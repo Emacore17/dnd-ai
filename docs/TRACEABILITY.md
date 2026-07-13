@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-13
-last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -27,6 +27,7 @@ code_refs:
   - .github/workflows/ci.yml
   - scripts/lib/ci-workflow-policy.mjs
   - scripts/lib/build-artifact.mjs
+  - scripts/lib/secret-scanner.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -48,7 +49,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo e `BL-002` pipeline/Ruleset. `BL-003` è `IN_REVIEW`: config server-only, profili, startup fail-fast e scanner `.env` sono implementati e verificati dalle suite mirate; clean checkout e CI sono ancora in chiusura. `BL-080` resta owner del primo secret manager e smoke remoto, mentre la fondazione `BL-079` resta pianificata dopo lo staging. I riferimenti futuri restano marcati `planned`; `GOV-002` estenderà il controllo documentale.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo e `BL-002` pipeline/Ruleset. `BL-003` è `DONE`: config server-only, profili, startup fail-fast e scanner `.env` sono verificati localmente, da checkout pulito e in CI Linux. `BL-080` è il prossimo task `READY` e resta owner del primo secret manager e smoke remoto; la fondazione `BL-079` resta pianificata dopo lo staging. I riferimenti futuri restano marcati `planned`; `GOV-002` estenderà il controllo documentale.
 
 ## Governance e baseline
 
@@ -65,10 +66,10 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Cache e artifact non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | setup action pnpm-only, `scripts/lib/secret-scanner.mjs`, `scripts/lib/build-artifact.mjs` | remote manifest `build-artifact-v1`, 3.205 file e checksum/secret verification; report BL-002 | PASS |
 | Log CI non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | workflow senza secret applicativi; output scanner redatto | scan redatto dei 5 job della run `29254494868` | PASS |
 | Gate fallito rende la PR non mergeabile | spec §31 `BL-002`; card BL-002 | BL-002 | Ruleset `main-required-ci` `18877721` | PR negativa #3/run `29256736728`: gate FAIL e `mergeStateStatus=BLOCKED`; regole `main` verificate via API | PASS |
-| Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; full verify locale e clean; report BL-003 | implemented; local/clean PASS; CI pending |
+| Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; full verify locale/clean; CI `29285998646`; report BL-003 | DONE; PASS locale/clean/CI |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
-| Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner path-based, artifact allowlist | contract config; force-tracked `.env.local` negativo; secret scan | PASS locale; manager reale planned BL-080 |
-| Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | config contract implementato; provider/IaC/deploy workflow (`planned`) | profilo staging locale PASS; deploy/smoke/rollback (`planned`) | BL-003 in chiusura; BL-080 planned |
+| Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner path-based e discovery ignore-aware, artifact allowlist | contract config; force-tracked `.env.local`; symlink/FIFO; secret scan | PASS locale/CI; manager reale planned BL-080 |
+| Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | config contract implementato; provider/IaC/deploy workflow (`planned`) | profilo staging locale PASS; deploy/smoke/rollback (`planned`) | BL-003 DONE; BL-080 READY |
 
 ## UX/UI P0
 

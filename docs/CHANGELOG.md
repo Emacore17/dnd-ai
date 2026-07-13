@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -70,8 +70,9 @@ supersedes: null
 - `BL-004` dipende da `BL-003` per il profilo migration; `config` è un leaf server-only importabile solo dai composition root API/worker.
 - Il minimo Node passa a `>=22.12.0`; `typecheck` costruisce prima le declaration delle dipendenze workspace per funzionare da checkout pulito.
 - Staging/production richiedono URL strutturali, credenziali service-scoped, PostgreSQL TLS con un solo `sslmode` allowlisted e Redis `rediss:`.
-- Il secret scanner rifiuta qualsiasi `.env`/`.env.*` tracciato salvo `.env.example`, anche senza pattern token noto.
+- Il secret scanner rifiuta qualsiasi `.env`/`.env.*` tracciato salvo `.env.example`, anche senza pattern token noto, e scopre file untracked/speciali mediante traversal Git-ignore-aware senza seguire symlink o junction.
 - Il packager omette soltanto i private-hoist pnpm non tracciati e privi di mirror nell'output Next standalone; target esterni e link ordinari senza mirror restano fail-closed.
+- `BL-003` passa a `DONE`; `BL-080` diventa il prossimo task `READY`, mentre `BL-079` resta `BACKLOG` fino alla disponibilità dello staging.
 
 ### Verification
 
@@ -87,6 +88,8 @@ supersedes: null
 - Dopo la pubblicazione, run positiva `29255261423` tutta verde e PR negativa #3/run `29256736728` con tests/gate rossi, artifact skipped e `mergeStateStatus=BLOCKED`; PR chiusa senza merge e branch rimossa.
 - Working tree di chiusura BL-002: `TURBO_FORCE=true pnpm verify` exit `0` in 53,9 s; front matter/link documentali, task graph, CI policy e secret scan `PASS`.
 - PR #1 unita senza bypass nel commit `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`; post-merge run `29257721274` su `main` con tutti i cinque job `SUCCESS`.
-- BL-003 isolato su `origin/main`: implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; full verify locale exit `0` in `54,9 s`; commit documentale `0d3af18c9d38887441dd9be3deb2d98084a44071` verificato da checkout detached pulito con install frozen e `TURBO_FORCE=true pnpm verify` exit `0` in `59,6 s`, artifact `3.212` file; audit senza vulnerabilità note; CI remota ancora pendente.
-- Spec baseline corrente: SHA `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`; include il contratto config e l'ownership staging `BL-080`, senza evidenze d'implementazione `BL-079`.
+- La prima CI BL-003, run `29285442650` su `4622d5c`, ha fallito Security `11/12` perché il solo indice Git non enumerava un FIFO untracked; Build artifact è stato saltato e il merge gate ha fallito. Il failure path ha prodotto il fix ignore-aware `f571413`.
+- BL-003 verificato su head `f57141341efe5df0707c77ff8ccef4f6fa15f675`: full verify locale exit `0` in `60,4 s`, artifact `3.191` file; worktree pulito con install frozen forzata exit `0` e verify exit `0` in `61,0 s`, artifact `3.554` file. Il primo install frozen nel worktree era un no-op e il verify preliminare ha fallito per dipendenze non materializzate; non è stato contato come gate applicativo.
+- Run finale `29285998646`: Quality, Tests, Security, Build artifact e `CI / Merge gate` tutti `SUCCESS`; Security Linux `12/12`, artifact Ubuntu `3.233` file e PR #6 `MERGEABLE/CLEAN`; audit senza vulnerabilità note.
+- Spec baseline corrente: SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`; include il contratto config e l'ownership staging `BL-080`, senza evidenze d'implementazione `BL-079`.
 - Evidenze: `AGENTS_VALIDATION.txt`; `docs/testing/BL-001_VERIFICATION.md`.

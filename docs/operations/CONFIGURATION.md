@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-13
-last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
@@ -105,7 +105,7 @@ Per Next.js, le variabili `NEXT_PUBLIC_*` vengono incorporate nel bundle al buil
 
 Su input mancante o malformato, `RuntimeConfigurationError` contiene soltanto il servizio e i nomi delle chiavi invalide. Non include valore, `ZodError`, input o cause. Errori inattesi allo startup API diventano il messaggio sicuro `API startup failed`.
 
-Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo scanner rifiuta comunque un file privato forzato in Git per pathname, classifica credential file prima della lettura e non dereferenzia symlink né apre file non regolari. Questo controllo è difesa in profondità: non sostituisce rotazione, scope minimo e audit del secret manager.
+Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo scanner rifiuta comunque un file privato forzato in Git per pathname, classifica credential file prima della lettura e integra l'indice Git con un traversal filesystem Git-ignore-aware per scoprire file untracked e speciali. Il traversal esclude `.git` e path ignorati, non segue symlink/junction e il controllo non apre file non regolari. Questo controllo è difesa in profondità: non sostituisce rotazione, scope minimo e audit del secret manager.
 
 ## Ownership successiva
 

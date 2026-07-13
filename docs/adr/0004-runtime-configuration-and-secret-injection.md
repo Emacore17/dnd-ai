@@ -2,7 +2,7 @@
 status: accepted
 owner: engineering-and-security
 last_reviewed: 2026-07-13
-last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
@@ -54,7 +54,7 @@ Preview/staging deve inoltre restare separato da production. La scelta del provi
 5. `RuntimeConfigurationError` espone soltanto servizio e nomi delle chiavi invalide. Non conserva `ZodError`, input, cause o valori che potrebbero contenere password.
 6. L'API valida prima della factory Fastify e del bind. Il worker valida prima dell'inizializzatore iniettato; non viene creato un daemon fittizio. Il profilo migration è verificabile dalla CLI e sarà consumato dall'entry point posseduto da `BL-004`.
 7. In locale si usano `.env.local` ignorati e template distinti con sentinel non sensibili. Staging e production usano gli stessi nomi e lo stesso schema di variabili, ma valori, risorse e credenziali distinti iniettati dal secret manager per singolo servizio. Nessun SDK del provider entra nel package.
-8. Ogni `.env` o `.env.*` tracciato, salvo `.env.example`, fallisce il secret scan per pathname anche quando il contenuto non coincide con un pattern credenziale noto. Lo scanner classifica path ambientali e credenziali prima di leggere, non dereferenzia symlink e rifiuta file non regolari.
+8. Ogni `.env` o `.env.*` tracciato, salvo `.env.example`, fallisce il secret scan per pathname anche quando il contenuto non coincide con un pattern credenziale noto. Lo scanner classifica path ambientali e credenziali prima di leggere e integra l'indice Git con una discovery filesystem Git-ignore-aware: `.git` e path ignorati sono esclusi, symlink/junction non vengono seguiti e i file non regolari sono rifiutati senza apertura.
 9. Nuove variabili vengono aggiunte soltanto insieme a un consumer reale, classificazione public/secret, test, template e aggiornamento di `docs/operations/CONFIGURATION.md`.
 
 ## Alternative considerate

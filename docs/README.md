@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -49,7 +49,7 @@ supersedes: null
 | [`testing/BL-002_VERIFICATION.md`](testing/BL-002_VERIFICATION.md) | Evidenze locali e remote di BL-002 |
 | [`adr/0004-runtime-configuration-and-secret-injection.md`](adr/0004-runtime-configuration-and-secret-injection.md) | Decisione accepted su config server-only, profili e secret injection |
 | [`operations/CONFIGURATION.md`](operations/CONFIGURATION.md) | Matrice variabili, setup locale, redazione e ownership ambienti |
-| [`testing/BL-003_VERIFICATION.md`](testing/BL-003_VERIFICATION.md) | Evidenze locali e clean-checkout di BL-003; CI ancora pendente |
+| [`testing/BL-003_VERIFICATION.md`](testing/BL-003_VERIFICATION.md) | Evidenze locali, clean-worktree e CI Linux di BL-003 |
 
 ## Documenti pianificati
 

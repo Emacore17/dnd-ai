@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -24,6 +24,7 @@ code_refs:
   - .github/workflows/ci.yml
   - scripts/lib/ci-workflow-policy.mjs
   - scripts/lib/build-artifact.mjs
+  - scripts/lib/secret-scanner.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -50,18 +51,18 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-13 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | baseline `origin/main` a `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; branch isolato `codex/bl-003-runtime-config`; implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; clean-verified docs head `0d3af18c9d38887441dd9be3deb2d98084a44071` |
+| Delivery/commit | baseline `origin/main` a `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; branch isolato `codex/bl-003-runtime-config`; verified head `f57141341efe5df0707c77ff8ccef4f6fa15f675`; PR #6 `MERGEABLE/CLEAN` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
-| SHA-256 specifica | `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f` |
+| SHA-256 specifica | `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-003 — IN_REVIEW/90%/PARTIAL` |
-| Ultimo task completato | `BL-002 — DONE/PASSING` |
-| Prossimo task READY | `—`; `BL-080` diventa eseguibile solo dopo `BL-003`, `BL-079` dopo `BL-080` |
+| Task attivo | `—` |
+| Ultimo task completato | `BL-003 — DONE/100%/PASSING` |
+| Prossimo task READY | `BL-080 — Fondazione preview/staging M0`; `BL-079` resta `BACKLOG` fino alla chiusura di `BL-080` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. Il web resta uno scaffold: la foundation UX/UI `BL-079` è pianificata e non fa parte di questo change set. `BL-003` implementa `runtime-config-v1`, startup API fail-fast, boundary worker, profilo migration, template service-scoped e scanner fail-closed; isolamento, full verify locale e clean checkout sono chiusi, mentre la CI resta pendente. Non esistono valori reali, risorse cloud o staging: `BL-080` possiede secret manager concreto, packaging, primo deploy e smoke remoto.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. Il web resta uno scaffold: la foundation UX/UI `BL-079` è pianificata e non fa parte di questo change set. `BL-003` implementa `runtime-config-v1`, startup API fail-fast, boundary worker, profilo migration, template service-scoped e scanner fail-closed; full verify locale, checkout pulito e CI Ubuntu sono `PASS`. Non esistono valori reali, risorse cloud o staging: `BL-080`, ora `READY`, possiede secret manager concreto, packaging, primo deploy e smoke remoto.
 
 ## Decisioni operative vigenti
 
@@ -92,9 +93,9 @@ Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web scaffold; API senza route ma con startup validate-before-bind |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
-| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; post-merge run `29257721274` PASS |
+| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; BL-003 run `29285998646` 5/5 job PASS |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
-| Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file; checkout pulito BL-003 `3.212` file, secret/checksum verification PASS |
+| Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file; checkout pulito BL-003 `3.554` file e CI Ubuntu `3.233` file, secret/checksum verification PASS |
 
 ## Comandi disponibili
 
@@ -148,12 +149,12 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | CTX-R03 | App e package di dominio restano scaffold; il web non contiene ancora la foundation UX/UI | task M0 proprietari; non inferire comportamento applicativo dalle entry point minime |
 | CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` resta in M0 e dipende dalla foundation operativa `BL-080` |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive gated o rimosso nel task `BL-079` |
-| CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | chiudere `BL-003`, quindi `BL-080` crea l'ambiente e sblocca lo smoke BL-079/GATE-M0 |
-| CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based |
+| CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | eseguire `BL-080`, ora READY, per creare l'ambiente e sbloccare lo smoke BL-079/GATE-M0 |
+| CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based/ignore-aware |
 
 ## Prossima azione
 
-Pubblicare la branch `codex/bl-003-runtime-config`, aprire la PR isolata e attendere la CI remota. Il primo provisioning e smoke preview/staging resta in `BL-080`.
+Selezionare ed eseguire `BL-080`: decidere provider/regione, definire provisioning ripetibile e verificare il primo deploy/smoke preview-staging senza valori production. `BL-079` inizierà soltanto dopo la disponibilità dell'ambiente.
 
 ## Rischi chiusi
 
@@ -163,3 +164,4 @@ Pubblicare la branch `codex/bl-003-runtime-config`, aprire la PR isolata e atten
 | CTX-R08 | BL-002 verificato da worktree detached pulito con install frozen e cache forzata off | head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; `TURBO_FORCE=true pnpm verify` exit `0` in 66,0 s |
 | CTX-R06 | Pipeline e failure path verificati realmente su GitHub | PR #1/run `29257544214` tutti verdi; PR #3/run `29256736728` con tests/gate rossi, build skipped e merge state `BLOCKED`; post-merge run `29257721274` PASS |
 | CTX-R07 | Blocco del piano privato rimosso dal Product Owner e enforcement attivato | repository pubblico; Ruleset `18877721` active/strict/no bypass; regole applicabili a `main` verificate via API |
+| CTX-R12 | Configurazione runtime BL-003 verificata localmente, da checkout pulito e su Linux | head `f571413`; clean verify `61,0 s`; run `29285998646` 5/5 job PASS; failure path FIFO `29285442650` registrato e corretto |

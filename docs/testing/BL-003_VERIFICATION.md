@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-13
-last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
@@ -40,8 +40,8 @@ supersedes: null
 | Ambiente locale | Windows; Node `24.11.0`; pnpm `10.34.5` |
 | Branch di lavoro | `codex/bl-003-runtime-config` |
 | Baseline | `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8` (`origin/main`) |
-| Commit verificato | `1090a2a2498f69102c78e1e8d90722c239629d68` |
-| Spec SHA-256 | `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f` |
+| Commit verificato | `f57141341efe5df0707c77ff8ccef4f6fa15f675` |
+| Spec SHA-256 | `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c` |
 | Config contract | `runtime-config-v1` |
 | Migration/schema/event/prompt/eval | `N/A` — non modificati |
 
@@ -50,6 +50,10 @@ supersedes: null
 I test sono stati introdotti prima del package. Il primo run di `node --test tests/unit/runtime-config.test.mjs` è fallito con `ERR_MODULE_NOT_FOUND` su `packages/config/dist/index.js`, confermando il rosso iniziale. Dopo l'implementazione, i parser e i process smoke sono passati.
 
 Il primo build ha inoltre fallito su tipi Node non dichiarati; il package e l'API ora dichiarano esplicitamente `@types/node` e `types: ["node"]`. Il primo SAST ha rifiutato la regex hostname; la validazione è stata riscritta senza regex ambigua. Una regressione successiva ha dimostrato che gli hostname interni alle URL non erano ancora verificati: il parser ora applica la stessa policy strutturale anche a PostgreSQL/Redis. Questi failure non sono stati aggirati o silenziati.
+
+La prima CI Ubuntu sulla PR #6, [run `29285442650`](https://github.com/Emacore17/dnd-ai/actions/runs/29285442650) al commit `4622d5c87c5018fbc9a3ac883c82342520e85d1a`, ha fallito Security `11/12`: `git ls-files` non enumerava il FIFO untracked creato dal negative test e lo scanner restituiva `[]`. Build artifact è stato saltato e il merge gate è fallito. Il fix aggiunge una discovery filesystem Git-ignore-aware, pota `.git` e directory ignorate e non segue symlink o junction; la run successiva prova il caso FIFO su Linux.
+
+Nel worktree pulito di `f571413`, il primo `install --frozen-lockfile` ha restituito un no-op senza materializzare `node_modules`; il verify preliminare ha quindi fallito in preflight perché `prettier` non era disponibile. `install --frozen-lockfile --force` ha materializzato 452 package ed è passato; soltanto dopo questa correzione ambientale è stato eseguito e contato il full verify pulito. Il fallimento preliminare non è un test applicativo fallito né viene registrato come installazione riuscita.
 
 ## Evidenze preliminari del change set sorgente
 
@@ -64,9 +68,10 @@ Il primo build ha inoltre fallito su tipi Node non dichiarati; il package e l'AP
 | `pnpm tasks:check` | exit `0` |
 | `pnpm scan:sast` | exit `0`; zero warning |
 | `pnpm audit --audit-level high` | exit `0`; nessuna vulnerabilità nota |
-| `TURBO_FORCE=true pnpm verify` isolato | exit `0` in `54,9 s`; unit 17 pass/1 skip host, integration 8/8, contract 13/13, security 9 pass/3 skip host, artifact 3.191 file |
-| clean-checkout `0d3af18c9d38887441dd9be3deb2d98084a44071` | install frozen exit `0`; `TURBO_FORCE=true pnpm verify` exit `0` in `59,6 s`; 0 cache hit; artifact 3.212 file |
-| CI remota | pending |
+| `TURBO_FORCE=true pnpm verify` su head `f571413` | exit `0` in `60,4 s`; unit 17 pass/1 skip host, integration 8/8, contract 13/13, security 9 pass/3 skip host, artifact 3.191 file |
+| clean worktree `f57141341efe5df0707c77ff8ccef4f6fa15f675` | primo install frozen no-op e verify preliminare exit `1` per dipendenze assenti; install frozen forzata exit `0`; `TURBO_FORCE=true pnpm verify` exit `0` in `61,0 s`; artifact 3.554 file |
+| CI failure path `29285442650` | Quality/Tests `SUCCESS`; Security `11/12` per FIFO non scoperta; Build artifact skipped; merge gate `FAILURE` |
+| CI finale `29285998646` su `f571413` | 5/5 job `SUCCESS`; Security 12/12 senza skip; artifact Ubuntu 3.233 file; PR #6 `MERGEABLE/CLEAN` |
 
 ## Copertura del contratto
 
@@ -82,6 +87,7 @@ Il primo build ha inoltre fallito su tipi Node non dichiarati; il package e l'AP
 - CLI local/staging stampa solo servizio e ambiente; missing config produce exit `1`;
 - web privo di dipendenza config e di chiavi `NEXT_PUBLIC_*` nel contratto;
 - `.env` privato force-tracked rifiutato per pathname; `.env.example` consentito; symlink e file non regolari mai aperti;
+- file untracked non ignorati scoperti anche quando Git non li elenca, incluso FIFO Linux; `.git` e path ignorati esclusi; symlink/junction non seguiti durante il traversal;
 - config compilata inclusa nell'allowlist artifact e boundary workspace fail-closed.
 
 ## Secret, dipendenze e ambiente
@@ -90,6 +96,6 @@ Non sono stati creati o letti secret reali. I tre `.env.example` usano sentinel 
 
 Il web resta `N/A` perché non ha un consumer runtime reale. Il primo secret manager, packaging deployabile e smoke preview/staging appartengono a `BL-080`; `BL-003` prova soltanto il profilo staging in processi locali isolati. Questo è coerente con la precisazione della DoD per i prerequisiti del primo ambiente.
 
-## Gate ancora necessari alla chiusura
+## Esito di chiusura
 
-1. CI remota e secret/artifact evidence sul commit candidato.
+Non restano gate di `BL-003`: test mirati, full verify locale, worktree pulito, audit dipendenze e CI Linux sono `PASS`. Il primo secret manager, deploy e smoke preview/staging restano correttamente fuori scope e sono posseduti da `BL-080`, ora `READY`.

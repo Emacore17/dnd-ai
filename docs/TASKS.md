@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -45,13 +45,13 @@ supersedes: null
 > **Punto di ingresso agente:** [`AGENTS.md`](../AGENTS.md)
 > **Specifica canonica:** [`docs/MVP_SPEC.md`](MVP_SPEC.md)
 > **Studio UX/UI:** [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md)
-> **Baseline specifica:** SHA-256 `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`
+> **Baseline specifica:** SHA-256 `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`
 > **Data baseline:** `2026-07-13`
 > **Versione schema task:** `1.0.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-003 — IN_REVIEW`
-> **Prossimo task READY:** `—`; `BL-080` sarà sbloccato dalla chiusura di `BL-003`, quindi `BL-079` potrà consumarne lo staging
+> **Task attivo:** `—`
+> **Prossimo task READY:** `BL-080 — Fondazione preview/staging M0`; `BL-079` resta `BACKLOG` finché lo staging non è disponibile
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -276,7 +276,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | 23% | 17 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta | `IN_PROGRESS` | 24% | 17 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -356,10 +356,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-003 — Typed config, secret injection contract, local template
 
-- **Stato:** `IN_REVIEW`
-- **Progresso:** `90%`
-- **Esito test:** `PARTIAL`
-- **Contesto verificato:** `YES` — delivery baseline commit: `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; implementation head: `1090a2a2498f69102c78e1e8d90722c239629d68`; spec SHA-256: `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`; data: `2026-07-13`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — delivery baseline commit: `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; verified implementation head: `f57141341efe5df0707c77ff8ccef4f6fa15f675`; spec SHA-256: `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`; data: `2026-07-13`
 - **Priorità / stima:** `P0` / `S`
 - **Dipendenze:** BL-001
 - **Dipendenze operative aggiuntive:** BL-001
@@ -373,7 +373,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Process smoke locale dei runtime/composition root con fixture valida; startup fail-fast ed exit non-zero senza variabili obbligatorie.
   - [x] Contract test del profilo `staging`: chiavi richieste, assenza di fallback `local`/`production`, errori redatti e nessun valore secret nei report. Il primo deploy/smoke reale appartiene a `BL-080`.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0002-monorepo-package-boundaries.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/operations/CONFIGURATION.md`; `docs/testing/BL-003_VERIFICATION.md`
-- **Evidenze di chiusura:** implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; full verify locale exit `0` in `54,9 s`; clean-verified docs head `0d3af18c9d38887441dd9be3deb2d98084a44071`, install frozen exit `0` e `TURBO_FORCE=true pnpm verify` exit `0` in `59,6 s`; unit `17 pass/1 skip host`, integration `8/8`, contract `13/13`, security `9 pass/3 skip host`; artifact clean `3.212` file e audit `PASS`; PR/CI `pending`; migration/eval/trace ID `N/A`; docs aggiornati.
+- **Evidenze di chiusura:** verified head `f57141341efe5df0707c77ff8ccef4f6fa15f675`; full verify locale exit `0` in `60,4 s`; clean worktree con install frozen forzata exit `0` e `TURBO_FORCE=true pnpm verify` exit `0` in `61,0 s`; unit `17 pass/1 skip host`, integration `8/8`, contract `13/13`, security Windows `9 pass/3 skip host`, security Ubuntu `12/12`; artifact clean `3.554` file e artifact CI Ubuntu `3.233` file; audit `PASS`; [PR #6](https://github.com/Emacore17/dnd-ai/pull/6), [CI `29285998646`](https://github.com/Emacore17/dnd-ai/actions/runs/29285998646) 5/5 job `SUCCESS`; failure path [run `29285442650`](https://github.com/Emacore17/dnd-ai/actions/runs/29285442650) corretto; migration/eval/trace ID `N/A`; docs aggiornati.
 - **Note, rischi o bloccanti:** `BL-003` non provisiona un ambiente cloud e non gestisce valori reali. `BL-080` possiede secret manager concreto, primo deploy e smoke preview/staging; `BL-070` possiede hardening, load/chaos, backup restore e go/no-go.
 
 ### BL-004 — Tool migration e schema baseline
@@ -548,10 +548,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-080 — Fondazione preview/staging M0
 
-- **Stato:** `BACKLOG`
+- **Stato:** `READY`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Contesto verificato:** `YES` — commit `f57141341efe5df0707c77ff8ccef4f6fa15f675`; spec SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`; data: `2026-07-13`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-002, BL-003
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§29.3–29.4, §30 Milestone 0, §31 `BL-080`, §35.1; `docs/adr/0003-ci-trust-boundary-and-artifacts.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/architecture/SYSTEM_OVERVIEW.md`
@@ -565,7 +565,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Rollback o redeploy provato; baseline web corrente e health check dei runtime disponibili verificati. Lo smoke della shell mobile resta un gate di `BL-079` dopo la disponibilità dell'ambiente.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; ADR-0004, ADR/provider decision e runbook ambiente
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; provider/project/region non sensibili `—`; deploy/run URL `—`; smoke/rollback `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** non include load, chaos, backup restore, production release o i gate UX della shell, posseduti da `BL-070`, `BL-079` e dai gate finali. Diventa eseguibile dopo `BL-003`; `BL-079` consuma l'ambiente dopo la chiusura di `BL-080`, senza dipendenza inversa.
+- **Note, rischi o bloccanti:** non include load, chaos, backup restore, production release o i gate UX della shell, posseduti da `BL-070`, `BL-079` e dai gate finali. Le dipendenze sono soddisfatte; `BL-079` consumerà l'ambiente dopo la chiusura di `BL-080`, senza dipendenza inversa.
 
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
 
@@ -2463,20 +2463,20 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: BL-003
-last_completed_task: BL-002
-next_ready_task: null
-status: IN_REVIEW
-progress: 90
+active_task: null
+last_completed_task: BL-003
+next_ready_task: BL-080
+status: DONE
+progress: 100
 started_at: 2026-07-13
 updated_at: 2026-07-13
 agent: Codex development agent
 git_branch: codex/bl-003-runtime-config
 base_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
-current_commit: 0d3af18c9d38887441dd9be3deb2d98084a44071
-spec_sha256: 7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f
+current_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
+spec_sha256: 0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c
 context_verified: true
-test_status: PARTIAL
+test_status: PASSING
 working_tree_dirty: true
 ```
 
@@ -2488,7 +2488,7 @@ working_tree_dirty: true
 - [x] `docs/CONTEXT.md`
 - [x] ADR vigenti — ADR-0001, ADR-0002, ADR-0003 e ADR-0004
 - [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CI_CD.md`; report BL-001 e BL-002
-- [x] codice, dipendenze e test correnti — tre composition root minimi, sette package condivisi, nessun config package o template locale; boundary/task graph e contract baseline verdi
+- [x] codice, dipendenze e test correnti — tre composition root minimi, otto package condivisi incluso `config`, template service-scoped; boundary/task graph e contract baseline verdi
 
 ## Piano e scope
 
@@ -2523,19 +2523,21 @@ working_tree_dirty: true
 | 2026-07-13 | 90% | Chiusa la review codice/documenti senza finding P0/P1, rifiutati symlink e file non regolari prima della lettura, validati gli host negli URL e rimossa la dipendenza semantica circolare BL-079/BL-080. | Verify preliminare sulla baseline di sviluppo `PASS`; cherry-pick isolato su `d530f3a` in verifica. | Completare il gate da checkout pulito e attendere CI. |
 | 2026-07-13 | 90% | Isolata la delivery; il full gate ha scoperto un private-hoist pnpm non tracciato nell'output Next. Il packager ora omette solo link immediati scoped/unscoped senza mirror dopo il containment check e mantiene gli altri failure path fail-closed. | Head `1090a2a`; `TURBO_FORCE=true pnpm verify` exit `0` in `54,9 s`; unit `17+1 skip`, integration `8`, contract `13`, security `9+3 skip`; artifact `3.191` file; review finale senza P0/P1. | Verificare da checkout pulito e attendere CI. |
 | 2026-07-13 | 90% | Verificato il commit documentale da worktree detached pulito con lockfile frozen e cache Turbo forzatamente ignorata. | Head `0d3af18`; install exit `0`; full verify exit `0` in `59,6 s`; artifact `3.212` file; audit documentale finale senza P0/P1. | Pubblicare la PR isolata e attendere CI. |
+| 2026-07-13 | 90% | La prima run Ubuntu ha dimostrato che il solo indice Git non enumerava un FIFO untracked; lo scanner ora scopre anche file non ignorati senza seguire symlink/junction e continua a rifiutare file non regolari prima della lettura. | Run `29285442650`: Quality/Tests verdi, Security `11/12`, artifact skipped e merge gate rosso; fix head `f571413`, full verify locale exit `0` in `60,4 s`, artifact `3.191` file. | Ripetere clean verify e CI Ubuntu. |
+| 2026-07-13 | 100% | Verificati fix, checkout pulito e CI; BL-003 chiuso senza introdurre staging o secret reali. | Worktree pulito head `f571413`: install frozen forzata exit `0`, full verify exit `0` in `61,0 s`, artifact `3.554` file; run `29285998646` 5/5 job `SUCCESS`, security `12/12`, artifact Ubuntu `3.233` file; PR #6 `MERGEABLE/CLEAN`. | Eseguire `BL-080`; mantenere `BL-079` in backlog fino allo staging. |
 
 ## Chiusura
 
-- **Commit/PR:** delivery branch `codex/bl-003-runtime-config` da `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; PR pending
+- **Commit/PR:** delivery branch `codex/bl-003-runtime-config` da `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; verified head `f57141341efe5df0707c77ff8ccef4f6fa15f675`; [PR #6](https://github.com/Emacore17/dnd-ai/pull/6) `MERGEABLE/CLEAN`
 - **Comandi eseguiti:** build config/runtime; unit config; process integration; contract config; security env/symlink/non-regular; lint/typecheck/build; boundary/task graph/CI policy; SAST/secret scan/audit; artifact verify
-- **Exit code:** `0` per gate mirati, full verify isolato, install frozen e clean-checkout verify; CI ancora pending
-- **Report/CI URL o path:** `docs/testing/BL-003_VERIFICATION.md`; CI ancora pending; primo deploy/smoke reale demandato a `BL-080`
+- **Exit code:** `0` per gate mirati, full verify isolato, install frozen forzato, clean-worktree verify e CI finale; il preflight clean iniziale è documentato con exit `1` perché l'install no-op non aveva materializzato `node_modules`
+- **Report/CI URL o path:** `docs/testing/BL-003_VERIFICATION.md`; [run positiva `29285998646`](https://github.com/Emacore17/dnd-ai/actions/runs/29285998646); [failure path `29285442650`](https://github.com/Emacore17/dnd-ai/actions/runs/29285442650); primo deploy/smoke reale demandato a `BL-080`
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** config contract `runtime-config-v1`; API/event schema `N/A`
 - **Prompt/model/eval version:** `N/A`
 - **Documenti aggiornati:** `AGENTS.md`; spec/task/context/traceability/changelog/index/overview; ADR-0002/0004; runbook e report BL-003
 - **Rischi residui/TODO tracciati:** leakage nei messaggi/config artifact; cross-environment fallback; primo secret manager/deploy reale tramite `BL-080`
-- **Task successivo reso READY:** `N/A` durante l'esecuzione
+- **Task successivo reso READY:** `BL-080`
 
 
 ## 21. Context Sync Log
@@ -2557,6 +2559,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `f1be878` | BL-002 closure | GitHub Ruleset e negative merge gate | Repository pubblico verificato; attivata Ruleset `18877721` active/strict/no bypass e confermato `mergeStateStatus=BLOCKED` sulla PR negativa #3/run `29256736728`. BL-002 chiuso e BL-079 reso READY. | BL-079, GOV-002, BL-070 |
 | 2026-07-13 | `ae88583` | BL-002 post-merge | `main` e CI | PR #1 unita senza bypass; post-merge run `29257721274` con quality, tests, security, build artifact e merge gate tutti `SUCCESS`. | BL-079, GOV-002 |
 | 2026-07-13 | `1090a2a` | BL-003 | Config/runtime, secret boundary e documentazione | Aggiunti `runtime-config-v1`, startup fail-fast, template/scanner `.env`, TLS/auth managed e ADR-0004; corretto il private-hoist artifact fail-closed; `BL-004` ora dipende dal profilo migration e `BL-080` non dipende semanticamente dalla shell BL-079. Spec SHA `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`. | BL-004, BL-005, BL-008, BL-010, BL-079, BL-080, GATE-M0 |
+| 2026-07-13 | `f571413` | BL-003 closure | Secret scanner, clean verification e CI | Aggiunta discovery ignore-aware dei file speciali untracked dopo il failure path FIFO Ubuntu; clean verify e run `29285998646` chiudono BL-003. BL-080 passa a READY; BL-079 resta BACKLOG. Spec SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`. | BL-004, BL-005, BL-008, BL-010, BL-079, BL-080, GATE-M0 |
 | — | — | — | — | — | — |
 
 
