@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-13
-last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -51,7 +51,7 @@ Verifica operativa:
 4. verificare job rosso, gate rosso e merge state `BLOCKED`;
 5. chiudere la PR negativa, rimuovere la branch e registrare URL/ruleset ID nel report.
 
-La verifica di accettazione è registrata in `docs/testing/BL-002_VERIFICATION.md`: la PR negativa #3/run `29256736728` ha prodotto gate rosso e `mergeStateStatus=BLOCKED`, quindi è stata chiusa senza merge.
+La verifica di accettazione è registrata in `docs/testing/BL-002_VERIFICATION.md`: la PR negativa #3/run `29256736728` ha prodotto gate rosso e `mergeStateStatus=BLOCKED`, quindi è stata chiusa senza merge; la PR #1/run `29257544214` è stata unita senza bypass e la run push `29257721274` su `main` è passata.
 
 Non disabilitare il gate per risolvere una coda. Se un job viene cancellato o saltato, `scripts/assert-ci-results.mjs` lo considera fallito.
 

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -59,5 +59,6 @@ supersedes: null
 - Prima della pubblicazione, CI Ubuntu verde sulla PR #1 (`29254494868`), log e artifact remoto verificati; PR negativa #2 ha fallito il gate ma restava mergeable per assenza di Ruleset nel piano privato.
 - Dopo la pubblicazione, run positiva `29255261423` tutta verde e PR negativa #3/run `29256736728` con tests/gate rossi, artifact skipped e `mergeStateStatus=BLOCKED`; PR chiusa senza merge e branch rimossa.
 - Working tree di chiusura BL-002: `TURBO_FORCE=true pnpm verify` exit `0` in 53,9 s; front matter/link documentali, task graph, CI policy e secret scan `PASS`.
+- PR #1 unita senza bypass nel commit `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`; post-merge run `29257721274` su `main` con tutti i cinque job `SUCCESS`.
 - Spec baseline corrente: SHA `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`; il run sul commit di implementazione usava `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90` prima del solo aggiornamento front matter.
 - Evidenze: `AGENTS_VALIDATION.txt`; `docs/testing/BL-001_VERIFICATION.md`.
