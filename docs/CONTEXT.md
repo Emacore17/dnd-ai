@@ -34,9 +34,9 @@ supersedes: null
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `—` |
+| Task attivo | `BL-002 — IN_PROGRESS/25%` |
 | Ultimo task completato | `BL-001 — DONE/PASSING` |
-| Prossimo task READY | `BL-002 — Pipeline test, scan, build e artifact` |
+| Prossimo task READY | `—` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
@@ -116,7 +116,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Selezionare `BL-002` e implementare la pipeline locale/CI e gli artifact previsti dalla card. `BL-079` resta `BACKLOG` fino al completamento di `BL-002`, poi diventa la fondazione UI da eseguire prima delle feature utente.
+Completare `BL-002` con workflow PR, quality/test/security gate, failure fixture e artifact allowlisted. La Ruleset GitHub e una run reale restano non verificabili finché il repository non dispone di un remote; `BL-079` resta `BACKLOG` fino alla chiusura di `BL-002`.
 
 ## Rischi chiusi
 

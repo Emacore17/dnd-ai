@@ -32,8 +32,8 @@ supersedes: null
 > **Versione schema task:** `1.0.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `—`
-> **Prossimo task READY:** `BL-002 — Pipeline test, scan, build e artifact`
+> **Task attivo:** `BL-002 — Pipeline test, scan, build e artifact`
+> **Prossimo task READY:** `—`
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -314,14 +314,14 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-002 — Pipeline test, scan, build e artifact
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
+- **Stato:** `IN_PROGRESS`
+- **Progresso:** `25%`
 - **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Contesto verificato:** `YES` — base commit `74af8947932443de5b4df2f42f4c6aebfff7a109`; spec SHA `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`; data: `2026-07-13`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-001
 - **Dipendenze operative aggiuntive:** BL-001
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §26.12 CI quality gates; `docs/MVP_SPEC.md` §29.4 CI/CD; `docs/MVP_SPEC.md` §35.1 Definition of Done per user story; `docs/MVP_SPEC.md` §31 `BL-002`; `docs/MVP_SPEC.md` §35.1
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §26.12 CI quality gates; `docs/MVP_SPEC.md` §29.4 CI/CD; `docs/MVP_SPEC.md` §31 `BL-002`; `docs/MVP_SPEC.md` §35.1 Definition of Done per user story
 - **Obiettivo:** Come team voglio una CI che blocchi regressioni.
 - **Deliverable:** Pipeline test, scan, build e artifact.
 - **Criterio di accettazione:** PR non mergeabile su gate fallito; cache non espone secret.
@@ -331,7 +331,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Verifica che cache, log e artifact CI non contengano secret.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+- **Note, rischi o bloccanti:** Il repository non ha ancora un remote GitHub: workflow, failure propagation e policy possono essere verificati localmente, mentre Ruleset/branch protection e run URL restano il gate esterno necessario per provare che una PR non sia mergeabile.
 
 ### BL-003 — Typed config, secret manager, local template
 
@@ -2418,20 +2418,20 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: null
+active_task: BL-002
 last_completed_task: BL-001
-next_ready_task: BL-002
-status: DONE
-progress: 100
+next_ready_task: null
+status: IN_PROGRESS
+progress: 25
 started_at: 2026-07-13
 updated_at: 2026-07-13
 agent: Codex development agent
 git_branch: main
-base_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
-current_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
-spec_sha256: 5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90
+base_commit: 74af8947932443de5b4df2f42f4c6aebfff7a109
+current_commit: 74af8947932443de5b4df2f42f4c6aebfff7a109
+spec_sha256: ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6
 context_verified: true
-test_status: PASSING
+test_status: NOT_RUN
 ```
 
 ## Contesto letto
@@ -2440,17 +2440,17 @@ test_status: PASSING
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] ADR vigenti — ADR-0001
-- [x] documenti collegati — `docs/product/UX_UI_DESIGN.md`; operations/testing `N/A` per task documentale
-- [x] codice, migration, contratti e test correnti — assenti al preflight; repository ancora documentale prima di `BL-001`
+- [x] ADR vigenti — ADR-0001 e ADR-0002
+- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/testing/BL-001_VERIFICATION.md`
+- [x] codice, migration, contratti e test correnti — workspace e sei contract test presenti; workflow CI, suite unit/integration, scan e artifact assenti al preflight
 
 ## Piano e scope
 
-- **Obiettivo verificabile:** creare il monorepo TypeScript con app/package buildabili e impedire automaticamente dipendenze o import vietati.
-- **File/moduli previsti:** workspace pnpm/Turborepo; `apps/web`, `apps/api`, `apps/worker`; package `contracts`, `domain`, `rules`, `ai`, `persistence`, `observability`, `testing`; checker boundary/task graph; test contract; overview e ADR dei confini.
-- **Test da scrivere prima/durante:** fixture valida del workspace; dipendenza e import vietati; ciclo; task ID/dipendenza/riferimento UX invalido; build/lint/typecheck di ogni workspace.
-- **Rischi/failure path:** drift fra manifest e import sorgente; dipendenza circolare; package infrastrutturale importato dal dominio; toolchain non riproducibile; build Next incompatibile con Node/package manager.
-- **Fuori scope:** CI remota (`BL-002`), config ambiente (`BL-003`), database (`BL-004`), shadcn/AI Elements/Motion e shell visuale (`BL-079`).
+- **Obiettivo verificabile:** creare una pipeline PR riproducibile che renda obbligatori quality, test, security e build prima dell'artifact, senza propagare secret in cache, log o artifact.
+- **File/moduli previsti:** workflow GitHub Actions; script CI per secret scan, policy e manifest artifact; suite unit/integration/contract con failure fixture; ADR/runbook/report; aggiornamenti a package scripts e documenti living.
+- **Test da scrivere prima/durante:** contratto workflow e action pin; fixture fallita con exit non-zero; secret sintetico rifiutato; cache e artifact allowlisted; artifact mancante/path non ammesso fail-closed; integrazione dei comandi reali.
+- **Rischi/failure path:** action o tool non pin; `pull_request_target`; permessi write e credenziali checkout; failure inghiottita; cache/artifact troppo ampi; symlink/path traversal; audit dipendenze non disponibile; branch protection non configurabile senza remote.
+- **Fuori scope:** database/migration e container (`BL-004`/`QA-001`); schema compatibility (`BL-009`); browser/a11y e UI budget (`BL-079`/`QA-001`); eval (`BL-068`); deploy staging/production e rollback (`BL-070`).
 
 ## Diario sintetico
 
@@ -2461,19 +2461,20 @@ test_status: PASSING
 | 2026-07-13 | 25% | Auditati 101 task e 79 righe BL: grafo senza cicli/ID orfani; formalizzati i consumer UI di `BL-079`, le dipendenze differite e l’ownership del browser harness. Selezionato `BL-001`. | Nuova spec SHA `6c40a5c2b42d496c4977df157c19984175e643684cf5b2f1ec8e7ea47fc74578`; test implementativi ancora `NOT_RUN`. | Creare scaffold, checker e test negativi. |
 | 2026-07-13 | 90% | Scaffold e policy implementati; corretto il failure path del pnpm globale; documentati overview, ADR-0002 e supply-chain allowlist. | `pnpm verify` `PASS`: 10/10 workspace lint/typecheck/build, 6/6 contract test, boundary/task graph `PASS`; manca la replica da worktree pulito. | Inizializzare Git, verificare il commit da worktree pulito e chiudere il task. |
 | 2026-07-13 | 100% | Inizializzato Git e verificato il commit di implementazione da worktree detached pulito con cache forzatamente disabilitata. | Commit `6cda07a60022665f321b48dd82fbeb1d9bef586f`; frozen install `0`; `TURBO_FORCE=true pnpm verify` `0`; 10/10 workspace e 6/6 contract test. | Chiudere `BL-001` e rendere `BL-002` READY. |
+| 2026-07-13 | 25% | Selezionato `BL-002`; auditati card, spec, ADR, comandi e trust boundary CI. Nessun remote Git configurato. | Preflight pulito su `74af894`; spec SHA `ed2c7882…`; task graph e 6/6 contract test risultano verdi dalla baseline. | Implementare workflow, test negativi, scansioni e artifact allowlisted. |
 
 ## Chiusura
 
-- **Commit/PR:** `6cda07a60022665f321b48dd82fbeb1d9bef586f`
-- **Comandi eseguiti:** `corepack pnpm@10.34.5 install --frozen-lockfile`; `$env:TURBO_FORCE='true'; corepack pnpm@10.34.5 verify`; `git status --short --branch`; staged secret scan; `git diff --check`
-- **Exit code:** `0` per frozen install, verify, status, secret scan e diff check; la fixture vietata restituisce intenzionalmente `1` ed è asserita dal test
-- **Report/CI URL o path:** `docs/testing/BL-001_VERIFICATION.md`
+- **Commit/PR:** in corso da base `74af8947932443de5b4df2f42f4c6aebfff7a109`; remote/PR non disponibile
+- **Comandi eseguiti:** preflight documentale e Git; implementazione/test non ancora eseguiti
+- **Exit code:** preflight `0`; suite del change `NOT_RUN`
+- **Report/CI URL o path:** pianificato `docs/testing/BL-002_VERIFICATION.md`; CI URL non disponibile senza remote
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** `N/A`
 - **Prompt/model/eval version:** `N/A`
-- **Documenti aggiornati:** `docs/MVP_SPEC.md`, `docs/TASKS.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, `docs/CHANGELOG.md`, `docs/README.md`, `docs/product/UX_UI_DESIGN.md`, ADR-0001, ADR-0002, `docs/architecture/SYSTEM_OVERVIEW.md`, report BL-001
-- **Rischi residui/TODO tracciati:** `CTX-R02..CTX-R05`, `GOV-002`, `QA-001`, `BL-079`
-- **Task successivo reso READY:** `BL-002`
+- **Documenti aggiornati:** in corso
+- **Rischi residui/TODO tracciati:** branch protection/run CI reale senza remote; `BL-003`, `BL-004`, `BL-009`, `BL-079`, `QA-001`, `BL-068`, `BL-070`
+- **Task successivo reso READY:** nessuno finché `BL-002` non supera il gate esterno
 
 
 ## 21. Context Sync Log
