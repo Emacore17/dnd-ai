@@ -6,7 +6,7 @@ import { fileURLToPath, URL } from "node:url";
 
 import {
   discoverWorkspace,
-  validateWorkspaceBoundaries
+  validateWorkspaceBoundaries,
 } from "../../scripts/lib/workspace-boundaries.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
@@ -23,18 +23,22 @@ test("a domain dependency on persistence fails closed", () => {
     "tests",
     "fixtures",
     "boundaries",
-    "forbidden"
+    "forbidden",
   );
-  const checkerPath = path.join(repositoryRoot, "scripts", "check-boundaries.mjs");
+  const checkerPath = path.join(
+    repositoryRoot,
+    "scripts",
+    "check-boundaries.mjs",
+  );
   const result = spawnSync(
     process.execPath,
     [checkerPath, "--root", fixtureRoot],
-    { encoding: "utf8" }
+    { encoding: "utf8" },
   );
 
   assert.equal(result.status, 1);
   assert.match(
     result.stderr,
-    /forbidden-dependency: @dnd-ai\/domain -> @dnd-ai\/persistence/
+    /forbidden-dependency: @dnd-ai\/domain -> @dnd-ai\/persistence/,
   );
 });

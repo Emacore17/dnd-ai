@@ -10,17 +10,24 @@ related_tasks:
   - GOV-001
   - GOV-002
   - BL-001
+  - BL-002
   - BL-079
 code_refs:
   - apps
   - packages
   - scripts/lib/workspace-boundaries.mjs
   - scripts/lib/task-graph.mjs
+  - .github/workflows/ci.yml
+  - scripts/lib/ci-workflow-policy.mjs
+  - scripts/lib/build-artifact.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
   - tests/contracts/task-graph.test.mjs
   - docs/testing/BL-001_VERIFICATION.md
+  - tests/contracts/ci-workflow.test.mjs
+  - tests/integration/ci-gate.test.mjs
+  - docs/testing/BL-002_VERIFICATION.md
 supersedes: null
 ---
 
@@ -28,7 +35,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository è ancora `unversioned`, ma `BL-001` ha introdotto lo scaffold applicativo e i primi contract test. I riferimenti futuri restano marcati `planned`; `GOV-002` estenderà il controllo task graph a link, front matter, Mermaid e generated-doc drift.
+Il repository è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo e i primi contract test; `BL-002` aggiunge la pipeline e i controlli locali/CI. I riferimenti futuri restano marcati `planned`; `GOV-002` estenderà il controllo task graph a link, front matter, Mermaid e generated-doc drift.
 
 ## Governance e baseline
 
@@ -41,6 +48,9 @@ Il repository è ancora `unversioned`, ma `BL-001` ha introdotto lo scaffold app
 | Monorepo buildabile con tre runtime e package puri | spec §§11.2–11.3; `AGENTS.md` §9 | BL-001 | `apps/*`, `packages/*`, `turbo.json` | lint/typecheck/build su 10 workspace; report BL-001 | implemented, clean worktree PASS |
 | Import e dipendenze rispettano la allowlist | `AGENTS.md` §§4.6, 9 | BL-001 | `scripts/lib/workspace-boundaries.mjs` | `tests/contracts/workspace-boundaries.test.mjs`, inclusa fixture vietata; report BL-001 | implemented, PASS |
 | Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check`; report BL-001 | implemented (scope task graph), PASS |
+| PR CI fail-closed con check stabile | spec §§26.12, 29.4; ADR-0003 | BL-002 | `.github/workflows/ci.yml`, `scripts/lib/ci-gate.mjs` | `tests/integration/ci-gate.test.mjs`, `tests/contracts/ci-workflow.test.mjs`; report BL-002 | implemented locally, remote evidence pending |
+| Cache e artifact non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | setup action pnpm-only, `scripts/lib/secret-scanner.mjs`, `scripts/lib/build-artifact.mjs` | security/unit/contract test e manifest `build-artifact-v1`; report BL-002 | local PASS, remote artifact pending |
+| Log CI non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | workflow senza secret applicativi; output scanner redatto | ispezione log della PR nel report BL-002 | remote evidence pending |
 
 ## UX/UI P0
 

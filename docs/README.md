@@ -9,6 +9,7 @@ source_refs:
 related_tasks:
   - GOV-001
   - BL-001
+  - BL-002
 code_refs: []
 test_refs:
   - AGENTS_VALIDATION.txt
@@ -39,6 +40,9 @@ supersedes: null
 | [`architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | Monorepo implementato, direzioni di dipendenza e toolchain |
 | [`adr/0002-monorepo-package-boundaries.md`](adr/0002-monorepo-package-boundaries.md) | Decisione accepted su workspace e boundary enforcement |
 | [`testing/BL-001_VERIFICATION.md`](testing/BL-001_VERIFICATION.md) | Evidenza riproducibile della clean-worktree verification di BL-001 |
+| [`adr/0003-ci-trust-boundary-and-artifacts.md`](adr/0003-ci-trust-boundary-and-artifacts.md) | Decisione accepted su trust boundary, cache, gate e artifact CI |
+| [`operations/CI_CD.md`](operations/CI_CD.md) | Contratto operativo della pipeline e configurazione Ruleset |
+| [`testing/BL-002_VERIFICATION.md`](testing/BL-002_VERIFICATION.md) | Evidenze locali e remote di BL-002 |
 
 ## Documenti pianificati
 

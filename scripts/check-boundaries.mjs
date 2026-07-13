@@ -3,7 +3,7 @@ import { fileURLToPath, URL } from "node:url";
 
 import {
   discoverWorkspace,
-  validateWorkspaceBoundaries
+  validateWorkspaceBoundaries,
 } from "./lib/workspace-boundaries.mjs";
 
 function resolveRoot(args) {

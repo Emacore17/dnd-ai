@@ -1,10 +1,10 @@
 import Fastify, {
   type FastifyInstance,
-  type FastifyServerOptions
+  type FastifyServerOptions,
 } from "fastify";
 
 export function createApiApp(
-  options: FastifyServerOptions = {}
+  options: FastifyServerOptions = {},
 ): FastifyInstance {
   return Fastify(options);
 }

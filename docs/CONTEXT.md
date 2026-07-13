@@ -2,23 +2,33 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: uncommitted
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
 related_tasks:
   - GOV-001
   - BL-001
+  - BL-002
   - BL-079
 code_refs:
   - apps
   - packages
   - scripts/lib/workspace-boundaries.mjs
   - scripts/lib/task-graph.mjs
+  - .github/workflows/ci.yml
+  - scripts/lib/ci-workflow-policy.mjs
+  - scripts/lib/build-artifact.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
   - tests/contracts/task-graph.test.mjs
+  - tests/contracts/ci-workflow.test.mjs
+  - tests/integration/ci-gate.test.mjs
+  - tests/unit/build-artifact.test.mjs
+  - tests/security/sast-config.test.mjs
+  - tests/security/secret-scanner.test.mjs
+  - docs/testing/BL-002_VERIFICATION.md
 supersedes: null
 ---
 
@@ -29,19 +39,19 @@ supersedes: null
 | Campo | Valore |
 |---|---|
 | Data assoluta | 2026-07-13 |
-| Repository | Git inizializzato durante `BL-001` |
-| Branch/commit | `main`; implementation verificata `6cda07a60022665f321b48dd82fbeb1d9bef586f` |
+| Repository | GitHub `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
+| Branch/commit | `codex/bl-002-ci-foundation`; base `6b9f5d281fb0185f5f6c98813e2ffcee6424e658`; change non ancora committato |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-002 — IN_PROGRESS/25%` |
+| Task attivo | `BL-002 — IN_REVIEW/90%` |
 | Ultimo task completato | `BL-001 — DONE/PASSING` |
 | Prossimo task READY | `—` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. Le entry point sono intenzionalmente minime: migration, schema di dominio, CI, queue e configurazioni di ambiente restano assenti e non vanno inferiti.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. `BL-002` ha aggiunto la pipeline e i relativi controlli locali, ma la Ruleset e le run GitHub devono ancora essere verificate. Le entry point applicative restano intenzionalmente minime: migration, contratti di dominio implementati, queue e configurazioni di ambiente sono assenti e non vanno inferiti.
 
 ## Decisioni operative vigenti
 
@@ -53,16 +63,16 @@ supersedes: null
 - Visual language premium contemporaneo per casual gamer, senza chrome pseudo-medievale/fantasy.
 - Workspace e direzioni di dipendenza secondo ADR-0002; manifest/import/cicli falliscono chiuso tramite checker versionato.
 
-Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md) e [`ADR-0002`](adr/0002-monorepo-package-boundaries.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Architettura implementata: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md).
+Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md) e [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Architettura implementata: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md).
 
 ## Versioni e head
 
 | Elemento | Versione/head | Stato |
 |---|---|---|
-| Migration head | `N/A` | persistence non creata |
-| Contract/API/event schema | `N/A` | package contracts non creato |
-| Rules version | `N/A` | rules package non creato |
-| Prompt version | `N/A` | AI package non creato |
+| Migration head | `N/A` | package persistence presente come scaffold; migration non implementate |
+| Contract/API/event schema | `N/A` | package contracts presente come scaffold; schema non implementati |
+| Rules version | `N/A` | package rules presente come scaffold; cataloghi/formule non implementati |
+| Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
 | Eval suite version | `N/A` | harness non creato |
 | Design contract | `ux-ui-2026-07-13` | documentato, non implementato |
 | ADR UI | `ADR-0001 accepted` | vigente |
@@ -70,22 +80,33 @@ Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md) e [
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | scaffold buildabile, nessuna feature |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
+| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate` |
+| Artifact schema | `build-artifact-v1` | staging allowlisted, secret scan, SHA-256 e verifica payload |
 
 ## Comandi disponibili
 
-Sono disponibili i comandi del perimetro `BL-001`:
+Sono disponibili i comandi locali del perimetro `BL-001`/`BL-002`:
 
 ```powershell
 corepack pnpm@10.34.5 lint
 corepack pnpm@10.34.5 typecheck
 corepack pnpm@10.34.5 build
+corepack pnpm@10.34.5 format:check
+corepack pnpm@10.34.5 test:unit
+corepack pnpm@10.34.5 test:integration
 corepack pnpm@10.34.5 test:contract
+corepack pnpm@10.34.5 test:security
 corepack pnpm@10.34.5 boundaries:check
 corepack pnpm@10.34.5 tasks:check
+corepack pnpm@10.34.5 ci:workflow:check
+corepack pnpm@10.34.5 scan:sast
+corepack pnpm@10.34.5 scan:secrets
+corepack pnpm@10.34.5 artifact:prepare
+corepack pnpm@10.34.5 artifact:verify
 corepack pnpm@10.34.5 verify
 ```
 
-Il contratto completo di `docs/TASKS.md` §5 resta pianificato in `BL-002`/`QA-001` e non va dichiarato completo.
+E2E, eval, bot, load, migration e il test harness container/browser completo restano pianificati nei task proprietari, soprattutto `QA-001`; non vanno sostituiti da no-op.
 
 Verifiche documentali manuali correnti:
 
@@ -113,10 +134,12 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | CTX-R03 | App/package sono scaffold senza contratti o feature | task M0 proprietari; non inferire dominio dalle entry point vuote |
 | CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` in M0 e dipendenza documentale per i task UI |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced; Rive gated o rimosso in `BL-079` |
+| CTX-R06 | Il workflow locale non prova da solo il blocco merge | eseguire PR verde, Ruleset attiva e PR negativa in `BL-002` |
+| CTX-R07 | Ruleset e branch protection non sono disponibili sul piano GitHub corrente per il repository privato | decisione Product Owner: piano GitHub compatibile oppure repository pubblico; non modificare privacy/spesa implicitamente |
 
 ## Prossima azione
 
-Completare `BL-002` con workflow PR, quality/test/security gate, failure fixture e artifact allowlisted. La Ruleset GitHub e una run reale restano non verificabili finché il repository non dispone di un remote; `BL-079` resta `BACKLOG` fino alla chiusura di `BL-002`.
+Completare i gate locali e la PR verde di `BL-002`; registrare anche una PR negativa per il comportamento fail-closed. L'enforcement della Ruleset `main` resta bloccato dal piano GitHub privato finché il Product Owner non sceglie un piano compatibile o la pubblicazione. `BL-079` resta `BACKLOG` fino alla chiusura di `BL-002`.
 
 ## Rischi chiusi
 

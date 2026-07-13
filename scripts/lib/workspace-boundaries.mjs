@@ -8,7 +8,7 @@ const DEPENDENCY_FIELDS = [
   "dependencies",
   "devDependencies",
   "optionalDependencies",
-  "peerDependencies"
+  "peerDependencies",
 ];
 
 export const WORKSPACE_POLICY = Object.freeze({
@@ -24,7 +24,7 @@ export const WORKSPACE_POLICY = Object.freeze({
     "@dnd-ai/rules",
     "@dnd-ai/ai",
     "@dnd-ai/persistence",
-    "@dnd-ai/observability"
+    "@dnd-ai/observability",
   ],
   "@dnd-ai/web": ["@dnd-ai/contracts", "@dnd-ai/observability"],
   "@dnd-ai/api": [
@@ -33,7 +33,7 @@ export const WORKSPACE_POLICY = Object.freeze({
     "@dnd-ai/rules",
     "@dnd-ai/ai",
     "@dnd-ai/persistence",
-    "@dnd-ai/observability"
+    "@dnd-ai/observability",
   ],
   "@dnd-ai/worker": [
     "@dnd-ai/contracts",
@@ -41,8 +41,8 @@ export const WORKSPACE_POLICY = Object.freeze({
     "@dnd-ai/rules",
     "@dnd-ai/ai",
     "@dnd-ai/persistence",
-    "@dnd-ai/observability"
-  ]
+    "@dnd-ai/observability",
+  ],
 });
 
 function isInside(parentDirectory, candidatePath) {
@@ -61,7 +61,7 @@ async function listSourceFiles(directory) {
       }
 
       throw error;
-    }
+    },
   );
   const files = [];
 
@@ -70,7 +70,10 @@ async function listSourceFiles(directory) {
 
     if (entry.isDirectory()) {
       files.push(...(await listSourceFiles(entryPath)));
-    } else if (entry.isFile() && SOURCE_EXTENSIONS.has(path.extname(entry.name))) {
+    } else if (
+      entry.isFile() &&
+      SOURCE_EXTENSIONS.has(path.extname(entry.name))
+    ) {
       files.push(entryPath);
     }
   }
@@ -83,7 +86,7 @@ function collectModuleSpecifiers(sourceText, filePath) {
     filePath,
     sourceText,
     ts.ScriptTarget.Latest,
-    true
+    true,
   );
   const specifiers = [];
 
@@ -116,11 +119,13 @@ async function discoverPackage(packageDirectory, workspaceRoot) {
   const manifestPath = path.join(packageDirectory, "package.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   const dependencies = DEPENDENCY_FIELDS.flatMap((field) =>
-    Object.keys(manifest[field] ?? {})
+    Object.keys(manifest[field] ?? {}),
   );
   const sourceImports = [];
 
-  for (const filePath of await listSourceFiles(path.join(packageDirectory, "src"))) {
+  for (const filePath of await listSourceFiles(
+    path.join(packageDirectory, "src"),
+  )) {
     const sourceText = await readFile(filePath, "utf8");
 
     for (const specifier of collectModuleSpecifiers(sourceText, filePath)) {
@@ -129,16 +134,21 @@ async function discoverPackage(packageDirectory, workspaceRoot) {
         specifier,
         escapesPackage:
           specifier.startsWith(".") &&
-          !isInside(packageDirectory, path.resolve(path.dirname(filePath), specifier))
+          !isInside(
+            packageDirectory,
+            path.resolve(path.dirname(filePath), specifier),
+          ),
       });
     }
   }
 
   return {
     name: manifest.name,
-    directory: path.relative(workspaceRoot, packageDirectory).replaceAll(path.sep, "/"),
+    directory: path
+      .relative(workspaceRoot, packageDirectory)
+      .replaceAll(path.sep, "/"),
     dependencies,
-    sourceImports
+    sourceImports,
   };
 }
 
@@ -147,15 +157,15 @@ export async function discoverWorkspace(rootDirectory) {
 
   for (const parentName of ["apps", "packages"]) {
     const parentDirectory = path.join(rootDirectory, parentName);
-    const entries = await readdir(parentDirectory, { withFileTypes: true }).catch(
-      (error) => {
-        if (error.code === "ENOENT") {
-          return [];
-        }
-
-        throw error;
+    const entries = await readdir(parentDirectory, {
+      withFileTypes: true,
+    }).catch((error) => {
+      if (error.code === "ENOENT") {
+        return [];
       }
-    );
+
+      throw error;
+    });
 
     for (const entry of entries) {
       if (!entry.isDirectory()) {
@@ -163,7 +173,10 @@ export async function discoverWorkspace(rootDirectory) {
       }
 
       packages.push(
-        await discoverPackage(path.join(parentDirectory, entry.name), rootDirectory)
+        await discoverPackage(
+          path.join(parentDirectory, entry.name),
+          rootDirectory,
+        ),
       );
     }
   }
@@ -173,7 +186,7 @@ export async function discoverWorkspace(rootDirectory) {
 
 function workspaceTarget(specifier, workspaceNames) {
   return workspaceNames.find(
-    (name) => specifier === name || specifier.startsWith(`${name}/`)
+    (name) => specifier === name || specifier.startsWith(`${name}/`),
   );
 }
 
@@ -222,17 +235,19 @@ function findCycle(graph) {
 
 export function validateWorkspaceBoundaries(
   packages,
-  policy = WORKSPACE_POLICY
+  policy = WORKSPACE_POLICY,
 ) {
   const errors = [];
-  const packageNames = packages.map(({ name }) => name).sort(
-    (left, right) => right.length - left.length
-  );
+  const packageNames = packages
+    .map(({ name }) => name)
+    .sort((left, right) => right.length - left.length);
   const packageNameSet = new Set(packageNames);
   const graph = new Map(packageNames.map((name) => [name, new Set()]));
 
   if (packageNameSet.size !== packageNames.length) {
-    errors.push("duplicate-package-name: workspace package names must be unique");
+    errors.push(
+      "duplicate-package-name: workspace package names must be unique",
+    );
   }
 
   for (const currentPackage of packages) {
@@ -246,18 +261,18 @@ export function validateWorkspaceBoundaries(
     const relationships = [
       ...currentPackage.dependencies.map((specifier) => ({
         kind: "dependency",
-        specifier
+        specifier,
       })),
       ...currentPackage.sourceImports.map((sourceImport) => ({
         kind: "import",
-        ...sourceImport
-      }))
+        ...sourceImport,
+      })),
     ];
 
     for (const relationship of relationships) {
       if (relationship.escapesPackage) {
         errors.push(
-          `cross-package-relative-import: ${currentPackage.name} ${relationship.file} -> ${relationship.specifier}`
+          `cross-package-relative-import: ${currentPackage.name} ${relationship.file} -> ${relationship.specifier}`,
         );
         continue;
       }
@@ -272,7 +287,7 @@ export function validateWorkspaceBoundaries(
 
       if (!allowedTargets.has(target)) {
         errors.push(
-          `forbidden-${relationship.kind}: ${currentPackage.name} -> ${target}`
+          `forbidden-${relationship.kind}: ${currentPackage.name} -> ${target}`,
         );
       }
     }
