@@ -1,0 +1,29 @@
+{
+  "name": "dnd-ai",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=20.9.0",
+    "pnpm": ">=10.34.5 <11"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "eslint scripts tests eslint.config.mjs && turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "boundaries:check": "node scripts/check-boundaries.mjs",
+    "tasks:check": "node scripts/check-task-graph.mjs",
+    "test:contract": "node --test tests/contracts/*.test.mjs",
+    "verify": "eslint scripts tests eslint.config.mjs && turbo run lint && turbo run typecheck && turbo run build && node --test tests/contracts/*.test.mjs && node scripts/check-boundaries.mjs && node scripts/check-task-graph.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.2",
+    "@types/node": "24.13.3",
+    "eslint": "9.39.2",
+    "eslint-config-next": "16.2.10",
+    "turbo": "2.10.4",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.63.0"
+  }
+}

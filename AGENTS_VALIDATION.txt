@@ -1,0 +1,73 @@
+Task: GOV-001
+Status/progress: DONE / 100%
+Test status: PASSING
+Date: 2026-07-13
+Environment: local Windows PowerShell, Europe/Rome
+Repository: unversioned; no .git directory
+Commit/branch: N/A
+
+Scope verified
+- AGENTS.md cold-start protocol and repository-wide guardrails
+- docs/MVP_SPEC.md product/architecture baseline
+- docs/TASKS.md task state, dependencies, quality gates and evidence
+- docs/README.md documentation index
+- docs/CONTEXT.md operational snapshot
+- docs/TRACEABILITY.md initial requirement mapping
+- docs/CHANGELOG.md document/contract changes
+- docs/product/UX_UI_DESIGN.md mobile-first UX/UI study
+- docs/adr/0001-mobile-first-conversational-ui.md accepted decision
+
+Commands and results
+1. Structural audit (PowerShell): spec hash agreement, Markdown link resolution,
+   front matter fields, unique task IDs, initial cold-start fields.
+   Exit code: 0
+   Result: STRUCTURAL_AUDIT=PASS
+
+2. Final cold-start audit (PowerShell): spec hash agreement, Markdown link
+   resolution, front matter fields, unique task IDs, zero active tasks,
+   GOV-001 DONE/PASSING, BL-001 as the only READY task, source of truth,
+   milestone, open decisions, command availability and mobile-first consistency.
+   Exit code: 0
+   Result: FINAL_AUDIT=PASS
+
+3. Get-FileHash -Algorithm SHA256 docs\MVP_SPEC.md
+   Exit code: 0
+   Result: b639a75c26ca0dc17e54d9f1c8816de7514a5e2d54ea4cfa733f275e18fbcd84
+
+Execution note
+- One evidence-manifest audit invocation did not execute because a PowerShell
+  interpolated variable immediately preceded a colon. The command was corrected
+  with an explicit variable delimiter and rerun; the repository verification then
+  completed with exit code 0 and EVIDENCE_MANIFEST=PASS. This was a validation
+  script syntax error, not a repository/content failure.
+- A later abbreviated recheck also failed to parse because of an unbalanced
+  PowerShell condition. It was discarded; the previously corrected canonical
+  final audit was rerun unchanged and completed with FINAL_VERIFICATION=PASS.
+
+Cold-start answer
+- Source of truth: accepted ADRs, then docs/MVP_SPEC.md, contracts when created,
+  living documentation, code/tests, docs/TASKS.md for order and evidence.
+- Current milestone: M0 - Fondamenta.
+- Active task: none.
+- Next READY P0 task: BL-001.
+- BL-001 dependencies: no product dependency; GOV-001 operational dependency DONE.
+- Quality commands: target contract exists in docs/TASKS.md section 5, but no
+  package.json exists yet; pnpm commands are planned in BL-002/QA-001.
+- Blocking M0 open decisions: OD-07 auth approach and OD-08 data/telemetry region.
+- Current implementation: documentation only; no app, migration, schema or tests.
+
+File SHA-256 manifest
+- AGENTS.md: 08b443b99b0ff13f083e2213315aa1e31b6598b872bfad59b8b06fdcba0981c3
+- docs/MVP_SPEC.md: b639a75c26ca0dc17e54d9f1c8816de7514a5e2d54ea4cfa733f275e18fbcd84
+- docs/TASKS.md: 84bd0a57c4f0950cdd03c0ba5eda88a4ac275f891393f9397a1d9d481db04306
+- docs/README.md: c6da47556773a9cba5017ab634b1ad733e8211c18db632d2f2b664cfe79fee56
+- docs/CONTEXT.md: 5a859e2c0ae8e54ea2e7919db876d9c4be81681c7d2db47ba73f980d25466196
+- docs/TRACEABILITY.md: a1a0bb4edb63ca080d407348f2c3919831a3419afade2dd20ace0d1c960512d3
+- docs/CHANGELOG.md: 42e239e8f3d0a8a68c03f5b20122edac243411c8ac959a5ea632c97d7a3c9304
+- docs/product/UX_UI_DESIGN.md: de575c6eaa04ccc91f7a022fe4b81b778a6908785486750f16570e07588f5224
+- docs/adr/0001-mobile-first-conversational-ui.md: 42d837487db1bbc431c7a3279a39de9f6df7c236bc1238b2dbeb2fcf3fd1a3e2
+
+Migration head: N/A
+Contract/schema/event version: N/A
+Prompt/model/eval version: N/A
+Residual risks: CTX-R01..CTX-R05; automation remains tracked in GOV-002.
