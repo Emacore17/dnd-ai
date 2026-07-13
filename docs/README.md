@@ -49,7 +49,7 @@ supersedes: null
 | [`testing/BL-002_VERIFICATION.md`](testing/BL-002_VERIFICATION.md) | Evidenze locali e remote di BL-002 |
 | [`adr/0004-runtime-configuration-and-secret-injection.md`](adr/0004-runtime-configuration-and-secret-injection.md) | Decisione accepted su config server-only, profili e secret injection |
 | [`operations/CONFIGURATION.md`](operations/CONFIGURATION.md) | Matrice variabili, setup locale, redazione e ownership ambienti |
-| [`testing/BL-003_VERIFICATION.md`](testing/BL-003_VERIFICATION.md) | Evidenze locali unit/integration/contract/security di BL-003; clean-checkout e CI ancora pendenti |
+| [`testing/BL-003_VERIFICATION.md`](testing/BL-003_VERIFICATION.md) | Evidenze locali e clean-checkout di BL-003; CI ancora pendente |
 
 ## Documenti pianificati
 

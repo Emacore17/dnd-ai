@@ -65,7 +65,7 @@ Il primo build ha inoltre fallito su tipi Node non dichiarati; il package e l'AP
 | `pnpm scan:sast` | exit `0`; zero warning |
 | `pnpm audit --audit-level high` | exit `0`; nessuna vulnerabilità nota |
 | `TURBO_FORCE=true pnpm verify` isolato | exit `0` in `54,9 s`; unit 17 pass/1 skip host, integration 8/8, contract 13/13, security 9 pass/3 skip host, artifact 3.191 file |
-| clean-checkout install/verify | pending |
+| clean-checkout `0d3af18c9d38887441dd9be3deb2d98084a44071` | install frozen exit `0`; `TURBO_FORCE=true pnpm verify` exit `0` in `59,6 s`; 0 cache hit; artifact 3.212 file |
 | CI remota | pending |
 
 ## Copertura del contratto
@@ -92,5 +92,4 @@ Il web resta `N/A` perché non ha un consumer runtime reale. Il primo secret man
 
 ## Gate ancora necessari alla chiusura
 
-1. install e `pnpm verify` da checkout pulito della branch isolata;
-2. CI remota e secret/artifact evidence sul commit candidato.
+1. CI remota e secret/artifact evidence sul commit candidato.

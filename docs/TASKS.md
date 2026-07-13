@@ -373,7 +373,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Process smoke locale dei runtime/composition root con fixture valida; startup fail-fast ed exit non-zero senza variabili obbligatorie.
   - [x] Contract test del profilo `staging`: chiavi richieste, assenza di fallback `local`/`production`, errori redatti e nessun valore secret nei report. Il primo deploy/smoke reale appartiene a `BL-080`.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0002-monorepo-package-boundaries.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/operations/CONFIGURATION.md`; `docs/testing/BL-003_VERIFICATION.md`
-- **Evidenze di chiusura:** implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; `TURBO_FORCE=true pnpm verify` exit `0` in `54,9 s`; unit `17 pass/1 skip host`, integration `8/8`, contract `13/13`, security `9 pass/3 skip host`; artifact `3.191` file e audit `PASS`; clean checkout/PR/CI `pending`; migration/eval/trace ID `N/A`; docs aggiornati.
+- **Evidenze di chiusura:** implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; full verify locale exit `0` in `54,9 s`; clean-verified docs head `0d3af18c9d38887441dd9be3deb2d98084a44071`, install frozen exit `0` e `TURBO_FORCE=true pnpm verify` exit `0` in `59,6 s`; unit `17 pass/1 skip host`, integration `8/8`, contract `13/13`, security `9 pass/3 skip host`; artifact clean `3.212` file e audit `PASS`; PR/CI `pending`; migration/eval/trace ID `N/A`; docs aggiornati.
 - **Note, rischi o bloccanti:** `BL-003` non provisiona un ambiente cloud e non gestisce valori reali. `BL-080` possiede secret manager concreto, primo deploy e smoke preview/staging; `BL-070` possiede hardening, load/chaos, backup restore e go/no-go.
 
 ### BL-004 — Tool migration e schema baseline
@@ -2473,7 +2473,7 @@ updated_at: 2026-07-13
 agent: Codex development agent
 git_branch: codex/bl-003-runtime-config
 base_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
-current_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
+current_commit: 0d3af18c9d38887441dd9be3deb2d98084a44071
 spec_sha256: 7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f
 context_verified: true
 test_status: PARTIAL
@@ -2522,12 +2522,13 @@ working_tree_dirty: true
 | 2026-07-13 | 75% | Implementati package config, profili service-scoped, TLS/auth managed, startup API, boundary worker, template e scanner `.env`; allineati ADR, spec e dipendenza BL-004. | Unit config `7/7`; integration startup `5/5`; contract config `5/5`; security scanner mirato `PASS`; boundary/task graph e SAST `PASS`. | Completare review e isolare la delivery da `origin/main`. |
 | 2026-07-13 | 90% | Chiusa la review codice/documenti senza finding P0/P1, rifiutati symlink e file non regolari prima della lettura, validati gli host negli URL e rimossa la dipendenza semantica circolare BL-079/BL-080. | Verify preliminare sulla baseline di sviluppo `PASS`; cherry-pick isolato su `d530f3a` in verifica. | Completare il gate da checkout pulito e attendere CI. |
 | 2026-07-13 | 90% | Isolata la delivery; il full gate ha scoperto un private-hoist pnpm non tracciato nell'output Next. Il packager ora omette solo link immediati scoped/unscoped senza mirror dopo il containment check e mantiene gli altri failure path fail-closed. | Head `1090a2a`; `TURBO_FORCE=true pnpm verify` exit `0` in `54,9 s`; unit `17+1 skip`, integration `8`, contract `13`, security `9+3 skip`; artifact `3.191` file; review finale senza P0/P1. | Verificare da checkout pulito e attendere CI. |
+| 2026-07-13 | 90% | Verificato il commit documentale da worktree detached pulito con lockfile frozen e cache Turbo forzatamente ignorata. | Head `0d3af18`; install exit `0`; full verify exit `0` in `59,6 s`; artifact `3.212` file; audit documentale finale senza P0/P1. | Pubblicare la PR isolata e attendere CI. |
 
 ## Chiusura
 
 - **Commit/PR:** delivery branch `codex/bl-003-runtime-config` da `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; PR pending
 - **Comandi eseguiti:** build config/runtime; unit config; process integration; contract config; security env/symlink/non-regular; lint/typecheck/build; boundary/task graph/CI policy; SAST/secret scan/audit; artifact verify
-- **Exit code:** `0` per gate mirati e full verify isolato; clean checkout e CI ancora pending
+- **Exit code:** `0` per gate mirati, full verify isolato, install frozen e clean-checkout verify; CI ancora pending
 - **Report/CI URL o path:** `docs/testing/BL-003_VERIFICATION.md`; CI ancora pending; primo deploy/smoke reale demandato a `BL-080`
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** config contract `runtime-config-v1`; API/event schema `N/A`

@@ -87,6 +87,6 @@ supersedes: null
 - Dopo la pubblicazione, run positiva `29255261423` tutta verde e PR negativa #3/run `29256736728` con tests/gate rossi, artifact skipped e `mergeStateStatus=BLOCKED`; PR chiusa senza merge e branch rimossa.
 - Working tree di chiusura BL-002: `TURBO_FORCE=true pnpm verify` exit `0` in 53,9 s; front matter/link documentali, task graph, CI policy e secret scan `PASS`.
 - PR #1 unita senza bypass nel commit `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`; post-merge run `29257721274` su `main` con tutti i cinque job `SUCCESS`.
-- BL-003 isolato su `origin/main`: implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; `TURBO_FORCE=true pnpm verify` exit `0` in `54,9 s`, artifact `3.191` file verificati e audit senza vulnerabilità note; clean checkout e CI remota ancora pendenti.
+- BL-003 isolato su `origin/main`: implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; full verify locale exit `0` in `54,9 s`; commit documentale `0d3af18c9d38887441dd9be3deb2d98084a44071` verificato da checkout detached pulito con install frozen e `TURBO_FORCE=true pnpm verify` exit `0` in `59,6 s`, artifact `3.212` file; audit senza vulnerabilità note; CI remota ancora pendente.
 - Spec baseline corrente: SHA `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`; include il contratto config e l'ownership staging `BL-080`, senza evidenze d'implementazione `BL-079`.
 - Evidenze: `AGENTS_VALIDATION.txt`; `docs/testing/BL-001_VERIFICATION.md`.
