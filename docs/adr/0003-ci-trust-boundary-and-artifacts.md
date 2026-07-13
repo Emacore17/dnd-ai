@@ -2,7 +2,7 @@
 status: accepted
 owner: engineering-and-security
 last_reviewed: 2026-07-13
-last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd

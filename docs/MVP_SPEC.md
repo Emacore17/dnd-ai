@@ -2,7 +2,7 @@
 status: active
 owner: product-and-engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
 source_refs: []
 related_tasks:
   - GOV-001

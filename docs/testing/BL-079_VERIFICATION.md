@@ -2,7 +2,7 @@
 status: active
 owner: product-design-frontend-and-qa
 last_reviewed: 2026-07-13
-last_verified_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
+last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
 source_refs:
   - docs/MVP_SPEC.md#8-esperienza-utente
   - docs/MVP_SPEC.md#114-stack-selezionato
@@ -107,8 +107,9 @@ La route è una fixture deterministica della shell P0. Non implementa API, REST/
 | performance smoke `mobile-390` | exit `0`; `0` long task, CLS `0.0000245` |
 | `corepack pnpm@10.34.5 build` | exit `0`; `10/10` workspace build |
 | `corepack pnpm@10.34.5 --filter @dnd-ai/web analyze` | exit `0`; report `.next/diagnostics/analyze` |
-| `corepack pnpm@10.34.5 verify` | exit `0` in `62,3 s`; 10/10 lint/typecheck/build, unit/component/integration/contract/security, policy, secret scan, artifact verify e boot HTTP |
-| clean commit/checkout, CI e staging | `PENDING` |
+| `corepack pnpm@10.34.5 verify` | working tree exit `0` in `62,3 s`; clean implementation commit `778b634` con `TURBO_FORCE=true` exit `0` in `66,1 s` |
+| clean commit/checkout | `PASS`; 10/10 lint/typecheck/build, unit/component/integration/contract/security, policy, secret scan, artifact verify e boot HTTP |
+| CI e staging | `PENDING` |
 
 Gli skip Playwright sono intenzionali: ogni scenario viene eseguito solo sui progetti rappresentativi dichiarati nel test. Nessun caso applicabile è skipped.
 
@@ -155,8 +156,9 @@ Rive è **rimosso dalla decisione P0 della shell**: nessun package o riferimento
 | Zoom testo/browser 200% | `PENDING MANUAL` | QA; verificare reflow e CTA |
 | Firefox, Safari e Edge correnti | `PENDING` | `QA-001` consolida la matrice; smoke BL-079 richiesto prima del `DONE` |
 | Five-second comprehension con cinque utenti interni | `PENDING HUMAN` | Product Design; i sei compiti sono in `UX_UI_DESIGN.md` §13 |
-| `pnpm verify` sul contenuto finale | `PASS` | exit `0` in `62,3 s`; artifact `3.172` file e boot HTTP inclusi |
-| Commit pulito e CI | `PENDING` | Engineering; nessuna attestazione anticipata |
+| `pnpm verify` sul contenuto finale | `PASS` | clean commit `778b634`, cache forzata off, exit `0` in `66,1 s`; artifact `3.172` file e boot HTTP inclusi |
+| Commit/checkout pulito | `PASS` | implementation commit `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2` |
+| CI branch | `PENDING` | Engineering; nessuna attestazione anticipata |
 | Preview/staging e shell smoke | `PENDING DEPENDENCY` | `BL-080`, dopo la typed config di `BL-003`; `BL-070` possiede solo hardening/load/restore |
 
 ## Verdetto

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
+last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -526,7 +526,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Stato:** `IN_REVIEW`
 - **Progresso:** `90%`
 - **Esito test:** `PARTIAL`
-- **Contesto verificato:** `YES` — commit/SHA: `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; data: `2026-07-13`
+- **Contesto verificato:** `YES` — implementation commit: `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; data: `2026-07-13`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-001, BL-002, BL-080
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§8, 11.4, 21, 23.1, 26.8, 32.2; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-079`; `docs/MVP_SPEC.md` §35.1
@@ -543,7 +543,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Visual regression delle shell P0 su Windows e Linux.
   - [ ] Review “five-second comprehension” con cinque utenti interni e finding tracciati; smoke browser, staging fornito da `BL-080` e clean-commit verification.
 - **Documentazione e contesto:** `docs/product/UX_UI_DESIGN.md`, `docs/adr/0001-mobile-first-conversational-ui.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, `docs/testing/BL-079_VERIFICATION.md`; `docs/testing/TEST_STRATEGY.md` quando creato da `QA-001`
-- **Evidenze di chiusura:** commit/PR `PENDING`; `pnpm verify` exit `0` in `62,3 s`; lint/typecheck/build `10/10`; contract UI `8/8`; component `26/26`; Playwright `37` pass applicabili/`123` skip condizionali; visual Windows/Linux `7/7`; performance `0` long task e CLS `0.0000245`; bundle `/` `365.057` byte gzip; artifact `3.172` file con checksum/secret/boot HTTP `PASS`; report `docs/testing/BL-079_VERIFICATION.md`.
+- **Evidenze di chiusura:** implementation commit `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; PR `PENDING`; clean-commit `TURBO_FORCE=true pnpm verify` exit `0` in `66,1 s`; lint/typecheck/build `10/10`; contract UI `8/8`; component `26/26`; Playwright `37` pass applicabili/`123` skip condizionali; visual Windows/Linux `7/7`; performance `0` long task e CLS `0.0000245`; bundle `/` `365.057` byte gzip; artifact `3.172` file con checksum/secret/boot HTTP `PASS`; report `docs/testing/BL-079_VERIFICATION.md`.
 - **Note, rischi o bloccanti:** Rive è stato escluso dalla shell P0; `useChat` e trasporti paralleli restano vietati. Gli automatismi specifici sono verdi. `DONE` è trattenuto dai gate manuali/ambientali, dalla dipendenza `BL-080` emersa nell'audit finale e dalla verifica su commit pulito; `QA-001` consolida il harness senza diventare dipendenza circolare.
 
 ### BL-080 — Fondazione preview/staging M0
@@ -2473,11 +2473,11 @@ updated_at: 2026-07-13
 agent: Codex development agent
 git_branch: codex/bl-079-mobile-shell
 base_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
-current_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
-spec_sha256: 960ac78b25e5c343d53a05bf8e986acfa0e72f9d4884c06127256885260e1599
+current_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
+spec_sha256: aa892faafb3e54b76a0a37a31d3a919c9e9f05681a64501239de9c0351322805
 context_verified: true
 test_status: PARTIAL
-working_tree_dirty: true
+working_tree_dirty: false
 ```
 
 ## Contesto letto
@@ -2522,18 +2522,19 @@ working_tree_dirty: true
 | 2026-07-13 | 90% | Implementata e auditata la fondazione mobile-first; chiusi overflow landscape, safe area L/R, feed anchor, contratti choice/retry/rule/party, live regions, reduced-motion e visual regression. Rive escluso dal P0. | Contract `8/8`; component `26/26`; Playwright `37` pass applicabili; visual Windows/Linux `7/7`; build `10/10`; performance `0` long task, CLS `0.0000245`; bundle `/` `365.057` byte gzip. | Eseguire verify finale, congelare commit pulito e completare screen reader/device/browser/five-second; lo staging dipende da `BL-080`. |
 | 2026-07-13 | 90% | L'audit delle dipendenze ha rilevato che il primo staging era assegnato soltanto a `BL-070`, troppo tardi per la DoD M0; aggiunto `BL-080` e reso `BL-003` il prossimo task READY. | Parità spec/task e grafo da rieseguire; BL-079 resta `IN_REVIEW` e non anticipa lo smoke staging. | Chiudere il gate locale, committare e avviare BL-003; quindi BL-080 rende eseguibile lo smoke. |
 | 2026-07-13 | 90% | Il verify ha scoperto due gap preesistenti del packaging: file Git eliminati nello scanner e standalone Next materializzato ma non avviabile. Correzioni fail-closed con regressioni; aggiunto boot smoke CI. | `pnpm verify` exit `0` in `62,3 s`; unit 10 pass/1 skip host, component 26, integration 4, contract 16, security 8, build 10/10; artifact 3.172 file e HTTP shell `PASS`. | Congelare commit pulito e attendere CI; gate manuali e BL-080 restano aperti. |
+| 2026-07-13 | 90% | Congelato il change set e ripetuto il gate sul commit pulito con cache Turbo forzatamente ignorata. | Commit `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; `TURBO_FORCE=true pnpm verify` exit `0` in `66,1 s`; 0 cache hit, artifact boot HTTP `PASS`. | Sincronizzare i metadati, pubblicare branch/PR e attendere CI; gate manuali e BL-080 restano aperti. |
 
 ## Chiusura / hand-off corrente
 
-- **Commit/PR:** BL-079 `PENDING`; working tree su base `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`
+- **Commit/PR:** implementation `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; documentation sync corrente; PR `PENDING`
 - **Comandi eseguiti:** lint/typecheck web; contract BL-079; component; Playwright completo e visual Windows/Linux; performance smoke; build; analyze
-- **Exit code:** `0` per tutti i gate automatici; `pnpm verify` finale `PASS` in `62,3 s`, incluso boot HTTP dell'artifact
+- **Exit code:** `0` per tutti i gate automatici; clean-commit `TURBO_FORCE=true pnpm verify` `PASS` in `66,1 s`, incluso boot HTTP dell'artifact
 - **Report/CI URL o path:** `docs/testing/BL-079_VERIFICATION.md`; baseline in `apps/web/e2e/__screenshots__/`
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** `N/A`
 - **Prompt/model/eval version:** `N/A`
 - **Documenti aggiornati:** `docs/product/UX_UI_DESIGN.md`; ADR-0001; `docs/CONTEXT.md`; `docs/TASKS.md`; `docs/TRACEABILITY.md`; `docs/CHANGELOG.md`; `docs/README.md`; report BL-079
-- **Rischi residui/TODO tracciati:** screen reader, telefono/zoom, browser non Chromium, five-second review, commit pulito/CI; provisioning e smoke staging tramite `BL-080`
+- **Rischi residui/TODO tracciati:** screen reader, telefono/zoom, browser non Chromium, five-second review e CI; provisioning e smoke staging tramite `BL-080`
 - **Task successivo reso READY:** `BL-003`; il programma può avanzare mentre BL-079 attende i gate manuali e ambientali
 
 

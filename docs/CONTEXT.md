@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
+last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -49,9 +49,9 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-13 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `main` sincronizzato a `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; branch attivo `codex/bl-079-mobile-shell` |
+| Delivery/commit | `main` a `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; branch `codex/bl-079-mobile-shell`, implementation verificata `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
-| SHA-256 specifica | `960ac78b25e5c343d53a05bf8e986acfa0e72f9d4884c06127256885260e1599` |
+| SHA-256 specifica | `aa892faafb3e54b76a0a37a31d3a919c9e9f05681a64501239de9c0351322805` |
 | Milestone | `M0 — Fondamenta` |
 | Task attivo | `BL-079 — IN_REVIEW/90%/PARTIAL` |
 | Ultimo task completato | `BL-002 — DONE/PASSING` |
@@ -60,7 +60,7 @@ supersedes: null
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. `BL-002` ha aggiunto e verificato localmente e su GitHub pipeline, artifact, failure path e Ruleset. `BL-079` ha implementato nel working tree la fondazione web: design system shadcn/Radix, shell conversazionale mobile-first, fixture dei dieci stati, motion riducibile e harness component/browser. Contract, component, Playwright, axe, visual multipiattaforma, build e performance smoke sono verdi; il task è in review perché i gate umani, device/browser reali, commit pulito, CI e lo staging posseduto dal nuovo `BL-080` non sono ancora attestati. `BL-003` è il prossimo task eseguibile e sblocca la configurazione necessaria a `BL-080`.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. `BL-002` ha aggiunto e verificato localmente e su GitHub pipeline, artifact, failure path e Ruleset. `BL-079` ha implementato la fondazione web: design system shadcn/Radix, shell conversazionale mobile-first, fixture dei dieci stati, motion riducibile e harness component/browser. Contract, component, Playwright, axe, visual multipiattaforma, build, performance e clean-commit verify sono verdi sul commit `778b634`; il task è in review perché i gate umani, device/browser reali, CI e lo staging posseduto dal nuovo `BL-080` non sono ancora attestati. `BL-003` è il prossimo task eseguibile e sblocca la configurazione necessaria a `BL-080`.
 
 ## Decisioni operative vigenti
 
@@ -153,7 +153,7 @@ Il dettaglio cromatico può evolvere tramite token. Rive non è adottato nella s
 
 ## Prossima azione
 
-Chiudere il gate tecnico e congelare un commit pulito di BL-079; mantenere aperti screen reader, telefono/zoom, browser e five-second review. Avviare quindi `BL-003`, che sblocca `BL-080` per provisioning e smoke preview/staging senza attribuire quel lavoro al tardo hardening `BL-070`.
+Pubblicare il branch e attendere la CI di BL-079; mantenere aperti screen reader, telefono/zoom, browser e five-second review. Avviare quindi `BL-003`, che sblocca `BL-080` per provisioning e smoke preview/staging senza attribuire quel lavoro al tardo hardening `BL-070`.
 
 ## Rischi chiusi
 

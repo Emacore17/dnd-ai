@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
+last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -86,9 +86,10 @@ supersedes: null
 - Dopo la pubblicazione, run positiva `29255261423` tutta verde e PR negativa #3/run `29256736728` con tests/gate rossi, artifact skipped e `mergeStateStatus=BLOCKED`; PR chiusa senza merge e branch rimossa.
 - Working tree di chiusura BL-002: `TURBO_FORCE=true pnpm verify` exit `0` in 53,9 s; front matter/link documentali, task graph, CI policy e secret scan `PASS`.
 - PR #1 unita senza bypass nel commit `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`; post-merge run `29257721274` su `main` con tutti i cinque job `SUCCESS`.
-- Spec baseline corrente: SHA `960ac78b25e5c343d53a05bf8e986acfa0e72f9d4884c06127256885260e1599`, inclusa l'ownership preview/staging `BL-080`; il run BL-002 usava `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90` prima degli aggiornamenti successivi.
+- Spec baseline corrente: SHA `aa892faafb3e54b76a0a37a31d3a919c9e9f05681a64501239de9c0351322805`, inclusa l'ownership preview/staging `BL-080` e la freshness BL-079; il run BL-002 usava `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90` prima degli aggiornamenti successivi.
 - Evidenze: `AGENTS_VALIDATION.txt`; `docs/testing/BL-001_VERIFICATION.md`.
 - BL-079 working tree: lint/typecheck exit `0`; contract UI `8/8`; Vitest `7` file e `26/26`; Playwright `37` casi applicabili passati e `123` skip condizionali; visual Windows e Linux `7/7` ciascuno; build `10/10` workspace.
 - Performance BL-079: `0` long task nelle interazioni osservate, CLS `0.0000245`; route `/` a `1.229.757` byte JS first-load non compressi, `365.057` gzip e `311.655` Brotli; Rive assente.
 - BL-079 passa a `IN_REVIEW/90%/PARTIAL`: automatismi verdi; screen reader/device/browser reali, zoom 200%, review con cinque utenti, clean commit/CI e staging restano aperti nel report dedicato.
 - Verify finale del working tree BL-079: exit `0` in `62,3 s`; unit `10` pass/`1` skip host, component `26`, integration `4`, contract `16`, security `8`, build `10/10`; artifact `3.172` file con checksum, secret scan e boot HTTP `PASS`.
+- Implementation commit BL-079 `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2` verificato da working tree pulito con `TURBO_FORCE=true pnpm verify`: exit `0` in `66,1 s`, 0 cache hit e boot artifact `PASS`.
