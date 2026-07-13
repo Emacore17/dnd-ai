@@ -207,7 +207,11 @@ async function collectFiles(
 
       // Linux Next standalone links can already resolve into the traced mirror.
       // Only links escaping the collection need to be remapped from the pnpm store.
-      if (!isInside(resolvedCollectionRoot, targetPath)) {
+      if (isInside(resolvedCollectionRoot, targetPath)) {
+        if (!symlinkMirrorRoot) {
+          throw new Error(`symlink is not allowed: ${entryPath}`);
+        }
+      } else {
         if (
           !allowedSymlinkTargetRoot ||
           !isInside(allowedSymlinkTargetRoot, targetPath)

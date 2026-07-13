@@ -113,7 +113,7 @@ test("forbidden and unexpected hidden output names are rejected", async () => {
   await unlink(path.join(sourceDirectory, ".cache"));
 });
 
-test("symlinks outside the allowlisted Next package mirror are rejected", async (context) => {
+test("symlinks in non-Next build outputs are rejected", async (context) => {
   const fixture = await createFixture();
   const sourceDirectory = path.join(fixture.repositoryRoot, "build", "api");
   const linkPath = path.join(sourceDirectory, "linked.js");

@@ -78,6 +78,8 @@ Il repository GitHub è privato e Code Scanning non è abilitato: la relativa AP
 
 La prima run della PR #1, [`29253365500`](https://github.com/Emacore17/dnd-ai/actions/runs/29253365500), ha verificato il failure path: `Quality`, `Security` e `Tests` sono passati; `Build artifact` ha fallito su un symlink Linux di Next già risolto dentro `.next/standalone`; `CI / Merge gate` ha propagato il fallimento. La policy è stata corretta per accettare questo solo target interno confinato, continuando a rimappare gli eventuali link allo store esterno esclusivamente verso il mirror traced e a rifiutare ogni altro escape. Il nuovo caso è coperto dal test unitario del mirror Next.
 
+La seconda run, [`29254060444`](https://github.com/Emacore17/dnd-ai/actions/runs/29254060444), ha reso eseguibile su Linux il test symlink prima saltato su Windows: ha mostrato che l'eccezione interna era troppo ampia per gli output non-Next. La correzione limita esplicitamente i link interni al solo source root Next dotato di mirror; `Tests` e `CI / Merge gate` sono falliti e `Build artifact` è stato saltato, confermando il fan-in fail-closed. Il working tree corretto ha quindi superato `TURBO_FORCE=true pnpm verify` in 60,9 s.
+
 ## Evidenze finali ancora richieste
 
 - PR verde e URL della run GitHub;
