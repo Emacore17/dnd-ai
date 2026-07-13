@@ -2,7 +2,7 @@
 status: accepted
 owner: engineering-and-security
 last_reviewed: 2026-07-13
-last_verified_commit: pending
+last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
@@ -17,8 +17,10 @@ code_refs:
   - apps/api/src/runtime.ts
   - apps/api/src/start.ts
   - apps/worker/src/runtime.ts
+  - scripts/lib/build-artifact.mjs
   - scripts/lib/secret-scanner.mjs
 test_refs:
+  - tests/unit/build-artifact.test.mjs
   - tests/unit/runtime-config.test.mjs
   - tests/integration/runtime-startup.test.mjs
   - tests/contracts/runtime-config-contract.test.mjs
@@ -51,7 +53,7 @@ Preview/staging deve inoltre restare separato da production. La scelta del provi
 4. I parser rimuovono chiavi ambientali estranee, restituiscono oggetti frozen e accettano solo host, porte e URL strutturalmente validi. `staging`/`production` richiedono password service-scoped, PostgreSQL con `sslmode=require|verify-ca|verify-full` e Redis `rediss:`; alternative IAM/mTLS richiedono un'estensione tipizzata del contratto.
 5. `RuntimeConfigurationError` espone soltanto servizio e nomi delle chiavi invalide. Non conserva `ZodError`, input, cause o valori che potrebbero contenere password.
 6. L'API valida prima della factory Fastify e del bind. Il worker valida prima dell'inizializzatore iniettato; non viene creato un daemon fittizio. Il profilo migration è verificabile dalla CLI e sarà consumato dall'entry point posseduto da `BL-004`.
-7. In locale si usano `.env.local` ignorati e template distinti con sentinel non sensibili. Staging e production ricevono le stesse chiavi dal secret manager della piattaforma, per singolo servizio. Nessun SDK del provider entra nel package.
+7. In locale si usano `.env.local` ignorati e template distinti con sentinel non sensibili. Staging e production usano gli stessi nomi e lo stesso schema di variabili, ma valori, risorse e credenziali distinti iniettati dal secret manager per singolo servizio. Nessun SDK del provider entra nel package.
 8. Ogni `.env` o `.env.*` tracciato, salvo `.env.example`, fallisce il secret scan per pathname anche quando il contenuto non coincide con un pattern credenziale noto. Lo scanner classifica path ambientali e credenziali prima di leggere, non dereferenzia symlink e rifiuta file non regolari.
 9. Nuove variabili vengono aggiunte soltanto insieme a un consumer reale, classificazione public/secret, test, template e aggiornamento di `docs/operations/CONFIGURATION.md`.
 

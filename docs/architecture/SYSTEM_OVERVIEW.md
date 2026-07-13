@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
@@ -24,6 +24,7 @@ code_refs:
   - .github/workflows/ci.yml
   - scripts/lib/ci-workflow-policy.mjs
 test_refs:
+  - tests/unit/build-artifact.test.mjs
   - tests/contracts/workspace-boundaries.test.mjs
   - tests/contracts/ci-workflow.test.mjs
   - tests/contracts/runtime-config-contract.test.mjs

@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-13
-last_verified_commit: pending
+last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
@@ -18,8 +18,10 @@ code_refs:
   - apps/api/src/runtime.ts
   - apps/api/src/start.ts
   - apps/worker/src/runtime.ts
+  - scripts/lib/build-artifact.mjs
   - scripts/lib/secret-scanner.mjs
 test_refs:
+  - tests/unit/build-artifact.test.mjs
   - tests/unit/runtime-config.test.mjs
   - tests/integration/runtime-startup.test.mjs
   - tests/contracts/runtime-config-contract.test.mjs
@@ -38,8 +40,8 @@ supersedes: null
 | Ambiente locale | Windows; Node `24.11.0`; pnpm `10.34.5` |
 | Branch di lavoro | `codex/bl-003-runtime-config` |
 | Baseline | `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8` (`origin/main`) |
-| Commit verificato | `pending` |
-| Spec SHA-256 | `pending` dopo il commit isolato |
+| Commit verificato | `1090a2a2498f69102c78e1e8d90722c239629d68` |
+| Spec SHA-256 | `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f` |
 | Config contract | `runtime-config-v1` |
 | Migration/schema/event/prompt/eval | `N/A` — non modificati |
 
@@ -57,12 +59,12 @@ Il primo build ha inoltre fallito su tipi Node non dichiarati; il package e l'AP
 | `node --test tests/unit/runtime-config.test.mjs` | exit `0`; 7/7 |
 | `node --test tests/integration/runtime-startup.test.mjs` | exit `0`; 5/5 |
 | `node --test tests/contracts/runtime-config-contract.test.mjs` | exit `0`; 5/5 |
-| `node --test tests/security/environment-file-policy.test.mjs tests/security/secret-scanner.test.mjs` | exit `0`; 9 pass, 3 skip motivati su Windows (symlink/FIFO); copertura POSIX attesa in CI |
+| `node --test tests/security/environment-file-policy.test.mjs tests/security/secret-scanner.test.mjs` | exit `0`; 8 pass, 3 skip motivati su Windows (symlink/FIFO); copertura POSIX attesa in CI |
 | `pnpm boundaries:check` | exit `0`; 11 package policy |
 | `pnpm tasks:check` | exit `0` |
 | `pnpm scan:sast` | exit `0`; zero warning |
 | `pnpm audit --audit-level high` | exit `0`; nessuna vulnerabilità nota |
-| `TURBO_FORCE=true pnpm verify` isolato | pending |
+| `TURBO_FORCE=true pnpm verify` isolato | exit `0` in `54,9 s`; unit 17 pass/1 skip host, integration 8/8, contract 13/13, security 9 pass/3 skip host, artifact 3.191 file |
 | clean-checkout install/verify | pending |
 | CI remota | pending |
 
@@ -90,7 +92,5 @@ Il web resta `N/A` perché non ha un consumer runtime reale. Il primo secret man
 
 ## Gate ancora necessari alla chiusura
 
-1. commit di implementazione e aggiornamento dei front matter al commit candidato;
-2. isolamento della delivery rispetto ai commit BL-079 ancora in review;
-3. install e `pnpm verify` da checkout pulito della branch isolata;
-4. CI remota e secret/artifact evidence sul commit candidato.
+1. install e `pnpm verify` da checkout pulito della branch isolata;
+2. CI remota e secret/artifact evidence sul commit candidato.

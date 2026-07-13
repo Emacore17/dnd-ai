@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-13
-last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
+last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -19,6 +19,7 @@ code_refs:
   - scripts/assert-ci-results.mjs
   - scripts/create-build-artifact.mjs
 test_refs:
+  - tests/unit/build-artifact.test.mjs
   - tests/contracts/ci-workflow.test.mjs
   - tests/integration/ci-gate.test.mjs
   - tests/security/sast-config.test.mjs

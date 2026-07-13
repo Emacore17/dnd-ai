@@ -2,16 +2,18 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-13
-last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
+last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
+  - docs/product/UX_UI_DESIGN.md
 related_tasks:
   - GOV-001
   - GOV-002
   - BL-001
   - BL-002
   - BL-003
+  - BL-040
   - BL-079
   - BL-080
 code_refs:
@@ -33,6 +35,7 @@ test_refs:
   - tests/contracts/ci-workflow.test.mjs
   - tests/integration/ci-gate.test.mjs
   - docs/testing/BL-002_VERIFICATION.md
+  - tests/unit/build-artifact.test.mjs
   - tests/unit/runtime-config.test.mjs
   - tests/integration/runtime-startup.test.mjs
   - tests/contracts/runtime-config-contract.test.mjs
@@ -62,7 +65,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Cache e artifact non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | setup action pnpm-only, `scripts/lib/secret-scanner.mjs`, `scripts/lib/build-artifact.mjs` | remote manifest `build-artifact-v1`, 3.205 file e checksum/secret verification; report BL-002 | PASS |
 | Log CI non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | workflow senza secret applicativi; output scanner redatto | scan redatto dei 5 job della run `29254494868` | PASS |
 | Gate fallito rende la PR non mergeabile | spec §31 `BL-002`; card BL-002 | BL-002 | Ruleset `main-required-ci` `18877721` | PR negativa #3/run `29256736728`: gate FAIL e `mergeStateStatus=BLOCKED`; regole `main` verificate via API | PASS |
-| Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; report BL-003 | implemented; full gate pending |
+| Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; full verify locale; report BL-003 | implemented; local full gate PASS; clean/CI pending |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
 | Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner path-based, artifact allowlist | contract config; force-tracked `.env.local` negativo; secret scan | PASS locale; manager reale planned BL-080 |
 | Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | config contract implementato; provider/IaC/deploy workflow (`planned`) | profilo staging locale PASS; deploy/smoke/rollback (`planned`) | BL-003 in chiusura; BL-080 planned |

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: pending
+last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -50,9 +50,9 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-13 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | baseline `origin/main` a `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; branch isolato `codex/bl-003-runtime-config`; candidate commit `pending` |
+| Delivery/commit | baseline `origin/main` a `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; branch isolato `codex/bl-003-runtime-config`; implementation head `1090a2a2498f69102c78e1e8d90722c239629d68` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
-| SHA-256 specifica | `pending` dopo la risoluzione documentale isolata |
+| SHA-256 specifica | `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f` |
 | Milestone | `M0 — Fondamenta` |
 | Task attivo | `BL-003 — IN_REVIEW/90%/PARTIAL` |
 | Ultimo task completato | `BL-002 — DONE/PASSING` |
@@ -61,7 +61,7 @@ supersedes: null
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. Il web resta uno scaffold: la foundation UX/UI `BL-079` è pianificata e non fa parte di questo change set. `BL-003` implementa `runtime-config-v1`, startup API fail-fast, boundary worker, profilo migration, template service-scoped e scanner fail-closed; isolamento, clean checkout e CI sono ancora da chiudere. Non esistono valori reali, risorse cloud o staging: `BL-080` possiede secret manager concreto, packaging, primo deploy e smoke remoto.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. Il web resta uno scaffold: la foundation UX/UI `BL-079` è pianificata e non fa parte di questo change set. `BL-003` implementa `runtime-config-v1`, startup API fail-fast, boundary worker, profilo migration, template service-scoped e scanner fail-closed; isolamento e full verify locale sono chiusi, clean checkout e CI restano pendenti. Non esistono valori reali, risorse cloud o staging: `BL-080` possiede secret manager concreto, packaging, primo deploy e smoke remoto.
 
 ## Decisioni operative vigenti
 
@@ -94,7 +94,7 @@ Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
 | CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; post-merge run `29257721274` PASS |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
-| Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file, secret/checksum verification PASS; delta BL-003 da riverificare |
+| Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file; artifact locale BL-003 `3.191` file, secret/checksum verification PASS |
 
 ## Comandi disponibili
 
@@ -153,7 +153,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Completare la risoluzione isolata, il full verify e il clean-checkout del change set `BL-003`, quindi attendere la CI remota. Il primo provisioning e smoke preview/staging resta in `BL-080`.
+Verificare l'implementation head `1090a2a` da checkout detached pulito, quindi pubblicare la branch e attendere la CI remota. Il primo provisioning e smoke preview/staging resta in `BL-080`.
 
 ## Rischi chiusi
 

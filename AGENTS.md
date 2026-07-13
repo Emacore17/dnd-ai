@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 7c6c7071d027c55aeffbc7279b8ca3765ea26c37
+last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -12,6 +12,7 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-079
+  - BL-080
 code_refs:
   - .github/workflows/ci.yml
   - packages/config

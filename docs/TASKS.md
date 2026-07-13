@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
+last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -30,6 +30,7 @@ test_refs:
   - tests/contracts/task-graph.test.mjs
   - tests/contracts/ci-workflow.test.mjs
   - tests/integration/ci-gate.test.mjs
+  - tests/unit/build-artifact.test.mjs
   - tests/security/secret-scanner.test.mjs
   - tests/unit/runtime-config.test.mjs
   - tests/integration/runtime-startup.test.mjs
@@ -44,7 +45,7 @@ supersedes: null
 > **Punto di ingresso agente:** [`AGENTS.md`](../AGENTS.md)
 > **Specifica canonica:** [`docs/MVP_SPEC.md`](MVP_SPEC.md)
 > **Studio UX/UI:** [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md)
-> **Baseline specifica:** SHA-256 `pending` fino al commit isolato di implementazione `BL-003`
+> **Baseline specifica:** SHA-256 `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`
 > **Data baseline:** `2026-07-13`
 > **Versione schema task:** `1.0.0`
 > **Stato del programma:** `IN_PROGRESS`
@@ -275,7 +276,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | da ricalcolare alla chiusura `BL-003` | 17 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta | `IN_PROGRESS` | 23% | 17 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -358,7 +359,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Stato:** `IN_REVIEW`
 - **Progresso:** `90%`
 - **Esito test:** `PARTIAL`
-- **Contesto verificato:** `YES` — delivery baseline commit: `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; spec SHA-256: `pending` fino al commit isolato; data: `2026-07-13`
+- **Contesto verificato:** `YES` — delivery baseline commit: `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; implementation head: `1090a2a2498f69102c78e1e8d90722c239629d68`; spec SHA-256: `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`; data: `2026-07-13`
 - **Priorità / stima:** `P0` / `S`
 - **Dipendenze:** BL-001
 - **Dipendenze operative aggiuntive:** BL-001
@@ -372,7 +373,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Process smoke locale dei runtime/composition root con fixture valida; startup fail-fast ed exit non-zero senza variabili obbligatorie.
   - [x] Contract test del profilo `staging`: chiavi richieste, assenza di fallback `local`/`production`, errori redatti e nessun valore secret nei report. Il primo deploy/smoke reale appartiene a `BL-080`.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0002-monorepo-package-boundaries.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/operations/CONFIGURATION.md`; `docs/testing/BL-003_VERIFICATION.md`
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
+- **Evidenze di chiusura:** implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; `TURBO_FORCE=true pnpm verify` exit `0` in `54,9 s`; unit `17 pass/1 skip host`, integration `8/8`, contract `13/13`, security `9 pass/3 skip host`; artifact `3.191` file e audit `PASS`; clean checkout/PR/CI `pending`; migration/eval/trace ID `N/A`; docs aggiornati.
 - **Note, rischi o bloccanti:** `BL-003` non provisiona un ambiente cloud e non gestisce valori reali. `BL-080` possiede secret manager concreto, primo deploy e smoke preview/staging; `BL-070` possiede hardening, load/chaos, backup restore e go/no-go.
 
 ### BL-004 — Tool migration e schema baseline
@@ -2472,8 +2473,8 @@ updated_at: 2026-07-13
 agent: Codex development agent
 git_branch: codex/bl-003-runtime-config
 base_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
-current_commit: pending
-spec_sha256: pending
+current_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
+spec_sha256: 7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f
 context_verified: true
 test_status: PARTIAL
 working_tree_dirty: true
@@ -2520,12 +2521,13 @@ working_tree_dirty: true
 | 2026-07-13 | 25% | Selezionato `BL-003`, definito un config contract service-scoped senza valori reali e stabilito che la delivery finale parta direttamente da `origin/main` per non includere `BL-079`. | Baseline di delivery `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; test del change `NOT_RUN`. | Scrivere unit/contract/process smoke e implementare package/configuration boundary. |
 | 2026-07-13 | 75% | Implementati package config, profili service-scoped, TLS/auth managed, startup API, boundary worker, template e scanner `.env`; allineati ADR, spec e dipendenza BL-004. | Unit config `7/7`; integration startup `5/5`; contract config `5/5`; security scanner mirato `PASS`; boundary/task graph e SAST `PASS`. | Completare review e isolare la delivery da `origin/main`. |
 | 2026-07-13 | 90% | Chiusa la review codice/documenti senza finding P0/P1, rifiutati symlink e file non regolari prima della lettura, validati gli host negli URL e rimossa la dipendenza semantica circolare BL-079/BL-080. | Verify preliminare sulla baseline di sviluppo `PASS`; cherry-pick isolato su `d530f3a` in verifica. | Completare il gate da checkout pulito e attendere CI. |
+| 2026-07-13 | 90% | Isolata la delivery; il full gate ha scoperto un private-hoist pnpm non tracciato nell'output Next. Il packager ora omette solo link immediati scoped/unscoped senza mirror dopo il containment check e mantiene gli altri failure path fail-closed. | Head `1090a2a`; `TURBO_FORCE=true pnpm verify` exit `0` in `54,9 s`; unit `17+1 skip`, integration `8`, contract `13`, security `9+3 skip`; artifact `3.191` file; review finale senza P0/P1. | Verificare da checkout pulito e attendere CI. |
 
 ## Chiusura
 
-- **Commit/PR:** delivery branch `codex/bl-003-runtime-config` da `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; commit candidato pending
+- **Commit/PR:** delivery branch `codex/bl-003-runtime-config` da `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; implementation head `1090a2a2498f69102c78e1e8d90722c239629d68`; PR pending
 - **Comandi eseguiti:** build config/runtime; unit config; process integration; contract config; security env/symlink/non-regular; lint/typecheck/build; boundary/task graph/CI policy; SAST/secret scan/audit; artifact verify
-- **Exit code:** `0` per i gate specifici sulla baseline di sviluppo; clean checkout isolato e CI ancora pending
+- **Exit code:** `0` per gate mirati e full verify isolato; clean checkout e CI ancora pending
 - **Report/CI URL o path:** `docs/testing/BL-003_VERIFICATION.md`; CI ancora pending; primo deploy/smoke reale demandato a `BL-080`
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** config contract `runtime-config-v1`; API/event schema `N/A`
@@ -2553,7 +2555,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `7c6c707` | BL-002 remote evidence | GitHub PR/check/artifact | Run positiva e negativa, log scan e artifact remoto verificati; task bloccato unicamente dal piano GitHub che non espone Ruleset/branch protection sul repository privato. | BL-002, BL-079 |
 | 2026-07-13 | `f1be878` | BL-002 closure | GitHub Ruleset e negative merge gate | Repository pubblico verificato; attivata Ruleset `18877721` active/strict/no bypass e confermato `mergeStateStatus=BLOCKED` sulla PR negativa #3/run `29256736728`. BL-002 chiuso e BL-079 reso READY. | BL-079, GOV-002, BL-070 |
 | 2026-07-13 | `ae88583` | BL-002 post-merge | `main` e CI | PR #1 unita senza bypass; post-merge run `29257721274` con quality, tests, security, build artifact e merge gate tutti `SUCCESS`. | BL-079, GOV-002 |
-| 2026-07-13 | working tree su `d530f3a` | BL-003 | Config/runtime, secret boundary e documentazione | Aggiunti `runtime-config-v1`, startup fail-fast, template/scanner `.env`, TLS/auth managed e ADR-0004; `BL-004` ora dipende dal profilo migration e `BL-080` non dipende semanticamente dalla shell BL-079. Spec SHA da registrare sul commit isolato. | BL-004, BL-005, BL-008, BL-010, BL-079, BL-080, GATE-M0 |
+| 2026-07-13 | `1090a2a` | BL-003 | Config/runtime, secret boundary e documentazione | Aggiunti `runtime-config-v1`, startup fail-fast, template/scanner `.env`, TLS/auth managed e ADR-0004; corretto il private-hoist artifact fail-closed; `BL-004` ora dipende dal profilo migration e `BL-080` non dipende semanticamente dalla shell BL-079. Spec SHA `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`. | BL-004, BL-005, BL-008, BL-010, BL-079, BL-080, GATE-M0 |
 | — | — | — | — | — | — |
 
 

@@ -2,12 +2,13 @@
 status: active
 owner: product-and-engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: 1090a2a2498f69102c78e1e8d90722c239629d68
 source_refs: []
 related_tasks:
   - GOV-001
   - BL-003
   - BL-079
+  - BL-080
 code_refs: []
 test_refs:
   - AGENTS_VALIDATION.txt
