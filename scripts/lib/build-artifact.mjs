@@ -21,6 +21,7 @@ export const DEFAULT_BUILD_ROOTS = Object.freeze([
   },
   { source: "apps/api/dist", target: "api/dist" },
   { source: "apps/worker/dist", target: "worker/dist" },
+  { source: "packages/config/dist", target: "packages/config/dist" },
   { source: "packages/contracts/dist", target: "packages/contracts/dist" },
   { source: "packages/domain/dist", target: "packages/domain/dist" },
   { source: "packages/rules/dist", target: "packages/rules/dist" },

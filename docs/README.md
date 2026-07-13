@@ -10,9 +10,12 @@ related_tasks:
   - GOV-001
   - BL-001
   - BL-002
+  - BL-003
+  - BL-080
 code_refs: []
 test_refs:
   - AGENTS_VALIDATION.txt
+  - docs/testing/BL-003_VERIFICATION.md
 supersedes: null
 ---
 
@@ -43,6 +46,9 @@ supersedes: null
 | [`adr/0003-ci-trust-boundary-and-artifacts.md`](adr/0003-ci-trust-boundary-and-artifacts.md) | Decisione accepted su trust boundary, cache, gate e artifact CI |
 | [`operations/CI_CD.md`](operations/CI_CD.md) | Contratto operativo della pipeline e configurazione Ruleset |
 | [`testing/BL-002_VERIFICATION.md`](testing/BL-002_VERIFICATION.md) | Evidenze locali e remote di BL-002 |
+| [`adr/0004-runtime-configuration-and-secret-injection.md`](adr/0004-runtime-configuration-and-secret-injection.md) | Decisione accepted su config server-only, profili e secret injection |
+| [`operations/CONFIGURATION.md`](operations/CONFIGURATION.md) | Matrice variabili, setup locale, redazione e ownership ambienti |
+| [`testing/BL-003_VERIFICATION.md`](testing/BL-003_VERIFICATION.md) | Evidenze unit/integration/contract/security e clean-checkout di BL-003 |
 
 ## Documenti pianificati
 

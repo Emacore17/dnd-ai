@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { lstat, readFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -53,7 +53,21 @@ function lineNumberAt(text, index) {
   return line;
 }
 
+function isPrivateEnvironmentFile(filePath) {
+  const normalizedPath = filePath.replaceAll("\\", "/").toLowerCase();
+  const fileName = path.posix.basename(normalizedPath);
+
+  return (
+    fileName === ".env" ||
+    (fileName.startsWith(".env.") && fileName !== ".env.example")
+  );
+}
+
 export function scanSecretText(text, filePath) {
+  if (isPrivateEnvironmentFile(filePath)) {
+    return [{ filePath, line: 1, ruleId: "environment-file" }];
+  }
+
   const findings = [];
 
   for (const rule of SECRET_RULES) {
@@ -76,6 +90,10 @@ export function scanSecretText(text, filePath) {
 }
 
 export function scanSecretBuffer(buffer, filePath) {
+  if (isPrivateEnvironmentFile(filePath)) {
+    return [{ filePath, line: 1, ruleId: "environment-file" }];
+  }
+
   if (CREDENTIAL_FILE_PATTERN.test(filePath)) {
     return [{ filePath, line: 1, ruleId: "credential-file" }];
   }
@@ -121,16 +139,64 @@ export async function scanRepositoryFiles(repositoryRoot) {
   const findings = [];
 
   for (const relativePath of await listRepositoryFiles(repositoryRoot)) {
+    const normalizedRelativePath = relativePath.replaceAll(path.sep, "/");
     const filePath = path.resolve(repositoryRoot, relativePath);
 
     if (!isInside(repositoryRoot, filePath)) {
       throw new Error(`repository path escapes root: ${relativePath}`);
     }
 
-    const buffer = await readFile(filePath);
-    findings.push(
-      ...scanSecretBuffer(buffer, relativePath.replaceAll(path.sep, "/")),
-    );
+    if (isPrivateEnvironmentFile(normalizedRelativePath)) {
+      findings.push({
+        filePath: normalizedRelativePath,
+        line: 1,
+        ruleId: "environment-file",
+      });
+      continue;
+    }
+
+    if (CREDENTIAL_FILE_PATTERN.test(normalizedRelativePath)) {
+      findings.push({
+        filePath: normalizedRelativePath,
+        line: 1,
+        ruleId: "credential-file",
+      });
+      continue;
+    }
+
+    let buffer;
+
+    try {
+      const fileStat = await lstat(filePath);
+
+      if (fileStat.isSymbolicLink()) {
+        findings.push({
+          filePath: normalizedRelativePath,
+          line: 1,
+          ruleId: "symbolic-link",
+        });
+        continue;
+      }
+
+      if (!fileStat.isFile()) {
+        findings.push({
+          filePath: normalizedRelativePath,
+          line: 1,
+          ruleId: "non-regular-file",
+        });
+        continue;
+      }
+
+      buffer = await readFile(filePath);
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        continue;
+      }
+
+      throw error;
+    }
+
+    findings.push(...scanSecretBuffer(buffer, normalizedRelativePath));
   }
 
   return findings;

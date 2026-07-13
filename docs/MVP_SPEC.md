@@ -6,6 +6,7 @@ last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
 source_refs: []
 related_tasks:
   - GOV-001
+  - BL-003
   - BL-079
 code_refs: []
 test_refs:
@@ -550,6 +551,7 @@ apps/
   worker/              BullMQ consumers, generation e maintenance jobs
   admin/               route protette nello stesso web app (P0)
 packages/
+  config/              config runtime tipizzata, server-only e service-scoped
   contracts/           Zod/JSON Schema, DTO, event contracts
   domain/              aggregate, command handler, policy, errori
   rules-engine/        regole pure e RNG iniettato
@@ -560,7 +562,7 @@ packages/
   testing/             fixture, bot simulator, fake AI provider
 ```
 
-I package di dominio non importano framework HTTP, SDK AI o client Redis. `contracts` pubblica schemi versionati; `persistence` implementa porte di repository; `ai-adapters` traduce API provider in tipi di dominio.
+I package di dominio non importano framework HTTP, SDK AI o client Redis. `config` è un leaf package server-only: i parser puri non leggono stato ambientale implicito, mentre CLI e composition root forniscono la sorgente esplicita; `contracts` pubblica schemi versionati; `persistence` implementa porte di repository; `ai-adapters` traduce API provider in tipi di dominio.
 
 ## 11.3 Moduli applicativi
 
@@ -3985,15 +3987,16 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 |---|---|---|---|---|---|---|---|
 | BL-001 | Fondamenta | Come sviluppatore voglio un monorepo coerente per condividere contratti. | Configurare workspace, app e package boundaries. | P0 | — | Build/lint/typecheck di tutte le app; import boundaries testate. | S |
 | BL-002 | Fondamenta | Come team voglio una CI che blocchi regressioni. | Pipeline test, scan, build e artifact. | P0 | BL-001 | PR non mergeabile su gate fallito; cache non espone secret. | M |
-| BL-003 | Fondamenta | Come operatore voglio config separata per ambiente. | Typed config, secret manager, local template. | P0 | BL-001 | Startup fallisce su config mancante; nessun secret committato. | S |
-| BL-004 | Fondamenta | Come backend voglio migrations riproducibili. | Tool migration e schema baseline. | P0 | BL-001 | Migrazione da DB vuoto e rollback operativo documentato. | M |
+| BL-003 | Fondamenta | Come operatore voglio config separata per ambiente. | Typed config, contratto provider-agnostic di secret injection e local template. | P0 | BL-001 | Startup fallisce su config mancante; nessun secret committato. | S |
+| BL-004 | Fondamenta | Come backend voglio migrations riproducibili. | Tool migration e schema baseline. | P0 | BL-001, BL-003 | Migrazione da DB vuoto e rollback operativo documentato. | M |
 | BL-005 | Identity | Come utente voglio registrarmi e verificare l’email. | Signup, verify, rate limit. | P0 | BL-003, BL-004, BL-079 | Account inattivo fino a verifica; replay token non valido. | M |
 | BL-006 | Identity | Come utente voglio login/logout/reset sicuri. | Sessioni, reset, revoca. | P0 | BL-005, BL-079 | Cookie sicuri; logout revoca; reset one-time e rate-limited. | M |
 | BL-007 | Security | Come sistema voglio ownership scoped nei repository. | ActorContext e query tenant-safe. | P0 | BL-004, BL-006 | IDOR matrix restituisce zero accessi; risorsa altrui 404. | M |
 | BL-008 | Observability | Come operatore voglio request e trace ID end-to-end. | OTel/log/Sentry baseline. | P0 | BL-001, BL-003 | Trace web→API→worker fake; log redaction test pass. | M |
 | BL-009 | Contracts | Come client voglio DTO runtime-validati. | Zod, JSON Schema, OpenAPI generation. | P0 | BL-001 | Contract compile e response validation; schema versionato. | M |
 | BL-010 | Platform | Come operatore voglio feature flag e kill switch server-side. | Flag store/config auditato. | P0 | BL-003, BL-008 | Disabilita start/turn/model route senza deploy; audit event. | S |
-| BL-079 | Frontend UX | Come giocatore voglio un’interfaccia mobile semplice e premium fin dal primo slice. | Fondazione design system, shell conversazionale, token e motion layer. | P0 | BL-001, BL-002 | shadcn/Radix e AI Elements selettivi configurati; shell 320–430 px e desktop adattivo; target touch, reduced motion, keyboard/AA e performance smoke passano. | M |
+| BL-079 | Frontend UX | Come giocatore voglio un’interfaccia mobile semplice e premium fin dal primo slice. | Fondazione design system, shell conversazionale, token e motion layer. | P0 | BL-001, BL-002, BL-080 | shadcn/Radix e AI Elements selettivi configurati; shell 320–430 px e desktop adattivo; target touch, reduced motion, keyboard/AA, performance e smoke staging passano. | M |
+| BL-080 | Platform | Come team voglio una preview/staging M0 isolata e riproducibile. | Provider/secret manager, provisioning, deploy automatico e smoke iniziale dei runtime deployabili. | P0 | BL-002, BL-003 | Preview/staging usa config e secret separati, non contiene dati production, pubblica URL/evidenza redatti e supera lo smoke dei runtime disponibili con rollback documentato. | M |
 | BL-011 | Character | Come designer voglio cataloghi originali versionati. | Ascendenze, classi, background, ability, item base. | P0 | BL-009 | Nessun contenuto proprietario; schema/catalog validation pass. | L |
 | BL-012 | Character | Come giocatore voglio scegliere identità e classe. | Step builder con preview. | P0 | BL-011, BL-079 | Solo opzioni catalogo; keyboard/accessibility smoke. | M |
 | BL-013 | Character | Come giocatore voglio allocare attributi validi. | Point allocation/array standard. | P0 | BL-011, BL-079 | Budget invariabile; score 8–16; server ricalcola. | M |
@@ -4226,7 +4229,8 @@ Una user story è `Done` solo quando:
 - security/privacy review è svolta per auth, testo, admin, export o nuovi dati;
 - costo/token impact è misurato per modifiche AI;
 - eval pertinente passa e baseline non regredisce oltre soglia;
-- deploy staging e smoke test completati;
+- per le story che modificano un percorso già disponibile in un ambiente deployabile, deploy staging e smoke test sono completati;
+- per le story che costruiscono un prerequisito del primo ambiente deployabile, è ammessa un'evidenza local/contract esplicitamente motivata; il primo deploy e smoke reali devono passare nel task che possiede la fondazione dell'ambiente e nel gate della milestone;
 - nessun TODO critico non tracciato.
 
 ## 35.2 Definition of Done per componente AI

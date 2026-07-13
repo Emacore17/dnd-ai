@@ -1,0 +1,130 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import test from "node:test";
+import { fileURLToPath, URL } from "node:url";
+
+import { DEFAULT_BUILD_ROOTS } from "../../scripts/lib/build-artifact.mjs";
+import { WORKSPACE_POLICY } from "../../scripts/lib/workspace-boundaries.mjs";
+
+const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
+
+async function read(relativePath) {
+  return readFile(path.join(repositoryRoot, relativePath), "utf8");
+}
+
+function parseExample(text) {
+  return Object.fromEntries(
+    text
+      .split(/\r?\n/u)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"))
+      .map((line) => {
+        const separator = line.indexOf("=");
+        assert.notEqual(separator, -1, `invalid example line: ${line}`);
+        return [line.slice(0, separator), line.slice(separator + 1)];
+      }),
+  );
+}
+
+test("service-specific local templates expose only their own configuration surface", async () => {
+  const api = parseExample(await read("apps/api/.env.example"));
+  const worker = parseExample(await read("apps/worker/.env.example"));
+  const migration = parseExample(
+    await read("packages/persistence/.env.example"),
+  );
+
+  assert.deepEqual(Object.keys(api).sort(), [
+    "API_DATABASE_URL",
+    "API_HOST",
+    "API_PORT",
+    "API_REDIS_URL",
+    "APP_ENV",
+  ]);
+  assert.deepEqual(Object.keys(worker).sort(), [
+    "APP_ENV",
+    "WORKER_DATABASE_URL",
+    "WORKER_REDIS_URL",
+  ]);
+  assert.deepEqual(Object.keys(migration).sort(), [
+    "APP_ENV",
+    "MIGRATION_DATABASE_URL",
+  ]);
+
+  for (const example of [api, worker, migration]) {
+    assert.equal(example.APP_ENV, "local");
+    assert.equal(
+      Object.keys(example).some((key) => key.startsWith("NEXT_PUBLIC_")),
+      false,
+    );
+  }
+
+  assert.equal(api.API_HOST, "127.0.0.1");
+  assert.equal(api.API_PORT, "3001");
+  assert.deepEqual(
+    [
+      api.API_DATABASE_URL,
+      api.API_REDIS_URL,
+      worker.WORKER_DATABASE_URL,
+      worker.WORKER_REDIS_URL,
+      migration.MIGRATION_DATABASE_URL,
+    ],
+    Array.from({ length: 5 }, () => "<set-in-local-env-file>"),
+  );
+});
+
+test("config is a server-only leaf package allowed only at runtime composition roots", () => {
+  assert.deepEqual(WORKSPACE_POLICY["@dnd-ai/config"], []);
+  assert.equal(
+    WORKSPACE_POLICY["@dnd-ai/api"].includes("@dnd-ai/config"),
+    true,
+  );
+  assert.equal(
+    WORKSPACE_POLICY["@dnd-ai/worker"].includes("@dnd-ai/config"),
+    true,
+  );
+
+  for (const packageName of [
+    "@dnd-ai/web",
+    "@dnd-ai/contracts",
+    "@dnd-ai/domain",
+    "@dnd-ai/rules",
+    "@dnd-ai/ai",
+    "@dnd-ai/persistence",
+  ]) {
+    assert.equal(
+      WORKSPACE_POLICY[packageName].includes("@dnd-ai/config"),
+      false,
+      packageName,
+    );
+  }
+});
+
+test("the deploy artifact includes compiled config but never environment files", async () => {
+  assert.equal(
+    DEFAULT_BUILD_ROOTS.some(
+      ({ source, target }) =>
+        source === "packages/config/dist" && target === "packages/config/dist",
+    ),
+    true,
+  );
+
+  const gitignore = await read(".gitignore");
+  assert.match(gitignore, /^\.env$/mu);
+  assert.match(gitignore, /^\.env\.\*$/mu);
+  assert.match(gitignore, /^!\.env\.example$/mu);
+});
+
+test("pure config parsing does not read ambient process state", async () => {
+  const implementation = await read("packages/config/src/runtime-config.ts");
+  assert.doesNotMatch(implementation, /process\.env/u);
+
+  const webManifest = JSON.parse(await read("apps/web/package.json"));
+  assert.equal("@dnd-ai/config" in webManifest.dependencies, false);
+});
+
+test("workspace typecheck builds dependency declarations on a clean checkout", async () => {
+  const turbo = JSON.parse(await read("turbo.json"));
+  assert.equal(turbo.tasks.typecheck.dependsOn.includes("^build"), true);
+  assert.equal(turbo.tasks.typecheck.dependsOn.includes("^typecheck"), true);
+});

@@ -11,10 +11,15 @@ related_tasks:
   - GOV-002
   - BL-001
   - BL-002
+  - BL-003
   - BL-079
+  - BL-080
 code_refs:
   - apps
   - packages
+  - packages/config
+  - apps/api/src/runtime.ts
+  - apps/worker/src/runtime.ts
   - scripts/lib/workspace-boundaries.mjs
   - scripts/lib/task-graph.mjs
   - .github/workflows/ci.yml
@@ -28,6 +33,11 @@ test_refs:
   - tests/contracts/ci-workflow.test.mjs
   - tests/integration/ci-gate.test.mjs
   - docs/testing/BL-002_VERIFICATION.md
+  - tests/unit/runtime-config.test.mjs
+  - tests/integration/runtime-startup.test.mjs
+  - tests/contracts/runtime-config-contract.test.mjs
+  - tests/security/environment-file-policy.test.mjs
+  - docs/testing/BL-003_VERIFICATION.md
 supersedes: null
 ---
 
@@ -35,7 +45,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo e i primi contract test; `BL-002` ha completato pipeline, controlli locali/CI e Ruleset required su `main`. I riferimenti futuri restano marcati `planned`; `GOV-002` estenderà il controllo task graph a link, front matter, Mermaid e generated-doc drift.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo e `BL-002` pipeline/Ruleset. `BL-003` è `IN_REVIEW`: config server-only, profili, startup fail-fast e scanner `.env` sono implementati e verificati dalle suite mirate; clean checkout e CI sono ancora in chiusura. `BL-080` resta owner del primo secret manager e smoke remoto, mentre la fondazione `BL-079` resta pianificata dopo lo staging. I riferimenti futuri restano marcati `planned`; `GOV-002` estenderà il controllo documentale.
 
 ## Governance e baseline
 
@@ -52,6 +62,10 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Cache e artifact non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | setup action pnpm-only, `scripts/lib/secret-scanner.mjs`, `scripts/lib/build-artifact.mjs` | remote manifest `build-artifact-v1`, 3.205 file e checksum/secret verification; report BL-002 | PASS |
 | Log CI non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | workflow senza secret applicativi; output scanner redatto | scan redatto dei 5 job della run `29254494868` | PASS |
 | Gate fallito rende la PR non mergeabile | spec §31 `BL-002`; card BL-002 | BL-002 | Ruleset `main-required-ci` `18877721` | PR negativa #3/run `29256736728`: gate FAIL e `mergeStateStatus=BLOCKED`; regole `main` verificate via API | PASS |
+| Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; report BL-003 | implemented; full gate pending |
+| Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
+| Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner path-based, artifact allowlist | contract config; force-tracked `.env.local` negativo; secret scan | PASS locale; manager reale planned BL-080 |
+| Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | config contract implementato; provider/IaC/deploy workflow (`planned`) | profilo staging locale PASS; deploy/smoke/rollback (`planned`) | BL-003 in chiusura; BL-080 planned |
 
 ## UX/UI P0
 

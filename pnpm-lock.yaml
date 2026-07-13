@@ -59,9 +59,16 @@ importers:
 
   apps/api:
     dependencies:
+      '@dnd-ai/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       fastify:
         specifier: 5.10.0
         version: 5.10.0
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
 
   apps/web:
     dependencies:
@@ -82,9 +89,23 @@ importers:
         specifier: 'catalog:'
         version: 19.2.3(@types/react@19.2.17)
 
-  apps/worker: {}
+  apps/worker:
+    dependencies:
+      '@dnd-ai/config':
+        specifier: workspace:*
+        version: link:../../packages/config
 
   packages/ai: {}
+
+  packages/config:
+    dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
 
   packages/contracts: {}
 

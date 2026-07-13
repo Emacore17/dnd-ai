@@ -10,13 +10,17 @@ source_refs:
 related_tasks:
   - GOV-001
   - BL-002
+  - BL-003
   - BL-079
 code_refs:
   - .github/workflows/ci.yml
+  - packages/config
   - scripts/lib/ci-workflow-policy.mjs
+  - scripts/lib/secret-scanner.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/ci-workflow.test.mjs
+  - tests/contracts/runtime-config-contract.test.mjs
 supersedes: null
 ---
 
@@ -347,6 +351,7 @@ apps/
   api/          # Fastify, auth, REST, SSE e application entry point
   worker/       # BullMQ, turn orchestration e job asincroni
 packages/
+  config/       # config runtime tipizzata, server-only e service-scoped
   contracts/    # DTO, Zod/JSON Schema, OpenAPI/event schema
   domain/       # Entità, value object, command/result ed invarianti puri
   rules/        # Rules Engine deterministico
@@ -359,10 +364,12 @@ packages/
 La struttura può essere raffinata da ADR, ma deve mantenere queste direzioni:
 
 - `domain` e `rules` non dipendono da framework web, database, queue o SDK AI;
+- `config` è un leaf package server-only: riceve l'ambiente come input esplicito e non importa package di dominio o infrastruttura;
 - `contracts` non importa implementazioni infrastrutturali;
 - `ai` dipende da contratti e porte, non da persistence concreta;
 - `api` e `worker` orchestrano application service, non contengono regole di gioco;
 - `web` non ricostruisce stato canonico né applica mutazioni ottimistiche irreversibili;
+- il browser non importa `config`; le variabili pubbliche vengono aggiunte soltanto quando esiste un consumer reale e non contengono secret;
 - `persistence` implementa porte definite dal dominio/application layer;
 - dipendenze cicliche fra package sono vietate e testate automaticamente.
 

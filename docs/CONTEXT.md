@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
+last_verified_commit: pending
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -10,10 +10,15 @@ related_tasks:
   - GOV-001
   - BL-001
   - BL-002
+  - BL-003
   - BL-079
+  - BL-080
 code_refs:
   - apps
   - packages
+  - packages/config
+  - apps/api/src/runtime.ts
+  - apps/worker/src/runtime.ts
   - scripts/lib/workspace-boundaries.mjs
   - scripts/lib/task-graph.mjs
   - .github/workflows/ci.yml
@@ -29,6 +34,11 @@ test_refs:
   - tests/security/sast-config.test.mjs
   - tests/security/secret-scanner.test.mjs
   - docs/testing/BL-002_VERIFICATION.md
+  - tests/unit/runtime-config.test.mjs
+  - tests/integration/runtime-startup.test.mjs
+  - tests/contracts/runtime-config-contract.test.mjs
+  - tests/security/environment-file-policy.test.mjs
+  - docs/testing/BL-003_VERIFICATION.md
 supersedes: null
 ---
 
@@ -40,18 +50,18 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-13 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | PR #1 unita su `main` come `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`; implementation head pulito `7c6c7071d027c55aeffbc7279b8ca3765ea26c37` |
+| Delivery/commit | baseline `origin/main` a `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; branch isolato `codex/bl-003-runtime-config`; candidate commit `pending` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
-| SHA-256 specifica | `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6` |
+| SHA-256 specifica | `pending` dopo la risoluzione documentale isolata |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `—` |
+| Task attivo | `BL-003 — IN_REVIEW/90%/PARTIAL` |
 | Ultimo task completato | `BL-002 — DONE/PASSING` |
-| Prossimo task READY | `BL-079 — Fondazione design system e shell conversazionale mobile-first` |
+| Prossimo task READY | `—`; `BL-080` diventa eseguibile solo dopo `BL-003`, `BL-079` dopo `BL-080` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. `BL-002` ha aggiunto e verificato localmente e su GitHub la pipeline, inclusi artifact e failure path; la Ruleset di `main` è ora attiva e una PR negativa ha confermato il blocco reale del merge. Le entry point applicative restano intenzionalmente minime: migration, contratti di dominio implementati, queue e configurazioni di ambiente sono assenti e non vanno inferiti.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. Il web resta uno scaffold: la foundation UX/UI `BL-079` è pianificata e non fa parte di questo change set. `BL-003` implementa `runtime-config-v1`, startup API fail-fast, boundary worker, profilo migration, template service-scoped e scanner fail-closed; isolamento, clean checkout e CI sono ancora da chiudere. Non esistono valori reali, risorse cloud o staging: `BL-080` possiede secret manager concreto, packaging, primo deploy e smoke remoto.
 
 ## Decisioni operative vigenti
 
@@ -62,8 +72,9 @@ supersedes: null
 - shadcn/ui `new-york` su Radix; AI Elements solo presentational layer; Motion per micro-interazioni; Rive opzionale e performance-gated.
 - Visual language premium contemporaneo per casual gamer, senza chrome pseudo-medievale/fantasy.
 - Workspace e direzioni di dipendenza secondo ADR-0002; manifest/import/cicli falliscono chiuso tramite checker versionato.
+- Configurazione runtime server-only validata ai composition root; nessun valore secret nel client, nei default, nei log o nei documenti. ADR-0004 accepted durante `BL-003`.
 
-Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md) e [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Architettura implementata: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md).
+Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md), [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md) e [`ADR-0004`](adr/0004-runtime-configuration-and-secret-injection.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Configurazione operativa: [`CONFIGURATION.md`](operations/CONFIGURATION.md). Architettura implementata: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md).
 
 ## Versioni e head
 
@@ -74,19 +85,20 @@ Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`
 | Rules version | `N/A` | package rules presente come scaffold; cataloghi/formule non implementati |
 | Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
 | Eval suite version | `N/A` | harness non creato |
+| Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
 | Design contract | `ux-ui-2026-07-13` | documentato, non implementato |
 | ADR UI | `ADR-0001 accepted` | vigente |
-| Toolchain | Node `24.11.0`; pnpm `10.34.5`; Turbo `2.10.4`; TypeScript `6.0.3` | pinning e lockfile presenti |
-| Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | scaffold buildabile, nessuna feature |
+| Toolchain | Node `24.11.0` (engine `>=22.12.0`); pnpm `10.34.5`; Turbo `2.10.4`; TypeScript `6.0.3` | pinning e lockfile presenti |
+| Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web scaffold; API senza route ma con startup validate-before-bind |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
 | CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; post-merge run `29257721274` PASS |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
-| Artifact schema | `build-artifact-v1` | remote artifact 3.205 file, secret/checksum verification PASS |
+| Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file, secret/checksum verification PASS; delta BL-003 da riverificare |
 
 ## Comandi disponibili
 
-Sono disponibili i comandi locali del perimetro `BL-001`/`BL-002`:
+Sono disponibili i comandi locali del perimetro `BL-001`/`BL-002`/`BL-003`:
 
 ```powershell
 corepack pnpm@10.34.5 lint
@@ -104,6 +116,7 @@ corepack pnpm@10.34.5 scan:sast
 corepack pnpm@10.34.5 scan:secrets
 corepack pnpm@10.34.5 artifact:prepare
 corepack pnpm@10.34.5 artifact:verify
+corepack pnpm@10.34.5 config:check
 corepack pnpm@10.34.5 verify
 ```
 
@@ -132,13 +145,15 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | ID | Rischio | Mitigazione/owner |
 |---|---|---|
 | CTX-R02 | `tasks:check` copre il grafo, non l’intero `docs:check` | `GOV-002` estende a link/front matter/Mermaid/generated drift |
-| CTX-R03 | App/package sono scaffold senza contratti o feature | task M0 proprietari; non inferire dominio dalle entry point vuote |
-| CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` in M0 e dipendenza documentale per i task UI |
-| CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced; Rive gated o rimosso in `BL-079` |
+| CTX-R03 | App e package di dominio restano scaffold; il web non contiene ancora la foundation UX/UI | task M0 proprietari; non inferire comportamento applicativo dalle entry point minime |
+| CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` resta in M0 e dipende dalla foundation operativa `BL-080` |
+| CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive gated o rimosso nel task `BL-079` |
+| CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | chiudere `BL-003`, quindi `BL-080` crea l'ambiente e sblocca lo smoke BL-079/GATE-M0 |
+| CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based |
 
 ## Prossima azione
 
-Selezionare `BL-079` e implementare la fondazione UX/UI mobile-first già definita da ADR-0001 e `docs/product/UX_UI_DESIGN.md`, mantenendo shadcn/ui e AI Elements selettivi, HUD on demand, motion ridotta e i gate mobile/accessibilità/performance del task.
+Completare la risoluzione isolata, il full verify e il clean-checkout del change set `BL-003`, quindi attendere la CI remota. Il primo provisioning e smoke preview/staging resta in `BL-080`.
 
 ## Rischi chiusi
 

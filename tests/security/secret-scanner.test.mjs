@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { Buffer } from "node:buffer";
 import { execFile } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -11,6 +11,7 @@ import {
   formatSecretFinding,
   listRepositoryFiles,
   scanSecretBuffer,
+  scanRepositoryFiles,
   scanSecretText,
 } from "../../scripts/lib/secret-scanner.mjs";
 
@@ -101,5 +102,60 @@ test("repository scan includes untracked non-ignored files", async (context) => 
     ".gitignore",
     "tracked.txt",
     "untracked.txt",
+  ]);
+});
+
+test("repository scan rejects symlinks without dereferencing external targets", async (context) => {
+  const repositoryRoot = await mkdtemp(
+    path.join(tmpdir(), "dnd-ai-secret-symlink-scan-"),
+  );
+  const externalRoot = await mkdtemp(
+    path.join(tmpdir(), "dnd-ai-secret-symlink-target-"),
+  );
+  context.after(() => rm(repositoryRoot, { force: true, recursive: true }));
+  context.after(() => rm(externalRoot, { force: true, recursive: true }));
+
+  await execFileAsync("git", ["init", "--quiet"], { cwd: repositoryRoot });
+  await writeFile(path.join(repositoryRoot, ".gitignore"), "ignored.txt\n");
+  const externalPath = path.join(externalRoot, "external.txt");
+  await writeFile(externalPath, "external content must not be scanned\n");
+
+  try {
+    await symlink(externalPath, path.join(repositoryRoot, "linked.txt"));
+  } catch (error) {
+    if (error.code === "EPERM" || error.code === "EACCES") {
+      context.skip("symlink creation is not permitted on this Windows host");
+      return;
+    }
+
+    throw error;
+  }
+
+  await execFileAsync("git", ["add", ".gitignore", "linked.txt"], {
+    cwd: repositoryRoot,
+  });
+
+  assert.deepEqual(await scanRepositoryFiles(repositoryRoot), [
+    { filePath: "linked.txt", line: 1, ruleId: "symbolic-link" },
+  ]);
+});
+
+test("repository scan rejects non-regular files without opening them", async (context) => {
+  if (process.platform === "win32") {
+    context.skip("FIFO creation is not available on Windows");
+    return;
+  }
+
+  const repositoryRoot = await mkdtemp(
+    path.join(tmpdir(), "dnd-ai-secret-fifo-scan-"),
+  );
+  context.after(() => rm(repositoryRoot, { force: true, recursive: true }));
+
+  await execFileAsync("git", ["init", "--quiet"], { cwd: repositoryRoot });
+  await writeFile(path.join(repositoryRoot, ".gitignore"), "ignored.txt\n");
+  await execFileAsync("mkfifo", ["named-pipe"], { cwd: repositoryRoot });
+
+  assert.deepEqual(await scanRepositoryFiles(repositoryRoot), [
+    { filePath: "named-pipe", line: 1, ruleId: "non-regular-file" },
   ]);
 });
