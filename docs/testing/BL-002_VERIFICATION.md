@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-13
-last_verified_commit: 7c6c7071d027c55aeffbc7279b8ca3765ea26c37
+last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -54,6 +54,7 @@ supersedes: null
 | `pnpm audit --audit-level=moderate` | exit `0`, nessuna vulnerabilità nota dopo override `postcss@8.5.10` |
 | `pnpm verify` sul contenuto documentato | exit `0` in 74,4 s; aggregazione completa locale PASS |
 | clean worktree dell'head | frozen install exit `0`; `TURBO_FORCE=true pnpm verify` exit `0` in 66,0 s |
+| working tree di chiusura | `TURBO_FORCE=true pnpm verify` exit `0` in 53,9 s; 10/10 lint/typecheck/build, 9+1 unit, 3 integration, 8 contract, 7 security e artifact verification PASS |
 
 Il primo artifact smoke ha rifiutato i junction assoluti prodotti da Next/pnpm; il packager è stato corretto per usare soltanto la copia traced interna e continua a rifiutare link esterni. Un secondo failure ha individuato un esempio di private key nei docs del package Next non traced: la correzione del mirror evita di includere documentazione/dependency non necessarie.
 
@@ -72,7 +73,7 @@ I tag sono stati risolti il 2026-07-13 tramite release API e `git ls-remote` dei
 
 ## Decisione SAST
 
-Il repository GitHub è privato e Code Scanning non è abilitato: la relativa API ha restituito `403`. Per non attivare implicitamente un servizio potenzialmente a pagamento, la pipeline usa `eslint-plugin-security@4.0.1` (Apache-2.0) in configurazione flat `recommended`, con `--max-warnings 0`. Una security test dimostra che una chiamata `eval` non affidabile viene rilevata. Gli script CI escludono soltanto le regole generiche su path/key dinamici già coperte da boundary, artifact, policy e negative-path test dedicati.
+Al momento della decisione il repository GitHub era privato e Code Scanning non era abilitato: la relativa API aveva restituito `403`. Per non attivare implicitamente un servizio potenzialmente a pagamento, la pipeline ha adottato `eslint-plugin-security@4.0.1` (Apache-2.0) in configurazione flat `recommended`, con `--max-warnings 0`. Una security test dimostra che una chiamata `eval` non affidabile viene rilevata. Il repository è ora pubblico, ma il SAST locale resta il gate riproducibile della baseline; un futuro CodeQL sarebbe difesa aggiuntiva e non sostituirebbe questi controlli. Gli script CI escludono soltanto le regole generiche su path/key dinamici già coperte da boundary, artifact, policy e negative-path test dedicati.
 
 ## Iterazione CI remota
 
@@ -84,6 +85,14 @@ La terza run della PR #1, [`29254494868`](https://github.com/Emacore17/dnd-ai/ac
 
 La PR negativa #2, chiusa senza merge, ha prodotto la run [`29254866626`](https://github.com/Emacore17/dnd-ai/actions/runs/29254866626): `Tests=FAILURE`, `Build artifact=SKIPPED` e `CI / Merge gate=FAILURE`. GitHub ha tuttavia riportato la PR come `MERGEABLE/UNSTABLE`, prova che il gate applicativo funziona ma non è enforced senza Ruleset/branch protection.
 
-## Blocco residuo
+Dopo la pubblicazione del repository, la run finale sul precedente head documentale della PR #1, [`29255261423`](https://github.com/Emacore17/dnd-ai/actions/runs/29255261423), ha confermato `Quality`, `Tests`, `Security`, `Build artifact` e `CI / Merge gate` tutti `SUCCESS` sul commit `f1be878b291a535ea6c8e0d995ee5e3c80ef164c`.
 
-L'unica evidenza mancante è una Ruleset attiva su `main` che richieda `CI / Merge gate` e renda realmente non mergeabile la PR negativa. `GET rulesets` e branch protection restituiscono `403` sul piano GitHub Free del repository privato. Rendere pubblico il repository o effettuare un upgrade è fuori dall'autorizzazione implicita del task; `BL-002` resta quindi `BLOCKED/90%/PARTIAL`.
+## Enforcement della Ruleset e prova negativa finale
+
+La Ruleset [`main-required-ci` (`18877721`)](https://github.com/Emacore17/dnd-ai/rules/18877721) è stata creata il 2026-07-13 con enforcement `active`, target `~DEFAULT_BRANCH`, pull request obbligatoria, nessun bypass e policy strict. Richiede soltanto `CI / Merge gate`, vincolato all'app GitHub Actions tramite `integration_id=15368`; l'API delle regole applicabili a `main` restituisce la stessa configurazione.
+
+La PR negativa [#3](https://github.com/Emacore17/dnd-ai/pull/3), chiusa senza merge e con branch rimossa, ha prodotto la run [`29256736728`](https://github.com/Emacore17/dnd-ai/actions/runs/29256736728): `Quality=SUCCESS`, `Security=SUCCESS`, `Tests=FAILURE`, `Build artifact=SKIPPED` e `CI / Merge gate=FAILURE`. GitHub ha riportato `mergeStateStatus=BLOCKED`; il campo separato `mergeable=MERGEABLE` indicava soltanto l'assenza di conflitti Git, non l'autorizzazione al merge. La Ruleset ha quindi soddisfatto il criterio di accettazione rendendo la PR non unibile per policy.
+
+## Chiusura
+
+Tutti i gate applicabili a `BL-002` dispongono ora di evidenza riproducibile locale e remota. Il task è `DONE/100%/PASSING`; i gate di database, schema, browser/accessibilità, eval, container/SBOM e deploy restano assegnati ai task proprietari già indicati nel runbook, senza placeholder verdi.

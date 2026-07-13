@@ -2,7 +2,7 @@
 status: accepted
 owner: engineering-and-security
 last_reviewed: 2026-07-13
-last_verified_commit: 7c6c7071d027c55aeffbc7279b8ca3765ea26c37
+last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -61,10 +61,10 @@ Rinviati: cache e glob ampi aumentano la superficie di poisoning/esfiltrazione. 
 
 Non adottato nella baseline: introduce configurazione/licenza e un nuovo confine dati. Lo scanner locale non sostituisce il futuro hardening, ma è deterministico, redatto e testabile.
 
-### CodeQL su repository privato
+### CodeQL come gate baseline
 
-Non adottato nella baseline perché Code Scanning non è abilitato sul repository privato e l'API restituisce `403`. Attivare un servizio potenzialmente a pagamento senza una decisione esplicita non è accettabile. CodeQL potrà essere aggiunto come difesa ulteriore se l'entitlement sarà disponibile; non sostituirà i gate locali riproducibili.
+Non adottato nella baseline: al momento della decisione Code Scanning non era abilitato sul repository privato e l'API restituiva `403`, mentre attivare implicitamente un servizio potenzialmente a pagamento non era accettabile. Dopo la pubblicazione del repository l'entitlement può essere rivalutato, ma il SAST locale resta il gate deterministico e riproducibile deciso per `BL-002`; CodeQL potrà aggiungere difesa in profondità senza sostituirlo.
 
 ## Conseguenze e revisione
 
-La pipeline è più esplicita e riproducibile, ma ripete install/build in job isolati e l’artifact Next richiede circa 49 MB nel primo scaffold. Rivalutare cache remota, SBOM/container e split artifact quando esistono deploy target, metriche CI o immagini container; ogni estensione deve mantenere il gate fail-closed e aggiornare policy, test e runbook.
+La pipeline è più esplicita e riproducibile, ma ripete install/build in job isolati e l’artifact Next richiede circa 49 MB nel primo scaffold. La Ruleset `main-required-ci` (`18877721`) applica la decisione senza bypass ordinario e vincola il gate all'app GitHub Actions. Rivalutare cache remota, CodeQL, SBOM/container e split artifact quando esistono deploy target, metriche CI o immagini container; ogni estensione deve mantenere il gate fail-closed e aggiornare policy, test e runbook.

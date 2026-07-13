@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-13
-last_verified_commit: 7c6c7071d027c55aeffbc7279b8ca3765ea26c37
+last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -41,7 +41,7 @@ Trigger: PR, push su `main`, merge queue e dispatch manuale. Il workflow non usa
 
 La Ruleset GitHub deve essere `active`, target `~DEFAULT_BRANCH`, richiedere una pull request e il solo status check `CI / Merge gate`, senza bypass ordinario. Il check va selezionato dopo almeno una run completata; GitHub identifica il contesto con il nome del job, non con il nome del workflow.
 
-Stato corrente: il repository è privato sul piano GitHub Free. Le API Ruleset e branch protection restituiscono `403` con richiesta di upgrade o pubblicazione; entrambe le opzioni richiedono una decisione esplicita del Product Owner. La pipeline può essere eseguita, ma finché l'enforcement non è disponibile `BL-002` non soddisfa il criterio “PR non mergeabile”.
+Stato corrente: la Ruleset [`main-required-ci` (`18877721`)](https://github.com/Emacore17/dnd-ai/rules/18877721) è `active` sul repository pubblico, target `~DEFAULT_BRANCH`, senza bypass. Richiede una pull request e il solo check `CI / Merge gate` in modalità strict, vincolato a GitHub Actions con `integration_id=15368`. L'API delle regole applicabili a `main` conferma la stessa configurazione.
 
 Verifica operativa:
 
@@ -50,6 +50,8 @@ Verifica operativa:
 3. aprire una seconda PR con una unit fixture intenzionalmente fallita;
 4. verificare job rosso, gate rosso e merge state `BLOCKED`;
 5. chiudere la PR negativa, rimuovere la branch e registrare URL/ruleset ID nel report.
+
+La verifica di accettazione è registrata in `docs/testing/BL-002_VERIFICATION.md`: la PR negativa #3/run `29256736728` ha prodotto gate rosso e `mergeStateStatus=BLOCKED`, quindi è stata chiusa senza merge.
 
 Non disabilitare il gate per risolvere una coda. Se un job viene cancellato o saltato, `scripts/assert-ci-results.mjs` lo considera fallito.
 

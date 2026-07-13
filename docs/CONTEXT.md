@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 7c6c7071d027c55aeffbc7279b8ca3765ea26c37
+last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -39,19 +39,19 @@ supersedes: null
 | Campo | Valore |
 |---|---|
 | Data assoluta | 2026-07-13 |
-| Repository | GitHub `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Branch/commit | `codex/bl-002-ci-foundation`; verified implementation head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; aggiornamento evidenze in corso |
+| Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
+| Delivery/commit | PR #1 verso `main`; verified CI head `f1be878b291a535ea6c8e0d995ee5e3c80ef164c`; implementation head pulito `7c6c7071d027c55aeffbc7279b8ca3765ea26c37` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-002 — BLOCKED/90%` |
-| Ultimo task completato | `BL-001 — DONE/PASSING` |
-| Prossimo task READY | `—` |
+| Task attivo | `—` |
+| Ultimo task completato | `BL-002 — DONE/PASSING` |
+| Prossimo task READY | `BL-079 — Fondazione design system e shell conversazionale mobile-first` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. `BL-002` ha aggiunto e verificato localmente e su GitHub la pipeline, inclusi artifact e failure path; resta bloccata soltanto l'enforcement della Ruleset, non disponibile sul piano privato corrente. Le entry point applicative restano intenzionalmente minime: migration, contratti di dominio implementati, queue e configurazioni di ambiente sono assenti e non vanno inferiti.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. `BL-002` ha aggiunto e verificato localmente e su GitHub la pipeline, inclusi artifact e failure path; la Ruleset di `main` è ora attiva e una PR negativa ha confermato il blocco reale del merge. Le entry point applicative restano intenzionalmente minime: migration, contratti di dominio implementati, queue e configurazioni di ambiente sono assenti e non vanno inferiti.
 
 ## Decisioni operative vigenti
 
@@ -80,7 +80,8 @@ Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | scaffold buildabile, nessuna feature |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
-| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; run `29254494868` PASS |
+| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; run `29255261423` PASS |
+| Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
 | Artifact schema | `build-artifact-v1` | remote artifact 3.205 file, secret/checksum verification PASS |
 
 ## Comandi disponibili
@@ -134,11 +135,10 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | CTX-R03 | App/package sono scaffold senza contratti o feature | task M0 proprietari; non inferire dominio dalle entry point vuote |
 | CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` in M0 e dipendenza documentale per i task UI |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced; Rive gated o rimosso in `BL-079` |
-| CTX-R07 | Ruleset e branch protection non sono disponibili sul piano GitHub corrente per il repository privato | decisione Product Owner: piano GitHub compatibile oppure repository pubblico; non modificare privacy/spesa implicitamente |
 
 ## Prossima azione
 
-Decisione Product Owner richiesta per sbloccare `BL-002`: piano GitHub compatibile con Ruleset/branch protection per repository privati, oppure pubblicazione esplicitamente autorizzata. Tutti i gate indipendenti sono completi; `BL-079` resta `BACKLOG` finché `BL-002` non può chiudere.
+Selezionare `BL-079` e implementare la fondazione UX/UI mobile-first già definita da ADR-0001 e `docs/product/UX_UI_DESIGN.md`, mantenendo shadcn/ui e AI Elements selettivi, HUD on demand, motion ridotta e i gate mobile/accessibilità/performance del task.
 
 ## Rischi chiusi
 
@@ -146,4 +146,5 @@ Decisione Product Owner richiesta per sbloccare `BL-002`: piano GitHub compatibi
 |---|---|---|
 | CTX-R01 | Git inizializzato e clean-worktree verification completata | commit `6cda07a60022665f321b48dd82fbeb1d9bef586f`; `docs/testing/BL-001_VERIFICATION.md` |
 | CTX-R08 | BL-002 verificato da worktree detached pulito con install frozen e cache forzata off | head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; `TURBO_FORCE=true pnpm verify` exit `0` in 66,0 s |
-| CTX-R06 | Pipeline e failure path verificati realmente su GitHub | PR #1/run `29254494868` tutti verdi; PR #2/run `29254866626` con tests/gate rossi e build skipped |
+| CTX-R06 | Pipeline e failure path verificati realmente su GitHub | PR #1/run `29255261423` tutti verdi; PR #3/run `29256736728` con tests/gate rossi, build skipped e merge state `BLOCKED` |
+| CTX-R07 | Blocco del piano privato rimosso dal Product Owner e enforcement attivato | repository pubblico; Ruleset `18877721` active/strict/no bypass; regole applicabili a `main` verificate via API |
