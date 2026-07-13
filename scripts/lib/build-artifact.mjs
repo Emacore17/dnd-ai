@@ -59,6 +59,32 @@ function isInside(parentDirectory, candidatePath) {
   );
 }
 
+function isPnpmHiddenHoistLink(entryPath, symlinkMirrorRoot) {
+  if (!symlinkMirrorRoot) {
+    return false;
+  }
+
+  const hiddenHoistRoot = path.join(symlinkMirrorRoot, "node_modules");
+  const relativePath = path.relative(hiddenHoistRoot, entryPath);
+
+  if (
+    !relativePath ||
+    path.isAbsolute(relativePath) ||
+    relativePath === ".." ||
+    relativePath.startsWith(`..${path.sep}`)
+  ) {
+    return false;
+  }
+
+  const segments = relativePath.split(path.sep).filter(Boolean);
+  return (
+    (segments.length === 1 && !segments[0].startsWith("@")) ||
+    (segments.length === 2 &&
+      segments[0].startsWith("@") &&
+      !segments[1].startsWith("@"))
+  );
+}
+
 async function lstatOrNull(candidatePath) {
   return lstat(candidatePath).catch((error) => {
     if (error.code === "ENOENT") {
@@ -231,6 +257,16 @@ async function collectFiles(
       }
 
       const artifactTargetStat = await lstatOrNull(artifactTarget);
+
+      // Next can copy pnpm's private-hoist link without tracing its package.
+      // Omit only that unmaterialized link so external store bytes never enter
+      // the artifact; ordinary or unsafe links continue to fail closed.
+      if (
+        !artifactTargetStat &&
+        isPnpmHiddenHoistLink(entryPath, symlinkMirrorRoot)
+      ) {
+        continue;
+      }
 
       if (
         !artifactTargetStat ||

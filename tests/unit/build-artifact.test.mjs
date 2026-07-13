@@ -288,3 +288,126 @@ test("Next dependency links require their traced standalone mirror", async (cont
     "export const traced = true;\n",
   );
 });
+
+test("Next hidden-hoist links without a traced mirror are omitted", async (context) => {
+  const repositoryRoot = await mkdtemp(
+    path.join(os.tmpdir(), "dnd-ai-next-hidden-hoist-"),
+  );
+  const standaloneRoot = path.join(
+    repositoryRoot,
+    "apps",
+    "web",
+    ".next",
+    "standalone",
+  );
+  const externalPackage = path.join(
+    repositoryRoot,
+    "node_modules",
+    ".pnpm",
+    "semver@6.3.1",
+    "node_modules",
+    "semver",
+  );
+  const hiddenHoistLink = path.join(
+    standaloneRoot,
+    "node_modules",
+    ".pnpm",
+    "node_modules",
+    "semver",
+  );
+  await mkdir(externalPackage, { recursive: true });
+  await mkdir(path.dirname(hiddenHoistLink), { recursive: true });
+  await writeFile(
+    path.join(standaloneRoot, "server.js"),
+    "export {};\n",
+    "utf8",
+  );
+  await writeFile(
+    path.join(externalPackage, "index.js"),
+    `${["-----BEGIN ", "PRIVATE KEY-----"].join("")}\n`,
+    "utf8",
+  );
+
+  if (
+    !(await createDirectoryLinkOrSkip(
+      context,
+      externalPackage,
+      hiddenHoistLink,
+    ))
+  ) {
+    return;
+  }
+
+  const fixture = {
+    repositoryRoot,
+    outputDirectory: path.join(repositoryRoot, "artifacts", "bl002"),
+    sourceRoots: [{ source: "apps/web/.next/standalone", target: "web" }],
+  };
+  const manifest = await prepareBuildArtifact(fixture);
+
+  assert.deepEqual(
+    manifest.files.map(({ path: filePath }) => filePath),
+    ["web/server.js"],
+  );
+  assert.deepEqual(await verifyBuildArtifact(fixture), []);
+
+  const scopedExternalPackage = path.join(
+    repositoryRoot,
+    "node_modules",
+    ".pnpm",
+    "@scope+fixture@1.0.0",
+    "node_modules",
+    "@scope",
+    "fixture",
+  );
+  const scopedHiddenHoistLink = path.join(
+    standaloneRoot,
+    "node_modules",
+    ".pnpm",
+    "node_modules",
+    "@scope",
+    "fixture",
+  );
+  await mkdir(scopedExternalPackage, { recursive: true });
+  await mkdir(path.dirname(scopedHiddenHoistLink), { recursive: true });
+  await writeFile(
+    path.join(scopedExternalPackage, "index.js"),
+    "export const scoped = true;\n",
+    "utf8",
+  );
+  if (
+    !(await createDirectoryLinkOrSkip(
+      context,
+      scopedExternalPackage,
+      scopedHiddenHoistLink,
+    ))
+  ) {
+    return;
+  }
+
+  const scopedManifest = await prepareBuildArtifact(fixture);
+  assert.deepEqual(
+    scopedManifest.files.map(({ path: filePath }) => filePath),
+    ["web/server.js"],
+  );
+
+  const untrustedPackage = path.join(repositoryRoot, "untrusted", "semver");
+  await mkdir(untrustedPackage, { recursive: true });
+  await writeFile(
+    path.join(untrustedPackage, "index.js"),
+    "export const untrusted = true;\n",
+    "utf8",
+  );
+  await unlink(hiddenHoistLink);
+  if (
+    !(await createDirectoryLinkOrSkip(
+      context,
+      untrustedPackage,
+      hiddenHoistLink,
+    ))
+  ) {
+    return;
+  }
+
+  await assert.rejects(prepareBuildArtifact(fixture), /symlink is not allowed/);
+});
