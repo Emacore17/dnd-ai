@@ -197,3 +197,16 @@ test("BL-079 models safety-critical game UI with explicit view contracts", async
   assert.match(stateContract, /sourceLabel/u);
   assert.match(stateContract, /resources/u);
 });
+
+test("BL-079 isolates the zero-long-task browser gate from worker contention", async () => {
+  const [playwrightConfig, gameShellSpec] = await Promise.all([
+    read("apps/web/playwright.config.ts"),
+    read("apps/web/e2e/game-shell.spec.ts"),
+  ]);
+
+  assert.match(playwrightConfig, /workers:\s*1[,\n]/u);
+  assert.match(
+    gameShellSpec,
+    /metrics\?\.longTasks,[\s\S]*?\.toEqual\(\[\]\)/u,
+  );
+});

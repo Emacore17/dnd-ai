@@ -73,5 +73,7 @@ export default defineConfig({
     timeout: 120_000,
     url: baseURL,
   },
-  workers: process.env.CI ? 2 : 1,
+  // Shared CI runners can turn CPU contention into browser long tasks.
+  // Keep the zero-long-task product gate on an uncontended worker.
+  workers: 1,
 });
