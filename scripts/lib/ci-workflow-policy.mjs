@@ -199,7 +199,9 @@ function validateJobs(errors, workflow) {
     "pnpm test:integration",
     "pnpm test:contract",
     "playwright install --with-deps chromium",
-    "pnpm test:e2e",
+    "pnpm --filter @dnd-ai/web build",
+    "pnpm test:e2e:functional",
+    "pnpm test:e2e:performance",
   ]);
   requireCommands(errors, "security", jobs.security, [
     "pnpm scan:sast",
@@ -259,6 +261,49 @@ function validateJobs(errors, workflow) {
   const retentionDays = Number(artifactStep?.with?.["retention-days"]);
   if (!Number.isInteger(retentionDays) || retentionDays > 7) {
     errors.push("build artifact retention must be seven days or less");
+  }
+
+  const browserDiagnosticsStep = asArray(jobs.tests?.steps).find(
+    (step) => step.name === "Upload browser diagnostics",
+  );
+
+  if (!browserDiagnosticsStep?.uses?.startsWith("actions/upload-artifact@")) {
+    errors.push("browser diagnostics must use actions/upload-artifact");
+  }
+
+  if (
+    browserDiagnosticsStep?.with?.path !== "apps/web/test-results/playwright"
+  ) {
+    errors.push(
+      "browser diagnostics path must be apps/web/test-results/playwright",
+    );
+  }
+
+  const browserDiagnosticsRetention = Number(
+    browserDiagnosticsStep?.with?.["retention-days"],
+  );
+  if (
+    !Number.isInteger(browserDiagnosticsRetention) ||
+    browserDiagnosticsRetention < 1 ||
+    browserDiagnosticsRetention > 3
+  ) {
+    errors.push("browser diagnostics retention must be three days or less");
+  }
+
+  const browserDiagnosticsCondition = String(
+    browserDiagnosticsStep?.if ?? "",
+  ).replaceAll(/\s/gu, "");
+  if (browserDiagnosticsCondition !== "${{failure()&&!cancelled()}}") {
+    errors.push("browser diagnostics failure-only condition is required");
+  }
+
+  if (
+    browserDiagnosticsStep?.with?.["include-hidden-files"] !== false ||
+    browserDiagnosticsStep?.with?.["if-no-files-found"] !== "warn"
+  ) {
+    errors.push(
+      "browser diagnostics must exclude hidden files and allow absence",
+    );
   }
 }
 

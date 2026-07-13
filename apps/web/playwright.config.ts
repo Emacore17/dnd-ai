@@ -2,6 +2,9 @@ import { defineConfig } from "@playwright/test";
 
 const port = 3100;
 const baseURL = `http://127.0.0.1:${port}`;
+const webServerCommand = process.env.CI
+  ? "node e2e/start-production-server.mjs"
+  : `corepack pnpm@10.34.5 exec next dev --hostname 127.0.0.1 --port ${port}`;
 
 const viewportProjects = [
   { name: "mobile-320", viewport: { height: 568, width: 320 }, touch: true },
@@ -68,12 +71,16 @@ export default defineConfig({
     video: "off",
   },
   webServer: {
-    command: `corepack pnpm@10.34.5 exec next dev --hostname 127.0.0.1 --port ${port}`,
+    command: webServerCommand,
+    env: {
+      ...process.env,
+      HOSTNAME: "127.0.0.1",
+      PORT: String(port),
+    },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     url: baseURL,
   },
-  // Shared CI runners can turn CPU contention into browser long tasks.
-  // Keep the zero-long-task product gate on an uncontended worker.
+  // One worker gives interaction traces an uncontended browser process on CI.
   workers: 1,
 });

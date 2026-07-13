@@ -58,3 +58,33 @@ test("unpinned actions, privileged PR triggers and broad artifacts fail closed",
   assert.ok(errors.some((error) => error.includes("unpinned action")));
   assert.ok(errors.some((error) => error.includes("artifact path")));
 });
+
+test("browser failure diagnostics must remain narrow and short-lived", () => {
+  const unsafeWorkflow = {
+    jobs: {
+      tests: {
+        steps: [
+          {
+            name: "Upload browser diagnostics",
+            if: "${{ success() || failure() }}",
+            uses: `actions/cache@${"a".repeat(40)}`,
+            with: {
+              path: ".",
+              "retention-days": 30,
+            },
+          },
+        ],
+      },
+    },
+  };
+  const errors = validateCiDocuments(unsafeWorkflow, {});
+
+  assert.ok(errors.some((error) => error.includes("browser diagnostics path")));
+  assert.ok(
+    errors.some((error) => error.includes("browser diagnostics retention")),
+  );
+  assert.ok(
+    errors.some((error) => error.includes("browser diagnostics failure-only")),
+  );
+  assert.ok(errors.some((error) => error.includes("actions/upload-artifact")));
+});

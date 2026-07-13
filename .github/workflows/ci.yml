@@ -75,8 +75,24 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm --filter @dnd-ai/web exec playwright install --with-deps chromium
 
-      - name: Browser tests
-        run: pnpm test:e2e
+      - name: Build web for browser tests
+        run: pnpm --filter @dnd-ai/web build
+
+      - name: Browser functional tests
+        run: pnpm test:e2e:functional
+
+      - name: Browser performance smoke
+        run: pnpm test:e2e:performance
+
+      - name: Upload browser diagnostics
+        if: ${{ failure() && !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dnd-ai-playwright-${{ github.sha }}
+          path: apps/web/test-results/playwright
+          include-hidden-files: false
+          if-no-files-found: warn
+          retention-days: 3
 
   security:
     name: Security

@@ -26,6 +26,8 @@
     "test:integration": "node --test tests/integration/*.test.mjs",
     "test:contract": "node --test tests/contracts/*.test.mjs",
     "test:e2e": "corepack pnpm@10.34.5 --filter @dnd-ai/web test:e2e",
+    "test:e2e:functional": "corepack pnpm@10.34.5 --filter @dnd-ai/web test:e2e:functional",
+    "test:e2e:performance": "corepack pnpm@10.34.5 --filter @dnd-ai/web test:e2e:performance",
     "test:security": "node --test tests/security/*.test.mjs && node scripts/scan-secrets.mjs",
     "verify": "prettier --check \".github/**/*.{yml,yaml}\" \"scripts/**/*.mjs\" \"tests/**/*.mjs\" \"*.{json,mjs,yaml,yml}\" \"apps/**/*.{css,json,mjs,ts,tsx}\" \"packages/**/*.{json,ts,tsx}\" && eslint scripts tests eslint.config.mjs && eslint scripts apps packages --max-warnings 0 && turbo run lint && turbo run typecheck && node --test tests/unit/*.test.mjs && corepack pnpm@10.34.5 --filter @dnd-ai/web test:component && node --test tests/integration/*.test.mjs && node --test tests/contracts/*.test.mjs && node --test tests/security/*.test.mjs && node scripts/check-boundaries.mjs && node scripts/check-task-graph.mjs && node scripts/check-ci-workflow.mjs && node scripts/scan-secrets.mjs && turbo run build && node scripts/create-build-artifact.mjs && node scripts/verify-build-artifact.mjs && node scripts/smoke-build-artifact.mjs"
   },

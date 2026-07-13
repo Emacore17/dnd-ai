@@ -11,6 +11,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test:component": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test --config playwright.config.ts",
+    "test:e2e:functional": "playwright test --config playwright.config.ts game-shell.spec.ts",
+    "test:e2e:performance": "playwright test --config playwright.config.ts game-shell.performance.spec.ts --project=mobile-390 --repeat-each=3 --retries=0",
     "test:e2e:update": "playwright test --config playwright.config.ts --update-snapshots"
   },
   "dependencies": {

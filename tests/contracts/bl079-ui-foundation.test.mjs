@@ -198,15 +198,72 @@ test("BL-079 models safety-critical game UI with explicit view contracts", async
   assert.match(stateContract, /resources/u);
 });
 
-test("BL-079 isolates the zero-long-task browser gate from worker contention", async () => {
-  const [playwrightConfig, gameShellSpec] = await Promise.all([
+test("BL-079 measures a dedicated production performance budget", async () => {
+  const [
+    playwrightConfig,
+    productionServer,
+    performanceSpec,
+    performanceBudgetSource,
+    rootManifest,
+    webManifest,
+    workflow,
+  ] = await Promise.all([
     read("apps/web/playwright.config.ts"),
-    read("apps/web/e2e/game-shell.spec.ts"),
+    read("apps/web/e2e/start-production-server.mjs"),
+    read("apps/web/e2e/game-shell.performance.spec.ts"),
+    read("apps/web/e2e/performance-budget.mjs"),
+    readJson("package.json"),
+    readJson("apps/web/package.json"),
+    read(".github/workflows/ci.yml"),
   ]);
 
   assert.match(playwrightConfig, /workers:\s*1[,\n]/u);
   assert.match(
-    gameShellSpec,
-    /metrics\?\.longTasks,[\s\S]*?\.toEqual\(\[\]\)/u,
+    playwrightConfig,
+    /process\.env\.CI[\s\S]*?start-production-server\.mjs/u,
+  );
+  assert.match(productionServer, /\.next[\s\S]*?standalone/u);
+  assert.match(productionServer, /await cp\(sourceStaticDirectory/u);
+  assert.match(productionServer, /process\.env\.HOSTNAME/u);
+  assert.match(productionServer, /process\.env\.PORT/u);
+  assert.equal(
+    webManifest.scripts["test:e2e:functional"],
+    "playwright test --config playwright.config.ts game-shell.spec.ts",
+  );
+  assert.equal(
+    webManifest.scripts["test:e2e:performance"],
+    "playwright test --config playwright.config.ts game-shell.performance.spec.ts --project=mobile-390 --repeat-each=3 --retries=0",
+  );
+  assert.match(rootManifest.scripts["test:e2e:functional"], /@dnd-ai\/web/u);
+  assert.match(rootManifest.scripts["test:e2e:performance"], /@dnd-ai\/web/u);
+  assert.match(workflow, /pnpm --filter @dnd-ai\/web build/u);
+  assert.match(workflow, /pnpm test:e2e:functional/u);
+  assert.match(workflow, /pnpm test:e2e:performance/u);
+
+  for (const contract of [
+    /takeRecords\(\)/u,
+    /disconnect\(\)/u,
+    /long-animation-frame/u,
+    /durationThreshold:\s*16/u,
+    /testInfo\.attach/u,
+    /waitForScrollToSettle/u,
+    /state\.inputs\.push/u,
+  ]) {
+    assert.match(performanceSpec, contract);
+  }
+
+  for (const budget of [
+    /maximumInteractionDurationMs:\s*104/u,
+    /maximumEventProcessingTimeMs:\s*50/u,
+    /maximumBlockingDurationMs:\s*0/u,
+    /maximumCumulativeLayoutShift:\s*0\.1/u,
+    /input-missing/u,
+  ]) {
+    assert.match(performanceBudgetSource, budget);
+  }
+
+  assert.doesNotMatch(
+    performanceSpec,
+    /observe\(\{\s*buffered:\s*true,\s*type:\s*"longtask"\s*\}\)/u,
   );
 });
