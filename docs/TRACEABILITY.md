@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-13
-last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
+last_verified_commit: a557d73b6c8cec530e67f5292c7d48f10e987c53
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -54,7 +54,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo e i primi contract test; `BL-002` ha completato pipeline, controlli locali/CI e Ruleset required su `main`. La fondazione `BL-079` è `IN_REVIEW`: contract, component, browser, axe, visual multipiattaforma, build e performance smoke sono verdi sul working tree; i gate residui richiedono commit pulito/CI, persone/browser/device reali e lo staging ora assegnato esplicitamente a `BL-080`. `BL-003` è il prossimo task `READY` e fornisce la config necessaria al provisioning. I riferimenti futuri restano marcati `planned`; `GOV-002` estenderà il controllo task graph a link, front matter, Mermaid e generated-doc drift.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo e i primi contract test; `BL-002` ha completato pipeline, controlli locali/CI e Ruleset required su `main`. La fondazione `BL-079` è `IN_REVIEW`: contract, component, browser, axe, visual multipiattaforma, build e performance smoke sono verdi localmente. La prima run della PR ha fallito chiusa sul performance smoke conteso da due worker; `a557d73` serializza il browser mantenendo il budget a zero e attende la CI sostitutiva. I gate residui richiedono inoltre persone/browser/device reali e lo staging assegnato esplicitamente a `BL-080`. `BL-003` è il prossimo task `READY` e fornisce la config necessaria al provisioning. I riferimenti futuri restano marcati `planned`; `GOV-002` estenderà il controllo task graph a link, front matter, Mermaid e generated-doc drift.
 
 ## Governance e baseline
 
@@ -80,9 +80,9 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-040 | `apps/web/src/components/game/game-shell.tsx` | matrice Playwright in `apps/web/e2e/game-shell.spec.ts` | `PASS` automatico su otto viewport; device reale ancora manuale |
 | UX-P0-02 | Feed conversazionale, decisione e composer dominano il primo livello | BL-079, BL-040 | `game-conversation.tsx`, `narrative-turn.tsx`, `free-action-composer.tsx` | component, long-feed e visual test | `PASS`; risposta alta apre dallo speaker, stream/reconnect restano in coda |
 | UX-P0-03 | HUD secondaria in drawer/sheet; desktop senza funzioni esclusive | BL-079, BL-040 | `game-drawer.tsx`, `game-shell.tsx` | focus, safe-area, scroll e viewport matrix | `PASS`; ordine DOM condiviso e grid desktop centrata |
-| UX-P0-04 | shadcn/ui `new-york` su Radix e token semantici | BL-079 | `apps/web/components.json`, globals e `components/ui/` | `tests/contracts/bl079-ui-foundation.test.mjs` | `8/8 PASS` |
+| UX-P0-04 | shadcn/ui `new-york` su Radix e token semantici | BL-079 | `apps/web/components.json`, globals e `components/ui/` | `tests/contracts/bl079-ui-foundation.test.mjs` | `9/9 PASS`, incluso isolamento del performance gate |
 | UX-P0-05 | AI Elements selettivo non sostituisce `TurnView`, REST+SSE o idempotenza | BL-079, BL-040, BL-041 | `components/ai-elements/`, wrapper in `components/game/` | contract negativo su `useChat`/trasporto parallelo | `PASS`; integrazione REST/SSE resta fuori scope BL-079 |
-| UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all'animazione | BL-079, BL-027, BL-040 | `apps/web/src/components/motion/` | contract, hydration/reduced-motion e performance smoke | `PASS`; `0` long task nelle interazioni osservate |
+| UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all'animazione | BL-079, BL-027, BL-040 | `apps/web/src/components/motion/`, `apps/web/playwright.config.ts` | contract, hydration/reduced-motion e performance smoke seriale | `PASS` locale; `0` long task, CI sostitutiva del fix `a557d73` pending |
 | UX-P0-07 | Touch target ≥44 px, primarie ≥48 px, safe area/tastiera/zoom | BL-079, BL-012, BL-019, BL-040 | token, composer, drawer e Visual Viewport | DOM/CDP/viewport test | target, safe area e keyboard proxy `PASS`; telefono reale e zoom 200% `PENDING MANUAL` |
 | UX-P0-08 | Stile premium contemporaneo, non pseudo-medievale | BL-079 | token e shell in `src/app/` e `components/game/` | visual Windows/Linux, axe e review browser | baseline automatiche `PASS`; five-second review `PENDING HUMAN` |
 | UX-P0-09 | Dado decorativo riproduce risultato backend e possiede fallback | BL-079, BL-040, BL-043 | `rule-result-card.tsx`, `game-motion.tsx` | domain view e reduced-motion test | fondazione visuale `PASS`; integrazione col risultato server in BL-040/BL-043 |

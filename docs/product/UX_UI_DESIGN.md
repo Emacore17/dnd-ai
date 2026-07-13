@@ -2,7 +2,7 @@
 status: active
 owner: product-design-and-frontend
 last_reviewed: 2026-07-13
-last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
+last_verified_commit: a557d73b6c8cec530e67f5292c7d48f10e987c53
 source_refs:
   - docs/MVP_SPEC.md#8-esperienza-utente
   - docs/MVP_SPEC.md#21-interfaccia-utente
@@ -327,6 +327,7 @@ Il gate `BL-079` ha escluso Rive dalla shell P0: Motion e CSS soddisfano i momen
 Guardrail misurabili introdotti da `BL-079`:
 
 - `0` long task nelle interazioni core osservate dal performance smoke dopo il caricamento;
+- il performance smoke gira con un solo browser worker, così il budget misura la shell senza contesa CPU introdotta dalla matrice sul runner condiviso; la soglia non viene rilassata;
 - CLS delle interazioni ≤ `0.1`;
 - baseline first-load della route registrata nel report BL-079; una crescita gzip superiore al 10% richiede misura, motivazione e review;
 - Rive resta assente da manifest, lockfile, source e bundle iniziale finché un ADR o task consumer non supera il gate.

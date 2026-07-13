@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
+last_verified_commit: a557d73b6c8cec530e67f5292c7d48f10e987c53
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -71,6 +71,7 @@ supersedes: null
 - Spostata la route web nello `src/app`, configurati Tailwind CSS 4 e il contratto alias/token, e aggiunti al quality contract i component test e il browser harness posseduti da `BL-079`.
 - Corrette le dipendenze di `BL-079`: lo staging non è più un gate senza owner futuro, ma una dipendenza esplicita da `BL-080`; `BL-003` è il prossimo task `READY` mentre la review UI attende i gate manuali.
 - Corretto il packager su Windows/Next 16: i private-hoist senza mirror vengono omessi senza leggere lo store esterno; il launcher usa soltanto il mirror incluso e la CI richiede ora `artifact:smoke` prima dell'upload.
+- Serializzata la matrice Playwright con un solo worker: il performance smoke conserva il budget rigoroso di `0` long task senza misurare contesa CPU generata da un secondo browser sul runner condiviso; aggiunta regressione contrattuale.
 
 ### Verification
 
@@ -88,8 +89,11 @@ supersedes: null
 - PR #1 unita senza bypass nel commit `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`; post-merge run `29257721274` su `main` con tutti i cinque job `SUCCESS`.
 - Spec baseline corrente: SHA `aa892faafb3e54b76a0a37a31d3a919c9e9f05681a64501239de9c0351322805`, inclusa l'ownership preview/staging `BL-080` e la freshness BL-079; il run BL-002 usava `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90` prima degli aggiornamenti successivi.
 - Evidenze: `AGENTS_VALIDATION.txt`; `docs/testing/BL-001_VERIFICATION.md`.
-- BL-079 working tree: lint/typecheck exit `0`; contract UI `8/8`; Vitest `7` file e `26/26`; Playwright `37` casi applicabili passati e `123` skip condizionali; visual Windows e Linux `7/7` ciascuno; build `10/10` workspace.
+- BL-079 working tree: lint/typecheck exit `0`; contract UI `9/9`; Vitest `7` file e `26/26`; Playwright `37` casi applicabili passati e `123` skip condizionali; visual Windows e Linux `7/7` ciascuno; build `10/10` workspace.
 - Performance BL-079: `0` long task nelle interazioni osservate, CLS `0.0000245`; route `/` a `1.229.757` byte JS first-load non compressi, `365.057` gzip e `311.655` Brotli; Rive assente.
-- BL-079 passa a `IN_REVIEW/90%/PARTIAL`: automatismi verdi; screen reader/device/browser reali, zoom 200%, review con cinque utenti, clean commit/CI e staging restano aperti nel report dedicato.
+- BL-079 passa a `IN_REVIEW/90%/PARTIAL`: automatismi locali verdi; screen reader/device/browser reali, zoom 200%, review con cinque utenti, CI sostitutiva e staging restano aperti nel report dedicato.
 - Verify finale del working tree BL-079: exit `0` in `62,3 s`; unit `10` pass/`1` skip host, component `26`, integration `4`, contract `16`, security `8`, build `10/10`; artifact `3.172` file con checksum, secret scan e boot HTTP `PASS`.
 - Implementation commit BL-079 `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2` verificato da working tree pulito con `TURBO_FORCE=true pnpm verify`: exit `0` in `66,1 s`, 0 cache hit e boot artifact `PASS`.
+- PR #5/run `29271004267`: quality e security verdi; tests falliti chiusi sul solo performance smoke (`[83, 63]` ms e retry `[85, 53]` ms) eseguito insieme a un secondo browser; build skipped e merge gate rosso.
+- Fix `a557d73b6c8cec530e67f5292c7d48f10e987c53`: contratto `9/9`, focused CI-profile `1/1` e matrice seriale `37/37` applicabili in `49,7 s`; CI sostitutiva ancora da attestare.
+- Verify del fix più documentazione sincronizzata: exit `0` in `74,9 s`, 0 cache hit, 10/10 workspace lint/typecheck/build, unit `10` pass/`1` skip host, component `26`, integration `4`, contract `17`, security `8` e boot HTTP artifact `PASS`.
