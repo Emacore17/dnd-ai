@@ -5,7 +5,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Avventura AI",
-  description: "Un gioco di ruolo conversazionale guidato da un Dungeon Master AI."
+  description:
+    "Un gioco di ruolo conversazionale guidato da un Dungeon Master AI.",
 };
 
 export default function RootLayout({ children }: PropsWithChildren) {

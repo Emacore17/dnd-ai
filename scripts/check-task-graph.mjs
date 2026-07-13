@@ -9,7 +9,7 @@ const taskPath = path.join(repositoryRoot, "docs", "TASKS.md");
 const specPath = path.join(repositoryRoot, "docs", "MVP_SPEC.md");
 const [taskMarkdown, specMarkdown] = await Promise.all([
   readFile(taskPath, "utf8"),
-  readFile(specPath, "utf8")
+  readFile(specPath, "utf8"),
 ]);
 const errors = validateTaskDocuments(taskMarkdown, specMarkdown);
 

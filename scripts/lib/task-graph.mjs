@@ -13,7 +13,7 @@ const REQUIRED_FIELDS = [
   "Test obbligatori prima di `DONE`",
   "Documentazione e contesto",
   "Evidenze di chiusura",
-  "Note, rischi o bloccanti"
+  "Note, rischi o bloccanti",
 ];
 const UX_REFERENCE = "docs/product/UX_UI_DESIGN.md";
 const UX_ADR_REFERENCE = "docs/adr/0001-mobile-first-conversational-ui.md";
@@ -27,14 +27,16 @@ function escapeRegularExpression(value) {
 function fieldOccurrences(cardText, fieldName) {
   const expression = new RegExp(
     `^- \\*\\*${escapeRegularExpression(fieldName)}:\\*\\*(?: (.*))?$`,
-    "gm"
+    "gm",
   );
   return [...cardText.matchAll(expression)].map((match) =>
-    (match[1] ?? "").trim()
+    (match[1] ?? "").trim(),
   );
 }
 
 function parseNumericTaskId(taskId) {
+  // Task IDs are bounded metadata; this anchored expression has no wildcard branch.
+  // eslint-disable-next-line security/detect-unsafe-regex
   const match = /^(?<base>[A-Z]+-(?:[A-Z]+-?)*?)(?<number>\d+)$/.exec(taskId);
 
   if (!match?.groups) {
@@ -44,7 +46,7 @@ function parseNumericTaskId(taskId) {
   return {
     base: match.groups.base,
     number: Number(match.groups.number),
-    width: match.groups.number.length
+    width: match.groups.number.length,
   };
 }
 
@@ -98,7 +100,7 @@ export function expandDependencyExpression(expression) {
       current += 1
     ) {
       dependencies.push(
-        `${parsedStart.base}${String(current).padStart(parsedStart.width, "0")}`
+        `${parsedStart.base}${String(current).padStart(parsedStart.width, "0")}`,
       );
     }
   }
@@ -109,7 +111,7 @@ export function expandDependencyExpression(expression) {
 export function parseTaskCards(markdown) {
   const headingExpression = new RegExp(
     `^### (?<id>${TASK_ID_PATTERN})\\b[^\\r\\n]*$`,
-    "gm"
+    "gm",
   );
   const headings = [...markdown.matchAll(headingExpression)];
 
@@ -121,12 +123,12 @@ export function parseTaskCards(markdown) {
     const fields = Object.fromEntries(
       REQUIRED_FIELDS.map((fieldName) => [
         fieldName,
-        fieldOccurrences(raw, fieldName)
-      ])
+        fieldOccurrences(raw, fieldName),
+      ]),
     );
     const operationalDependencies = fieldOccurrences(
       raw,
-      "Dipendenze operative aggiuntive"
+      "Dipendenze operative aggiuntive",
     );
 
     return {
@@ -134,7 +136,7 @@ export function parseTaskCards(markdown) {
       line,
       raw,
       fields,
-      operationalDependencies
+      operationalDependencies,
     };
   });
 }
@@ -142,7 +144,7 @@ export function parseTaskCards(markdown) {
 function dependencyIds(card, errors) {
   const expressions = [
     ...(card.fields.Dipendenze ?? []),
-    ...card.operationalDependencies
+    ...card.operationalDependencies,
   ];
   const dependencies = [];
 
@@ -150,7 +152,9 @@ function dependencyIds(card, errors) {
     try {
       dependencies.push(...expandDependencyExpression(expression));
     } catch (error) {
-      errors.push(`${card.id}:${card.line} invalid-dependency: ${error.message}`);
+      errors.push(
+        `${card.id}:${card.line} invalid-dependency: ${error.message}`,
+      );
     }
   }
 
@@ -218,14 +222,14 @@ export function validateTaskGraph(markdown) {
     for (const [fieldName, occurrences] of Object.entries(card.fields)) {
       if (occurrences.length !== 1) {
         errors.push(
-          `${card.id}:${card.line} field-count ${fieldName}=${occurrences.length}`
+          `${card.id}:${card.line} field-count ${fieldName}=${occurrences.length}`,
         );
       }
     }
 
     if (card.operationalDependencies.length > 1) {
       errors.push(
-        `${card.id}:${card.line} field-count Dipendenze operative aggiuntive=${card.operationalDependencies.length}`
+        `${card.id}:${card.line} field-count Dipendenze operative aggiuntive=${card.operationalDependencies.length}`,
       );
     }
   }
@@ -238,7 +242,9 @@ export function validateTaskGraph(markdown) {
 
     for (const dependency of dependencies) {
       if (!cardsById.has(dependency)) {
-        errors.push(`${card.id}:${card.line} unknown-dependency: ${dependency}`);
+        errors.push(
+          `${card.id}:${card.line} unknown-dependency: ${dependency}`,
+        );
       }
 
       if (dependency === card.id) {
@@ -259,9 +265,8 @@ export function validateTaskGraph(markdown) {
     const status = unquote(card.fields.Stato?.[0]);
     const progress = unquote(card.fields.Progresso?.[0]);
     const testStatus = unquote(card.fields["Esito test"]?.[0]);
-    const contextVerified = card.fields["Contesto verificato"]?.[0]?.match(
-      /`(YES|NO)`/
-    )?.[1];
+    const contextVerified =
+      card.fields["Contesto verificato"]?.[0]?.match(/`(YES|NO)`/)?.[1];
 
     if (status === "IN_PROGRESS") {
       activeTasks.push(card.id);
@@ -284,12 +289,12 @@ export function validateTaskGraph(markdown) {
     if (status === "READY") {
       const incompleteDependencies = (graph.get(card.id) ?? []).filter(
         (dependency) =>
-          unquote(cardsById.get(dependency)?.fields.Stato?.[0]) !== "DONE"
+          unquote(cardsById.get(dependency)?.fields.Stato?.[0]) !== "DONE",
       );
 
       if (incompleteDependencies.length > 0) {
         errors.push(
-          `${card.id}:${card.line} ready-with-incomplete-dependencies: ${incompleteDependencies.join(", ")}`
+          `${card.id}:${card.line} ready-with-incomplete-dependencies: ${incompleteDependencies.join(", ")}`,
         );
       }
     }
@@ -305,7 +310,10 @@ export function validateTaskGraph(markdown) {
         errors.push(`${card.id}:${card.line} missing-ux-adr-reference`);
       }
 
-      if (card.id !== "BL-079" && !(graph.get(card.id) ?? []).includes("BL-079")) {
+      if (
+        card.id !== "BL-079" &&
+        !(graph.get(card.id) ?? []).includes("BL-079")
+      ) {
         errors.push(`${card.id}:${card.line} missing-bl-079-dependency`);
       }
     }
@@ -336,7 +344,7 @@ function parseSpecBacklog(specMarkdown) {
 export function validateTaskSpecParity(taskMarkdown, specMarkdown) {
   const errors = [];
   const cards = parseTaskCards(taskMarkdown).filter(({ id }) =>
-    id.startsWith("BL-")
+    id.startsWith("BL-"),
   );
   const cardsById = new Map(cards.map((card) => [card.id, card]));
   const specRows = parseSpecBacklog(specMarkdown);
@@ -348,10 +356,10 @@ export function validateTaskSpecParity(taskMarkdown, specMarkdown) {
     }
 
     const taskDependencies = expandDependencyExpression(
-      card.fields.Dipendenze?.[0] ?? "—"
+      card.fields.Dipendenze?.[0] ?? "—",
     ).sort();
     const specDependencies = expandDependencyExpression(
-      specRows.get(card.id)
+      specRows.get(card.id),
     ).sort();
 
     if (taskDependencies.join("|") !== specDependencies.join("|")) {
@@ -377,6 +385,6 @@ export function validateTaskSpecParity(taskMarkdown, specMarkdown) {
 export function validateTaskDocuments(taskMarkdown, specMarkdown) {
   return [
     ...validateTaskGraph(taskMarkdown),
-    ...validateTaskSpecParity(taskMarkdown, specMarkdown)
+    ...validateTaskSpecParity(taskMarkdown, specMarkdown),
   ].sort();
 }

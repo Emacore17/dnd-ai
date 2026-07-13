@@ -2,22 +2,30 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
   - GOV-001
   - BL-001
+  - BL-002
   - BL-079
 code_refs:
   - apps
   - packages
+  - .github/workflows/ci.yml
+  - scripts/lib/build-artifact.mjs
+  - scripts/lib/ci-workflow-policy.mjs
+  - scripts/lib/secret-scanner.mjs
   - scripts/lib/workspace-boundaries.mjs
   - scripts/lib/task-graph.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
   - tests/contracts/task-graph.test.mjs
+  - tests/contracts/ci-workflow.test.mjs
+  - tests/integration/ci-gate.test.mjs
+  - tests/security/secret-scanner.test.mjs
 supersedes: null
 ---
 
@@ -32,8 +40,8 @@ supersedes: null
 > **Versione schema task:** `1.0.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-002 — Pipeline test, scan, build e artifact`
-> **Prossimo task READY:** `—`
+> **Task attivo:** `—`
+> **Prossimo task READY:** `BL-079 — Fondazione design system e shell conversazionale mobile-first`
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -185,6 +193,9 @@ pnpm verify
 | [`docs/CHANGELOG.md`](CHANGELOG.md) | Esistente, `active`; consolidamento pianificato in `GOV-002` | Modifiche documentali/contrattuali | A ogni release/decisione significativa. |
 | [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md) | Esistente, `active` | Contratto UX/UI mobile-first e motion | Ogni cambio a gerarchia, component stack, token, responsive o motion. |
 | [`docs/adr/0001-mobile-first-conversational-ui.md`](adr/0001-mobile-first-conversational-ui.md) | Esistente, `accepted` | Decisione UI mobile-first e stack visuale | Ogni revisione della decisione o dei guardrail. |
+| [`docs/adr/0003-ci-trust-boundary-and-artifacts.md`](adr/0003-ci-trust-boundary-and-artifacts.md) | Esistente, `accepted` | Trust boundary, gate e artifact CI | Ogni modifica a trigger, permessi, cache, scan o artifact. |
+| [`docs/operations/CI_CD.md`](operations/CI_CD.md) | Esistente, `active` | Contratto operativo della pipeline | Ogni modifica a job, Ruleset, gate o ownership differita. |
+| [`docs/testing/BL-002_VERIFICATION.md`](testing/BL-002_VERIFICATION.md) | Esistente, `active` | Evidenze riproducibili BL-002 | A ogni run o cambio del commit verificato. |
 | `docs/adr/` | Registro parziale; automazione pianificata in `GOV-002` | Decisioni architetturali | Prima o insieme a decisioni non reversibili. |
 | [`docs/architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | Esistente, baseline `BL-001`; consolidamento `DOC-ARCH-001` | Architettura implementata | Ogni cambio di confine/topologia. |
 | `docs/data/DATA_MODEL.md` | Planned (`DOC-ARCH-001`) | Entità, indici, migration head | Ogni migration/schema change. |
@@ -255,7 +266,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | 6% | 16 | `GATE-M0` | Pipeline, auth, dati, osservabilità, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta | `IN_PROGRESS` | 13% | 16 | `GATE-M0` | Pipeline, auth, dati, osservabilità, fondazione UX/UI e contesto agenti operativi. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -314,10 +325,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-002 — Pipeline test, scan, build e artifact
 
-- **Stato:** `IN_PROGRESS`
-- **Progresso:** `25%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `YES` — base commit `74af8947932443de5b4df2f42f4c6aebfff7a109`; spec SHA `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`; data: `2026-07-13`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — base commit iniziale `74af8947932443de5b4df2f42f4c6aebfff7a109`; branch base dopo collegamento remote `6b9f5d281fb0185f5f6c98813e2ffcee6424e658`; spec SHA `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`; data: `2026-07-13`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-001
 - **Dipendenze operative aggiuntive:** BL-001
@@ -326,12 +337,12 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Deliverable:** Pipeline test, scan, build e artifact.
 - **Criterio di accettazione:** PR non mergeabile su gate fallito; cache non espone secret.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Test di accettazione automatizzato: PR non mergeabile su gate fallito; cache non espone secret.
-  - [ ] Pipeline su PR con job lint, typecheck, unit, integration/contract e build; un fixture fallito deve bloccare il merge.
-  - [ ] Verifica che cache, log e artifact CI non contengano secret.
-- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** Il repository non ha ancora un remote GitHub: workflow, failure propagation e policy possono essere verificati localmente, mentre Ruleset/branch protection e run URL restano il gate esterno necessario per provare che una PR non sia mergeabile.
+  - [x] Test di accettazione automatizzato: PR non mergeabile su gate fallito; cache non espone secret.
+  - [x] Pipeline su PR con job lint, typecheck, unit, integration/contract e build; un fixture fallito raggiunge e fallisce il merge gate.
+  - [x] Verifica che cache, log e artifact CI non contengano secret.
+- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0003-ci-trust-boundary-and-artifacts.md`; `docs/operations/CI_CD.md`; `docs/testing/BL-002_VERIFICATION.md`
+- **Evidenze di chiusura:** verified implementation head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; PR #1/run positiva `29255261423` PASS; [Ruleset `main-required-ci` `18877721`](https://github.com/Emacore17/dnd-ai/rules/18877721) active/strict/no bypass; PR negativa #3/run `29256736728` con `CI / Merge gate=FAILURE` e `mergeStateStatus=BLOCKED`; report `docs/testing/BL-002_VERIFICATION.md`; migration/eval/trace ID `N/A`; docs aggiornati.
+- **Note, rischi o bloccanti:** Nessun blocco residuo. La Ruleset richiede una PR e il check `CI / Merge gate` prodotto da GitHub Actions (`integration_id=15368`); la PR negativa è stata chiusa senza merge e la branch rimossa.
 
 ### BL-003 — Typed config, secret manager, local template
 
@@ -502,7 +513,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-079 — Fondazione design system e shell conversazionale mobile-first
 
-- **Stato:** `BACKLOG`
+- **Stato:** `READY`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
@@ -2089,11 +2100,12 @@ Completare safety, cost control, admin, privacy, eval, bot, load/chaos/restore e
 - **Dipendenze:** BL-063–BL-069
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §23 Requisiti non funzionali; `docs/MVP_SPEC.md` §26.10 Performance e chaos; `docs/MVP_SPEC.md` §29.8 Disaster recovery; `docs/MVP_SPEC.md` §32.4 Go/no-go; `docs/MVP_SPEC.md` §31 `BL-070`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come operatore voglio load/chaos/restore e runbook.
-- **Deliverable:** Staging tests, backup restore, incident docs.
+- **Deliverable:** Staging tests, container build riproducibile con SBOM e image scan, backup restore, deploy/rollback hardening e incident docs.
 - **Criterio di accettazione:** SLO pass; restore checksum; no Sev1; go/no-go signed.
 - **Test obbligatori prima di `DONE`:**
   - [ ] Test di accettazione automatizzato: SLO pass; restore checksum; no Sev1; go/no-go signed.
   - [ ] Load, soak, chaos, provider outage, deploy rollback e backup restore drill in staging.
+  - [ ] Container build, SBOM e image scan fail-closed con artifact riferito al commit candidato.
   - [ ] Go/no-go report: SLO/costi/security/Sev1 e checksum restore conformi.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/security/`; `docs/operations/`; `docs/testing/`
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
@@ -2418,20 +2430,20 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: BL-002
-last_completed_task: BL-001
-next_ready_task: null
-status: IN_PROGRESS
-progress: 25
+active_task: null
+last_completed_task: BL-002
+next_ready_task: BL-079
+status: DONE
+progress: 100
 started_at: 2026-07-13
 updated_at: 2026-07-13
 agent: Codex development agent
-git_branch: main
-base_commit: 74af8947932443de5b4df2f42f4c6aebfff7a109
-current_commit: 74af8947932443de5b4df2f42f4c6aebfff7a109
+git_branch: codex/bl-002-ci-foundation
+base_commit: 6b9f5d281fb0185f5f6c98813e2ffcee6424e658
+current_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
 spec_sha256: ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6
 context_verified: true
-test_status: NOT_RUN
+test_status: PASSING
 ```
 
 ## Contesto letto
@@ -2440,8 +2452,8 @@ test_status: NOT_RUN
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] ADR vigenti — ADR-0001 e ADR-0002
-- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/testing/BL-001_VERIFICATION.md`
+- [x] ADR vigenti — ADR-0001, ADR-0002 e ADR-0003
+- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CI_CD.md`; report BL-001 e BL-002
 - [x] codice, migration, contratti e test correnti — workspace e sei contract test presenti; workflow CI, suite unit/integration, scan e artifact assenti al preflight
 
 ## Piano e scope
@@ -2450,7 +2462,7 @@ test_status: NOT_RUN
 - **File/moduli previsti:** workflow GitHub Actions; script CI per secret scan, policy e manifest artifact; suite unit/integration/contract con failure fixture; ADR/runbook/report; aggiornamenti a package scripts e documenti living.
 - **Test da scrivere prima/durante:** contratto workflow e action pin; fixture fallita con exit non-zero; secret sintetico rifiutato; cache e artifact allowlisted; artifact mancante/path non ammesso fail-closed; integrazione dei comandi reali.
 - **Rischi/failure path:** action o tool non pin; `pull_request_target`; permessi write e credenziali checkout; failure inghiottita; cache/artifact troppo ampi; symlink/path traversal; audit dipendenze non disponibile; branch protection non configurabile senza remote.
-- **Fuori scope:** database/migration e container (`BL-004`/`QA-001`); schema compatibility (`BL-009`); browser/a11y e UI budget (`BL-079`/`QA-001`); eval (`BL-068`); deploy staging/production e rollback (`BL-070`).
+- **Fuori scope:** database/migration e Testcontainers (`BL-004`/`QA-001`); schema compatibility (`BL-009`); browser/a11y e UI budget (`BL-079`/`QA-001`); eval (`BL-068`); container/SBOM/image scan, deploy staging/production e rollback (`BL-070`).
 
 ## Diario sintetico
 
@@ -2462,19 +2474,29 @@ test_status: NOT_RUN
 | 2026-07-13 | 90% | Scaffold e policy implementati; corretto il failure path del pnpm globale; documentati overview, ADR-0002 e supply-chain allowlist. | `pnpm verify` `PASS`: 10/10 workspace lint/typecheck/build, 6/6 contract test, boundary/task graph `PASS`; manca la replica da worktree pulito. | Inizializzare Git, verificare il commit da worktree pulito e chiudere il task. |
 | 2026-07-13 | 100% | Inizializzato Git e verificato il commit di implementazione da worktree detached pulito con cache forzatamente disabilitata. | Commit `6cda07a60022665f321b48dd82fbeb1d9bef586f`; frozen install `0`; `TURBO_FORCE=true pnpm verify` `0`; 10/10 workspace e 6/6 contract test. | Chiudere `BL-001` e rendere `BL-002` READY. |
 | 2026-07-13 | 25% | Selezionato `BL-002`; auditati card, spec, ADR, comandi e trust boundary CI. Nessun remote Git configurato. | Preflight pulito su `74af894`; spec SHA `ed2c7882…`; task graph e 6/6 contract test risultano verdi dalla baseline. | Implementare workflow, test negativi, scansioni e artifact allowlisted. |
+| 2026-07-13 | 75% | Implementati workflow fail-closed, action pin, cache pnpm-only, SAST/audit/secret scan, fan-in stabile e artifact allowlisted con manifest SHA. Il remote è stato collegato e il branch di lavoro creato. | Unit 5 pass/1 skip host; integration 3/3; contract 8/8; security 3/3; build 10/10; artifact 3.184 file verificati; audit `No known vulnerabilities found`. | Completare documentazione, `pnpm verify`, PR verde, Ruleset e PR negativa. |
+| 2026-07-13 | 90% | Verificato il vincolo del piano GitHub: Ruleset e branch protection sul repository privato restituiscono `403`; Code Scanning non è disponibile e viene sostituito con SAST locale riproducibile senza attivare servizi a pagamento. | `pnpm scan:sast` exit `0`; fixture SAST negativa rilevata; API GitHub letta come admin. | Completare clean checkout e CI remota; mantenere BL-002 aperto finché l'enforcement non è disponibile. |
+| 2026-07-13 | 90% | Documentazione, ADR, runbook, tracciabilità e gate locali completati; hardening parent junction, mirror traced e scanner supply-chain incluso. | `pnpm verify` exit `0` in 74,4 s; 10/10 lint/typecheck/build, 9+1 unit, 3 integration, 8 contract, 7 security, SAST/policy/scan/artifact PASS. | Committare, verificare da checkout pulito e aprire PR; Ruleset resta bloccata dal piano GitHub. |
+| 2026-07-13 | 90% | Congelato e verificato il commit di implementazione da worktree detached pulito, con lockfile frozen e cache Turbo forzatamente ignorata. | Commit `f9330fed11e623e84fa7e32032dca95c4e7ee308`; install exit `0`; `TURBO_FORCE=true pnpm verify` exit `0` in 73,7 s. | Aprire PR, verificare CI/log/artifact e creare la PR negativa. |
+| 2026-07-13 | 90% | La prima run Ubuntu ha rilevato un link Next interno al mirror standalone non presente su Windows; corretto il packager mantenendo il confinement fail-closed. | PR #1 run `29253365500`: quality/security/tests verdi, build e merge gate rossi come previsto; fix locale `pnpm verify` exit `0`. | Committare il fix, rieseguire clean verify e attendere la nuova run remota. |
+| 2026-07-13 | 90% | Il fix Linux è stato congelato e verificato da worktree detached pulito senza cache riutilizzata. | Head `049748443aa6fa83496bfc5b996560312b6fd48d`; frozen install `0`; `TURBO_FORCE=true pnpm verify` `0` in 63,4 s. | Push e nuova run della PR #1. |
+| 2026-07-13 | 90% | La seconda run Ubuntu ha eseguito il test symlink saltato su Windows e ristretto correttamente l'eccezione ai soli output Next con mirror configurato. | Run `29254060444`: quality/security verdi, tests/gate rossi, build skipped; working tree `TURBO_FORCE=true pnpm verify` `0` in 60,9 s. | Committare, clean verify e rieseguire la PR. |
+| 2026-07-13 | 90% | Congelata e verificata da checkout pulito la policy symlink finale, inclusa l'eccezione Next e il rifiuto non-Next. | Head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; frozen install `0`; `TURBO_FORCE=true pnpm verify` `0` in 66,0 s. | Push e terza run PR #1. |
+| 2026-07-13 | 90% | CI positiva, log/artifact e PR negativa completati; BL-002 passa a `BLOCKED` sul solo enforcement GitHub non disponibile nel piano corrente. | Run `29254494868` 5/5 job PASS; log scan 5 job PASS; artifact 3.205 file PASS; run negativa `29254866626` gate FAIL ma PR #2 `MERGEABLE/UNSTABLE`. | Decisione Product Owner: piano compatibile oppure repository pubblico. |
+| 2026-07-13 | 100% | Il repository è stato reso pubblico dal Product Owner; attivata la Ruleset `main-required-ci` senza bypass e chiusa la nuova prova negativa. | Ruleset `18877721` active/strict; run negativa `29256736728` con tests/gate rossi, artifact skipped e PR #3 `mergeStateStatus=BLOCKED`; `TURBO_FORCE=true pnpm verify` sul working tree di chiusura exit `0` in 53,9 s; branch di prova rimossa. | Chiudere BL-002 e rendere `BL-079` READY. |
 
 ## Chiusura
 
-- **Commit/PR:** in corso da base `74af8947932443de5b4df2f42f4c6aebfff7a109`; remote/PR non disponibile
-- **Comandi eseguiti:** preflight documentale e Git; implementazione/test non ancora eseguiti
-- **Exit code:** preflight `0`; suite del change `NOT_RUN`
-- **Report/CI URL o path:** pianificato `docs/testing/BL-002_VERIFICATION.md`; CI URL non disponibile senza remote
+- **Commit/PR:** branch `codex/bl-002-ci-foundation`; verified implementation head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; PR #1 pronta al merge tramite Ruleset
+- **Comandi eseguiti:** `pnpm format:check`; `pnpm lint`; `pnpm typecheck`; `pnpm test:unit`; `pnpm test:integration`; `pnpm test:contract`; `pnpm test:security`; `pnpm scan:sast`; `pnpm boundaries:check`; `pnpm tasks:check`; `pnpm ci:workflow:check`; `pnpm build`; `pnpm artifact:prepare`; `pnpm artifact:verify`; `pnpm audit --audit-level=moderate`
+- **Exit code:** `0` per i comandi completati incluso clean-worktree verify dell'implementation head in 66,0 s e `TURBO_FORCE=true pnpm verify` sul working tree di chiusura in 53,9 s; fixture CI intenzionale `1` asserito; le run negative hanno fallito chiuso come previsto
+- **Report/CI URL o path:** `docs/testing/BL-002_VERIFICATION.md`; PR #1; run verde `29255261423`; Ruleset `18877721`; PR negativa #3 chiusa; run negativa `29256736728`
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** `N/A`
 - **Prompt/model/eval version:** `N/A`
-- **Documenti aggiornati:** in corso
-- **Rischi residui/TODO tracciati:** branch protection/run CI reale senza remote; `BL-003`, `BL-004`, `BL-009`, `BL-079`, `QA-001`, `BL-068`, `BL-070`
-- **Task successivo reso READY:** nessuno finché `BL-002` non supera il gate esterno
+- **Documenti aggiornati:** `AGENTS.md`; `docs/CONTEXT.md`; `docs/TASKS.md`; `docs/TRACEABILITY.md`; `docs/CHANGELOG.md`; `docs/README.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; ADR-0003; `docs/operations/CI_CD.md`; report BL-002
+- **Rischi residui/TODO tracciati:** nessuno nel perimetro BL-002; gate differiti mappati a `BL-004`, `BL-009`, `BL-079`, `QA-001`, `BL-068`, `BL-070`
+- **Task successivo reso READY:** `BL-079`
 
 
 ## 21. Context Sync Log
@@ -2489,6 +2511,11 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `N/A` | GOV-001 | Contesto living e UX/UI | Completato il bootstrap, accettata ADR-0001, aggiunto `BL-079` P0 e aggiornata la spec alla baseline mobile-first SHA `b639a75c26ca0dc17e54d9f1c8816de7514a5e2d54ea4cfa733f275e18fbcd84`. | BL-001, BL-002, BL-012, BL-019, BL-027, BL-040, QA-001, GOV-002 |
 | 2026-07-13 | `6cda07a` | BL-001 | Backlog, monorepo e confini | Allineati consumer UX→`BL-079`, dipendenze differite e riferimenti; creati 10 workspace, policy import/task graph, test negativi, overview e ADR-0002. Spec SHA `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90`. | BL-002, BL-003, BL-004, BL-079, GOV-002, QA-001 |
 | 2026-07-13 | `6cda07a` | BL-001 closure | Front matter e baseline | Registrato il commit verificato nei documenti living; corpo normativo invariato. Nuova spec SHA `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`. | Tutti i task aperti alla prossima cold start |
+| 2026-07-13 | `f9330fe` | BL-002 | Pipeline, ADR-0003 e trust boundary | Aggiunti gate fail-closed, SAST/secret/audit, artifact allowlisted e remote GitHub; registrato il blocco Ruleset del piano privato senza modificare privacy o spesa. | BL-002, BL-070, QA-001, GOV-002 |
+| 2026-07-13 | `0497484` | BL-002 CI fix | Artifact Next standalone | Accettati soltanto i symlink Linux già confinati nel mirror traced; ogni target esterno continua a richiedere rimappatura allowlisted. | BL-002, BL-070 |
+| 2026-07-13 | `7c6c707` | BL-002 CI fix | Artifact negative path | Limitata l'eccezione ai soli output Next configurati; il negative test Linux non-Next resta fail-closed. | BL-002, BL-070 |
+| 2026-07-13 | `7c6c707` | BL-002 remote evidence | GitHub PR/check/artifact | Run positiva e negativa, log scan e artifact remoto verificati; task bloccato unicamente dal piano GitHub che non espone Ruleset/branch protection sul repository privato. | BL-002, BL-079 |
+| 2026-07-13 | `f1be878` | BL-002 closure | GitHub Ruleset e negative merge gate | Repository pubblico verificato; attivata Ruleset `18877721` active/strict/no bypass e confermato `mergeStateStatus=BLOCKED` sulla PR negativa #3/run `29256736728`. BL-002 chiuso e BL-079 reso READY. | BL-079, GOV-002, BL-070 |
 | — | — | — | — | — | — |
 
 

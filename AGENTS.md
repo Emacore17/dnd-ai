@@ -2,17 +2,21 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: 7c6c7071d027c55aeffbc7279b8ca3765ea26c37
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
   - docs/product/UX_UI_DESIGN.md
 related_tasks:
   - GOV-001
+  - BL-002
   - BL-079
-code_refs: []
+code_refs:
+  - .github/workflows/ci.yml
+  - scripts/lib/ci-workflow-policy.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
+  - tests/contracts/ci-workflow.test.mjs
 supersedes: null
 ---
 
@@ -229,6 +233,8 @@ pnpm verify
 ```
 
 Finché lo scaffold non espone questi script, usare comandi equivalenti espliciti e registrarli nelle evidenze. Non dichiarare un test “passato” se non è stato eseguito sul commit o sul contenuto indicato.
+
+Il check remoto stabile da rendere obbligatorio su `main` è `CI / Merge gate`: usa `always()` e fallisce se quality, test, security o build/artifact non terminano con `success`. La CI su codice PR usa soltanto `pull_request`, permessi minimi e action pin a SHA completo; `pull_request_target` è vietato. La cache ammessa nel workflow base è il solo store pnpm lockfile-scoped, mai `.env`, output, log o artifact.
 
 ### 6.5 Chiusura
 

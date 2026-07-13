@@ -2,13 +2,14 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
   - AGENTS.md#9-confini-architetturali-e-struttura-target
 related_tasks:
   - BL-001
+  - BL-002
   - DOC-ARCH-001
 code_refs:
   - apps/web
@@ -16,8 +17,11 @@ code_refs:
   - apps/worker
   - packages
   - scripts/lib/workspace-boundaries.mjs
+  - .github/workflows/ci.yml
+  - scripts/lib/ci-workflow-policy.mjs
 test_refs:
   - tests/contracts/workspace-boundaries.test.mjs
+  - tests/contracts/ci-workflow.test.mjs
 supersedes: null
 ---
 
@@ -75,7 +79,7 @@ TypeScript 7 non è stato selezionato perché `typescript-eslint@8.63.0` dichiar
 
 La supply-chain policy pnpm permette install script soltanto a `sharp` (runtime immagini di Next) e `unrs-resolver` (resolver nativo usato dal lint); ogni nuovo script transitive resta bloccato finché non viene revisionato e aggiunto esplicitamente ad [`allowBuilds`](https://pnpm.io/settings#allowbuilds).
 
-## Comandi disponibili in BL-001
+## Comandi disponibili in BL-001/BL-002
 
 ```bash
 corepack pnpm@10.34.5 install --frozen-lockfile
@@ -83,13 +87,23 @@ corepack pnpm@10.34.5 lint
 corepack pnpm@10.34.5 typecheck
 corepack pnpm@10.34.5 build
 corepack pnpm@10.34.5 test:contract
+corepack pnpm@10.34.5 test:security
+corepack pnpm@10.34.5 scan:sast
 corepack pnpm@10.34.5 boundaries:check
 corepack pnpm@10.34.5 tasks:check
 corepack pnpm@10.34.5 verify
 ```
 
-`verify` copre il perimetro di `BL-001`. Le suite complete di `docs/TASKS.md` §5, CI, test container e browser harness comune restano responsabilità di `BL-002` e `QA-001`.
+`verify` copre format, lint, typecheck, unit, integration, contract, security, package/task/CI policy, build e artifact verification. Test container, browser/E2E, migration, eval, bot e load restano responsabilità dei task proprietari, soprattutto `QA-001`; nessun comando futuro è simulato da un no-op.
+
+## CI e supply chain
+
+`.github/workflows/ci.yml` separa quality, test, security e build. `CI / Merge gate` usa `always()` e considera valido soltanto `success` per ogni job richiesto, così failure, cancellation e skip non vengono mascherati. Il workflow usa `pull_request`, push `main`, merge queue e dispatch manuale; `pull_request_target` è vietato dalla policy automatica.
+
+Le action esterne sono pin a SHA completo, checkout non persiste credenziali e i permessi globali sono read-only. La cache gestita da `setup-node` contiene soltanto lo store pnpm indicizzato dal lockfile. Security esegue SAST locale fail-on-warning, test/secret scan e dependency audit; non riceve secret applicativi.
+
+Il build produce `artifacts/bl002`: `scripts/lib/build-artifact.mjs` copia soltanto output esplicitamente ammessi, dereferenzia solo i junction pnpm interni richiesti da Next standalone, rifiuta link esterni/path sensibili, scansiona i file e registra byte+SHA-256 in `build-artifact-v1`. L’upload usa soltanto questo staging validato.
 
 ## Frontend e design
 
-`apps/web` contiene una pagina Server Component minima soltanto per validare il build Next.js. Non è la shell di gioco e non anticipa componenti ad hoc. `BL-079`, dipendente da `BL-001` e `BL-002`, installerà shadcn/ui, AI Elements selettivi, Motion e il sistema visuale descritto in `docs/product/UX_UI_DESIGN.md`.
+`apps/web` contiene una pagina Server Component minima soltanto per validare il build Next.js. Non è la shell di gioco e non anticipa componenti ad hoc. `BL-079`, ora `READY` dopo la chiusura di `BL-001` e `BL-002`, installerà shadcn/ui, AI Elements selettivi, Motion e il sistema visuale descritto in `docs/product/UX_UI_DESIGN.md`.

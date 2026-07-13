@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Check package boundaries
+        run: pnpm boundaries:check
+
+      - name: Check task graph
+        run: pnpm tasks:check
+
+      - name: Check CI policy
+        run: pnpm ci:workflow:check
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Integration tests
+        run: pnpm test:integration
+
+      - name: Contract tests
+        run: pnpm test:contract
+
+  security:
+    name: Security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
+
+      - name: Static application security testing
+        run: pnpm scan:sast
+
+      - name: Run security tests and secret scan
+        run: pnpm test:security
+
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high
+
+  build:
+    name: Build artifact
+    needs:
+      - quality
+      - tests
+      - security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
+
+      - name: Build workspace
+        run: pnpm build
+
+      - name: Prepare allowlisted artifact
+        run: pnpm artifact:prepare
+
+      - name: Verify artifact manifest
+        run: pnpm artifact:verify
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dnd-ai-build-${{ github.sha }}
+          path: artifacts/bl002
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+  ci-required:
+    name: CI / Merge gate
+    if: ${{ always() }}
+    needs:
+      - quality
+      - tests
+      - security
+      - build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .node-version
+
+      - name: Assert every required job passed
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          TESTS_RESULT: ${{ needs.tests.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: node scripts/assert-ci-results.mjs
