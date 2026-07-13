@@ -1,5 +1,5 @@
-import { execFile } from "node:child_process";
-import { lstat, readFile } from "node:fs/promises";
+import { execFile, spawn } from "node:child_process";
+import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -132,7 +132,126 @@ export async function listRepositoryFiles(repositoryRoot) {
     },
   );
 
-  return stdout.toString("utf8").split("\0").filter(Boolean).sort();
+  const gitFiles = stdout.toString("utf8").split("\0").filter(Boolean);
+  const nonRegularEntries =
+    await listUnignoredNonRegularEntries(repositoryRoot);
+
+  return [...new Set([...gitFiles, ...nonRegularEntries])].sort();
+}
+
+async function listIgnoredPaths(repositoryRoot, relativePaths) {
+  const ignoredPaths = new Set();
+  const batchSize = 200;
+
+  for (let offset = 0; offset < relativePaths.length; offset += batchSize) {
+    const batch = relativePaths.slice(offset, offset + batchSize);
+
+    for (const ignoredPath of (await runGitCheckIgnore(repositoryRoot, batch))
+      .split("\0")
+      .filter(Boolean)) {
+      ignoredPaths.add(ignoredPath.replaceAll(path.sep, "/"));
+    }
+  }
+
+  return ignoredPaths;
+}
+
+function runGitCheckIgnore(repositoryRoot, relativePaths) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      "git",
+      ["check-ignore", "--no-index", "-z", "--stdin"],
+      { cwd: repositoryRoot, stdio: ["pipe", "pipe", "pipe"] },
+    );
+    let stdout = "";
+    let stderr = "";
+    let settled = false;
+
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+
+    const fail = (error) => {
+      if (!settled) {
+        settled = true;
+        reject(error);
+      }
+    };
+
+    child.on("error", fail);
+    child.stdin.on("error", fail);
+    child.on("close", (code) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+
+      if (code === 0 || code === 1) {
+        resolve(stdout);
+        return;
+      }
+
+      reject(
+        new Error(
+          `git check-ignore failed with exit code ${code}: ${stderr.trim()}`,
+        ),
+      );
+    });
+    child.stdin.end(`${relativePaths.join("\0")}\0`, "utf8");
+  });
+}
+
+async function listUnignoredNonRegularEntries(repositoryRoot) {
+  const nonRegularEntries = [];
+
+  async function walk(relativeDirectory) {
+    const directoryPath = path.join(repositoryRoot, relativeDirectory);
+    let entries;
+
+    try {
+      entries = await readdir(directoryPath, { withFileTypes: true });
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        return;
+      }
+
+      throw error;
+    }
+
+    const candidates = entries
+      .filter((entry) => entry.name !== ".git")
+      .map((entry) => ({
+        entry,
+        relativePath: path
+          .join(relativeDirectory, entry.name)
+          .replaceAll(path.sep, "/"),
+      }));
+    const ignoredPaths = await listIgnoredPaths(
+      repositoryRoot,
+      candidates.map(({ relativePath }) => relativePath),
+    );
+
+    for (const { entry, relativePath } of candidates) {
+      if (ignoredPaths.has(relativePath)) {
+        continue;
+      }
+
+      if (entry.isDirectory()) {
+        await walk(relativePath);
+      } else if (!entry.isFile()) {
+        nonRegularEntries.push(relativePath);
+      }
+    }
+  }
+
+  await walk("");
+  return nonRegularEntries;
 }
 
 export async function scanRepositoryFiles(repositoryRoot) {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { Buffer } from "node:buffer";
 import { execFile } from "node:child_process";
-import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -152,10 +152,17 @@ test("repository scan rejects non-regular files without opening them", async (co
   context.after(() => rm(repositoryRoot, { force: true, recursive: true }));
 
   await execFileAsync("git", ["init", "--quiet"], { cwd: repositoryRoot });
-  await writeFile(path.join(repositoryRoot, ".gitignore"), "ignored.txt\n");
-  await execFileAsync("mkfifo", ["named-pipe"], { cwd: repositoryRoot });
+  await writeFile(path.join(repositoryRoot, ".gitignore"), "ignored-pipe\n");
+  await mkdir(path.join(repositoryRoot, "nested"));
+  await execFileAsync("mkfifo", ["nested/named-pipe", "ignored-pipe"], {
+    cwd: repositoryRoot,
+  });
 
   assert.deepEqual(await scanRepositoryFiles(repositoryRoot), [
-    { filePath: "named-pipe", line: 1, ruleId: "non-regular-file" },
+    {
+      filePath: "nested/named-pipe",
+      line: 1,
+      ruleId: "non-regular-file",
+    },
   ]);
 });
