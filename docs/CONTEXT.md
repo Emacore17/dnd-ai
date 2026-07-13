@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: unversioned
+last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -30,13 +30,13 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-13 |
 | Repository | Git inizializzato durante `BL-001` |
-| Branch/commit | `main`; initial commit pending |
+| Branch/commit | `main`; implementation verificata `6cda07a60022665f321b48dd82fbeb1d9bef586f` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
-| SHA-256 specifica | `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90` |
+| SHA-256 specifica | `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-001 — IN_REVIEW (90%)` |
-| Ultimo task completato | `GOV-001 — DONE/PASSING` |
-| Prossimo task READY | `—`; `BL-002` dipende dalla chiusura di `BL-001` |
+| Task attivo | `—` |
+| Ultimo task completato | `BL-001 — DONE/PASSING` |
+| Prossimo task READY | `BL-002 — Pipeline test, scan, build e artifact` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
@@ -109,7 +109,6 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 | ID | Rischio | Mitigazione/owner |
 |---|---|---|
-| CTX-R01 | Repository non ancora versionato durante l’implementazione | inizializzare Git prima della clean-worktree verification di `BL-001` |
 | CTX-R02 | `tasks:check` copre il grafo, non l’intero `docs:check` | `GOV-002` estende a link/front matter/Mermaid/generated drift |
 | CTX-R03 | App/package sono scaffold senza contratti o feature | task M0 proprietari; non inferire dominio dalle entry point vuote |
 | CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` in M0 e dipendenza documentale per i task UI |
@@ -117,4 +116,10 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Completare `BL-001`: scaffold, test negativo dei confini, build/lint/typecheck di ogni workspace, documentazione architetturale ed evidenze. `BL-079` resta `BACKLOG` fino al completamento di `BL-001` e `BL-002`.
+Selezionare `BL-002` e implementare la pipeline locale/CI e gli artifact previsti dalla card. `BL-079` resta `BACKLOG` fino al completamento di `BL-002`, poi diventa la fondazione UI da eseguire prima delle feature utente.
+
+## Rischi chiusi
+
+| ID | Chiusura | Evidenza |
+|---|---|---|
+| CTX-R01 | Git inizializzato e clean-worktree verification completata | commit `6cda07a60022665f321b48dd82fbeb1d9bef586f`; `docs/testing/BL-001_VERIFICATION.md` |

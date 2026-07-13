@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: unversioned
+last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -38,6 +38,7 @@ supersedes: null
 | [`adr/0001-mobile-first-conversational-ui.md`](adr/0001-mobile-first-conversational-ui.md) | Decisione accepted su shell, stack visuale e guardrail |
 | [`architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | Monorepo implementato, direzioni di dipendenza e toolchain |
 | [`adr/0002-monorepo-package-boundaries.md`](adr/0002-monorepo-package-boundaries.md) | Decisione accepted su workspace e boundary enforcement |
+| [`testing/BL-001_VERIFICATION.md`](testing/BL-001_VERIFICATION.md) | Evidenza riproducibile della clean-worktree verification di BL-001 |
 
 ## Documenti pianificati
 

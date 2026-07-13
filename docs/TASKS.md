@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: unversioned
+last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -27,13 +27,13 @@ supersedes: null
 > **Punto di ingresso agente:** [`AGENTS.md`](../AGENTS.md)
 > **Specifica canonica:** [`docs/MVP_SPEC.md`](MVP_SPEC.md)
 > **Studio UX/UI:** [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md)
-> **Baseline specifica:** SHA-256 `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90`
+> **Baseline specifica:** SHA-256 `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`
 > **Data baseline:** `2026-07-13`
 > **Versione schema task:** `1.0.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-001 — IN_REVIEW`
-> **Prossimo task READY:** `—`; `BL-002` si sblocca alla chiusura di `BL-001`
+> **Task attivo:** `—`
+> **Prossimo task READY:** `BL-002 — Pipeline test, scan, build e artifact`
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -293,10 +293,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-001 — Configurare workspace, app e package boundaries
 
-- **Stato:** `IN_REVIEW`
-- **Progresso:** `90%`
-- **Esito test:** `PARTIAL`
-- **Contesto verificato:** `YES` — branch `main`, initial commit pending; spec SHA `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90`; data: `2026-07-13`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — commit `6cda07a60022665f321b48dd82fbeb1d9bef586f`; spec SHA `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90`; data: `2026-07-13`
 - **Priorità / stima:** `P0` / `S`
 - **Dipendenze:** —
 - **Dipendenze operative aggiuntive:** GOV-001
@@ -306,15 +306,15 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Criterio di accettazione:** Build/lint/typecheck di tutte le app; import boundaries testate.
 - **Test obbligatori prima di `DONE`:**
   - [x] Test di accettazione automatizzato: Build/lint/typecheck di tutte le app; import boundaries testate.
-  - [ ] Build, lint e typecheck da checkout pulito su tutte le app/package.
+  - [x] Build, lint e typecheck da checkout pulito su tutte le app/package.
   - [x] Test automatico delle dependency/import boundaries con almeno un caso vietato che deve fallire.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+- **Evidenze di chiusura:** commit `6cda07a60022665f321b48dd82fbeb1d9bef586f`; `install --frozen-lockfile: 0`; `TURBO_FORCE=true pnpm verify: 0`; report `docs/testing/BL-001_VERIFICATION.md`; migration/eval/trace ID `N/A`; overview, ADR-0002, contesto e tracciabilità aggiornati.
+- **Note, rischi o bloccanti:** Nessun blocco residuo nel perimetro. CI e harness completi restano tracciati in `BL-002`/`QA-001`; shadcn/ui e shell visuale in `BL-079`.
 
 ### BL-002 — Pipeline test, scan, build e artifact
 
-- **Stato:** `BACKLOG`
+- **Stato:** `READY`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
@@ -2418,20 +2418,20 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: BL-001
-last_completed_task: GOV-001
-next_ready_task: null
-status: IN_REVIEW
-progress: 90
+active_task: null
+last_completed_task: BL-001
+next_ready_task: BL-002
+status: DONE
+progress: 100
 started_at: 2026-07-13
 updated_at: 2026-07-13
 agent: Codex development agent
 git_branch: main
-base_commit: null
-current_commit: null
+base_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+current_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
 spec_sha256: 5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90
 context_verified: true
-test_status: PARTIAL
+test_status: PASSING
 ```
 
 ## Contesto letto
@@ -2460,19 +2460,20 @@ test_status: PARTIAL
 | 2026-07-13 | 100% | Completati contesto, indice, tracciabilità, changelog; allineata la direzione UX/UI mobile-first con studio, ADR e `BL-079`. | Structural audit e cold-start finale `PASS`; spec SHA `b639a75c26ca0dc17e54d9f1c8816de7514a5e2d54ea4cfa733f275e18fbcd84`. | Selezionare `BL-001` in una nuova sessione di sviluppo. |
 | 2026-07-13 | 25% | Auditati 101 task e 79 righe BL: grafo senza cicli/ID orfani; formalizzati i consumer UI di `BL-079`, le dipendenze differite e l’ownership del browser harness. Selezionato `BL-001`. | Nuova spec SHA `6c40a5c2b42d496c4977df157c19984175e643684cf5b2f1ec8e7ea47fc74578`; test implementativi ancora `NOT_RUN`. | Creare scaffold, checker e test negativi. |
 | 2026-07-13 | 90% | Scaffold e policy implementati; corretto il failure path del pnpm globale; documentati overview, ADR-0002 e supply-chain allowlist. | `pnpm verify` `PASS`: 10/10 workspace lint/typecheck/build, 6/6 contract test, boundary/task graph `PASS`; manca la replica da worktree pulito. | Inizializzare Git, verificare il commit da worktree pulito e chiudere il task. |
+| 2026-07-13 | 100% | Inizializzato Git e verificato il commit di implementazione da worktree detached pulito con cache forzatamente disabilitata. | Commit `6cda07a60022665f321b48dd82fbeb1d9bef586f`; frozen install `0`; `TURBO_FORCE=true pnpm verify` `0`; 10/10 workspace e 6/6 contract test. | Chiudere `BL-001` e rendere `BL-002` READY. |
 
 ## Chiusura
 
-- **Commit/PR:** `N/A — task in corso; repository unversioned`
-- **Comandi eseguiti:** preflight Git/file/hash; audit strutturale card, dipendenze, cicli e parity spec/TASKS; query versioni npm ufficiali
-- **Exit code:** `0` per i controlli completati; suite BL-001 non ancora eseguita
-- **Report/CI URL o path:** `—`
+- **Commit/PR:** `6cda07a60022665f321b48dd82fbeb1d9bef586f`
+- **Comandi eseguiti:** `corepack pnpm@10.34.5 install --frozen-lockfile`; `$env:TURBO_FORCE='true'; corepack pnpm@10.34.5 verify`; `git status --short --branch`; staged secret scan; `git diff --check`
+- **Exit code:** `0` per frozen install, verify, status, secret scan e diff check; la fixture vietata restituisce intenzionalmente `1` ed è asserita dal test
+- **Report/CI URL o path:** `docs/testing/BL-001_VERIFICATION.md`
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** `N/A`
 - **Prompt/model/eval version:** `N/A`
-- **Documenti aggiornati:** `docs/MVP_SPEC.md`, `docs/TASKS.md`, `docs/CONTEXT.md`, `docs/product/UX_UI_DESIGN.md`, `docs/adr/0001-mobile-first-conversational-ui.md`
-- **Rischi residui/TODO tracciati:** `CTX-R01..CTX-R05`, `GOV-002`, `BL-079`; verifica completa ancora aperta
-- **Task successivo reso READY:** `—`; `BL-002` dipende da `BL-001`
+- **Documenti aggiornati:** `docs/MVP_SPEC.md`, `docs/TASKS.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, `docs/CHANGELOG.md`, `docs/README.md`, `docs/product/UX_UI_DESIGN.md`, ADR-0001, ADR-0002, `docs/architecture/SYSTEM_OVERVIEW.md`, report BL-001
+- **Rischi residui/TODO tracciati:** `CTX-R02..CTX-R05`, `GOV-002`, `QA-001`, `BL-079`
+- **Task successivo reso READY:** `BL-002`
 
 
 ## 21. Context Sync Log
@@ -2485,6 +2486,8 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `N/A` | Allineamento BL-051 | `docs/MVP_SPEC.md` / tool suite | Corretto il conteggio da 21 a 23 tool per allinearlo all’allowlist obbligatoria. | BL-032, BL-051, DOC-RULES-001 |
 | 2026-07-13 | `N/A` | GOV-001 | `AGENTS.md`, `TASKS.md`, `docs/MVP_SPEC.md` | Creato e validato l’entry point agente (SHA `1c53683f00393fd1a992287d7efdd8d1b8bb9b107b6804869ead80761148756c`), formalizzati workflow, clean code, documentazione e uso sicuro del browser; aggiunti backlink. Nuova spec SHA `fe49613992adf7f476bbd56bc279ca76ddfc79bfc7b8d20272da2142c5594a83` dovuta alla sola navigazione. | GOV-001, GOV-002, tutti i task alla cold start |
 | 2026-07-13 | `N/A` | GOV-001 | Contesto living e UX/UI | Completato il bootstrap, accettata ADR-0001, aggiunto `BL-079` P0 e aggiornata la spec alla baseline mobile-first SHA `b639a75c26ca0dc17e54d9f1c8816de7514a5e2d54ea4cfa733f275e18fbcd84`. | BL-001, BL-002, BL-012, BL-019, BL-027, BL-040, QA-001, GOV-002 |
+| 2026-07-13 | `6cda07a` | BL-001 | Backlog, monorepo e confini | Allineati consumer UX→`BL-079`, dipendenze differite e riferimenti; creati 10 workspace, policy import/task graph, test negativi, overview e ADR-0002. Spec SHA `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90`. | BL-002, BL-003, BL-004, BL-079, GOV-002, QA-001 |
+| 2026-07-13 | `6cda07a` | BL-001 closure | Front matter e baseline | Registrato il commit verificato nei documenti living; corpo normativo invariato. Nuova spec SHA `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`. | Tutti i task aperti alla prossima cold start |
 | — | — | — | — | — | — |
 
 

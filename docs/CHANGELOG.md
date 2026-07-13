@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: unversioned
+last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -42,6 +42,6 @@ supersedes: null
 
 ### Verification
 
-- Repository: `unversioned`.
-- Spec baseline: registrata in `docs/CONTEXT.md` e `docs/TASKS.md`.
-- Evidenza: `AGENTS_VALIDATION.txt`.
+- Repository: Git `main`; implementation commit BL-001 `6cda07a60022665f321b48dd82fbeb1d9bef586f`.
+- Spec baseline corrente: SHA `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`; il run sul commit di implementazione usava `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90` prima del solo aggiornamento front matter.
+- Evidenze: `AGENTS_VALIDATION.txt`; `docs/testing/BL-001_VERIFICATION.md`.

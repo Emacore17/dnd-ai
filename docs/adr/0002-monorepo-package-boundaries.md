@@ -2,7 +2,7 @@
 status: accepted
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: unversioned
+last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
 source_refs:
   - docs/MVP_SPEC.md#112-forma-del-sistema
   - docs/MVP_SPEC.md#113-moduli-applicativi

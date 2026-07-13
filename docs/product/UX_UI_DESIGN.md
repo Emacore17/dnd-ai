@@ -2,7 +2,7 @@
 status: active
 owner: product-design-and-frontend
 last_reviewed: 2026-07-13
-last_verified_commit: unversioned
+last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
 source_refs:
   - docs/MVP_SPEC.md#8-esperienza-utente
   - docs/MVP_SPEC.md#21-interfaccia-utente
