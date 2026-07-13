@@ -264,4 +264,27 @@ test("Next dependency links require their traced standalone mirror", async (cont
     ),
     "export const traced = true;\n",
   );
+
+  await unlink(dependencyLink);
+  if (
+    !(await createDirectoryLinkOrSkip(context, mirroredPackage, dependencyLink))
+  ) {
+    return;
+  }
+  await prepareBuildArtifact(fixture);
+
+  assert.equal(
+    await readFile(
+      path.join(
+        fixture.outputDirectory,
+        "payload",
+        "web",
+        "node_modules",
+        "example",
+        "index.js",
+      ),
+      "utf8",
+    ),
+    "export const traced = true;\n",
+  );
 });

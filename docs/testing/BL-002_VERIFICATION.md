@@ -73,6 +73,10 @@ I tag sono stati risolti il 2026-07-13 tramite release API e `git ls-remote` dei
 
 Il repository GitHub è privato e Code Scanning non è abilitato: la relativa API ha restituito `403`. Per non attivare implicitamente un servizio potenzialmente a pagamento, la pipeline usa `eslint-plugin-security@4.0.1` (Apache-2.0) in configurazione flat `recommended`, con `--max-warnings 0`. Una security test dimostra che una chiamata `eval` non affidabile viene rilevata. Gli script CI escludono soltanto le regole generiche su path/key dinamici già coperte da boundary, artifact, policy e negative-path test dedicati.
 
+## Iterazione CI remota
+
+La prima run della PR #1, [`29253365500`](https://github.com/Emacore17/dnd-ai/actions/runs/29253365500), ha verificato il failure path: `Quality`, `Security` e `Tests` sono passati; `Build artifact` ha fallito su un symlink Linux di Next già risolto dentro `.next/standalone`; `CI / Merge gate` ha propagato il fallimento. La policy è stata corretta per accettare questo solo target interno confinato, continuando a rimappare gli eventuali link allo store esterno esclusivamente verso il mirror traced e a rifiutare ogni altro escape. Il nuovo caso è coperto dal test unitario del mirror Next.
+
 ## Evidenze finali ancora richieste
 
 - PR verde e URL della run GitHub;

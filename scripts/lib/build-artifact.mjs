@@ -203,53 +203,59 @@ async function collectFiles(
 
     if (entry.isSymbolicLink()) {
       const targetPath = await realpath(entryPath);
+      let artifactTarget = targetPath;
 
-      if (
-        !allowedSymlinkTargetRoot ||
-        !isInside(allowedSymlinkTargetRoot, targetPath)
-      ) {
-        throw new Error(`symlink is not allowed: ${entryPath}`);
+      // Linux Next standalone links can already resolve into the traced mirror.
+      // Only links escaping the collection need to be remapped from the pnpm store.
+      if (!isInside(resolvedCollectionRoot, targetPath)) {
+        if (
+          !allowedSymlinkTargetRoot ||
+          !isInside(allowedSymlinkTargetRoot, targetPath)
+        ) {
+          throw new Error(`symlink is not allowed: ${entryPath}`);
+        }
+
+        if (!symlinkMirrorRoot) {
+          throw new Error(`traced symlink mirror is required: ${entryPath}`);
+        }
+
+        artifactTarget = path.join(
+          symlinkMirrorRoot,
+          path.relative(allowedSymlinkTargetRoot, targetPath),
+        );
       }
 
-      if (!symlinkMirrorRoot) {
-        throw new Error(`traced symlink mirror is required: ${entryPath}`);
-      }
-
-      const mirroredTarget = path.join(
-        symlinkMirrorRoot,
-        path.relative(allowedSymlinkTargetRoot, targetPath),
-      );
-      const mirroredStat = await lstatOrNull(mirroredTarget);
+      const artifactTargetStat = await lstatOrNull(artifactTarget);
 
       if (
-        !mirroredStat ||
-        mirroredStat.isSymbolicLink() ||
-        (!mirroredStat.isDirectory() && !mirroredStat.isFile())
+        !artifactTargetStat ||
+        artifactTargetStat.isSymbolicLink() ||
+        (!artifactTargetStat.isDirectory() && !artifactTargetStat.isFile())
       ) {
         throw new Error(
           `traced symlink mirror is missing or unsafe: ${entryPath}`,
         );
       }
 
-      const mirroredRealPath = await realpath(mirroredTarget);
+      const artifactRealPath = await realpath(artifactTarget);
 
-      if (!isInside(resolvedCollectionRoot, mirroredRealPath)) {
+      if (!isInside(resolvedCollectionRoot, artifactRealPath)) {
         throw new Error(
           `traced symlink mirror escapes build output: ${entryPath}`,
         );
       }
 
-      if (mirroredStat.isDirectory()) {
-        const nestedFiles = await collectFiles(mirroredRealPath, relativePath, {
+      if (artifactTargetStat.isDirectory()) {
+        const nestedFiles = await collectFiles(artifactRealPath, relativePath, {
           allowedSymlinkTargetRoot,
           symlinkMirrorRoot,
           activeDirectories,
           collectionRoot: resolvedCollectionRoot,
         });
         files.push(...(nestedFiles ?? []));
-      } else if (mirroredStat.isFile()) {
+      } else if (artifactTargetStat.isFile()) {
         files.push({
-          absolutePath: mirroredRealPath,
+          absolutePath: artifactRealPath,
           relativePath,
           collectionRoot: resolvedCollectionRoot,
         });
