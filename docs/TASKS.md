@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -341,7 +341,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Pipeline su PR con job lint, typecheck, unit, integration/contract e build; un fixture fallito raggiunge e fallisce il merge gate.
   - [x] Verifica che cache, log e artifact CI non contengano secret.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0003-ci-trust-boundary-and-artifacts.md`; `docs/operations/CI_CD.md`; `docs/testing/BL-002_VERIFICATION.md`
-- **Evidenze di chiusura:** verified implementation head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; PR #1/run positiva `29255261423` PASS; [Ruleset `main-required-ci` `18877721`](https://github.com/Emacore17/dnd-ai/rules/18877721) active/strict/no bypass; PR negativa #3/run `29256736728` con `CI / Merge gate=FAILURE` e `mergeStateStatus=BLOCKED`; report `docs/testing/BL-002_VERIFICATION.md`; migration/eval/trace ID `N/A`; docs aggiornati.
+- **Evidenze di chiusura:** verified implementation head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; PR #1/run positiva `29257544214` PASS; merge commit `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e` e post-merge run `29257721274` PASS; [Ruleset `main-required-ci` `18877721`](https://github.com/Emacore17/dnd-ai/rules/18877721) active/strict/no bypass; PR negativa #3/run `29256736728` con `CI / Merge gate=FAILURE` e `mergeStateStatus=BLOCKED`; report `docs/testing/BL-002_VERIFICATION.md`; migration/eval/trace ID `N/A`; docs aggiornati.
 - **Note, rischi o bloccanti:** Nessun blocco residuo. La Ruleset richiede una PR e il check `CI / Merge gate` prodotto da GitHub Actions (`integration_id=15368`); la PR negativa è stata chiusa senza merge e la branch rimossa.
 
 ### BL-003 — Typed config, secret manager, local template
@@ -2438,9 +2438,9 @@ progress: 100
 started_at: 2026-07-13
 updated_at: 2026-07-13
 agent: Codex development agent
-git_branch: codex/bl-002-ci-foundation
+git_branch: main
 base_commit: 6b9f5d281fb0185f5f6c98813e2ffcee6424e658
-current_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+current_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
 spec_sha256: ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6
 context_verified: true
 test_status: PASSING
@@ -2487,10 +2487,10 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/bl-002-ci-foundation`; verified implementation head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; PR #1 pronta al merge tramite Ruleset
+- **Commit/PR:** PR #1 unita su `main`; merge commit `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`; verified implementation head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`
 - **Comandi eseguiti:** `pnpm format:check`; `pnpm lint`; `pnpm typecheck`; `pnpm test:unit`; `pnpm test:integration`; `pnpm test:contract`; `pnpm test:security`; `pnpm scan:sast`; `pnpm boundaries:check`; `pnpm tasks:check`; `pnpm ci:workflow:check`; `pnpm build`; `pnpm artifact:prepare`; `pnpm artifact:verify`; `pnpm audit --audit-level=moderate`
 - **Exit code:** `0` per i comandi completati incluso clean-worktree verify dell'implementation head in 66,0 s e `TURBO_FORCE=true pnpm verify` sul working tree di chiusura in 53,9 s; fixture CI intenzionale `1` asserito; le run negative hanno fallito chiuso come previsto
-- **Report/CI URL o path:** `docs/testing/BL-002_VERIFICATION.md`; PR #1; run verde `29255261423`; Ruleset `18877721`; PR negativa #3 chiusa; run negativa `29256736728`
+- **Report/CI URL o path:** `docs/testing/BL-002_VERIFICATION.md`; PR #1; run PR verde `29257544214`; post-merge run `29257721274`; Ruleset `18877721`; PR negativa #3 chiusa; run negativa `29256736728`
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** `N/A`
 - **Prompt/model/eval version:** `N/A`
@@ -2516,6 +2516,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `7c6c707` | BL-002 CI fix | Artifact negative path | Limitata l'eccezione ai soli output Next configurati; il negative test Linux non-Next resta fail-closed. | BL-002, BL-070 |
 | 2026-07-13 | `7c6c707` | BL-002 remote evidence | GitHub PR/check/artifact | Run positiva e negativa, log scan e artifact remoto verificati; task bloccato unicamente dal piano GitHub che non espone Ruleset/branch protection sul repository privato. | BL-002, BL-079 |
 | 2026-07-13 | `f1be878` | BL-002 closure | GitHub Ruleset e negative merge gate | Repository pubblico verificato; attivata Ruleset `18877721` active/strict/no bypass e confermato `mergeStateStatus=BLOCKED` sulla PR negativa #3/run `29256736728`. BL-002 chiuso e BL-079 reso READY. | BL-079, GOV-002, BL-070 |
+| 2026-07-13 | `ae88583` | BL-002 post-merge | `main` e CI | PR #1 unita senza bypass; post-merge run `29257721274` con quality, tests, security, build artifact e merge gate tutti `SUCCESS`. | BL-079, GOV-002 |
 | — | — | — | — | — | — |
 
 

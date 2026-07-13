@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-13
-last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -96,3 +96,5 @@ La PR negativa [#3](https://github.com/Emacore17/dnd-ai/pull/3), chiusa senza me
 ## Chiusura
 
 Tutti i gate applicabili a `BL-002` dispongono ora di evidenza riproducibile locale e remota. Il task è `DONE/100%/PASSING`; i gate di database, schema, browser/accessibilità, eval, container/SBOM e deploy restano assegnati ai task proprietari già indicati nel runbook, senza placeholder verdi.
+
+La PR #1 è stata unita senza bypass nel commit `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`. La successiva run push su `main`, [`29257721274`](https://github.com/Emacore17/dnd-ai/actions/runs/29257721274), ha confermato tutti i cinque job `SUCCESS` sul merge commit.

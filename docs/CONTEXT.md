@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -40,7 +40,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-13 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | PR #1 verso `main`; verified CI head `f1be878b291a535ea6c8e0d995ee5e3c80ef164c`; implementation head pulito `7c6c7071d027c55aeffbc7279b8ca3765ea26c37` |
+| Delivery/commit | PR #1 unita su `main` come `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`; implementation head pulito `7c6c7071d027c55aeffbc7279b8ca3765ea26c37` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6` |
 | Milestone | `M0 — Fondamenta` |
@@ -80,7 +80,7 @@ Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | scaffold buildabile, nessuna feature |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
-| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; run `29255261423` PASS |
+| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; post-merge run `29257721274` PASS |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
 | Artifact schema | `build-artifact-v1` | remote artifact 3.205 file, secret/checksum verification PASS |
 
@@ -146,5 +146,5 @@ Selezionare `BL-079` e implementare la fondazione UX/UI mobile-first già defini
 |---|---|---|
 | CTX-R01 | Git inizializzato e clean-worktree verification completata | commit `6cda07a60022665f321b48dd82fbeb1d9bef586f`; `docs/testing/BL-001_VERIFICATION.md` |
 | CTX-R08 | BL-002 verificato da worktree detached pulito con install frozen e cache forzata off | head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; `TURBO_FORCE=true pnpm verify` exit `0` in 66,0 s |
-| CTX-R06 | Pipeline e failure path verificati realmente su GitHub | PR #1/run `29255261423` tutti verdi; PR #3/run `29256736728` con tests/gate rossi, build skipped e merge state `BLOCKED` |
+| CTX-R06 | Pipeline e failure path verificati realmente su GitHub | PR #1/run `29257544214` tutti verdi; PR #3/run `29256736728` con tests/gate rossi, build skipped e merge state `BLOCKED`; post-merge run `29257721274` PASS |
 | CTX-R07 | Blocco del piano privato rimosso dal Product Owner e enforcement attivato | repository pubblico; Ruleset `18877721` active/strict/no bypass; regole applicabili a `main` verificate via API |
