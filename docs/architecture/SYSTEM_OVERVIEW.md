@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: f9330fed11e623e84fa7e32032dca95c4e7ee308
+last_verified_commit: 049748443aa6fa83496bfc5b996560312b6fd48d
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
