@@ -2,21 +2,27 @@
 status: accepted
 owner: engineering-and-security
 last_reviewed: 2026-07-13
-last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
 related_tasks:
   - BL-002
+  - BL-079
+  - BL-080
 code_refs:
   - .github/workflows/ci.yml
   - .github/actions/setup-workspace/action.yml
   - scripts/lib/ci-workflow-policy.mjs
   - scripts/lib/build-artifact.mjs
   - scripts/lib/secret-scanner.mjs
+  - scripts/smoke-build-artifact.mjs
+  - apps/web/artifact-runtime/start.mjs
 test_refs:
   - tests/contracts/ci-workflow.test.mjs
   - tests/integration/ci-gate.test.mjs
+  - tests/integration/artifact-runtime.test.mjs
+  - tests/unit/build-artifact.test.mjs
   - tests/security/sast-config.test.mjs
   - tests/security/secret-scanner.test.mjs
 supersedes: null
@@ -39,7 +45,7 @@ La CI esegue codice proveniente da pull request e dipendenze esterne. Deve blocc
 3. Ogni action esterna è pin a SHA completo. Un contract test fallisce su tag mobili, permessi ampi, trigger privilegiati o interpolazione non affidabile nei comandi shell.
 4. Quality, tests, security e build sono job separati. `CI / Merge gate` usa `always()` e fallisce se una dipendenza è failed, cancelled, skipped o missing. La Ruleset di `main` richiede soltanto questo nome stabile.
 5. La cache contiene esclusivamente lo store pnpm lockfile-scoped. Non vengono memorizzati `.turbo`, `.next`, `node_modules`, env, log, report o artifact.
-6. Il build precede l’artifact. Lo staging copia una allowlist di Next standalone/static e `dist`, rifiuta path sensibili e symlink esterni, scansiona credenziali e genera un manifest SHA-256. I junction pnpm di Next sono dereferenziati soltanto verso la copia traced interna.
+6. Il build precede l’artifact. Lo staging copia una allowlist di Next standalone/static e `dist`, rifiuta path sensibili e symlink esterni, scansiona credenziali e genera un manifest SHA-256. I junction pnpm di Next sono dereferenziati soltanto verso la copia traced interna. Un private-hoist generato da Next ma privo di mirror viene omesso soltanto dopo aver confinato il target allo store pnpm; nessun byte esterno viene copiato. Il launcher usa `NODE_PATH` esclusivamente verso il mirror nel payload e il job deve superare un boot smoke HTTP prima dell'upload.
 7. SAST locale con `eslint-plugin-security@4.0.1`, secret scan versionato e `pnpm audit` compongono il gate security. Ogni warning SAST, finding high/critical o scan fallito blocca; i finding inferiori dell'audit sono comunque esaminati e mitigati o tracciati.
 8. Nessun deploy è incluso in questa baseline. Quando arriverà il deploy cloud userà OIDC e environment protection, non chiavi cloud long-lived.
 
@@ -67,4 +73,4 @@ Non adottato nella baseline: al momento della decisione Code Scanning non era ab
 
 ## Conseguenze e revisione
 
-La pipeline è più esplicita e riproducibile, ma ripete install/build in job isolati e l’artifact Next richiede circa 49 MB nel primo scaffold. La Ruleset `main-required-ci` (`18877721`) applica la decisione senza bypass ordinario e vincola il gate all'app GitHub Actions. Rivalutare cache remota, CodeQL, SBOM/container e split artifact quando esistono deploy target, metriche CI o immagini container; ogni estensione deve mantenere il gate fail-closed e aggiornare policy, test e runbook.
+La pipeline è più esplicita e riproducibile, ma ripete install/build in job isolati e l’artifact Next richiede circa 49 MB nel primo scaffold. La materializzazione dei junction perde il contesto di risoluzione pnpm: il launcher ristretto al mirror e lo smoke reale rendono questo requisito esplicito e verificabile. La Ruleset `main-required-ci` (`18877721`) applica la decisione senza bypass ordinario e vincola il gate all'app GitHub Actions. Rivalutare cache remota, CodeQL, SBOM/container e split artifact quando esistono deploy target, metriche CI o immagini container; ogni estensione deve mantenere il gate fail-closed e aggiornare policy, test e runbook.

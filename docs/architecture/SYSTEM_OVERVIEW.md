@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+last_verified_commit: 778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
@@ -10,18 +10,28 @@ source_refs:
 related_tasks:
   - BL-001
   - BL-002
+  - BL-079
+  - BL-080
   - DOC-ARCH-001
 code_refs:
   - apps/web
+  - apps/web/components.json
+  - apps/web/src/app
+  - apps/web/src/components/game
+  - apps/web/artifact-runtime/start.mjs
   - apps/api
   - apps/worker
   - packages
   - scripts/lib/workspace-boundaries.mjs
   - .github/workflows/ci.yml
   - scripts/lib/ci-workflow-policy.mjs
+  - scripts/smoke-build-artifact.mjs
 test_refs:
   - tests/contracts/workspace-boundaries.test.mjs
   - tests/contracts/ci-workflow.test.mjs
+  - tests/contracts/bl079-ui-foundation.test.mjs
+  - apps/web/e2e/game-shell.spec.ts
+  - tests/integration/artifact-runtime.test.mjs
 supersedes: null
 ---
 
@@ -29,11 +39,11 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile. In questa fase esistono soltanto entry point minimi e confini verificabili: non esistono ancora database, queue, contratti di dominio, adapter AI, autenticazione o configurazione runtime.
+`BL-001` introduce un monorepo TypeScript buildabile e `BL-002` la pipeline fail-closed. `BL-079` aggiunge una fondazione frontend reale ma ancora alimentata da fixture: database, queue, contratti di dominio, adapter AI, autenticazione e configurazione runtime restano assegnati ai task M0 successivi.
 
 ```text
 apps/
-  web/             Next.js App Router; superficie browser
+  web/             Next.js App Router; design system e shell BL-079 su fixture
   api/             Fastify composition root; nessuna route di prodotto
   worker/          entry point worker vuoto; BullMQ pianificato
 packages/
@@ -79,7 +89,7 @@ TypeScript 7 non è stato selezionato perché `typescript-eslint@8.63.0` dichiar
 
 La supply-chain policy pnpm permette install script soltanto a `sharp` (runtime immagini di Next) e `unrs-resolver` (resolver nativo usato dal lint); ogni nuovo script transitive resta bloccato finché non viene revisionato e aggiunto esplicitamente ad [`allowBuilds`](https://pnpm.io/settings#allowbuilds).
 
-## Comandi disponibili in BL-001/BL-002
+## Comandi disponibili in BL-001/BL-002/BL-079
 
 ```bash
 corepack pnpm@10.34.5 install --frozen-lockfile
@@ -88,13 +98,15 @@ corepack pnpm@10.34.5 typecheck
 corepack pnpm@10.34.5 build
 corepack pnpm@10.34.5 test:contract
 corepack pnpm@10.34.5 test:security
+corepack pnpm@10.34.5 test:component
+corepack pnpm@10.34.5 test:e2e
 corepack pnpm@10.34.5 scan:sast
 corepack pnpm@10.34.5 boundaries:check
 corepack pnpm@10.34.5 tasks:check
 corepack pnpm@10.34.5 verify
 ```
 
-`verify` copre format, lint, typecheck, unit, integration, contract, security, package/task/CI policy, build e artifact verification. Test container, browser/E2E, migration, eval, bot e load restano responsabilità dei task proprietari, soprattutto `QA-001`; nessun comando futuro è simulato da un no-op.
+`verify` copre format, lint, typecheck, unit, component, integration, contract, security, package/task/CI policy, build e artifact verification. La CI BL-079 esegue anche il browser harness; `test:e2e` resta separato dal comando locale aggregato per rendere esplicito il costo. Test container, migration, eval, bot e load restano responsabilità dei task proprietari, soprattutto `QA-001`; nessun comando futuro è simulato da un no-op.
 
 ## CI e supply chain
 
@@ -102,8 +114,10 @@ corepack pnpm@10.34.5 verify
 
 Le action esterne sono pin a SHA completo, checkout non persiste credenziali e i permessi globali sono read-only. La cache gestita da `setup-node` contiene soltanto lo store pnpm indicizzato dal lockfile. Security esegue SAST locale fail-on-warning, test/secret scan e dependency audit; non riceve secret applicativi.
 
-Il build produce `artifacts/bl002`: `scripts/lib/build-artifact.mjs` copia soltanto output esplicitamente ammessi, dereferenzia solo i junction pnpm interni richiesti da Next standalone, rifiuta link esterni/path sensibili, scansiona i file e registra byte+SHA-256 in `build-artifact-v1`. L’upload usa soltanto questo staging validato.
+Il build produce `artifacts/bl002`: `scripts/lib/build-artifact.mjs` copia soltanto output esplicitamente ammessi, dereferenzia solo i junction pnpm con mirror traced, omette private-hoist non materializzati senza leggere byte esterni, rifiuta link/path sensibili, scansiona i file e registra byte+SHA-256 in `build-artifact-v1`. Il launcher incluso ripristina `NODE_PATH` soltanto verso il mirror pnpm del payload; `artifact:smoke` prova un boot e una risposta HTTP reali prima dell'upload.
 
 ## Frontend e design
 
-`apps/web` contiene una pagina Server Component minima soltanto per validare il build Next.js. Non è la shell di gioco e non anticipa componenti ad hoc. `BL-079`, ora `READY` dopo la chiusura di `BL-001` e `BL-002`, installerà shadcn/ui, AI Elements selettivi, Motion e il sistema visuale descritto in `docs/product/UX_UI_DESIGN.md`.
+`apps/web/src/app` monta la shell fixture implementata da `BL-079`. Il design system usa shadcn/ui `new-york` su Radix e token Tailwind 4; AI Elements è limitato alle primitive presentazionali di conversazione, Motion è lazy e rispetta reduced-motion, Rive non entra nel bundle P0. I wrapper `components/game` modellano i dieci stati visivi del turno senza introdurre trasporto o stato canonico parallelo. Vitest/Testing Library verificano i contratti componenti; Playwright/axe copre otto viewport, keyboard, safe area, regressione visuale e performance smoke. REST/SSE e `TurnView` reale appartengono ai consumer BL-039/BL-040/BL-041.
+
+La prima preview/staging M0 non è ancora implementata: `BL-003` fornisce typed config e secret contract, quindi `BL-080` possiede provisioning, deploy automatico, smoke e rollback minimo. `BL-070` resta il task di hardening pre-release per load/chaos, restore e separazione production definitiva.

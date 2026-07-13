@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
+last_verified_commit: 2765c49959d6b4094367120e3615a0728a58be0a
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -10,22 +10,35 @@ related_tasks:
   - BL-001
   - BL-002
   - BL-079
+  - BL-080
 code_refs:
   - apps
   - packages
   - .github/workflows/ci.yml
   - scripts/lib/build-artifact.mjs
+  - scripts/smoke-build-artifact.mjs
   - scripts/lib/ci-workflow-policy.mjs
   - scripts/lib/secret-scanner.mjs
   - scripts/lib/workspace-boundaries.mjs
   - scripts/lib/task-graph.mjs
+  - apps/web
+  - apps/web/artifact-runtime/start.mjs
+  - apps/web/e2e/game-shell.performance.spec.ts
+  - apps/web/e2e/performance-budget.mjs
+  - apps/web/e2e/start-production-server.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
+  - tests/integration/artifact-runtime.test.mjs
   - tests/contracts/task-graph.test.mjs
   - tests/contracts/ci-workflow.test.mjs
   - tests/integration/ci-gate.test.mjs
   - tests/security/secret-scanner.test.mjs
+  - tests/contracts/bl079-ui-foundation.test.mjs
+  - apps/web/src/components/game/game-shell.test.tsx
+  - apps/web/e2e/game-shell.spec.ts
+  - apps/web/e2e/game-shell.performance.spec.ts
+  - tests/unit/performance-budget.test.mjs
 supersedes: null
 ---
 
@@ -40,8 +53,8 @@ supersedes: null
 > **Versione schema task:** `1.0.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `—`
-> **Prossimo task READY:** `BL-079 — Fondazione design system e shell conversazionale mobile-first`
+> **Task attivo:** `BL-079 — IN_REVIEW`
+> **Prossimo task READY:** `BL-003`; BL-079 resta in review in attesa dei gate manuali e di `BL-080`
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -152,6 +165,8 @@ Un task è `DONE` solo se tutte le seguenti condizioni sono vere:
 - [ ] per security/privacy: threat/data review aggiornata;
 - [ ] per AI: eval pertinente e impatto token/costo registrati;
 - [ ] staging smoke test eseguito quando il task modifica un percorso deployabile.
+
+La prima disponibilità dell'ambiente non è una dipendenza implicita: i task M0 che richiedono uno smoke deployabile dipendono da `BL-080`. `BL-070` possiede hardening, load/chaos e restore pre-release, non il bootstrap dello staging.
 
 Un’implementazione “funzionante a mano” ma senza test/evidenze resta `IN_PROGRESS` o `BLOCKED`, mai `DONE`.
 
@@ -266,7 +281,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | 13% | 16 | `GATE-M0` | Pipeline, auth, dati, osservabilità, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta | `IN_PROGRESS` | 18% | 17 | `GATE-M0` | Pipeline, config, preview/staging, auth, dati, osservabilità, fondazione UX/UI e contesto agenti operativi. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -346,7 +361,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-003 — Typed config, secret manager, local template
 
-- **Stato:** `BACKLOG`
+- **Stato:** `READY`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
@@ -513,26 +528,50 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-079 — Fondazione design system e shell conversazionale mobile-first
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Stato:** `IN_REVIEW`
+- **Progresso:** `90%`
+- **Esito test:** `PARTIAL`
+- **Contesto verificato:** `YES` — implementation commit: `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; performance gate production: `2765c49959d6b4094367120e3615a0728a58be0a`; data: `2026-07-13`
 - **Priorità / stima:** `P0` / `M`
-- **Dipendenze:** BL-001, BL-002
+- **Dipendenze:** BL-001, BL-002, BL-080
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§8, 11.4, 21, 23.1, 26.8, 32.2; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-079`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come giocatore casual voglio un’interfaccia semplice, premium e comoda sul telefono, così posso leggere, decidere e agire senza una HUD densa.
 - **Deliverable:** shadcn/ui `new-york` su Radix; `components.json`; token semantici; font/icon/touch-target contract; primitive AI Elements selettive; wrapper `GameConversation`, `NarrativeTurn`, `FreeActionComposer` e `GameDrawer`; Motion lazy/reduced; shell fixture mobile e desktop adattiva; decisione performance-gated su Rive.
 - **Criterio di accettazione:** Il core shell funziona a 320 px ed è ottimizzato a 360–430 px; desktop amplia senza funzioni esclusive; composer, safe area, tastiera virtuale, due suggested actions, drawer HUD e stati idle/loading/error/reconnect sono verificati; keyboard/WCAG 2.2 AA, target touch, reduced-motion, visual regression e performance smoke passano.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Component test di token e wrapper per idle, loading, long content, error, reconnect e completed.
-  - [ ] E2E a 320, 360, 390, 768, 1024 e 1440 px; portrait/landscape, tastiera virtuale e safe area senza CTA coperte o overflow orizzontale.
-  - [ ] Keyboard-only, screen reader smoke, accessibility scan WCAG 2.2 AA e target frequenti ≥44×44 CSS px / primari ≥48 px.
-  - [ ] Reduced-motion mantiene contenuto, focus order e azioni; motion layer usa transform/opacity nei percorsi frequenti.
-  - [ ] Bundle/performance trace documenta Motion lazy; Rive è assente dal bundle iniziale e viene adottato solo se supera il gate, altrimenti rimosso.
-  - [ ] Visual regression delle shell P0 e review “five-second comprehension” con finding tracciati.
-- **Documentazione e contesto:** `docs/product/UX_UI_DESIGN.md`, `docs/adr/0001-mobile-first-conversational-ui.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, `docs/testing/TEST_STRATEGY.md` quando creato
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report visual/a11y/performance `—`; component inventory/versioni `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** Non installare tutte le registry AI Elements; non introdurre `useChat` o un trasporto parallelo; Rive è opzionale e non può bloccare la shell. `BL-079` possiede il setup browser/component minimo necessario ai propri test; `QA-001` lo consolida nel harness comune senza diventare una dipendenza circolare.
+  - [x] Component test di token e wrapper per idle, loading, long content, error, reconnect e completed.
+  - [x] E2E a 320, 360, 390, 768, 1024 e 1440 px; portrait/landscape, tastiera virtuale e safe area senza CTA coperte o overflow orizzontale.
+  - [x] Keyboard-only automatico, focus trap/restore, accessibility scan WCAG 2.2 AA e target frequenti ≥44×44 CSS px / primari ≥48 px.
+  - [ ] Screen reader smoke reale, telefono reale e zoom 200%; registrare device/browser e finding.
+  - [x] Reduced-motion mantiene contenuto, focus order e azioni; motion layer usa transform nei percorsi frequenti.
+  - [x] Bundle/performance trace documenta Motion lazy; Rive è assente da manifest, lockfile, source e bundle iniziale.
+  - [x] Visual regression delle shell P0 su Windows e Linux.
+  - [x] CI Ubuntu esegue build standalone, browser funzionale e tre campioni performance senza retry; merge gate verde nella run `29274592866`.
+  - [ ] Review “five-second comprehension” con cinque utenti interni e finding tracciati; smoke browser non Chromium e staging fornito da `BL-080`.
+- **Documentazione e contesto:** `docs/product/UX_UI_DESIGN.md`, `docs/adr/0001-mobile-first-conversational-ui.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, `docs/testing/BL-079_VERIFICATION.md`; `docs/testing/TEST_STRATEGY.md` quando creato da `QA-001`
+- **Evidenze di chiusura:** implementation `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; performance gate `2765c49959d6b4094367120e3615a0728a58be0a`; draft PR #5; run `29271004267` e `29272004975` fail-closed col vecchio observer; run `29274592866` 5/5 job `PASS`; verify finale senza cache `71,5 s`; lint/typecheck/build `10/10`; unit `14` pass/`1` skip host; contract UI `9/9`; evaluator budget `4/4`; component `26/26`; integration `4/4`; contract totali `18/18`; security `8/8`; Playwright completo `37` pass/`123` skip in `40,3 s`; browser functional production `36` pass/`116` skip; visual Windows/Linux `7/7`; performance production `3/3` e calibrazione `20/20`, Event Timing massimo `40 ms`, processing `14,7 ms`, CLS `0.0000246`, zero LoAF/long task osservati e zero violazioni; bundle `/` `365.057` byte gzip; artifact locale `3.172` file e CI `3.214` file con checksum/secret/boot HTTP `PASS`; report `docs/testing/BL-079_VERIFICATION.md`.
+- **Note, rischi o bloccanti:** Rive è stato escluso dalla shell P0; `useChat` e trasporti paralleli restano vietati. Gli automatismi locali e CI specifici sono verdi. Il dice tray performance appartiene al consumer `BL-040`. `DONE` è trattenuto dai gate manuali/ambientali e dalla dipendenza `BL-080`; `QA-001` consolida il harness senza diventare dipendenza circolare.
+
+### BL-080 — Fondazione preview/staging M0
+
+- **Stato:** `BACKLOG`
+- **Progresso:** `0%`
+- **Esito test:** `NOT_RUN`
+- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Priorità / stima:** `P0` / `M`
+- **Dipendenze:** BL-002, BL-003
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§29.3–29.4, §30 Milestone 0, §31 `BL-080`, §35.1; `docs/adr/0003-ci-trust-boundary-and-artifacts.md`; `docs/operations/CI_CD.md`; `docs/architecture/SYSTEM_OVERVIEW.md`
+- **Obiettivo:** Come team voglio una preview/staging M0 isolata e riproducibile, così ogni slice deployabile può essere validata prima di diventare `DONE`.
+- **Deliverable:** scelta provider e regione registrata; provisioning ripetibile; ambiente GitHub protetto; config e secret separati; deploy automatico dei runtime M0 disponibili; URL e owner redatti; smoke, rollback e runbook minimo. Preview di PR e staging possono essere risorse distinte, ma non condividono dati o credenziali production.
+- **Criterio di accettazione:** Un commit autorizzato produce un deploy identificabile e ripetibile; shell web e health check disponibili superano smoke automatizzato; un deploy fallito non viene promosso; rollback o redeploy dell'ultima versione valida è documentato e provato; nessun secret o dato production entra in log, artifact o fixture.
+- **Test obbligatori prima di `DONE`:**
+  - [ ] Contract test del workflow/IaC: environment, least privilege, concurrency, failure propagation e artifact immutabile.
+  - [ ] Deploy smoke su preview/staging con URL, commit, regione, environment e request/run ID redatti.
+  - [ ] Negative test per config mancante, secret indisponibile e deploy fallito senza promozione.
+  - [ ] Rollback o redeploy provato; shell mobile BL-079 e health check dei runtime disponibili verificati.
+- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/operations/CI_CD.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; ADR/provider decision e runbook ambiente
+- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; provider/project/region non sensibili `—`; deploy/run URL `—`; smoke/rollback `—`; docs aggiornati `—`
+- **Note, rischi o bloccanti:** non include load, chaos, backup restore o production release, posseduti da `BL-070` e dai gate finali. Diventa eseguibile dopo `BL-003`; fino ad allora `BL-079` può restare in review ma non `DONE`.
 
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
 
@@ -603,7 +642,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P0` / `S`
-- **Dipendenze:** GOV-001, GOV-002, QA-001, DOC-ARCH-001, BL-001..BL-010, BL-079
+- **Dipendenze:** GOV-001, GOV-002, QA-001, DOC-ARCH-001, BL-001..BL-010, BL-079, BL-080
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §30 Milestone 0; `docs/MVP_SPEC.md` §35.3
 - **Obiettivo:** Validare in modo integrato tutti i deliverable di M0 prima di autorizzare il lavoro della milestone successiva.
 - **Deliverable:** Report di exit gate M0, demo riproducibile, evidenze e aggiornamento della dashboard.
@@ -2422,7 +2461,7 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 | AC-22 | Moderazione | BL-020, BL-063 | safety integration/eval |
 | AC-23 | Isolamento utenti | BL-007, BL-066, BL-067 | IDOR/security matrix |
 | AC-24 | Evaluation suite | BL-068, BL-069 | 48+ eval + report |
-| AC-25 | Staging/production separati | BL-003, BL-070, DOC-OPS-001 | IaC/environment/restore review |
+| AC-25 | Staging/production separati | BL-003, BL-080, BL-070, DOC-OPS-001 | IaC/environment/restore review |
 
 
 ## 20. Registro dell’ultima esecuzione
@@ -2430,20 +2469,21 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: null
+active_task: BL-079
 last_completed_task: BL-002
-next_ready_task: BL-079
-status: DONE
-progress: 100
+next_ready_task: BL-003
+status: IN_REVIEW
+progress: 90
 started_at: 2026-07-13
 updated_at: 2026-07-13
 agent: Codex development agent
-git_branch: main
-base_commit: 6b9f5d281fb0185f5f6c98813e2ffcee6424e658
-current_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
-spec_sha256: ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6
+git_branch: codex/bl-079-mobile-shell
+base_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
+current_commit: 2765c49959d6b4094367120e3615a0728a58be0a
+spec_sha256: aa892faafb3e54b76a0a37a31d3a919c9e9f05681a64501239de9c0351322805
 context_verified: true
-test_status: PASSING
+test_status: PARTIAL
+working_tree_dirty: false
 ```
 
 ## Contesto letto
@@ -2453,16 +2493,16 @@ test_status: PASSING
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
 - [x] ADR vigenti — ADR-0001, ADR-0002 e ADR-0003
-- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CI_CD.md`; report BL-001 e BL-002
-- [x] codice, migration, contratti e test correnti — workspace e sei contract test presenti; workflow CI, suite unit/integration, scan e artifact assenti al preflight
+- [x] documenti collegati — `docs/product/UX_UI_DESIGN.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; report BL-001 e BL-002
+- [x] codice, dipendenze e test correnti — `apps/web` contiene la fondazione BL-079 con Tailwind, shadcn/Radix, AI Elements selettivi, Geist, Motion, Vitest e Playwright; boundary/task graph e CI baseline restano verdi
 
 ## Piano e scope
 
-- **Obiettivo verificabile:** creare una pipeline PR riproducibile che renda obbligatori quality, test, security e build prima dell'artifact, senza propagare secret in cache, log o artifact.
-- **File/moduli previsti:** workflow GitHub Actions; script CI per secret scan, policy e manifest artifact; suite unit/integration/contract con failure fixture; ADR/runbook/report; aggiornamenti a package scripts e documenti living.
-- **Test da scrivere prima/durante:** contratto workflow e action pin; fixture fallita con exit non-zero; secret sintetico rifiutato; cache e artifact allowlisted; artifact mancante/path non ammesso fail-closed; integrazione dei comandi reali.
-- **Rischi/failure path:** action o tool non pin; `pull_request_target`; permessi write e credenziali checkout; failure inghiottita; cache/artifact troppo ampi; symlink/path traversal; audit dipendenze non disponibile; branch protection non configurabile senza remote.
-- **Fuori scope:** database/migration e Testcontainers (`BL-004`/`QA-001`); schema compatibility (`BL-009`); browser/a11y e UI budget (`BL-079`/`QA-001`); eval (`BL-068`); container/SBOM/image scan, deploy staging/production e rollback (`BL-070`).
+- **Obiettivo verificabile:** consegnare una shell conversazionale premium, mobile-first e accessibile che renda immediatamente leggibili scena, narrazione, decisione e composer, mantenendo la stessa funzione su desktop.
+- **File/moduli previsti:** configurazione Tailwind/shadcn; token e font; primitive UI/AI Elements selettive; wrapper di dominio e fixture di stato; Motion lazy/reduced; test componenti/Playwright/a11y/visual/performance; report BL-079 e documenti living.
+- **Test da scrivere prima/durante:** contratti statici di design system e dipendenze; component test per idle/loading/long/error/reconnect/completed; E2E su otto viewport, portrait/landscape, safe area e keyboard-only; axe WCAG; target touch; reduced-motion; screenshot regression; bundle scan senza Rive e con Motion lazy.
+- **Rischi/failure path:** overflow a 320 px o zoom 200%; composer coperto da safe area/tastiera; focus perso nei drawer; testo AI renderizzato senza `MessageResponse`; animazioni non riducibili; dipendenze o bundle eccessivi; stato reconnect ambiguo; UI desktop-only.
+- **Fuori scope:** trasporto REST/SSE reale e `useChat`; stato canonico o API; Character Builder; combat/inventory completi; Rive senza superamento del gate; consolidamento cross-app del browser harness (`QA-001`); provisioning preview/staging (`BL-080`) e hardening operativo (`BL-070`).
 
 ## Diario sintetico
 
@@ -2484,19 +2524,29 @@ test_status: PASSING
 | 2026-07-13 | 90% | Congelata e verificata da checkout pulito la policy symlink finale, inclusa l'eccezione Next e il rifiuto non-Next. | Head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; frozen install `0`; `TURBO_FORCE=true pnpm verify` `0` in 66,0 s. | Push e terza run PR #1. |
 | 2026-07-13 | 90% | CI positiva, log/artifact e PR negativa completati; BL-002 passa a `BLOCKED` sul solo enforcement GitHub non disponibile nel piano corrente. | Run `29254494868` 5/5 job PASS; log scan 5 job PASS; artifact 3.205 file PASS; run negativa `29254866626` gate FAIL ma PR #2 `MERGEABLE/UNSTABLE`. | Decisione Product Owner: piano compatibile oppure repository pubblico. |
 | 2026-07-13 | 100% | Il repository è stato reso pubblico dal Product Owner; attivata la Ruleset `main-required-ci` senza bypass e chiusa la nuova prova negativa. | Ruleset `18877721` active/strict; run negativa `29256736728` con tests/gate rossi, artifact skipped e PR #3 `mergeStateStatus=BLOCKED`; `TURBO_FORCE=true pnpm verify` sul working tree di chiusura exit `0` in 53,9 s; branch di prova rimossa. | Chiudere BL-002 e rendere `BL-079` READY. |
+| 2026-07-13 | 25% | Selezionato `BL-079` dopo audit di specifica, ADR, contratto UX/UI, dipendenze e scaffold web; definita la matrice di test mobile/accessibilità/performance prima del codice. | Baseline pulita `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; spec SHA-256 `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`; test del change `NOT_RUN`. | Configurare design system e scrivere i contratti/test della shell. |
+| 2026-07-13 | 90% | Implementata e auditata la fondazione mobile-first; chiusi overflow landscape, safe area L/R, feed anchor, contratti choice/retry/rule/party, live regions, reduced-motion e visual regression. Rive escluso dal P0. | Contract `8/8`; component `26/26`; Playwright `37` pass applicabili; visual Windows/Linux `7/7`; build `10/10`; performance `0` long task, CLS `0.0000245`; bundle `/` `365.057` byte gzip. | Eseguire verify finale, congelare commit pulito e completare screen reader/device/browser/five-second; lo staging dipende da `BL-080`. |
+| 2026-07-13 | 90% | L'audit delle dipendenze ha rilevato che il primo staging era assegnato soltanto a `BL-070`, troppo tardi per la DoD M0; aggiunto `BL-080` e reso `BL-003` il prossimo task READY. | Parità spec/task e grafo da rieseguire; BL-079 resta `IN_REVIEW` e non anticipa lo smoke staging. | Chiudere il gate locale, committare e avviare BL-003; quindi BL-080 rende eseguibile lo smoke. |
+| 2026-07-13 | 90% | Il verify ha scoperto due gap preesistenti del packaging: file Git eliminati nello scanner e standalone Next materializzato ma non avviabile. Correzioni fail-closed con regressioni; aggiunto boot smoke CI. | `pnpm verify` exit `0` in `62,3 s`; unit 10 pass/1 skip host, component 26, integration 4, contract 16, security 8, build 10/10; artifact 3.172 file e HTTP shell `PASS`. | Congelare commit pulito e attendere CI; gate manuali e BL-080 restano aperti. |
+| 2026-07-13 | 90% | Congelato il change set e ripetuto il gate sul commit pulito con cache Turbo forzatamente ignorata. | Commit `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; `TURBO_FORCE=true pnpm verify` exit `0` in `66,1 s`; 0 cache hit, artifact boot HTTP `PASS`. | Sincronizzare i metadati, pubblicare branch/PR e attendere CI; gate manuali e BL-080 restano aperti. |
+| 2026-07-13 | 90% | La prima CI BL-079 ha fallito chiusa sul performance smoke conteso da due browser worker; la correlazione log mostra il test insieme a desktop-1024 e il retry insieme a desktop-1440. Serializzato Playwright senza rilassare la soglia. | PR #5/run `29271004267`: quality/security `PASS`, browser `36` pass/`123` skip/`1` fail; long task `[83, 63]`, retry `[85, 53]`. Fix `a557d73`: contratto `9/9`, focused `1/1`, matrice CI-profile `37/37` in `49,7 s`; full verify sincronizzato `PASS` in `74,9 s`, contract totali `17/17`. | Congelare e pubblicare la documentazione, poi attendere la CI sostitutiva; gate manuali e BL-080 restano aperti. |
+| 2026-07-13 | 90% | La seconda CI ha riprodotto il failure con un solo worker, invalidando la diagnosi “solo contesa”. Auditato il vecchio observer: runtime dev, buffer globale pre-navigation, nessuna attribuzione per fase e allegato prodotto dopo gli assert. | Run `29272004975`: quality/security `PASS`; tests/gate `FAIL`; build skipped; performance `[59]` ms, retry `[63]`; `36` pass/`123` skip. | Sostituire il gate con misure production attribuibili e diagnostica failure-only. |
+| 2026-07-13 | 90% | Separati test funzionali e performance; aggiunti runtime standalone, warm-up, User Timing, input per fase, scroll spring bounded, Event Timing/LoAF/CLS, evaluator puro, tre campioni senza retry e artifact diagnostico fail-closed. | Commit `2765c49959d6b4094367120e3615a0728a58be0a`; contract UI `9/9`; budget unit `4/4`; functional `36/116`; performance `3/3`; calibrazione `20/20`, massimo `40 ms`/`14,7 ms`, CLS `0.0000246`, zero violazioni; secret scan `PASS`. | Sincronizzare documentazione, completare verify e attendere la nuova CI; gate manuali e BL-080 restano aperti. |
+| 2026-07-13 | 90% | Il gate attribuibile ha superato Ubuntu; l'upload diagnostico è rimasto correttamente inattivo sul successo e la PR draft è mergeable/clean. | Run `29274592866`: 5/5 job `PASS`; unit `15`, component `26`, integration `4`, contract `18`; functional `36/116` in `43,8 s`; performance `3/3` in `14,7 s`; artifact `3.214` file e boot HTTP `PASS`. | Completare verify documentale, congelare il commit e lasciare aperti soltanto gate manuali e `BL-080`. |
+| 2026-07-13 | 90% | Allineati report, runbook, contesto e riferimenti del gate production; rieseguite la matrice browser completa e la verifica globale senza cache. | Playwright `37/123` in `40,3 s`; `TURBO_FORCE=true pnpm verify` exit `0` in `71,5 s`, 0 cache hit; unit `14` pass/`1` skip host, component `26`, integration `4`, contract `18`, security `8`, build `10/10`, artifact `3.172` file e boot HTTP `PASS`. | Congelare il sync documentale, pubblicarlo e lasciare aperti soltanto gate manuali e `BL-080`. |
 
-## Chiusura
+## Chiusura / hand-off corrente
 
-- **Commit/PR:** PR #1 unita su `main`; merge commit `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`; verified implementation head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`
-- **Comandi eseguiti:** `pnpm format:check`; `pnpm lint`; `pnpm typecheck`; `pnpm test:unit`; `pnpm test:integration`; `pnpm test:contract`; `pnpm test:security`; `pnpm scan:sast`; `pnpm boundaries:check`; `pnpm tasks:check`; `pnpm ci:workflow:check`; `pnpm build`; `pnpm artifact:prepare`; `pnpm artifact:verify`; `pnpm audit --audit-level=moderate`
-- **Exit code:** `0` per i comandi completati incluso clean-worktree verify dell'implementation head in 66,0 s e `TURBO_FORCE=true pnpm verify` sul working tree di chiusura in 53,9 s; fixture CI intenzionale `1` asserito; le run negative hanno fallito chiuso come previsto
-- **Report/CI URL o path:** `docs/testing/BL-002_VERIFICATION.md`; PR #1; run PR verde `29257544214`; post-merge run `29257721274`; Ruleset `18877721`; PR negativa #3 chiusa; run negativa `29256736728`
+- **Commit/PR:** implementation `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; performance gate `2765c49959d6b4094367120e3615a0728a58be0a`; draft PR #5
+- **Comandi eseguiti:** lint/typecheck web; contract BL-079 e CI; unit evaluator; component; browser funzionale production; performance production/calibrazione; Playwright completo e visual Windows/Linux; build; analyze
+- **Exit code:** `0` per tutti i gate automatici; matrice Playwright completa `37` pass/`123` skip in `40,3 s`; sync finale `TURBO_FORCE=true pnpm verify` `PASS` in `71,5 s`, 0 cache hit, unit `14` pass/`1` skip host, component `26`, integration `4`, contract `18`, security `8`, lint/typecheck/build `10/10`, artifact `3.172` file e boot HTTP `PASS`
+- **Report/CI URL o path:** `docs/testing/BL-079_VERIFICATION.md`; baseline in `apps/web/e2e/__screenshots__/`; run `29271004267` e `29272004975` fail-closed col vecchio observer; run `29274592866` 5/5 `PASS`
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** `N/A`
 - **Prompt/model/eval version:** `N/A`
-- **Documenti aggiornati:** `AGENTS.md`; `docs/CONTEXT.md`; `docs/TASKS.md`; `docs/TRACEABILITY.md`; `docs/CHANGELOG.md`; `docs/README.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; ADR-0003; `docs/operations/CI_CD.md`; report BL-002
-- **Rischi residui/TODO tracciati:** nessuno nel perimetro BL-002; gate differiti mappati a `BL-004`, `BL-009`, `BL-079`, `QA-001`, `BL-068`, `BL-070`
-- **Task successivo reso READY:** `BL-079`
+- **Documenti aggiornati:** `docs/product/UX_UI_DESIGN.md`; ADR-0001; `docs/CONTEXT.md`; `docs/TASKS.md`; `docs/TRACEABILITY.md`; `docs/CHANGELOG.md`; `docs/README.md`; report BL-079
+- **Rischi residui/TODO tracciati:** screen reader, telefono/zoom, browser non Chromium e five-second review; provisioning e smoke staging tramite `BL-080`; dice tray performance in `BL-040`
+- **Task successivo reso READY:** `BL-003`; il programma può avanzare mentre BL-079 attende i gate manuali e ambientali
 
 
 ## 21. Context Sync Log
@@ -2517,6 +2567,10 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `7c6c707` | BL-002 remote evidence | GitHub PR/check/artifact | Run positiva e negativa, log scan e artifact remoto verificati; task bloccato unicamente dal piano GitHub che non espone Ruleset/branch protection sul repository privato. | BL-002, BL-079 |
 | 2026-07-13 | `f1be878` | BL-002 closure | GitHub Ruleset e negative merge gate | Repository pubblico verificato; attivata Ruleset `18877721` active/strict/no bypass e confermato `mergeStateStatus=BLOCKED` sulla PR negativa #3/run `29256736728`. BL-002 chiuso e BL-079 reso READY. | BL-079, GOV-002, BL-070 |
 | 2026-07-13 | `ae88583` | BL-002 post-merge | `main` e CI | PR #1 unita senza bypass; post-merge run `29257721274` con quality, tests, security, build artifact e merge gate tutti `SUCCESS`. | BL-079, GOV-002 |
+| 2026-07-13 | working tree su `d530f3a` | BL-079 review | Shell, design contract e harness UI | Implementata la fondazione shadcn/AI Elements/Motion; test automatici specifici verdi; Rive escluso; task in review per gate manuali, clean commit e staging posseduto da `BL-080`. | BL-003, BL-080, BL-005, BL-006, BL-012, BL-019, BL-027, BL-040, QA-001 |
+| 2026-07-13 | `a557d73` | BL-079 CI fix intermedio | Performance smoke Playwright | Serializzata la matrice dopo la prima failure; la successiva run `29272004975` ha smentito la diagnosi solo-worker e questo gate è stato sostituito da `2765c49`. | BL-079, QA-001 |
+| 2026-07-13 | `2765c49` | BL-079 performance gate | Browser production e diagnostica CI | La seconda run `29272004975` ha smentito la diagnosi solo-worker. Il gate ora attribuisce quattro fasi tramite Event Timing/LoAF, usa tre campioni senza retry e carica diagnostica stretta solo sul failure. | BL-079, BL-040, QA-001 |
+| 2026-07-13 | `2765c49` | BL-079 remote evidence | GitHub CI e artifact | Run `29274592866` tutta verde: functional `36/116`, performance `3/3`, artifact/boot smoke e merge gate `PASS`; diagnostica browser skipped sul successo. | BL-079, BL-003, BL-040, QA-001 |
 | — | — | — | — | — | — |
 
 

@@ -2,7 +2,7 @@
 status: active
 owner: product-design-and-frontend
 last_reviewed: 2026-07-13
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: 2765c49959d6b4094367120e3615a0728a58be0a
 source_refs:
   - docs/MVP_SPEC.md#8-esperienza-utente
   - docs/MVP_SPEC.md#21-interfaccia-utente
@@ -28,12 +28,24 @@ related_tasks:
   - BL-076
   - BL-078
 code_refs:
-  - apps/web (planned)
+  - apps/web/components.json
+  - apps/web/src/app/globals.css
+  - apps/web/src/components/ai-elements
+  - apps/web/src/components/game
+  - apps/web/src/components/motion
+  - apps/web/e2e/game-shell.performance.spec.ts
+  - apps/web/e2e/performance-budget.mjs
+  - apps/web/e2e/start-production-server.mjs
+  - apps/web/playwright.config.ts
 test_refs:
   - AGENTS_VALIDATION.txt
-  - tests/e2e/mobile-game-loop.spec.ts (planned)
-  - tests/e2e/reduced-motion.spec.ts (planned)
-  - tests/visual/game-shell.spec.ts (planned)
+  - tests/contracts/bl079-ui-foundation.test.mjs
+  - apps/web/src/components/game/game-shell.test.tsx
+  - apps/web/e2e/game-shell.spec.ts
+  - apps/web/e2e/game-shell.performance.spec.ts
+  - apps/web/e2e/__screenshots__
+  - tests/unit/performance-budget.test.mjs
+  - docs/testing/BL-079_VERIFICATION.md
 supersedes: null
 ---
 
@@ -272,7 +284,7 @@ Regole normative:
 5. State diff che evidenzia cosa è cambiato e poi si stabilizza.
 6. Drawer che segue il gesto e conserva focus/scroll.
 
-Un asset Rive può essere sperimentato per generazione mondo o dado, ma entra nel P0 soltanto se supera il gate di `BL-079`.
+Il gate `BL-079` ha escluso Rive dalla shell P0: Motion e CSS soddisfano i momenti base con un bundle e un failure path più semplici. Un consumer futuro può riaprire la sperimentazione per un asset isolato soltanto con lazy loading, fallback statico e benchmark documentato rispetto alla baseline BL-079.
 
 ## 12. Stati e failure path
 
@@ -312,11 +324,22 @@ Un asset Rive può essere sperimentato per generazione mondo o dado, ma entra ne
 
 ### Performance
 
-- trace su device mobile concordato per submit, drawer, scroll e dice tray;
+- trace su runtime production per submit, drawer e scroll; il dice tray reale è verificato dal consumer `BL-040`;
 - animazioni core senza layout thrashing o long task attribuibili al motion layer;
 - Motion tree-shaken/lazy dove possibile;
 - Rive assente dal bundle iniziale e caricato una sola volta nella feature che lo usa;
 - visual regression e test del layout dopo font load, reconnect e contenuto lungo.
+
+Guardrail misurabili introdotti da `BL-079`:
+
+- suite dedicata sulla build standalone production, dopo font e quiet window, con un browser worker, tre campioni e zero retry;
+- ogni fase `scroll-latest`, `drawer-open`, `drawer-close` e `composer-submit` deve contenere un input catturato; lo scroll resta misurato fino al fondo stabile;
+- Event Timing per le interazioni osservabili ≤ `104 ms`, con processing `<50 ms`;
+- `0 ms` di `blockingDuration` per Long Animation Frame che interseca una fase; long task fuori fase restano diagnostici e non vengono attribuiti alla shell;
+- CLS delle interazioni ≤ `0.1`;
+- JSON di fasi, input, Event Timing, LoAF, long task e layout shift allegato prima delle asserzioni e conservato dalla CI soltanto in caso di failure;
+- baseline first-load della route registrata nel report BL-079; una crescita gzip superiore al 10% richiede misura, motivazione e review;
+- Rive resta assente da manifest, lockfile, source e bundle iniziale finché un ADR o task consumer non supera il gate.
 
 ### Test di comprensione
 
@@ -352,6 +375,16 @@ Ogni task che crea o modifica una superficie utente dipende esplicitamente da `B
 
 `BL-079` possiede il setup component/browser minimo necessario a dimostrare shell, accessibilità e responsive behavior. `QA-001` lo consolida successivamente nel harness comune per tutto il repository; non è una dipendenza di `BL-079` e non ne duplica le fixture.
 
+### 14.2 Profilo implementato da BL-079
+
+La fondazione verificata usa una shell dark graphite/cobalto con Geist, Lucide, radius morbidi e gerarchia tipografica contemporanea. Su mobile il primo livello contiene scena, feed, due azioni, composer e HUD a tre ingressi; party, obiettivo e inventario vivono in drawer. Su desktop gli stessi dati diventano pannelli laterali senza cambiare ordine semantico o introdurre funzioni esclusive.
+
+I viewport corti usano due colonne in landscape e una modalità feed+composer quando la tastiera riduce fortemente l'altezza. Safe area top, bottom, left e right proteggono shell e contenuti portalled. Una risposta più alta del feed apre sullo speaker e sull'inizio; streaming e reconnect restano invece ancorati all'ultimo contenuto.
+
+La UI non deduce esiti da copy localizzato: tono, DC visibile/nascosta, fonte, risorse party, `stateApplied`, `retryable` e `choiceSetId` sono view contract strutturati. Il testo AI è non affidabile e usa una allowlist Markdown senza HTML raw. Gli annunci live separano stato turno e blocchi narrativi, evitando annunci per token.
+
+Inventario, comandi, numeri di bundle e gate ancora manuali sono registrati in `docs/testing/BL-079_VERIFICATION.md`; quel report prevale su note o screenshot locali per lo stato di verifica.
+
 ## 15. Rischi e mitigazioni
 
 | Rischio | Segnale | Mitigazione |
@@ -383,3 +416,9 @@ Consultate il 2026-07-13; verificare nuovamente API e CLI al task di implementaz
 - [W3C — target size enhanced 44×44](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced)
 - [MDN — CSS `env()` e safe area](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/env)
 - [web.dev — high-performance CSS animations](https://web.dev/articles/animations-guide)
+- [Playwright — CI, un worker per stabilità](https://playwright.dev/docs/ci)
+- [Next.js — Production checklist](https://nextjs.org/docs/app/guides/production-checklist)
+- [W3C — Event Timing](https://www.w3.org/TR/event-timing/)
+- [Chrome Developers — Long Animation Frames](https://developer.chrome.com/docs/web-platform/long-animation-frames)
+- [W3C — Long Tasks](https://www.w3.org/TR/longtasks-1/)
+- [web.dev — Interaction to Next Paint](https://web.dev/articles/inp)

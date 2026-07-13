@@ -11,6 +11,7 @@ import {
   formatSecretFinding,
   listRepositoryFiles,
   scanSecretBuffer,
+  scanRepositoryFiles,
   scanSecretText,
 } from "../../scripts/lib/secret-scanner.mjs";
 
@@ -101,5 +102,30 @@ test("repository scan includes untracked non-ignored files", async (context) => 
     ".gitignore",
     "tracked.txt",
     "untracked.txt",
+  ]);
+});
+
+test("repository scan skips tracked files deleted from the working tree", async (context) => {
+  const repositoryRoot = await mkdtemp(
+    path.join(tmpdir(), "dnd-ai-secret-scan-"),
+  );
+  context.after(() => rm(repositoryRoot, { force: true, recursive: true }));
+
+  await execFileAsync("git", ["init", "--quiet"], { cwd: repositoryRoot });
+  const deletedPath = path.join(repositoryRoot, "a-deleted.txt");
+  await writeFile(deletedPath, "tracked\n");
+  await execFileAsync("git", ["add", "a-deleted.txt"], {
+    cwd: repositoryRoot,
+  });
+  await rm(deletedPath);
+
+  const syntheticToken = ["gh", "p_", "A".repeat(36)].join("");
+  await writeFile(
+    path.join(repositoryRoot, "z-present.txt"),
+    `${syntheticToken}\n`,
+  );
+
+  assert.deepEqual(await scanRepositoryFiles(repositoryRoot), [
+    { filePath: "z-present.txt", line: 1, ruleId: "github-token" },
   ]);
 });

@@ -127,7 +127,18 @@ export async function scanRepositoryFiles(repositoryRoot) {
       throw new Error(`repository path escapes root: ${relativePath}`);
     }
 
-    const buffer = await readFile(filePath);
+    let buffer;
+
+    try {
+      buffer = await readFile(filePath);
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        continue;
+      }
+
+      throw error;
+    }
+
     findings.push(
       ...scanSecretBuffer(buffer, relativePath.replaceAll(path.sep, "/")),
     );

@@ -15,6 +15,7 @@ import { formatSecretFinding, scanSecretBuffer } from "./secret-scanner.mjs";
 
 export const DEFAULT_BUILD_ROOTS = Object.freeze([
   { source: "apps/web/.next/standalone", target: "web" },
+  { source: "apps/web/artifact-runtime", target: "web" },
   {
     source: "apps/web/.next/static",
     target: "web/apps/web/.next/static",
@@ -55,6 +56,32 @@ function isInside(parentDirectory, candidatePath) {
   return (
     relativePath === "" ||
     (!relativePath.startsWith(`..${path.sep}`) && relativePath !== "..")
+  );
+}
+
+function isPnpmHiddenHoistLink(entryPath, symlinkMirrorRoot) {
+  if (!symlinkMirrorRoot) {
+    return false;
+  }
+
+  const hiddenHoistRoot = path.join(symlinkMirrorRoot, "node_modules");
+  const relativePath = path.relative(hiddenHoistRoot, entryPath);
+
+  if (
+    !relativePath ||
+    path.isAbsolute(relativePath) ||
+    relativePath === ".." ||
+    relativePath.startsWith(`..${path.sep}`)
+  ) {
+    return false;
+  }
+
+  const segments = relativePath.split(path.sep).filter(Boolean);
+  return (
+    (segments.length === 1 && !segments[0].startsWith("@")) ||
+    (segments.length === 2 &&
+      segments[0].startsWith("@") &&
+      !segments[1].startsWith("@"))
   );
 }
 
@@ -230,6 +257,16 @@ async function collectFiles(
       }
 
       const artifactTargetStat = await lstatOrNull(artifactTarget);
+
+      // Next can copy pnpm's private-hoist link itself without tracing its
+      // package target. Omitting only that unmaterialized link keeps external
+      // store bytes out of the artifact; ordinary and unsafe links still fail.
+      if (
+        !artifactTargetStat &&
+        isPnpmHiddenHoistLink(entryPath, symlinkMirrorRoot)
+      ) {
+        continue;
+      }
 
       if (
         !artifactTargetStat ||
