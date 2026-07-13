@@ -2,7 +2,7 @@
 status: active
 owner: product-design-and-frontend
 last_reviewed: 2026-07-13
-last_verified_commit: a557d73b6c8cec530e67f5292c7d48f10e987c53
+last_verified_commit: 2765c49959d6b4094367120e3615a0728a58be0a
 source_refs:
   - docs/MVP_SPEC.md#8-esperienza-utente
   - docs/MVP_SPEC.md#21-interfaccia-utente
@@ -33,12 +33,18 @@ code_refs:
   - apps/web/src/components/ai-elements
   - apps/web/src/components/game
   - apps/web/src/components/motion
+  - apps/web/e2e/game-shell.performance.spec.ts
+  - apps/web/e2e/performance-budget.mjs
+  - apps/web/e2e/start-production-server.mjs
+  - apps/web/playwright.config.ts
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/bl079-ui-foundation.test.mjs
   - apps/web/src/components/game/game-shell.test.tsx
   - apps/web/e2e/game-shell.spec.ts
+  - apps/web/e2e/game-shell.performance.spec.ts
   - apps/web/e2e/__screenshots__
+  - tests/unit/performance-budget.test.mjs
   - docs/testing/BL-079_VERIFICATION.md
 supersedes: null
 ---
@@ -318,7 +324,7 @@ Il gate `BL-079` ha escluso Rive dalla shell P0: Motion e CSS soddisfano i momen
 
 ### Performance
 
-- trace su device mobile concordato per submit, drawer, scroll e dice tray;
+- trace su runtime production per submit, drawer e scroll; il dice tray reale è verificato dal consumer `BL-040`;
 - animazioni core senza layout thrashing o long task attribuibili al motion layer;
 - Motion tree-shaken/lazy dove possibile;
 - Rive assente dal bundle iniziale e caricato una sola volta nella feature che lo usa;
@@ -326,9 +332,12 @@ Il gate `BL-079` ha escluso Rive dalla shell P0: Motion e CSS soddisfano i momen
 
 Guardrail misurabili introdotti da `BL-079`:
 
-- `0` long task nelle interazioni core osservate dal performance smoke dopo il caricamento;
-- il performance smoke gira con un solo browser worker, così il budget misura la shell senza contesa CPU introdotta dalla matrice sul runner condiviso; la soglia non viene rilassata;
+- suite dedicata sulla build standalone production, dopo font e quiet window, con un browser worker, tre campioni e zero retry;
+- ogni fase `scroll-latest`, `drawer-open`, `drawer-close` e `composer-submit` deve contenere un input catturato; lo scroll resta misurato fino al fondo stabile;
+- Event Timing per le interazioni osservabili ≤ `104 ms`, con processing `<50 ms`;
+- `0 ms` di `blockingDuration` per Long Animation Frame che interseca una fase; long task fuori fase restano diagnostici e non vengono attribuiti alla shell;
 - CLS delle interazioni ≤ `0.1`;
+- JSON di fasi, input, Event Timing, LoAF, long task e layout shift allegato prima delle asserzioni e conservato dalla CI soltanto in caso di failure;
 - baseline first-load della route registrata nel report BL-079; una crescita gzip superiore al 10% richiede misura, motivazione e review;
 - Rive resta assente da manifest, lockfile, source e bundle iniziale finché un ADR o task consumer non supera il gate.
 
@@ -407,3 +416,9 @@ Consultate il 2026-07-13; verificare nuovamente API e CLI al task di implementaz
 - [W3C — target size enhanced 44×44](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced)
 - [MDN — CSS `env()` e safe area](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/env)
 - [web.dev — high-performance CSS animations](https://web.dev/articles/animations-guide)
+- [Playwright — CI, un worker per stabilità](https://playwright.dev/docs/ci)
+- [Next.js — Production checklist](https://nextjs.org/docs/app/guides/production-checklist)
+- [W3C — Event Timing](https://www.w3.org/TR/event-timing/)
+- [Chrome Developers — Long Animation Frames](https://developer.chrome.com/docs/web-platform/long-animation-frames)
+- [W3C — Long Tasks](https://www.w3.org/TR/longtasks-1/)
+- [web.dev — Interaction to Next Paint](https://web.dev/articles/inp)

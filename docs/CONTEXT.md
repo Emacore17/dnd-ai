@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: a557d73b6c8cec530e67f5292c7d48f10e987c53
+last_verified_commit: 2765c49959d6b4094367120e3615a0728a58be0a
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -11,6 +11,7 @@ related_tasks:
   - BL-001
   - BL-002
   - BL-003
+  - BL-040
   - BL-079
   - BL-080
 code_refs:
@@ -23,6 +24,10 @@ code_refs:
   - scripts/lib/build-artifact.mjs
   - scripts/smoke-build-artifact.mjs
   - apps/web/artifact-runtime/start.mjs
+  - apps/web/e2e/game-shell.performance.spec.ts
+  - apps/web/e2e/performance-budget.mjs
+  - apps/web/e2e/start-production-server.mjs
+  - apps/web/playwright.config.ts
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -37,6 +42,8 @@ test_refs:
   - tests/contracts/bl079-ui-foundation.test.mjs
   - apps/web/src/components/game/game-shell.test.tsx
   - apps/web/e2e/game-shell.spec.ts
+  - apps/web/e2e/game-shell.performance.spec.ts
+  - tests/unit/performance-budget.test.mjs
   - docs/testing/BL-079_VERIFICATION.md
 supersedes: null
 ---
@@ -49,7 +56,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-13 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `main` a `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; branch `codex/bl-079-mobile-shell`, implementation `778b634`, performance CI fix `a557d73b6c8cec530e67f5292c7d48f10e987c53` |
+| Delivery/commit | `main` a `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; branch `codex/bl-079-mobile-shell`, implementation `778b634`, performance gate production `2765c49959d6b4094367120e3615a0728a58be0a` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `aa892faafb3e54b76a0a37a31d3a919c9e9f05681a64501239de9c0351322805` |
 | Milestone | `M0 — Fondamenta` |
@@ -60,7 +67,7 @@ supersedes: null
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. `BL-002` ha aggiunto e verificato localmente e su GitHub pipeline, artifact, failure path e Ruleset. `BL-079` ha implementato la fondazione web: design system shadcn/Radix, shell conversazionale mobile-first, fixture dei dieci stati, motion riducibile e harness component/browser. Contract, component, Playwright, axe, visual multipiattaforma, build, performance e clean-commit verify sono verdi localmente. La prima run della PR #5 (`29271004267`) ha fallito chiusa sul performance smoke eseguito con un secondo browser concorrente; `a557d73` serializza la matrice mantenendo la soglia a zero e attende la CI sostitutiva. Il task resta in review anche per i gate umani, device/browser reali e lo staging posseduto da `BL-080`. `BL-003` è il prossimo task eseguibile e sblocca la configurazione necessaria a `BL-080`.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. `BL-002` ha aggiunto e verificato localmente e su GitHub pipeline, artifact, failure path e Ruleset. `BL-079` ha implementato la fondazione web: design system shadcn/Radix, shell conversazionale mobile-first, fixture dei dieci stati, motion riducibile e harness component/browser. Contract, component, Playwright, axe, visual multipiattaforma e build sono verdi. Le run PR #5 `29271004267` e `29272004975` hanno fallito chiuse col vecchio observer, la seconda anche con un worker: il commit `2765c49` lo sostituisce con un gate standalone production delimitato su quattro fasi, tre campioni senza retry e diagnostica failure-only. La calibrazione locale è `20/20 PASS`; la run Ubuntu `29274592866` ha chiuso 5/5 job verdi, incluso performance `3/3` e merge gate. Il sync finale ha superato Playwright `37/123` in `40,3 s` e `TURBO_FORCE=true pnpm verify` in `71,5 s` senza cache. Il task resta in review per i gate umani, device/browser reali e lo staging posseduto da `BL-080`. `BL-003` è il prossimo task eseguibile e sblocca la configurazione necessaria a `BL-080`.
 
 ## Decisioni operative vigenti
 
@@ -90,7 +97,7 @@ Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`
 | UI foundation | shadcn `4.13.0`; Radix `1.6.2`; Tailwind `4.3.2`; Motion `12.42.2`; Streamdown `2.5.0` | BL-079 automatic gates `PASS`; Rive assente |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
-| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; post-merge run `29257721274` PASS |
+| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; browser functional/performance separati e diagnostica failure-only; run BL-079 `29274592866` PASS |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
 | Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file; working tree `3.172` file con secret/checksum e boot HTTP `PASS` |
 
@@ -108,6 +115,8 @@ corepack pnpm@10.34.5 test:component
 corepack pnpm@10.34.5 test:integration
 corepack pnpm@10.34.5 test:contract
 corepack pnpm@10.34.5 test:e2e
+corepack pnpm@10.34.5 test:e2e:functional
+corepack pnpm@10.34.5 test:e2e:performance
 corepack pnpm@10.34.5 test:security
 corepack pnpm@10.34.5 boundaries:check
 corepack pnpm@10.34.5 tasks:check
@@ -153,7 +162,7 @@ Il dettaglio cromatico può evolvere tramite token. Rive non è adottato nella s
 
 ## Prossima azione
 
-Pubblicare il fix `a557d73` e attendere la CI sostitutiva della PR #5; mantenere aperti screen reader, telefono/zoom, browser e five-second review. Avviare quindi `BL-003`, che sblocca `BL-080` per provisioning e smoke preview/staging senza attribuire quel lavoro al tardo hardening `BL-070`.
+Congelare e pubblicare la sincronizzazione documentale; mantenere aperti screen reader, telefono/zoom, browser e five-second review. Avviare quindi `BL-003`, che sblocca `BL-080` per provisioning e smoke preview/staging senza attribuire quel lavoro al tardo hardening `BL-070`.
 
 ## Rischi chiusi
 
@@ -164,4 +173,5 @@ Pubblicare il fix `a557d73` e attendere la CI sostitutiva della PR #5; mantenere
 | CTX-R06 | Pipeline e failure path verificati realmente su GitHub | PR #1/run `29257544214` tutti verdi; PR #3/run `29256736728` con tests/gate rossi, build skipped e merge state `BLOCKED`; post-merge run `29257721274` PASS |
 | CTX-R07 | Blocco del piano privato rimosso dal Product Owner e enforcement attivato | repository pubblico; Ruleset `18877721` active/strict/no bypass; regole applicabili a `main` verificate via API |
 | CTX-R04 | La fondazione mobile non è più differita | shell 320–1440, landscape, keyboard proxy e safe area automatici `PASS`; report BL-079 |
-| CTX-R05 | Runtime visuale contenuto e misurato | Motion lazy/reduced con performance smoke verde; Rive escluso dalla shell P0 |
+| CTX-R05 | Runtime visuale contenuto e misurato | Motion lazy/reduced; gate production locale `20/20 PASS`; Rive escluso dalla shell P0; dice tray reale assegnato a `BL-040` |
+| CTX-R12 | Gate performance production attestato su Ubuntu | commit `2765c49`; run PR #5 `29274592866` con functional `36/116`, performance `3/3`, artifact e merge gate `PASS` |

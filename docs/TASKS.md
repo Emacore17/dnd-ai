@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: a557d73b6c8cec530e67f5292c7d48f10e987c53
+last_verified_commit: 2765c49959d6b4094367120e3615a0728a58be0a
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -23,6 +23,9 @@ code_refs:
   - scripts/lib/task-graph.mjs
   - apps/web
   - apps/web/artifact-runtime/start.mjs
+  - apps/web/e2e/game-shell.performance.spec.ts
+  - apps/web/e2e/performance-budget.mjs
+  - apps/web/e2e/start-production-server.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -34,6 +37,8 @@ test_refs:
   - tests/contracts/bl079-ui-foundation.test.mjs
   - apps/web/src/components/game/game-shell.test.tsx
   - apps/web/e2e/game-shell.spec.ts
+  - apps/web/e2e/game-shell.performance.spec.ts
+  - tests/unit/performance-budget.test.mjs
 supersedes: null
 ---
 
@@ -526,7 +531,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Stato:** `IN_REVIEW`
 - **Progresso:** `90%`
 - **Esito test:** `PARTIAL`
-- **Contesto verificato:** `YES` — implementation commit: `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; performance CI fix: `a557d73b6c8cec530e67f5292c7d48f10e987c53`; data: `2026-07-13`
+- **Contesto verificato:** `YES` — implementation commit: `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; performance gate production: `2765c49959d6b4094367120e3615a0728a58be0a`; data: `2026-07-13`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-001, BL-002, BL-080
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§8, 11.4, 21, 23.1, 26.8, 32.2; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-079`; `docs/MVP_SPEC.md` §35.1
@@ -541,10 +546,11 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Reduced-motion mantiene contenuto, focus order e azioni; motion layer usa transform nei percorsi frequenti.
   - [x] Bundle/performance trace documenta Motion lazy; Rive è assente da manifest, lockfile, source e bundle iniziale.
   - [x] Visual regression delle shell P0 su Windows e Linux.
-  - [ ] Review “five-second comprehension” con cinque utenti interni e finding tracciati; smoke browser, CI sostitutiva e staging fornito da `BL-080`.
+  - [x] CI Ubuntu esegue build standalone, browser funzionale e tre campioni performance senza retry; merge gate verde nella run `29274592866`.
+  - [ ] Review “five-second comprehension” con cinque utenti interni e finding tracciati; smoke browser non Chromium e staging fornito da `BL-080`.
 - **Documentazione e contesto:** `docs/product/UX_UI_DESIGN.md`, `docs/adr/0001-mobile-first-conversational-ui.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, `docs/testing/BL-079_VERIFICATION.md`; `docs/testing/TEST_STRATEGY.md` quando creato da `QA-001`
-- **Evidenze di chiusura:** implementation `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; performance CI fix `a557d73b6c8cec530e67f5292c7d48f10e987c53`; draft PR #5; run iniziale `29271004267` fail-closed sul performance smoke concorrente; clean-commit `TURBO_FORCE=true pnpm verify` exit `0` in `66,1 s`; lint/typecheck/build `10/10`; contract UI `9/9`; component `26/26`; Playwright CI-profile seriale `37` pass applicabili/`123` skip condizionali; visual Windows/Linux `7/7`; performance `0` long task e CLS `0.0000245`; bundle `/` `365.057` byte gzip; artifact `3.172` file con checksum/secret/boot HTTP `PASS`; report `docs/testing/BL-079_VERIFICATION.md`.
-- **Note, rischi o bloccanti:** Rive è stato escluso dalla shell P0; `useChat` e trasporti paralleli restano vietati. Gli automatismi locali specifici sono verdi. `DONE` è trattenuto dalla CI sostitutiva, dai gate manuali/ambientali e dalla dipendenza `BL-080` emersa nell'audit finale; `QA-001` consolida il harness senza diventare dipendenza circolare.
+- **Evidenze di chiusura:** implementation `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; performance gate `2765c49959d6b4094367120e3615a0728a58be0a`; draft PR #5; run `29271004267` e `29272004975` fail-closed col vecchio observer; run `29274592866` 5/5 job `PASS`; verify finale senza cache `71,5 s`; lint/typecheck/build `10/10`; unit `14` pass/`1` skip host; contract UI `9/9`; evaluator budget `4/4`; component `26/26`; integration `4/4`; contract totali `18/18`; security `8/8`; Playwright completo `37` pass/`123` skip in `40,3 s`; browser functional production `36` pass/`116` skip; visual Windows/Linux `7/7`; performance production `3/3` e calibrazione `20/20`, Event Timing massimo `40 ms`, processing `14,7 ms`, CLS `0.0000246`, zero LoAF/long task osservati e zero violazioni; bundle `/` `365.057` byte gzip; artifact locale `3.172` file e CI `3.214` file con checksum/secret/boot HTTP `PASS`; report `docs/testing/BL-079_VERIFICATION.md`.
+- **Note, rischi o bloccanti:** Rive è stato escluso dalla shell P0; `useChat` e trasporti paralleli restano vietati. Gli automatismi locali e CI specifici sono verdi. Il dice tray performance appartiene al consumer `BL-040`. `DONE` è trattenuto dai gate manuali/ambientali e dalla dipendenza `BL-080`; `QA-001` consolida il harness senza diventare dipendenza circolare.
 
 ### BL-080 — Fondazione preview/staging M0
 
@@ -2473,7 +2479,7 @@ updated_at: 2026-07-13
 agent: Codex development agent
 git_branch: codex/bl-079-mobile-shell
 base_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
-current_commit: a557d73b6c8cec530e67f5292c7d48f10e987c53
+current_commit: 2765c49959d6b4094367120e3615a0728a58be0a
 spec_sha256: aa892faafb3e54b76a0a37a31d3a919c9e9f05681a64501239de9c0351322805
 context_verified: true
 test_status: PARTIAL
@@ -2524,18 +2530,22 @@ working_tree_dirty: false
 | 2026-07-13 | 90% | Il verify ha scoperto due gap preesistenti del packaging: file Git eliminati nello scanner e standalone Next materializzato ma non avviabile. Correzioni fail-closed con regressioni; aggiunto boot smoke CI. | `pnpm verify` exit `0` in `62,3 s`; unit 10 pass/1 skip host, component 26, integration 4, contract 16, security 8, build 10/10; artifact 3.172 file e HTTP shell `PASS`. | Congelare commit pulito e attendere CI; gate manuali e BL-080 restano aperti. |
 | 2026-07-13 | 90% | Congelato il change set e ripetuto il gate sul commit pulito con cache Turbo forzatamente ignorata. | Commit `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; `TURBO_FORCE=true pnpm verify` exit `0` in `66,1 s`; 0 cache hit, artifact boot HTTP `PASS`. | Sincronizzare i metadati, pubblicare branch/PR e attendere CI; gate manuali e BL-080 restano aperti. |
 | 2026-07-13 | 90% | La prima CI BL-079 ha fallito chiusa sul performance smoke conteso da due browser worker; la correlazione log mostra il test insieme a desktop-1024 e il retry insieme a desktop-1440. Serializzato Playwright senza rilassare la soglia. | PR #5/run `29271004267`: quality/security `PASS`, browser `36` pass/`123` skip/`1` fail; long task `[83, 63]`, retry `[85, 53]`. Fix `a557d73`: contratto `9/9`, focused `1/1`, matrice CI-profile `37/37` in `49,7 s`; full verify sincronizzato `PASS` in `74,9 s`, contract totali `17/17`. | Congelare e pubblicare la documentazione, poi attendere la CI sostitutiva; gate manuali e BL-080 restano aperti. |
+| 2026-07-13 | 90% | La seconda CI ha riprodotto il failure con un solo worker, invalidando la diagnosi “solo contesa”. Auditato il vecchio observer: runtime dev, buffer globale pre-navigation, nessuna attribuzione per fase e allegato prodotto dopo gli assert. | Run `29272004975`: quality/security `PASS`; tests/gate `FAIL`; build skipped; performance `[59]` ms, retry `[63]`; `36` pass/`123` skip. | Sostituire il gate con misure production attribuibili e diagnostica failure-only. |
+| 2026-07-13 | 90% | Separati test funzionali e performance; aggiunti runtime standalone, warm-up, User Timing, input per fase, scroll spring bounded, Event Timing/LoAF/CLS, evaluator puro, tre campioni senza retry e artifact diagnostico fail-closed. | Commit `2765c49959d6b4094367120e3615a0728a58be0a`; contract UI `9/9`; budget unit `4/4`; functional `36/116`; performance `3/3`; calibrazione `20/20`, massimo `40 ms`/`14,7 ms`, CLS `0.0000246`, zero violazioni; secret scan `PASS`. | Sincronizzare documentazione, completare verify e attendere la nuova CI; gate manuali e BL-080 restano aperti. |
+| 2026-07-13 | 90% | Il gate attribuibile ha superato Ubuntu; l'upload diagnostico è rimasto correttamente inattivo sul successo e la PR draft è mergeable/clean. | Run `29274592866`: 5/5 job `PASS`; unit `15`, component `26`, integration `4`, contract `18`; functional `36/116` in `43,8 s`; performance `3/3` in `14,7 s`; artifact `3.214` file e boot HTTP `PASS`. | Completare verify documentale, congelare il commit e lasciare aperti soltanto gate manuali e `BL-080`. |
+| 2026-07-13 | 90% | Allineati report, runbook, contesto e riferimenti del gate production; rieseguite la matrice browser completa e la verifica globale senza cache. | Playwright `37/123` in `40,3 s`; `TURBO_FORCE=true pnpm verify` exit `0` in `71,5 s`, 0 cache hit; unit `14` pass/`1` skip host, component `26`, integration `4`, contract `18`, security `8`, build `10/10`, artifact `3.172` file e boot HTTP `PASS`. | Congelare il sync documentale, pubblicarlo e lasciare aperti soltanto gate manuali e `BL-080`. |
 
 ## Chiusura / hand-off corrente
 
-- **Commit/PR:** implementation `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; performance CI fix `a557d73b6c8cec530e67f5292c7d48f10e987c53`; draft PR #5
-- **Comandi eseguiti:** lint/typecheck web; contract BL-079; component; Playwright completo e visual Windows/Linux; performance smoke; CI-profile seriale; build; analyze
-- **Exit code:** `0` per tutti i gate automatici; clean implementation `TURBO_FORCE=true pnpm verify` `PASS` in `66,1 s`; fix e documentazione sincronizzata `PASS` in `74,9 s`, 0 cache hit, contract `17/17` e boot HTTP artifact incluso
-- **Report/CI URL o path:** `docs/testing/BL-079_VERIFICATION.md`; baseline in `apps/web/e2e/__screenshots__/`; run iniziale `29271004267`, CI sostitutiva pending
+- **Commit/PR:** implementation `778b634ce4ef3e9a2dbe2a6b225327e2538e2ed2`; performance gate `2765c49959d6b4094367120e3615a0728a58be0a`; draft PR #5
+- **Comandi eseguiti:** lint/typecheck web; contract BL-079 e CI; unit evaluator; component; browser funzionale production; performance production/calibrazione; Playwright completo e visual Windows/Linux; build; analyze
+- **Exit code:** `0` per tutti i gate automatici; matrice Playwright completa `37` pass/`123` skip in `40,3 s`; sync finale `TURBO_FORCE=true pnpm verify` `PASS` in `71,5 s`, 0 cache hit, unit `14` pass/`1` skip host, component `26`, integration `4`, contract `18`, security `8`, lint/typecheck/build `10/10`, artifact `3.172` file e boot HTTP `PASS`
+- **Report/CI URL o path:** `docs/testing/BL-079_VERIFICATION.md`; baseline in `apps/web/e2e/__screenshots__/`; run `29271004267` e `29272004975` fail-closed col vecchio observer; run `29274592866` 5/5 `PASS`
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** `N/A`
 - **Prompt/model/eval version:** `N/A`
 - **Documenti aggiornati:** `docs/product/UX_UI_DESIGN.md`; ADR-0001; `docs/CONTEXT.md`; `docs/TASKS.md`; `docs/TRACEABILITY.md`; `docs/CHANGELOG.md`; `docs/README.md`; report BL-079
-- **Rischi residui/TODO tracciati:** CI sostitutiva, screen reader, telefono/zoom, browser non Chromium e five-second review; provisioning e smoke staging tramite `BL-080`
+- **Rischi residui/TODO tracciati:** screen reader, telefono/zoom, browser non Chromium e five-second review; provisioning e smoke staging tramite `BL-080`; dice tray performance in `BL-040`
 - **Task successivo reso READY:** `BL-003`; il programma può avanzare mentre BL-079 attende i gate manuali e ambientali
 
 
@@ -2558,7 +2568,9 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `f1be878` | BL-002 closure | GitHub Ruleset e negative merge gate | Repository pubblico verificato; attivata Ruleset `18877721` active/strict/no bypass e confermato `mergeStateStatus=BLOCKED` sulla PR negativa #3/run `29256736728`. BL-002 chiuso e BL-079 reso READY. | BL-079, GOV-002, BL-070 |
 | 2026-07-13 | `ae88583` | BL-002 post-merge | `main` e CI | PR #1 unita senza bypass; post-merge run `29257721274` con quality, tests, security, build artifact e merge gate tutti `SUCCESS`. | BL-079, GOV-002 |
 | 2026-07-13 | working tree su `d530f3a` | BL-079 review | Shell, design contract e harness UI | Implementata la fondazione shadcn/AI Elements/Motion; test automatici specifici verdi; Rive escluso; task in review per gate manuali, clean commit e staging posseduto da `BL-080`. | BL-003, BL-080, BL-005, BL-006, BL-012, BL-019, BL-027, BL-040, QA-001 |
-| 2026-07-13 | `a557d73` | BL-079 CI fix | Performance smoke Playwright | Rimossa la contesa interna al runner serializzando la matrice; contratto preserva il budget `0` long task. Prima run PR #5 `29271004267` registrata come failure fail-closed, CI sostitutiva pending. | BL-079, QA-001 |
+| 2026-07-13 | `a557d73` | BL-079 CI fix intermedio | Performance smoke Playwright | Serializzata la matrice dopo la prima failure; la successiva run `29272004975` ha smentito la diagnosi solo-worker e questo gate è stato sostituito da `2765c49`. | BL-079, QA-001 |
+| 2026-07-13 | `2765c49` | BL-079 performance gate | Browser production e diagnostica CI | La seconda run `29272004975` ha smentito la diagnosi solo-worker. Il gate ora attribuisce quattro fasi tramite Event Timing/LoAF, usa tre campioni senza retry e carica diagnostica stretta solo sul failure. | BL-079, BL-040, QA-001 |
+| 2026-07-13 | `2765c49` | BL-079 remote evidence | GitHub CI e artifact | Run `29274592866` tutta verde: functional `36/116`, performance `3/3`, artifact/boot smoke e merge gate `PASS`; diagnostica browser skipped sul successo. | BL-079, BL-003, BL-040, QA-001 |
 | — | — | — | — | — | — |
 
 
