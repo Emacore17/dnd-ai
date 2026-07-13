@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: f9330fed11e623e84fa7e32032dca95c4e7ee308
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -2440,7 +2440,7 @@ updated_at: 2026-07-13
 agent: Codex development agent
 git_branch: codex/bl-002-ci-foundation
 base_commit: 6b9f5d281fb0185f5f6c98813e2ffcee6424e658
-current_commit: uncommitted
+current_commit: f9330fed11e623e84fa7e32032dca95c4e7ee308
 spec_sha256: ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6
 context_verified: true
 test_status: PARTIAL
@@ -2477,12 +2477,13 @@ test_status: PARTIAL
 | 2026-07-13 | 75% | Implementati workflow fail-closed, action pin, cache pnpm-only, SAST/audit/secret scan, fan-in stabile e artifact allowlisted con manifest SHA. Il remote è stato collegato e il branch di lavoro creato. | Unit 5 pass/1 skip host; integration 3/3; contract 8/8; security 3/3; build 10/10; artifact 3.184 file verificati; audit `No known vulnerabilities found`. | Completare documentazione, `pnpm verify`, PR verde, Ruleset e PR negativa. |
 | 2026-07-13 | 90% | Verificato il vincolo del piano GitHub: Ruleset e branch protection sul repository privato restituiscono `403`; Code Scanning non è disponibile e viene sostituito con SAST locale riproducibile senza attivare servizi a pagamento. | `pnpm scan:sast` exit `0`; fixture SAST negativa rilevata; API GitHub letta come admin. | Completare clean checkout e CI remota; mantenere BL-002 aperto finché l'enforcement non è disponibile. |
 | 2026-07-13 | 90% | Documentazione, ADR, runbook, tracciabilità e gate locali completati; hardening parent junction, mirror traced e scanner supply-chain incluso. | `pnpm verify` exit `0` in 74,4 s; 10/10 lint/typecheck/build, 9+1 unit, 3 integration, 8 contract, 7 security, SAST/policy/scan/artifact PASS. | Committare, verificare da checkout pulito e aprire PR; Ruleset resta bloccata dal piano GitHub. |
+| 2026-07-13 | 90% | Congelato e verificato il commit di implementazione da worktree detached pulito, con lockfile frozen e cache Turbo forzatamente ignorata. | Commit `f9330fed11e623e84fa7e32032dca95c4e7ee308`; install exit `0`; `TURBO_FORCE=true pnpm verify` exit `0` in 73,7 s. | Aprire PR, verificare CI/log/artifact e creare la PR negativa. |
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/bl-002-ci-foundation`; commit/PR in preparazione
+- **Commit/PR:** branch `codex/bl-002-ci-foundation`; implementation commit `f9330fed11e623e84fa7e32032dca95c4e7ee308`; PR in preparazione
 - **Comandi eseguiti:** `pnpm format:check`; `pnpm lint`; `pnpm typecheck`; `pnpm test:unit`; `pnpm test:integration`; `pnpm test:contract`; `pnpm test:security`; `pnpm scan:sast`; `pnpm boundaries:check`; `pnpm tasks:check`; `pnpm ci:workflow:check`; `pnpm build`; `pnpm artifact:prepare`; `pnpm artifact:verify`; `pnpm audit --audit-level=moderate`
-- **Exit code:** `0` per i comandi completati incluso full `pnpm verify` in 74,4 s; fixture CI intenzionale `1` asserito; un primo verify ha rilevato `Buffer` non importato nel test ed è stato corretto; CI remota ancora da eseguire
+- **Exit code:** `0` per i comandi completati incluso full `pnpm verify` in 74,4 s e clean-worktree verify in 73,7 s; fixture CI intenzionale `1` asserito; un primo verify ha rilevato `Buffer` non importato nel test ed è stato corretto; CI remota ancora da eseguire
 - **Report/CI URL o path:** `docs/testing/BL-002_VERIFICATION.md`; PR/CI URL in preparazione
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** `N/A`
@@ -2504,7 +2505,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `N/A` | GOV-001 | Contesto living e UX/UI | Completato il bootstrap, accettata ADR-0001, aggiunto `BL-079` P0 e aggiornata la spec alla baseline mobile-first SHA `b639a75c26ca0dc17e54d9f1c8816de7514a5e2d54ea4cfa733f275e18fbcd84`. | BL-001, BL-002, BL-012, BL-019, BL-027, BL-040, QA-001, GOV-002 |
 | 2026-07-13 | `6cda07a` | BL-001 | Backlog, monorepo e confini | Allineati consumer UX→`BL-079`, dipendenze differite e riferimenti; creati 10 workspace, policy import/task graph, test negativi, overview e ADR-0002. Spec SHA `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90`. | BL-002, BL-003, BL-004, BL-079, GOV-002, QA-001 |
 | 2026-07-13 | `6cda07a` | BL-001 closure | Front matter e baseline | Registrato il commit verificato nei documenti living; corpo normativo invariato. Nuova spec SHA `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`. | Tutti i task aperti alla prossima cold start |
-| 2026-07-13 | `uncommitted` | BL-002 | Pipeline, ADR-0003 e trust boundary | Aggiunti gate fail-closed, SAST/secret/audit, artifact allowlisted e remote GitHub; registrato il blocco Ruleset del piano privato senza modificare privacy o spesa. | BL-002, BL-070, QA-001, GOV-002 |
+| 2026-07-13 | `f9330fe` | BL-002 | Pipeline, ADR-0003 e trust boundary | Aggiunti gate fail-closed, SAST/secret/audit, artifact allowlisted e remote GitHub; registrato il blocco Ruleset del piano privato senza modificare privacy o spesa. | BL-002, BL-070, QA-001, GOV-002 |
 | — | — | — | — | — | — |
 
 

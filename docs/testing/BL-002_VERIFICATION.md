@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-13
-last_verified_commit: uncommitted
+last_verified_commit: f9330fed11e623e84fa7e32032dca95c4e7ee308
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -32,7 +32,7 @@ supersedes: null
 | Environment locale | Windows, Node `24.11.0`, pnpm `10.34.5` |
 | Branch | `codex/bl-002-ci-foundation` |
 | Base | `6b9f5d281fb0185f5f6c98813e2ffcee6424e658` |
-| Commit verificato | in preparazione |
+| Commit verificato | `f9330fed11e623e84fa7e32032dca95c4e7ee308` |
 | Spec SHA-256 | `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6` |
 | Migration/schema/prompt/eval | `N/A` — non modificati |
 
@@ -75,7 +75,6 @@ Il repository GitHub è privato e Code Scanning non è abilitato: la relativa AP
 
 ## Evidenze finali ancora richieste
 
-- replica da checkout pulito del commit;
 - PR verde e URL della run GitHub;
 - Ruleset attiva su `main`, ID e required check `CI / Merge gate`: bloccata dal piano GitHub Free del repository privato (`GET rulesets` e branch protection restituiscono `403`);
 - PR negativa con gate fallito; il merge state realmente bloccato richiede prima l'enforcement sopra;

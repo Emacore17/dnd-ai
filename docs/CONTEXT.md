@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: uncommitted
+last_verified_commit: f9330fed11e623e84fa7e32032dca95c4e7ee308
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -40,7 +40,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-13 |
 | Repository | GitHub `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Branch/commit | `codex/bl-002-ci-foundation`; base `6b9f5d281fb0185f5f6c98813e2ffcee6424e658`; change non ancora committato |
+| Branch/commit | `codex/bl-002-ci-foundation`; implementation commit `f9330fed11e623e84fa7e32032dca95c4e7ee308`; aggiornamento evidenze in corso |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6` |
 | Milestone | `M0 — Fondamenta` |
@@ -146,3 +146,4 @@ Completare i gate locali e la PR verde di `BL-002`; registrare anche una PR nega
 | ID | Chiusura | Evidenza |
 |---|---|---|
 | CTX-R01 | Git inizializzato e clean-worktree verification completata | commit `6cda07a60022665f321b48dd82fbeb1d9bef586f`; `docs/testing/BL-001_VERIFICATION.md` |
+| CTX-R08 | BL-002 verificato da worktree detached pulito con install frozen e cache forzata off | commit `f9330fed11e623e84fa7e32032dca95c4e7ee308`; `TURBO_FORCE=true pnpm verify` exit `0` in 73,7 s |
