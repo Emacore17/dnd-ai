@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 049748443aa6fa83496bfc5b996560312b6fd48d
+last_verified_commit: 7c6c7071d027c55aeffbc7279b8ca3765ea26c37
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -2440,7 +2440,7 @@ updated_at: 2026-07-13
 agent: Codex development agent
 git_branch: codex/bl-002-ci-foundation
 base_commit: 6b9f5d281fb0185f5f6c98813e2ffcee6424e658
-current_commit: 049748443aa6fa83496bfc5b996560312b6fd48d
+current_commit: 7c6c7071d027c55aeffbc7279b8ca3765ea26c37
 spec_sha256: ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6
 context_verified: true
 test_status: PARTIAL
@@ -2481,10 +2481,11 @@ test_status: PARTIAL
 | 2026-07-13 | 90% | La prima run Ubuntu ha rilevato un link Next interno al mirror standalone non presente su Windows; corretto il packager mantenendo il confinement fail-closed. | PR #1 run `29253365500`: quality/security/tests verdi, build e merge gate rossi come previsto; fix locale `pnpm verify` exit `0`. | Committare il fix, rieseguire clean verify e attendere la nuova run remota. |
 | 2026-07-13 | 90% | Il fix Linux è stato congelato e verificato da worktree detached pulito senza cache riutilizzata. | Head `049748443aa6fa83496bfc5b996560312b6fd48d`; frozen install `0`; `TURBO_FORCE=true pnpm verify` `0` in 63,4 s. | Push e nuova run della PR #1. |
 | 2026-07-13 | 90% | La seconda run Ubuntu ha eseguito il test symlink saltato su Windows e ristretto correttamente l'eccezione ai soli output Next con mirror configurato. | Run `29254060444`: quality/security verdi, tests/gate rossi, build skipped; working tree `TURBO_FORCE=true pnpm verify` `0` in 60,9 s. | Committare, clean verify e rieseguire la PR. |
+| 2026-07-13 | 90% | Congelata e verificata da checkout pulito la policy symlink finale, inclusa l'eccezione Next e il rifiuto non-Next. | Head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; frozen install `0`; `TURBO_FORCE=true pnpm verify` `0` in 66,0 s. | Push e terza run PR #1. |
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/bl-002-ci-foundation`; verified implementation head `049748443aa6fa83496bfc5b996560312b6fd48d`; PR #1 aperta
+- **Commit/PR:** branch `codex/bl-002-ci-foundation`; verified implementation head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; PR #1 aperta
 - **Comandi eseguiti:** `pnpm format:check`; `pnpm lint`; `pnpm typecheck`; `pnpm test:unit`; `pnpm test:integration`; `pnpm test:contract`; `pnpm test:security`; `pnpm scan:sast`; `pnpm boundaries:check`; `pnpm tasks:check`; `pnpm ci:workflow:check`; `pnpm build`; `pnpm artifact:prepare`; `pnpm artifact:verify`; `pnpm audit --audit-level=moderate`
 - **Exit code:** `0` per i comandi completati incluso full `pnpm verify` e clean-worktree verify dell'head in 63,4 s; fixture CI intenzionale `1` asserito; la prima CI remota ha fallito chiuso sul caso Linux ora corretto
 - **Report/CI URL o path:** `docs/testing/BL-002_VERIFICATION.md`; PR/CI URL in preparazione
@@ -2510,6 +2511,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `6cda07a` | BL-001 closure | Front matter e baseline | Registrato il commit verificato nei documenti living; corpo normativo invariato. Nuova spec SHA `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`. | Tutti i task aperti alla prossima cold start |
 | 2026-07-13 | `f9330fe` | BL-002 | Pipeline, ADR-0003 e trust boundary | Aggiunti gate fail-closed, SAST/secret/audit, artifact allowlisted e remote GitHub; registrato il blocco Ruleset del piano privato senza modificare privacy o spesa. | BL-002, BL-070, QA-001, GOV-002 |
 | 2026-07-13 | `0497484` | BL-002 CI fix | Artifact Next standalone | Accettati soltanto i symlink Linux già confinati nel mirror traced; ogni target esterno continua a richiedere rimappatura allowlisted. | BL-002, BL-070 |
+| 2026-07-13 | `7c6c707` | BL-002 CI fix | Artifact negative path | Limitata l'eccezione ai soli output Next configurati; il negative test Linux non-Next resta fail-closed. | BL-002, BL-070 |
 | — | — | — | — | — | — |
 
 

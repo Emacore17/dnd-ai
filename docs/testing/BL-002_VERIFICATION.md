@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-13
-last_verified_commit: 049748443aa6fa83496bfc5b996560312b6fd48d
+last_verified_commit: 7c6c7071d027c55aeffbc7279b8ca3765ea26c37
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -32,7 +32,7 @@ supersedes: null
 | Environment locale | Windows, Node `24.11.0`, pnpm `10.34.5` |
 | Branch | `codex/bl-002-ci-foundation` |
 | Base | `6b9f5d281fb0185f5f6c98813e2ffcee6424e658` |
-| Commit verificato | `049748443aa6fa83496bfc5b996560312b6fd48d` |
+| Commit verificato | `7c6c7071d027c55aeffbc7279b8ca3765ea26c37` |
 | Spec SHA-256 | `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6` |
 | Migration/schema/prompt/eval | `N/A` — non modificati |
 
@@ -53,7 +53,7 @@ supersedes: null
 | `pnpm artifact:prepare && pnpm artifact:verify` | exit `0`, 3.184 file e 45,62 MiB, checksum/scan PASS |
 | `pnpm audit --audit-level=moderate` | exit `0`, nessuna vulnerabilità nota dopo override `postcss@8.5.10` |
 | `pnpm verify` sul contenuto documentato | exit `0` in 74,4 s; aggregazione completa locale PASS |
-| clean worktree dell'head | frozen install exit `0`; `TURBO_FORCE=true pnpm verify` exit `0` in 63,4 s |
+| clean worktree dell'head | frozen install exit `0`; `TURBO_FORCE=true pnpm verify` exit `0` in 66,0 s |
 
 Il primo artifact smoke ha rifiutato i junction assoluti prodotti da Next/pnpm; il packager è stato corretto per usare soltanto la copia traced interna e continua a rifiutare link esterni. Un secondo failure ha individuato un esempio di private key nei docs del package Next non traced: la correzione del mirror evita di includere documentazione/dependency non necessarie.
 
