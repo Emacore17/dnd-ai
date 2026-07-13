@@ -80,11 +80,10 @@ La prima run della PR #1, [`29253365500`](https://github.com/Emacore17/dnd-ai/ac
 
 La seconda run, [`29254060444`](https://github.com/Emacore17/dnd-ai/actions/runs/29254060444), ha reso eseguibile su Linux il test symlink prima saltato su Windows: ha mostrato che l'eccezione interna era troppo ampia per gli output non-Next. La correzione limita esplicitamente i link interni al solo source root Next dotato di mirror; `Tests` e `CI / Merge gate` sono falliti e `Build artifact` è stato saltato, confermando il fan-in fail-closed. Il working tree corretto ha quindi superato `TURBO_FORCE=true pnpm verify` in 60,9 s.
 
-## Evidenze finali ancora richieste
+La terza run della PR #1, [`29254494868`](https://github.com/Emacore17/dnd-ai/actions/runs/29254494868), è `success`: `Quality`, `Tests`, `Security`, `Build artifact` e `CI / Merge gate` sono tutti passati. La scansione redatta dei log dei cinque job non ha rilevato pattern credenziale. L'artifact remoto `dnd-ai-build-9cdd85a329bd733bfd8a15efb61edb020d7a76c4` ha digest archivio `sha256:0d37c3c8fd42aecef0af3e0c749566d22090a98ba428fcf2b4c871f6ea932da9`; il manifest `build-artifact-v1` contiene 3.205 file/114.392.641 byte e ha superato nuovamente checksum e secret scan dopo il download.
 
-- PR verde e URL della run GitHub;
-- Ruleset attiva su `main`, ID e required check `CI / Merge gate`: bloccata dal piano GitHub Free del repository privato (`GET rulesets` e branch protection restituiscono `403`);
-- PR negativa con gate fallito; il merge state realmente bloccato richiede prima l'enforcement sopra;
-- controllo dei log e dell'artifact remoto senza secret.
+La PR negativa #2, chiusa senza merge, ha prodotto la run [`29254866626`](https://github.com/Emacore17/dnd-ai/actions/runs/29254866626): `Tests=FAILURE`, `Build artifact=SKIPPED` e `CI / Merge gate=FAILURE`. GitHub ha tuttavia riportato la PR come `MERGEABLE/UNSTABLE`, prova che il gate applicativo funziona ma non è enforced senza Ruleset/branch protection.
 
-Rendere pubblico il repository o effettuare un upgrade è fuori dall'autorizzazione implicita del task. Finché questi punti non sono compilati, `BL-002` resta `IN_REVIEW/PARTIAL`.
+## Blocco residuo
+
+L'unica evidenza mancante è una Ruleset attiva su `main` che richieda `CI / Merge gate` e renda realmente non mergeabile la PR negativa. `GET rulesets` e branch protection restituiscono `403` sul piano GitHub Free del repository privato. Rendere pubblico il repository o effettuare un upgrade è fuori dall'autorizzazione implicita del task; `BL-002` resta quindi `BLOCKED/90%/PARTIAL`.

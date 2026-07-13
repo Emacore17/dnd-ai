@@ -44,14 +44,14 @@ supersedes: null
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-002 — IN_REVIEW/90%` |
+| Task attivo | `BL-002 — BLOCKED/90%` |
 | Ultimo task completato | `BL-001 — DONE/PASSING` |
 | Prossimo task READY | `—` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. `BL-002` ha aggiunto la pipeline e i relativi controlli locali, ma la Ruleset e le run GitHub devono ancora essere verificate. Le entry point applicative restano intenzionalmente minime: migration, contratti di dominio implementati, queue e configurazioni di ambiente sono assenti e non vanno inferiti.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app, sette package, lockfile e controlli automatici dei confini e del task graph. `BL-002` ha aggiunto e verificato localmente e su GitHub la pipeline, inclusi artifact e failure path; resta bloccata soltanto l'enforcement della Ruleset, non disponibile sul piano privato corrente. Le entry point applicative restano intenzionalmente minime: migration, contratti di dominio implementati, queue e configurazioni di ambiente sono assenti e non vanno inferiti.
 
 ## Decisioni operative vigenti
 
@@ -80,8 +80,8 @@ Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | scaffold buildabile, nessuna feature |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
-| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate` |
-| Artifact schema | `build-artifact-v1` | staging allowlisted, secret scan, SHA-256 e verifica payload |
+| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; run `29254494868` PASS |
+| Artifact schema | `build-artifact-v1` | remote artifact 3.205 file, secret/checksum verification PASS |
 
 ## Comandi disponibili
 
@@ -134,12 +134,11 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | CTX-R03 | App/package sono scaffold senza contratti o feature | task M0 proprietari; non inferire dominio dalle entry point vuote |
 | CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` in M0 e dipendenza documentale per i task UI |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced; Rive gated o rimosso in `BL-079` |
-| CTX-R06 | Il workflow locale non prova da solo il blocco merge | eseguire PR verde, Ruleset attiva e PR negativa in `BL-002` |
 | CTX-R07 | Ruleset e branch protection non sono disponibili sul piano GitHub corrente per il repository privato | decisione Product Owner: piano GitHub compatibile oppure repository pubblico; non modificare privacy/spesa implicitamente |
 
 ## Prossima azione
 
-Completare i gate locali e la PR verde di `BL-002`; registrare anche una PR negativa per il comportamento fail-closed. L'enforcement della Ruleset `main` resta bloccato dal piano GitHub privato finché il Product Owner non sceglie un piano compatibile o la pubblicazione. `BL-079` resta `BACKLOG` fino alla chiusura di `BL-002`.
+Decisione Product Owner richiesta per sbloccare `BL-002`: piano GitHub compatibile con Ruleset/branch protection per repository privati, oppure pubblicazione esplicitamente autorizzata. Tutti i gate indipendenti sono completi; `BL-079` resta `BACKLOG` finché `BL-002` non può chiudere.
 
 ## Rischi chiusi
 
@@ -147,3 +146,4 @@ Completare i gate locali e la PR verde di `BL-002`; registrare anche una PR nega
 |---|---|---|
 | CTX-R01 | Git inizializzato e clean-worktree verification completata | commit `6cda07a60022665f321b48dd82fbeb1d9bef586f`; `docs/testing/BL-001_VERIFICATION.md` |
 | CTX-R08 | BL-002 verificato da worktree detached pulito con install frozen e cache forzata off | head `7c6c7071d027c55aeffbc7279b8ca3765ea26c37`; `TURBO_FORCE=true pnpm verify` exit `0` in 66,0 s |
+| CTX-R06 | Pipeline e failure path verificati realmente su GitHub | PR #1/run `29254494868` tutti verdi; PR #2/run `29254866626` con tests/gate rossi e build skipped |
