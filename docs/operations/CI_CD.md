@@ -8,16 +8,20 @@ source_refs:
   - docs/MVP_SPEC.md#294-cicd
 related_tasks:
   - BL-002
+  - BL-080
   - QA-001
   - BL-070
 code_refs:
   - .github/workflows/ci.yml
   - .github/actions/setup-workspace/action.yml
+  - apps/web/artifact-runtime/start.mjs
   - scripts/assert-ci-results.mjs
   - scripts/create-build-artifact.mjs
+  - scripts/smoke-build-artifact.mjs
 test_refs:
   - tests/contracts/ci-workflow.test.mjs
   - tests/integration/ci-gate.test.mjs
+  - tests/integration/artifact-runtime.test.mjs
   - tests/security/sast-config.test.mjs
   - docs/testing/BL-002_VERIFICATION.md
 supersedes: null
@@ -59,7 +63,7 @@ Non disabilitare il gate per risolvere una coda. Se un job viene cancellato o sa
 
 La setup action installa Node/pnpm pin e usa soltanto `setup-node` con cache `pnpm` e `pnpm-lock.yaml`. Non aggiungere env, home, workspace, `.turbo`, `.next`, `node_modules` o report al path cache.
 
-L’artifact caricato è soltanto `artifacts/bl002`, directory ignorata da Git e rigenerata da zero. `manifest.json` usa schema `build-artifact-v1`; `payload/` contiene gli output ammessi. `include-hidden-files: true` è necessario per la struttura `.next`, ma è sicuro soltanto perché lo staging rifiuta `.env`, credenziali, log, symlink esterni e file con pattern secret prima dell’upload.
+L’artifact caricato è soltanto `artifacts/bl002`, directory ignorata da Git e rigenerata da zero. `manifest.json` usa schema `build-artifact-v1`; `payload/` contiene gli output ammessi. `include-hidden-files: true` è necessario per la struttura `.next`, ma è sicuro soltanto perché lo staging rifiuta `.env`, credenziali, log, symlink esterni e file con pattern secret prima dell’upload. I private-hoist link pnpm non materializzati da Next vengono omessi senza dereferenziare lo store esterno; `web/start.mjs` ripristina la risoluzione soltanto verso il mirror incluso nel payload. Dopo checksum e secret scan, `artifact:smoke` avvia il standalone isolato, richiede `/`, verifica la shell e chiude il processo con timeout bounded.
 
 Comandi locali:
 
@@ -69,6 +73,7 @@ corepack pnpm@10.34.5 scan:sast
 corepack pnpm@10.34.5 audit --audit-level=high
 corepack pnpm@10.34.5 artifact:prepare
 corepack pnpm@10.34.5 artifact:verify
+corepack pnpm@10.34.5 artifact:smoke
 ```
 
 ## Gate differiti e owner
@@ -79,7 +84,10 @@ corepack pnpm@10.34.5 artifact:verify
 | schema/OpenAPI/event compatibility | `BL-009` |
 | coverage rules/domain ≥80% e report | `QA-001` |
 | browser, bundle e accessibility budget | `BL-079`, `QA-001` |
+| preview/staging M0, deploy smoke e rollback minimo | `BL-003`, `BL-080` |
 | eval prompt/schema | `BL-068` |
-| container, SBOM, image scan, staging/prod, rollback | `BL-070` |
+| container, SBOM, image scan, load/chaos, restore e release hardening | `BL-070` |
 
 I comandi non ancora implementati non hanno placeholder verdi: entrano nel workflow insieme al rispettivo runtime e acceptance test.
+
+`BL-080` è il primo owner deployabile della milestone M0: registra provider, project/resource ID, regione, environment, commit e run URL senza includere credenziali. Deve usare la typed config di `BL-003`, dati sintetici e un environment protetto; il suo smoke rende verificabili BL-079 e `GATE-M0`. La separazione definitiva staging/production, il load profile e i drill operativi restano a `BL-070`.

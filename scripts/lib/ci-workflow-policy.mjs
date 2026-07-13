@@ -195,8 +195,11 @@ function validateJobs(errors, workflow) {
   ]);
   requireCommands(errors, "tests", jobs.tests, [
     "pnpm test:unit",
+    "pnpm test:component",
     "pnpm test:integration",
     "pnpm test:contract",
+    "playwright install --with-deps chromium",
+    "pnpm test:e2e",
   ]);
   requireCommands(errors, "security", jobs.security, [
     "pnpm scan:sast",
@@ -207,6 +210,7 @@ function validateJobs(errors, workflow) {
     "pnpm build",
     "pnpm artifact:prepare",
     "pnpm artifact:verify",
+    "pnpm artifact:smoke",
   ]);
 
   const buildNeeds = asArray(jobs.build?.needs);

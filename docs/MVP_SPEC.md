@@ -7,6 +7,7 @@ source_refs: []
 related_tasks:
   - GOV-001
   - BL-079
+  - BL-080
 code_refs: []
 test_refs:
   - AGENTS_VALIDATION.txt
@@ -3993,7 +3994,8 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 | BL-008 | Observability | Come operatore voglio request e trace ID end-to-end. | OTel/log/Sentry baseline. | P0 | BL-001, BL-003 | Trace web→API→worker fake; log redaction test pass. | M |
 | BL-009 | Contracts | Come client voglio DTO runtime-validati. | Zod, JSON Schema, OpenAPI generation. | P0 | BL-001 | Contract compile e response validation; schema versionato. | M |
 | BL-010 | Platform | Come operatore voglio feature flag e kill switch server-side. | Flag store/config auditato. | P0 | BL-003, BL-008 | Disabilita start/turn/model route senza deploy; audit event. | S |
-| BL-079 | Frontend UX | Come giocatore voglio un’interfaccia mobile semplice e premium fin dal primo slice. | Fondazione design system, shell conversazionale, token e motion layer. | P0 | BL-001, BL-002 | shadcn/Radix e AI Elements selettivi configurati; shell 320–430 px e desktop adattivo; target touch, reduced motion, keyboard/AA e performance smoke passano. | M |
+| BL-079 | Frontend UX | Come giocatore voglio un’interfaccia mobile semplice e premium fin dal primo slice. | Fondazione design system, shell conversazionale, token e motion layer. | P0 | BL-001, BL-002, BL-080 | shadcn/Radix e AI Elements selettivi configurati; shell 320–430 px e desktop adattivo; target touch, reduced motion, keyboard/AA, performance e smoke staging passano. | M |
+| BL-080 | Platform | Come team voglio una preview/staging M0 isolata e riproducibile. | Provisioning, deploy automatico e smoke iniziale dei runtime deployabili. | P0 | BL-002, BL-003 | Preview/staging usa config e secret separati, non contiene dati production, pubblica URL/evidenza redatti e supera health/shell smoke con rollback documentato. | M |
 | BL-011 | Character | Come designer voglio cataloghi originali versionati. | Ascendenze, classi, background, ability, item base. | P0 | BL-009 | Nessun contenuto proprietario; schema/catalog validation pass. | L |
 | BL-012 | Character | Come giocatore voglio scegliere identità e classe. | Step builder con preview. | P0 | BL-011, BL-079 | Solo opzioni catalogo; keyboard/accessibility smoke. | M |
 | BL-013 | Character | Come giocatore voglio allocare attributi validi. | Point allocation/array standard. | P0 | BL-011, BL-079 | Budget invariabile; score 8–16; server ricalcola. | M |

@@ -2,7 +2,7 @@
 status: accepted
 owner: product-design-and-frontend
 last_reviewed: 2026-07-13
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
 source_refs:
   - docs/MVP_SPEC.md#8-esperienza-utente
   - docs/MVP_SPEC.md#11-architettura-generale
@@ -23,10 +23,17 @@ related_tasks:
   - BL-039
   - BL-040
 code_refs:
-  - apps/web (planned)
+  - apps/web/components.json
+  - apps/web/src/app/globals.css
+  - apps/web/src/components/ai-elements
+  - apps/web/src/components/game
+  - apps/web/src/components/motion
 test_refs:
   - AGENTS_VALIDATION.txt
-  - tests/e2e/mobile-game-loop.spec.ts (planned)
+  - tests/contracts/bl079-ui-foundation.test.mjs
+  - apps/web/src/components/game/game-shell.test.tsx
+  - apps/web/e2e/game-shell.spec.ts
+  - docs/testing/BL-079_VERIFICATION.md
 supersedes: null
 ---
 
@@ -100,3 +107,9 @@ La decisione va riesaminata se:
 - AI Elements impone tipi/trasporto incompatibili con `TurnView` o REST+SSE.
 
 Ogni revisione aggiorna ADR, specifica, studio UX, task e test nello stesso change set.
+
+## Evidenza di implementazione BL-079
+
+La decisione è implementata nella fondazione `apps/web`: shadcn/ui `new-york` su Radix, AI Elements selettivi senza `useChat`, shell conversation-first da 320 px, drawer HUD, enhancement desktop, Motion lazy/reduced e contratti strutturati per stati, retry e scelte.
+
+Il gate ha scelto il ramo più semplice previsto dall'ADR: Rive non entra nella shell P0. Il bundle, la performance delle interazioni, gli screenshot multipiattaforma e la matrice automatizzata sono registrati in `docs/testing/BL-079_VERIFICATION.md`. I gate con utenti, device e browser reali restano condizioni di chiusura del task, non modifiche alla decisione architetturale.
