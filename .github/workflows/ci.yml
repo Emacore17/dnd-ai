@@ -48,7 +48,7 @@ jobs:
         run: pnpm ci:workflow:check
 
       - name: Check deployment foundation
-        run: pnpm deploy:check:linked
+        run: pnpm deploy:check
 
   tests:
     name: Tests

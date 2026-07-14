@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: 70f726d5a7fd9feed1a338d4c24bbedecc0bbe0b
+last_verified_commit: c64d09528dae2c1fd5e4ba3de7d17d15573dd71a
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
@@ -108,7 +108,7 @@ Il desired state di `BL-080` seleziona Vercel Environment Variables come confine
 
 `VERCEL_TRUSTED_OIDC_TOKEN` è un valore effimero del solo step GitHub Actions: viene richiesto con `id-token: write`, mascherato immediatamente, passato al verifier tramite environment di processo e inviato esclusivamente nell'header Trusted Sources verso l'origin branch versionata. Non è un environment secret GitHub/Vercel, non viene persistito e non sostituisce le future credenziali applicative service-scoped. Emissione OIDC e Trusted Source sono controlli distinti; entrambi sono configurati e la seconda è stata riletta con audience, repository/repository ID, ref, environment e target `preview` esatti. Standard Protection usa oggi la policy SSO predefinita `all_except_custom_domains`; non creare `VERCEL_AUTOMATION_BYPASS_SECRET`.
 
-La Git Integration effettiva collega esattamente `dnd-ai-web` al repository autorizzato `Emacore17/dnd-ai` (repository ID `1299266814`) senza access token Vercel nei workflow. L'installation `41079282` resta condivisa (`isAccessRestricted=false`, 8 repository) per decisione esplicita del Product Owner: restringerla farebbe perdere accesso ad altri progetti. È un rischio residuo accettato e compensato da link esatti, Trusted Source exact-match, Fork/Standard Protection, policy Git branch-closed, environment `staging` limitato a `main`, smoke fail-closed e readback di drift. Production Branch Vercel è `release/production`; il change set registra project ID, scope, origin e installation ID insieme e abilita esclusivamente `main` tramite `{"**": false, "main": true, "release/production": false}`. Non esiste ancora alcun deployment: la PR deve restare senza deploy e l'origin viene materializzata soltanto dopo il merge protetto. Project ID, scope slug, installation/deployment ID, regione, environment e run ID sono non sensibili ma vengono comunque redatti nei report automatici. Il token OIDC non viene mai stampato. I valori production, token, cookie e dati account non entrano in documenti, chat, log, screenshot o artifact.
+La Git Integration effettiva collega esattamente il progetto al repository autorizzato senza access token Vercel nei workflow. L'installation condivisa resta invariata per decisione PO e compensata dai controlli project-level. Production Branch Vercel continua a risultare `release/production`, ma la prima attivazione di `main` ha prodotto un deployment Production poi eliminato. Il manifest hotfix torna unlinked con binding `null`, `source.autoDeploy=false` e `git.deploymentEnabled=false`; lo stato remoto collegato resta distinto dal contratto versionato disabilitato. Project/deployment/run ID vengono redatti nei report; token, cookie e dati account non entrano nel repository.
 
 Per Next.js, le variabili `NEXT_PUBLIC_*` vengono incorporate nel bundle al build e restano congelate per quella build. Qualunque futura variabile pubblica richiede quindi review esplicita e non può contenere credenziali. Riferimento: [Next.js Environment Variables](https://nextjs.org/docs/app/guides/environment-variables).
 
@@ -123,5 +123,5 @@ Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo 
 - `BL-004`: migration executable e credenziali database locali/reali;
 - `BL-008`: log/redaction/telemetry e nuovi endpoint osservabili;
 - `BL-010`: configurazione dinamica auditata per flag e kill switch;
-- `BL-080`: project/provider web, Production Branch Vercel e branch GitHub `release/production` protetta, binding completi, environment e Trusted Source exact-match configurati senza secret applicativi; grant GitHub App condiviso accettato, mentre PR/merge, deploy e primo smoke preview/staging restano aperti;
+- `BL-080`: project/provider web, Production Branch e Trusted Source configurati senza secret applicativi; grant condiviso accettato; manifest temporaneamente fail-closed dopo un deployment Production inatteso, mentre Preview/smoke e causa del target restano aperti;
 - `BL-070`: hardening, load/chaos, backup restore e go/no-go.

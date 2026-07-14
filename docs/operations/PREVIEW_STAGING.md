@@ -2,7 +2,7 @@
 status: draft
 owner: engineering-and-operations
 last_reviewed: 2026-07-14
-last_verified_commit: 70f726d5a7fd9feed1a338d4c24bbedecc0bbe0b
+last_verified_commit: c64d09528dae2c1fd5e4ba3de7d17d15573dd71a
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -44,7 +44,7 @@ Questo runbook copre soltanto la Preview/staging non-production di `apps/web`. A
 - Deployment Protection: livello `standard`, policy SSO predefinita `all_except_custom_domains`; il readback project-level è un gate pre-merge, mentre l'accesso OIDC all'origin branch esatta può essere provato soltanto dopo che il primo deploy materializza l'alias.
 - Accesso automation: Trusted Source GitHub Actions configurata e riletta con OIDC breve, repository ID immutabile e claim repository/ref/environment esatti; non esiste alcun bypass secret.
 - Web config: zero variabili applicative e zero secret; system environment variables ed emissione OIDC del progetto abilitate; system metadata Vercel soltanto nel Route Handler `/health`.
-- Fase corrente: repository `Emacore17/dnd-ai` (ID `1299266814`) collegato, GitHub App installation ID `41079282` e binding atomici registrati nel change set `codex/bl-080-enable-preview`; `source.autoDeploy=true` coincide con `git.deploymentEnabled={"**": false, "main": true, "release/production": false}` e il Quality gate usa `deploy:check:linked`. La lista deployment è ancora vuota perché la PR non è stata pubblicata/mergiata. Il grant condiviso (`isAccessRestricted=false`, 8 repository) resta intenzionalmente invariato per non perdere accesso ad altri progetti ed è un rischio residuo accettato, non un blocker di `BL-080`.
+- Fase corrente: repository collegato e Production Branch riletta `release/production`, ma il primo merge con policy solo-`main` ha creato un deployment `production`, poi eliminato. Il hotfix `codex/bl-080-fail-closed-hotfix` ripristina `source.autoDeploy=false`, binding versionati `null`, `git.deploymentEnabled=false` e Quality gate `deploy:check`. Deployment e alias del progetto sono tornati a zero. Nessun nuovo tentativo è autorizzato finché il target Preview non può essere garantito preventivamente. Il grant condiviso resta invariato per decisione PO.
 
 ## Preflight
 
@@ -57,7 +57,7 @@ corepack pnpm dlx vercel@55.0.0 --version
 corepack pnpm dlx vercel@55.0.0 whoami
 ```
 
-Nel change set corrente `deploy:check` e `deploy:check:linked` passano: project ID, scope slug, origin branch e GitHub App installation ID sono registrati insieme. `whoami` deve essere eseguito soltanto in forma redatta; non passare token in command line, workflow o documenti. Il link CLI aveva creato un `.env.local` effimero ignorato, rimosso subito dopo il readback senza leggerne il contenuto; non conservarlo come configurazione del progetto.
+Nel hotfix `deploy:check` passa e `deploy:check:linked` fallisce come atteso con exit `1` sui quattro binding versionati `null`: il provider remoto resta collegato, ma il repository non dichiara attiva una delivery non verificata. `whoami` deve essere eseguito soltanto in forma redatta; non passare token in command line, workflow o documenti.
 
 ## Attivazione provider
 
@@ -65,7 +65,7 @@ Il Product Owner ha autorizzato esclusivamente il piano Hobby per uso personale/
 
 La foundation, incluso questo runbook e `git.deploymentEnabled=false`, deve essere prima integrata nella default branch. Il workflow `repository_dispatch` viene infatti caricato da `main` e la configurazione statica disabilita ogni auto-deploy durante il collegamento.
 
-Questo prerequisito è soddisfatto dalla [PR #7](https://github.com/Emacore17/dnd-ai/pull/7), merge commit `52bf58d9f9cb9cab6ad0cc1b1602d7556067b578`; la [CI post-merge `29321531038`](https://github.com/Emacore17/dnd-ai/actions/runs/29321531038) ha chiuso 5/5 job con `SUCCESS`. Il progetto è collegato e non esiste ancora alcun deployment; la policy di attivazione resta confinata al branch corrente finché non supera PR e merge protetti.
+La foundation disabilitata della [PR #7](https://github.com/Emacore17/dnd-ai/pull/7) resta la baseline sicura. L'attivazione PR #12 ha superato CI e zero-deploy sulla PR, ma il merge ha prodotto un target Production; la relativa delivery è stata eliminata. Finché il hotfix non è integrato, `main` resta esposto a ricorrenza su un nuovo push.
 
 ### Checkpoint provider del 2026-07-14
 
@@ -79,8 +79,8 @@ Questo prerequisito è soddisfatto dalla [PR #7](https://github.com/Emacore17/dn
 | Deployment Protection | Standard con SSO predefinito `all_except_custom_domains`; Trusted Source GitHub Actions exact-match configurata e riletta |
 | Branch | `release/production` creata da `ef803add249d16ded6f94936c59531047c8a92fa` e protetta dalla Ruleset dedicata `18926413` senza bypass; Ruleset `main` `18877721` invariata; Production Branch Vercel riletta come `release/production` |
 | GitHub App | installation ID condivisa `41079282`; `isAccessRestricted=false`; 8 repository accessibili: rischio residuo esplicitamente accettato, non blocker |
-| Binding | project ID, scope, installation ID e alias `https://dnd-ai-web-git-main-emacore17s-projects.vercel.app` registrati atomicamente; `deploy:check:linked` PASS; materializzazione provider pending |
-| Deploy | nessun deployment creato |
+| Binding | provider remoto collegato; manifest hotfix unlinked/fail-closed |
+| Deploy | storico Production incidentale rimosso; corrente zero deployment e zero alias del progetto |
 
 L'impostazione manuale della Production Branch è completata e il readback CLI mostra `release/production`. Non usare un account diverso, non indebolire la protezione e non effettuare push o deploy sulla branch riservata.
 
@@ -102,8 +102,8 @@ L'impostazione manuale della Production Branch è completata e il readback CLI m
 
    Il readback deve confermare installation ID `41079282`, baseline condivisa di 8 repository e presenza di `Emacore17/dnd-ai`; non richiede né autorizza la restrizione del grant o l'esplorazione degli altri repository. Una variazione del conteggio, del target project/repository o di `isAccessRestricted` è drift da registrare e valutare, non da correggere automaticamente. Non ampliare gli scope del token soltanto per il check.
 6. Abilitare gli eventi `repository_dispatch` e mantenere commenti/bot opzionali. Non creare Deploy Hook o `VERCEL_TOKEN`.
-7. Il secondo change set `codex/bl-080-enable-preview` registra atomicamente project ID, scope, installation ID e l'alias branch deterministico documentato `https://dnd-ai-web-git-main-emacore17s-projects.vercel.app`; imposta `source.autoDeploy=true`; configura `git.deploymentEnabled` come `{"**": false, "main": true, "release/production": false}`; sostituisce nel Quality gate `deploy:check` con `deploy:check:linked` e mantiene adattivi i test negativi. La formula usa esclusivamente project name, branch e scope già riletti e coincide con il contratto provider; non deriva dall'URL non affidabile di un evento. `**` è la deny-all ricorsiva necessaria per includere branch con `/`; `*` non è ammesso come fallback. La PR di attivazione deve restare senza deployment; il contract test confronta la config con `source.activationDeploymentPolicy` prima del merge.
-8. Solo il merge protetto del change set di attivazione può produrre la prima Preview di `main`. Rileggere il deployment/provider e confermare che l'alias materializzato coincida esattamente con l'origin versionata; lo smoke continua a ignorare l'URL del dispatch. Se prima di quel merge compare un deployment, oppure il deployment è `production`, fermarsi e registrare il finding.
+7. Integrare prima il hotfix fail-closed e confermare zero deployment/alias prima e dopo il merge. Il repository deve mantenere `git.deploymentEnabled=false`, `source.autoDeploy=false`, binding `null` e `deploy:check` finché il target mismatch non è risolto.
+8. Sospendere la precedente sequenza di attivazione. Un readback `productionBranch=release/production` e la policy `{"**": false, "main": true, "release/production": false}` non sono più prove sufficienti: l'incidente PR #12 ha prodotto `target=production`. Qualunque nuovo percorso deve usare un meccanismo ufficiale che selezioni Preview esplicitamente e deve essere verificato senza push su `main` prima di aggiornare il manifest.
 
 Il setup resta verificabile anche quando un'impostazione Vercel richiede dashboard: desired state, project ID e drift check sono versionati; la sequenza usa CLI pinned e ogni passaggio esterno viene registrato nel report. Gli errori storici dell'automazione UI non giustificano cambio account o riduzione dei controlli; il readback CLI, non l'esito del click, è l'evidenza canonica del Branch Tracking.
 
@@ -132,7 +132,7 @@ gh api repos/Emacore17/dnd-ai/environments/staging/variables
 
 ## Deploy e smoke
 
-Dopo il change set di attivazione, la Git Integration crea una Preview per ogni push abilitato. Il workflow `Staging smoke` esiste sulla default branch e reagisce all'action `vercel.deployment.ready` soltanto per project `dnd-ai-web`, ref `main`, environment `preview` e `state.type=success`. Fa checkout del verifier trusted su `main`; non esegue codice del commit indicato dal payload. Il verifier lega l'evento all'installation ID della GitHub App, ignora l'URL del payload e invia il token OIDC soltanto all'origin branch esatta registrata. `/health` conferma project, deployment, SHA, ref, repository, environment e regione.
+Soltanto dopo la chiusura del target mismatch, un futuro percorso approvato dovrà creare esplicitamente una Preview. Il workflow `Staging smoke` esiste sulla default branch e reagisce all'action `vercel.deployment.ready` soltanto per project `dnd-ai-web`, ref `main`, environment `preview` e `state.type=success`; il dispatch Production dell'incidente è stato rifiutato. Il verifier fa checkout trusted di `main`, lega l'evento all'installation ID, ignora l'URL del payload e usa esclusivamente l'origin versionata. `/health` confermerà project, deployment, SHA, ref, repository, environment e regione.
 
 Smoke remoto manuale, usando soltanto metadata non sensibili; il token OIDC viene creato e mascherato dal workflow:
 
@@ -149,11 +149,11 @@ Il report stampa host e ID redatti. `deploy:smoke` resta disponibile per fixture
 ## Failure, redeploy e recupero
 
 - Config/provider metadata o OIDC mancante: nessun fetch; exit `1` redatto.
-- Build Vercel fallita: nessun evento `ready` e nessuna promozione, perché `main` è Preview e la Production Branch è riservata.
-- Prova negativa remota: dopo il primo Preview riuscito registrare timestamp UTC, ultimo deployment Vercel e ultimo run `Staging smoke` (ID, SHA e timestamp), quindi creare da `main` il branch effimero `codex/bl-080-failure-probe` senza PR. Nel solo commit di prova sostituire esattamente `git.deploymentEnabled` con `{ "**": false, "codex/bl-080-failure-probe": true, "main": false, "release/production": false }` e aggiungere il `buildCommand` top-level `node -e "process.exit(42)"`. Attendere lo stato terminale Vercel `ERROR` per lo SHA del probe; rispetto alla baseline e al timestamp registrati, verificare zero dispatch `vercel.deployment.ready`, zero nuovi run `Staging smoke` e zero deployment Production. Eliminare infine la branch remota e locale. Il commit non viene mergiato e nessun controllo di `main` viene indebolito.
+- Target diverso da Preview: rimuovere la delivery, verificare URL/alias `404`, mantenere il job smoke rifiutato e ripristinare fail-closed; non tentare promote/redeploy.
+- Prova negativa remota: sospesa finché non esiste prima una Preview riuscita e un percorso di creazione che garantisca esplicitamente `target=preview`.
 - Smoke fallito: environment deployment GitHub rosso; non rendere `BL-079` READY.
 - Provider indisponibile: retry bounded manuale; non cambiare regione o provider silenziosamente.
-- Redeploy verificabile:
+- Redeploy verificabile, da usare soltanto dopo la chiusura del target mismatch:
 
   ```powershell
   corepack pnpm dlx vercel@55.0.0 redeploy <deployment-id-or-url> --target preview --cwd apps/web --scope emacore17s-projects
