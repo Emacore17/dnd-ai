@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: 770206d9e2aba1b6b8b5d19bf72e7226b3df3d82
+last_verified_commit: 1766406b9bd701a9880705b371fdc0b05a73abe1
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -43,6 +43,7 @@ supersedes: null
 | Commit task iniziale | `4a9754b61a3693145ebe5f42a0eef43e47b4c364` |
 | Commit implementazione | `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af` |
 | Foundation su `main` | PR #7; merge `52bf58d9f9cb9cab6ad0cc1b1602d7556067b578` |
+| Hardening corrente | commit `1766406b9bd701a9880705b371fdc0b05a73abe1`; PR #10; run `29326093430` 5/5 `SUCCESS` |
 | Spec SHA-256 | `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c` |
 | Deploy contract | `staging-foundation-v1`; project ID `prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`; scope `emacore17s-projects`; installation ID `41079282`; origin `pending`; binding versionati ancora atomicamente incompleti |
 | Health contract | `web-health-v1` |
@@ -126,6 +127,7 @@ Il primo full verify post-review è terminato per timeout host con exit `124` do
 - [PR #7](https://github.com/Emacore17/dnd-ai/pull/7) integrata senza bypass nel merge commit `52bf58d9f9cb9cab6ad0cc1b1602d7556067b578`.
 - [Run PR `29321410036`](https://github.com/Emacore17/dnd-ai/actions/runs/29321410036): Quality, Tests, Security, Build artifact e `CI / Merge gate` tutti `SUCCESS`.
 - [Run post-merge `29321531038`](https://github.com/Emacore17/dnd-ai/actions/runs/29321531038): 5/5 job `SUCCESS`; artifact allowlisted 3.247 file, artifact ID `8306136134`.
+- [PR #10](https://github.com/Emacore17/dnd-ai/pull/10), commit `1766406b9bd701a9880705b371fdc0b05a73abe1`: [run `29326093430`](https://github.com/Emacore17/dnd-ai/actions/runs/29326093430) con Quality, Tests, Security, Build artifact e `CI / Merge gate` tutti `SUCCESS`; readback Vercel successivo con zero deployment.
 - La foundation non ha prodotto deploy. Il progetto/provider è stato collegato soltanto dopo l'integrazione, con `git.deploymentEnabled=false` e `source.autoDeploy=false`; la lista deployment è rimasta vuota.
 
 Finché questi punti non sono provati, `BL-079` resta `BACKLOG` e nessuna evidenza locale viene presentata come staging disponibile.

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 770206d9e2aba1b6b8b5d19bf72e7226b3df3d82
+last_verified_commit: 1766406b9bd701a9880705b371fdc0b05a73abe1
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -73,6 +73,7 @@ supersedes: null
 - Foundation disabilitata integrata tramite [PR #7](https://github.com/Emacore17/dnd-ai/pull/7): run PR [`29321410036`](https://github.com/Emacore17/dnd-ai/actions/runs/29321410036) e run post-merge [`29321531038`](https://github.com/Emacore17/dnd-ai/actions/runs/29321531038) entrambe 5/5 job `SUCCESS`; artifact post-merge 3.247 file.
 - Full verify della foundation pre-provider PASS in 58,0 s senza cache Turbo: unit 29 pass/1 skip host, integration 9/9, contract 16/16, security 11 pass/3 skip host; artifact 3.205 file.
 - Hardening corrente verificato con `TURBO_FORCE=true pnpm verify` exit `0` in 75,4 s: unit 29 pass/1 skip host, integration 9/9, contract 18/18, security 11 pass/3 skip host, deployment/task/secret policy e artifact 3.205 file `PASS`. Il checker ora confronta `apps/web/vercel.json` con il desired state e rifiuta sia la glob singola `*` sia qualunque popolamento parziale dei quattro binding provider.
+- Commit hardening `1766406b9bd701a9880705b371fdc0b05a73abe1` pubblicato nella [PR #10](https://github.com/Emacore17/dnd-ai/pull/10): [run `29326093430`](https://github.com/Emacore17/dnd-ai/actions/runs/29326093430) 5/5 `SUCCESS`; readback provider post-PR ancora a zero deployment.
 - `deploy:check:linked` fallisce intenzionalmente sui binding versionati ancora `null`. L'identità Vercel autorizzata e il piano Hobby risultano verificati in modo redatto, ma la lista deployment è vuota e i blocker provider impediscono di presentare il progetto collegato come staging reale.
 
 ## 2026-07-13
