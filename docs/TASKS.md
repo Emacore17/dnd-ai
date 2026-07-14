@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 13032743552654f9f68d87050eb11cabbdd92325
+last_verified_commit: 1cb655abee8a55b6974d90ae20b4244b12ba1192
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -2502,11 +2502,11 @@ updated_at: 2026-07-14
 agent: Codex development agent
 git_branch: codex/bl-080-deploy-freeze
 base_commit: 10602288621210a075414e0fff6c437123022ed6
-current_commit: 10602288621210a075414e0fff6c437123022ed6
+current_commit: 1cb655abee8a55b6974d90ae20b4244b12ba1192
 spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
 context_verified: true
 test_status: FAILING
-working_tree_dirty: true
+working_tree_dirty: false
 ```
 
 ## Contesto letto
@@ -2574,7 +2574,7 @@ working_tree_dirty: true
 
 ## Chiusura
 
-- **Commit/PR:** foundation PR #7; hardening PR #10; attivazione commit `7335053`, PR #12 e merge `c64d095`; contenimento commit `4d3d4ba`, PR #13 e merge `61e5cbd`; guard commit `5190526`, PR #14 e merge `ee5f129`; policy CLI commit `13032743552654f9f68d87050eb11cabbdd92325`, PR #15 e merge `10602288621210a075414e0fff6c437123022ed6`; freeze manuale sul branch `codex/bl-080-deploy-freeze`, PR/CI pending
+- **Commit/PR:** foundation PR #7; hardening PR #10; attivazione commit `7335053`, PR #12 e merge `c64d095`; contenimento commit `4d3d4ba`, PR #13 e merge `61e5cbd`; guard commit `5190526`, PR #14 e merge `ee5f129`; policy CLI commit `13032743552654f9f68d87050eb11cabbdd92325`, PR #15 e merge `10602288621210a075414e0fff6c437123022ed6`; freeze manuale commit `1cb655abee8a55b6974d90ae20b4244b12ba1192` sul branch `codex/bl-080-deploy-freeze`, PR/CI pending
 - **Comandi eseguiti:** preflight Git/GitHub/Vercel; web lint/typecheck/build; unit/integration/contract/security; full `pnpm verify`; build guard local/Preview/Production; deployment e CI policy; dry-run Vercel JSON e parser bounded; API GitHub environment/branch/Ruleset; Vercel CLI/API per identity/plan/project/link/settings/env/deployment/Trusted Sources/Git namespace, repository grant, activity log, deployment e alias; rimozione per deployment ID esatto; gate `deploy:bootstrap:check`
 - **Exit code:** `0` per CI PR #12/#13/#14/#15, rimozioni deployment, readback vuoti, full verify hotfix/guard/policy payload/freeze, dry-run bounded e test mirati interlock; expected `1` per simulazione Production fermata prima di Next, CLI oversize fermato prima della delivery e gate manuale disabilitato. Il secondo record Production è stato osservato `ERROR` e rimosso; il gate remoto Preview resta `FAILING` perché nessuno staging esiste ancora
 - **Report/CI URL o path:** `docs/testing/BL-080_VERIFICATION.md`; [attivazione PR #12 / run `29331343752`](https://github.com/Emacore17/dnd-ai/actions/runs/29331343752); [smoke rifiutato `29331534774`](https://github.com/Emacore17/dnd-ai/actions/runs/29331534774); PR #15 run `29339984834` e post-merge `29340214947`; entrambi i record Production rimossi e `dnd-ai-web` tornato project-scoped a zero deployment/alias
@@ -2618,6 +2618,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-14 | `61e5cbd` + working tree | BL-080 containment and guard | Build target policy | PR #13 ha ripristinato lo stato fail-closed senza nuovi deploy. Avviato un guard versionato che separa build locale e build Vercel, rifiuta metadata mancanti/incoerenti e autorizza esclusivamente Preview; auto-deploy Git resta disabilitato. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | 2026-07-14 | `ee5f129` + working tree | BL-080 CLI payload | `.vercelignore` e dry-run policy | PR #14 ha integrato il guard senza deploy. Il primo bootstrap è fallito prima della delivery per cache locale oltre 100 MB; la nuova policy root-only e il parser JSON bounded rendono obbligatorio un dry-run sotto budget prima di ogni upload. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | 2026-07-14 | `1060228` + working tree | BL-080 deployment freeze | Mismatch target e interlock manuale | PR #15 ha integrato payload policy e dry-run bounded. Il successivo bootstrap con selector Preview ha creato un record Production, poi osservato `ERROR` e rimosso per ID esatto; deployment/alias project-scoped per `dnd-ai-web` sono tornati a zero. Il percorso manuale approvato ora fallisce chiuso finché una PR separata non riapre la policy; il possibile bypass diretto owner resta un rischio procedurale esplicito. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
+| 2026-07-14 | `1cb655a` | BL-080 deployment freeze implementation | Manual bootstrap policy e runbook | Interlock `manualDeployment.enabled=false`, gate CLI statico, binding provider obbligatori alla futura riapertura e contratti anti-drift/runbook sono congelati nel commit verificato. Full gate senza cache PASS; nessun deploy reale eseguito dal change set. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | — | — | — | — | — | — |
 
 

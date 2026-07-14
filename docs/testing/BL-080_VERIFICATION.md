@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: 13032743552654f9f68d87050eb11cabbdd92325
+last_verified_commit: 1cb655abee8a55b6974d90ae20b4244b12ba1192
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -63,6 +63,7 @@ supersedes: null
 | Contenimento corrente | commit `4d3d4baad1a57b5340c0092209cc640499aa4da8`; PR #13; CI PR `29332953627` e post-merge `29333105276` 5/5 `SUCCESS`; merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; zero deployment successivi |
 | Guard Preview-only | commit `519052649c88d84c45da92c3b35131819291a73a`; PR #14; merge `ee5f12916998cce6847fcc509d8f5e1fa05b1b9f`; CI PR/post-merge 5/5; zero deployment |
 | Contratto payload CLI | commit `13032743552654f9f68d87050eb11cabbdd92325`; PR #15; merge `10602288621210a075414e0fff6c437123022ed6`; CI PR/post-merge 5/5 `SUCCESS` |
+| Freeze bootstrap manuale | commit `1cb655abee8a55b6974d90ae20b4244b12ba1192`; branch `codex/bl-080-deploy-freeze`; PR/CI pending |
 | Spec SHA-256 | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Deploy contract | `staging-foundation-v1`; provider remoto ancora collegato, mentre il repository mantiene binding versionati `null`, `source.autoDeploy=false`, `source.manualDeployment.enabled=false`, `git.deploymentEnabled=false` e build guard Preview-only |
 | Health contract | `web-health-v1` |
