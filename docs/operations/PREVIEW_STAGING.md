@@ -2,7 +2,7 @@
 status: draft
 owner: engineering-and-operations
 last_reviewed: 2026-07-14
-last_verified_commit: e5dff7bf371bd91321587fecadbd8f51264cc263
+last_verified_commit: aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -58,7 +58,7 @@ Questo runbook copre soltanto la Preview/staging non-production di `apps/web`. A
 - Deployment Protection: livello `standard`, policy SSO predefinita `all_except_custom_domains`; il readback project-level è un gate pre-merge, mentre l'accesso OIDC all'origin branch esatta può essere provato soltanto dopo che il primo deploy materializza l'alias.
 - Accesso automation: Trusted Source GitHub Actions configurata e riletta con OIDC breve, repository ID immutabile e claim repository/ref/environment esatti; non esiste alcun bypass secret.
 - Web config: zero variabili applicative e zero secret; system environment variables ed emissione OIDC del progetto abilitate; system metadata Vercel soltanto nel Route Handler `/health`.
-- Fase corrente: la policy payload della PR #15 è integrata nel merge `10602288621210a075414e0fff6c437123022ed6`; CI PR `29339984834` e post-merge `29340214947` sono 5/5 verdi. Il dry-run da `main` pulita è passato con 158 entry e 1.093.594 byte. Il successivo e unico bootstrap CLI con `--target=preview` ha tuttavia creato un secondo record `target=production`; l'inspect lo ha osservato `ERROR`, poi il record è stato rimosso per ID esatto. L'activity log Vercel attribuisce il deploy Production alla CLI sul commit `1060228`; deployment e alias project-scoped per `dnd-ai-web` sono nuovamente zero e l'origin rimossa risponde `404`. `source.manualDeployment.enabled=false` rende fail-closed il percorso operativo approvato, ma non è enforcement provider contro un owner che invochi direttamente la CLI. Il grant condiviso resta invariato per decisione PO.
+- Fase corrente: freeze PR #16 integrato nel merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; CI PR `29343319207` e post-merge `29343526054` 5/5 verdi, zero deployment Vercel. Il dry-run resta valido, ma l'audit CLI `55.0.0` prova che `@vercel/client 17.6.4` elimina il target Preview prima della POST; il provider ha poi restituito Production. La regola first-deployment e `vercel/vercel#17069` sostengono l'ipotesi più forte, non una causa confermata. Non esiste ancora un fix/workaround maintainer. `source.manualDeployment.enabled=false` rende fail-closed il percorso approvato, ma non è enforcement provider contro un owner. Il grant condiviso resta invariato per decisione PO.
 
 ## Preflight
 
@@ -79,7 +79,7 @@ Il Product Owner ha autorizzato esclusivamente il piano Hobby per uso personale/
 
 La foundation, incluso questo runbook e `git.deploymentEnabled=false`, deve essere prima integrata nella default branch. Il workflow `repository_dispatch` viene infatti caricato da `main` e la configurazione statica disabilita ogni auto-deploy durante il collegamento.
 
-La foundation disabilitata della [PR #7](https://github.com/Emacore17/dnd-ai/pull/7) resta la baseline sicura. L'attivazione PR #12 ha superato CI e zero-deploy sulla PR, ma il merge ha prodotto un target Production; la relativa delivery è stata eliminata. La [PR #13](https://github.com/Emacore17/dnd-ai/pull/13) ha integrato il contenimento nel merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61` senza nuovi deployment. La [PR #14](https://github.com/Emacore17/dnd-ai/pull/14) ha integrato il guard nel merge `ee5f12916998cce6847fcc509d8f5e1fa05b1b9f`; le run `29335696502` e `29335856323` sono 5/5 verdi e non hanno prodotto deploy.
+La foundation disabilitata della [PR #7](https://github.com/Emacore17/dnd-ai/pull/7) resta la baseline sicura. L'attivazione PR #12 ha prodotto un target Production poi eliminato. PR #13, #14 e #15 hanno integrato contenimento, guard e payload; [PR #16](https://github.com/Emacore17/dnd-ai/pull/16) ha integrato il freeze nel merge `aa9342d`, con run `29343319207`/`29343526054` 5/5 verdi e nessun deployment.
 
 ### Checkpoint provider del 2026-07-14
 
@@ -94,7 +94,7 @@ La foundation disabilitata della [PR #7](https://github.com/Emacore17/dnd-ai/pul
 | Branch | `release/production` creata da `ef803add249d16ded6f94936c59531047c8a92fa` e protetta dalla Ruleset dedicata `18926413` senza bypass; Ruleset `main` `18877721` invariata; Production Branch Vercel riletta come `release/production` |
 | GitHub App | installation ID condivisa `41079282`; `isAccessRestricted=false`; 8 repository accessibili: rischio residuo esplicitamente accettato, non blocker |
 | Binding | provider remoto collegato; manifest unlinked/fail-closed integrato su `main` |
-| Deploy | due record Production rimossi: il secondo è stato creato dalla CLI con selector Preview sul commit `1060228`, osservato `ERROR` e contenuto per ID esatto; readback project-scoped `dnd-ai-web` con zero deployment, zero alias e origin rimossa `404` |
+| Deploy | due record Production rimossi; PR #16 non ha creato deployment; readback project-scoped `dnd-ai-web` con zero deployment/alias |
 
 L'impostazione manuale della Production Branch è completata e il readback CLI mostra `release/production`. Non usare un account diverso, non indebolire la protezione e non effettuare push o deploy sulla branch riservata.
 
@@ -117,10 +117,10 @@ L'impostazione manuale della Production Branch è completata e il readback CLI m
    Il readback deve confermare installation ID `41079282`, baseline condivisa di 8 repository e presenza di `Emacore17/dnd-ai`; non richiede né autorizza la restrizione del grant o l'esplorazione degli altri repository. Una variazione del conteggio, del target project/repository o di `isAccessRestricted` è drift da registrare e valutare, non da correggere automaticamente. Non ampliare gli scope del token soltanto per il check.
 6. Confermare che gli eventi `repository_dispatch` restino abilitati e mantenere commenti/bot opzionali. Non creare Deploy Hook o `VERCEL_TOKEN`.
 7. Conservare il contenimento integrato: `git.deploymentEnabled=false`, `source.autoDeploy=false`, binding `null` e `deploy:check`. Il guard Preview-only è integrato con PR #14; rileggere `autoExposeSystemEnvs=true` e confermare nuovamente zero deployment/alias project-scoped per `dnd-ai-web`. Il provider build deve eseguire `node scripts/assert-vercel-preview-build.mjs` senza `--allow-local` prima del normale build.
-8. Non ripetere le precedenti sequenze di attivazione. Production Branch separata, policy Git branch-closed e selector CLI `--target=preview` hanno tutti preceduto almeno un record effettivo `target=production`; nessuno dei tre può essere trattato come prova preventiva del target provider.
+8. Non ripetere le precedenti sequenze di attivazione. Il parser CLI conserva Preview, ma `@vercel/client` lo elimina dal body; sul progetto senza deployment il provider ha restituito Production. L'applicazione server del comportamento first-deployment è l'ipotesi più forte, non una causa confermata. Production Branch, policy Git e selector CLI non sono prove preventive del target.
 9. La policy payload è integrata e il dry-run bounded è passato. Conservare la sola `.vercelignore` root, non creare `apps/web/.vercelignore`, non cambiare cwd e non aggirare i limiti con archivi o `--prebuilt`.
 10. Il dry-run resta ammesso perché non carica sorgenti e non crea deployment. Deve usare Vercel `55.0.0`, root esatta, `--target=preview --dry --format=json` e `scripts/check-vercel-deploy-dry-run.mjs`; qualunque failure resta bloccante.
-11. Ogni creazione manuale è ora vietata dal desired state `source.manualDeployment.enabled=false` e da `deploy:bootstrap:check`. La riapertura richiede una PR separata che documenti la causa o una mitigazione provider verificabile, ripristini atomicamente i binding provider esatti, mantenga `source.autoDeploy=false`, aggiunga una procedura di cattura/contenimento testata e superi review/CI. Il gate non passa con soli `enabled=true` e binding `null`. Restano vietati `--prod`, `--prebuilt`, `promote`, `redeploy`, `--skip-domain`, custom target e override `--build-env`/`--env` dei metadata `VERCEL*`.
+11. Ogni creazione manuale è vietata dal desired state `source.manualDeployment.enabled=false` e da `deploy:bootstrap:check`. La riapertura richiede un fix/workaround first-deployment Preview-only supportato dal provider e una PR separata che ripristini atomicamente i binding, mantenga `source.autoDeploy=false`, aggiunga containment testato e superi review/CI. Il gate non passa con soli `enabled=true` e binding `null`. Restano vietati `--prod`, `--prebuilt`, `promote`, `redeploy`, `--skip-domain`, custom target e override `--build-env`/`--env` dei metadata `VERCEL*`.
 
 Il setup resta verificabile anche quando un'impostazione Vercel richiede dashboard: desired state, project ID e drift check sono versionati; la sequenza usa CLI pinned e ogni passaggio esterno viene registrato nel report. Gli errori storici dell'automazione UI non giustificano cambio account o riduzione dei controlli; il readback CLI, non l'esito del click, è l'evidenza canonica del Branch Tracking.
 
@@ -149,7 +149,7 @@ gh api repos/Emacore17/dnd-ai/environments/staging/variables
 
 ## Deploy e smoke — gate chiuso
 
-Il secondo incidente ritira la procedura di deploy reale precedentemente documentata. Il comando pinned ha ricevuto `--target=preview`, ma Vercel ha creato un record Production e la CLI non ha fornito allo script lo stdout singolo atteso prima dell'inspect. Non eseguire un altro deploy reale, anche se dry-run, CI e readback risultano verdi; il solo `vercel deploy --dry` resta ammesso perché non crea record. Sono ammessi soltanto preflight, dry-run, readback e contenimento di un record già identificato.
+Il secondo incidente ritira la procedura di deploy reale precedentemente documentata. Il comando pinned ha ricevuto `--target=preview`, ma il client lo ha omesso dalla POST e Vercel ha creato un record Production. Non eseguire un altro deploy reale, anche se dry-run, CI e readback risultano verdi; il solo `vercel deploy --dry` resta ammesso perché non crea record. Sono ammessi soltanto preflight, dry-run, readback e contenimento di un record già identificato.
 
 ```powershell
 git fetch --prune origin
@@ -201,7 +201,7 @@ Non passare mai il nome progetto a `vercel remove`: quel comando opera su tutti 
 
 Il workflow `Staging smoke` esiste sulla default branch e reagisce all'action `vercel.deployment.ready` soltanto per project `dnd-ai-web`, ref `main`, environment `preview` e `state.type=success`; il dispatch Production dell'incidente è stato rifiutato. Il verifier fa checkout trusted di `main`, lega l'evento all'installation ID, ignora l'URL del payload e usa esclusivamente l'origin versionata. `/health` confermerà project, deployment, SHA, ref, repository, environment e regione.
 
-Smoke remoto manuale futuro, da non eseguire finché il gate di creazione è chiuso e non esiste una Preview verificata; il token OIDC verrà creato e mascherato dal workflow:
+Smoke remoto manuale futuro, da non eseguire prima che siano soddisfatte entrambe le precondizioni: gate di creazione riaperto e Preview verificata; il token OIDC verrà creato e mascherato dal workflow:
 
 ```powershell
 gh workflow run deployment-smoke.yml --ref main `
@@ -222,8 +222,8 @@ Il report stampa host e ID redatti. `deploy:smoke` resta disponibile per fixture
 - Target diverso da Preview: rimuovere immediatamente la sola delivery per deployment ID esatto, verificare URL/alias `404`, mantenere il job smoke rifiutato e lo stato versionato fail-closed; non passare il project name a `vercel remove` e non tentare promote/redeploy.
 - Prova negativa remota: sospesa finché non esiste prima una Preview riuscita e un percorso che richieda esplicitamente `target=preview` e lo confermi tramite inspect.
 - Smoke fallito: environment deployment GitHub rosso; non rendere `BL-079` READY.
-- Provider indisponibile o target mismatch: nessun retry manuale; non cambiare regione, provider o target silenziosamente. Aprire una decisione/evidenza provider e mantenere il kill switch chiuso.
-- Redeploy: vietato finché il target mismatch non è risolto e una Preview valida non esiste.
+- Provider indisponibile o target mismatch: nessun retry manuale; non cambiare regione, provider o target silenziosamente. Monitorare `vercel/vercel#17069` e fonti ufficiali in sola lettura; mantenere il kill switch chiuso finché non esiste un workaround supportato.
+- Redeploy: vietato finché il target mismatch non è risolto oppure non esiste una Preview valida.
 - Rollback staging futuro: solo dopo riapertura del gate, revert del commit noto tramite PR, merge protetto su `main`, Preview verificata e smoke. Non usare Instant Rollback come prova di Preview.
 
 ## Chiusura operativa
@@ -237,6 +237,10 @@ Quando e solo quando una futura PR riaprirà esplicitamente il gate, registrare 
 - [Build Command](https://vercel.com/docs/builds/configure-a-build)
 - [System Environment Variables](https://vercel.com/docs/environment-variables/system-environment-variables)
 - [CLI deploy e selector `--target`](https://vercel.com/docs/cli/deploy)
+- [Create Deployment API](https://vercel.com/docs/rest-api/deployments/create-a-new-deployment)
+- [Sorgente client: target Preview omesso prima della POST](https://github.com/vercel/vercel/blob/11f0cebacce81dfb713b3cb2d4622e49da0fb475/packages/client/src/deploy.ts#L36-L67)
+- [Regola first-deployment Vercel](https://vercel.com/blog/default-production-domain)
+- [Issue Vercel `#17069`](https://github.com/vercel/vercel/issues/17069)
 - [CLI remove per deployment ID o URL](https://vercel.com/docs/cli/remove)
 - [Monorepo e Root Directory](https://vercel.com/docs/monorepos)
 - [List Git namespaces by provider](https://vercel.com/docs/rest-api/integrations/list-git-namespaces-by-provider)

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: e5dff7bf371bd91321587fecadbd8f51264cc263
+last_verified_commit: aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -10,6 +10,7 @@ related_tasks:
   - BL-001
   - BL-002
   - BL-003
+  - BL-004
   - BL-079
   - BL-080
 code_refs:
@@ -77,7 +78,7 @@ supersedes: null
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
 > **Task attivo:** `BL-080 — Fondazione preview/staging M0`
-> **Prossimo task READY:** `—`; `BL-079` resta `BACKLOG` finché lo staging non è disponibile
+> **Prossimo task READY:** `BL-004`; `BL-079` resta `BACKLOG` finché lo staging non è disponibile
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -404,7 +405,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-004 — Tool migration e schema baseline
 
-- **Stato:** `BACKLOG`
+- **Stato:** `READY`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
@@ -574,10 +575,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-080 — Fondazione preview/staging M0
 
-- **Stato:** `IN_PROGRESS`
+- **Stato:** `BLOCKED`
 - **Progresso:** `50%`
-- **Esito test:** `FAILING`
-- **Contesto verificato:** `YES` — [PR #15](https://github.com/Emacore17/dnd-ai/pull/15) ha integrato payload policy e dry-run bounded nel merge `10602288621210a075414e0fff6c437123022ed6`, con CI PR `29339984834` e post-merge `29340214947` 5/5 verdi e zero deployment project-scoped per `dnd-ai-web`. Il singolo bootstrap CLI autorizzato con `--target=preview` ha comunque creato il record provider `dpl_4yG…` classificato Production, osservato `ERROR` e rimosso per ID esatto; deployment e alias project-scoped per `dnd-ai-web` sono tornati a zero e l'origin rimossa risponde `404`. Il branch `codex/bl-080-deploy-freeze` introduce un interlock manuale fail-closed e vieta ulteriori deploy reali finché una decisione separata non riapre il percorso. Spec SHA `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c`; data: `2026-07-14`
+- **Esito test:** `PARTIAL`
+- **Contesto verificato:** `YES` — [PR #16](https://github.com/Emacore17/dnd-ai/pull/16) ha integrato il freeze manuale nel merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; CI PR `29343319207` e post-merge `29343526054` sono 5/5 verdi e non hanno creato deployment Vercel. Il readback project-scoped di `dnd-ai-web` resta a zero deployment/alias. L'audit del tag Vercel CLI `55.0.0`, risolto al commit immutabile `11f0cebacce81dfb713b3cb2d4622e49da0fb475`, mostra che il parser conserva `preview`, ma `@vercel/client 17.6.4` lo imposta a `undefined` prima della POST; la regola Vercel documentata sul primo deployment e l'issue aperta `vercel/vercel#17069` costituiscono l'ipotesi più forte per i record Production, senza ancora offrire conferma/fix/workaround supportato dal maintainer. Spec SHA `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c`; data: `2026-07-14`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-002, BL-003
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§29.3–29.4, §30 Milestone 0, §31 `BL-080`, §35.1; `docs/adr/0003-ci-trust-boundary-and-artifacts.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/adr/0005-vercel-web-preview-and-staging.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/PREVIEW_STAGING.md`; `docs/architecture/SYSTEM_OVERVIEW.md`
@@ -593,8 +594,8 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Deploy remoto fallito senza action `ready`, smoke o promozione Production.
   - [ ] Rollback o redeploy provato; baseline web corrente e health check dei runtime disponibili verificati. Lo smoke della shell mobile resta un gate di `BL-079` dopo la disponibilità dell'ambiente.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/PREVIEW_STAGING.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/adr/0005-vercel-web-preview-and-staging.md`; `docs/testing/BL-080_VERIFICATION.md`
-- **Evidenze di chiusura:** foundation `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af`/PR #7; hardening `1766406b9bd701a9880705b371fdc0b05a73abe1`/PR #10; attivazione `7335053c59838cf3b581d7f09645450372aa0429`/PR #12; contenimento PR #13; guard PR #14; payload policy `13032743552654f9f68d87050eb11cabbdd92325`, [PR #15](https://github.com/Emacore17/dnd-ai/pull/15), CI `29339984834` e `29340214947` 5/5 `SUCCESS`, merge `10602288621210a075414e0fff6c437123022ed6`. Il bootstrap successivo ha creato `dpl_4yG…` con target Production nonostante il selector Preview; inspect lo ha osservato `ERROR`, la rimozione per ID esatto ha ripristinato zero deployment/alias project-scoped per `dnd-ai-web` e l'origin risponde `404`. Nessuna nuova run smoke o GitHub deployment è stata creata. Report in `docs/testing/BL-080_VERIFICATION.md`.
-- **Note, rischi o bloccanti:** non include load, chaos, backup restore, production release o i gate UX della shell, posseduti da `BL-070`, `BL-079` e dai gate finali. Il piano Hobby personale/non-commerciale e l'identità esclusiva sono autorizzati; nessun upgrade, acquisto o account alternativo è consentito. L'installazione GitHub App condivisa `41079282` resta invariata per decisione PO e compensata a livello project. Production Branch=`release/production` e il selector CLI Preview non hanno impedito due record provider Production; la causa resta sconosciuta e il secondo record eliminato non espone più log sufficienti per attribuire l'errore al guard. Il contenimento mantiene `source.autoDeploy=false`, `git.deploymentEnabled=false`, binding versionati `null`, guard Preview-only, payload policy e dry-run bounded. `source.manualDeployment.enabled=false` con `deploy:bootstrap:check` chiude il percorso manuale approvato, ma è un controllo versionato/procedurale e non impedisce tecnicamente a un owner di usare direttamente CLI o dashboard: tale bypass resta un rischio residuo vietato dalla procedura. Fino a una decisione separata sono consentiti soltanto dry-run, readback e contenimento per ID/URL esatto; nessun nuovo deploy, retry, redeploy, riattivazione Git, promozione o Production è autorizzato. `BL-079` resta `BACKLOG`.
+- **Evidenze di chiusura:** foundation `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af`/PR #7; hardening `1766406b9bd701a9880705b371fdc0b05a73abe1`/PR #10; attivazione `7335053c59838cf3b581d7f09645450372aa0429`/PR #12; contenimento PR #13; guard PR #14; payload policy `13032743552654f9f68d87050eb11cabbdd92325`/PR #15; freeze `1cb655abee8a55b6974d90ae20b4244b12ba1192`, evidence sync `e5dff7bf371bd91321587fecadbd8f51264cc263`, [PR #16](https://github.com/Emacore17/dnd-ai/pull/16), CI `29343319207`/`29343526054` 5/5 `SUCCESS`, merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`. Nessun deployment Vercel è stato creato da PR #16 o dal merge; progetto ancora a zero deployment/alias. Audit sorgente e riferimenti provider in `docs/testing/BL-080_VERIFICATION.md`.
+- **Note, rischi o bloccanti:** fatti osservati: Vercel CLI `55.0.0` passa `preview` internamente, `@vercel/client 17.6.4` omette il campo prima della POST e il provider ha restituito record Production. L'applicazione server della regola first-deployment documentata è l'ipotesi più forte, coerente con `vercel/vercel#17069`, ma non è confermata dal maintainer. Blocco concreto: sul progetto con zero deployment non esiste oggi un percorso first-deployment Preview-only supportato e verificato compatibile con il divieto Product Owner di Production; smoke, failure e redeploy restano impossibili. Condizione di sblocco: fix o workaround ufficiale/provider-confirmed, senza upgrade/cambio account/Production, seguito da PR separata, containment testato e Preview reale. Il contenimento mantiene `source.autoDeploy=false`, `git.deploymentEnabled=false`, binding `null`, guard Preview-only, payload policy, dry-run bounded e `source.manualDeployment.enabled=false`. Sono consentiti soltanto dry-run, readback e contenimento per ID/URL esatto; nessun deploy, retry, redeploy, riattivazione Git, promozione o Production è autorizzato. L'installazione condivisa resta invariata per decisione PO. `BL-079` resta `BACKLOG`.
 
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
 
@@ -2494,19 +2495,19 @@ Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il t
 ```yaml
 active_task: BL-080
 last_completed_task: BL-003
-next_ready_task: null
-status: IN_PROGRESS
+next_ready_task: BL-004
+status: BLOCKED
 progress: 50
 started_at: 2026-07-14
 updated_at: 2026-07-14
 agent: Codex development agent
-git_branch: codex/bl-080-deploy-freeze
-base_commit: 10602288621210a075414e0fff6c437123022ed6
-current_commit: e5dff7bf371bd91321587fecadbd8f51264cc263
+git_branch: codex/bl-080-provider-evidence
+base_commit: aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d
+current_commit: aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d
 spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
 context_verified: true
-test_status: FAILING
-working_tree_dirty: false
+test_status: PARTIAL
+working_tree_dirty: true
 ```
 
 ## Contesto letto
@@ -2523,7 +2524,7 @@ working_tree_dirty: false
 
 - **Obiettivo verificabile:** rendere disponibile una preview/staging non-production del solo runtime oggi deployabile (`apps/web`), identificata dal commit, riproducibile e protetta da smoke/failure gate; registrare provider, regione, ownership e procedura di rollback senza introdurre credenziali production.
 - **File/moduli previsti:** decisione provider; configurazione ripetibile del progetto web; workflow/policy GitHub a privilegi minimi; script di smoke e metadati deploy; contract/negative test; runbook staging e report BL-080; documenti living e tracciabilità.
-- **Azioni esterne:** ambiente GitHub `staging`, Ruleset e Trusted Source restano invariati; account/piano e grant condiviso mantengono i vincoli già registrati. La policy payload è stata integrata con PR #15 nel merge `10602288621210a075414e0fff6c437123022ed6`; CI PR `29339984834` e post-merge `29340214947` sono 5/5 verdi. Il dry-run da `main` pulita ha superato il gate, ma il singolo bootstrap CLI con `--target=preview` ha creato un secondo record `target=production`, poi osservato `ERROR` e rimosso per ID esatto; deployment e alias project-scoped per `dnd-ai-web` sono tornati a zero e l'origin rimossa risponde `404`. L'activity log attribuisce il target Production alla CLI sul commit `1060228`. Nessun ulteriore deploy reale è autorizzato in questo change set. Sono esclusi auto-deploy Git, Production, promozioni, database/Redis/provider AI, comunicazioni pubbliche e qualunque secret in chat, log o file versionati.
+- **Azioni esterne:** ambiente GitHub `staging`, Ruleset, Trusted Source, account/piano e grant condiviso restano invariati. PR #16 ha integrato il freeze nel merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; CI PR `29343319207` e post-merge `29343526054` sono 5/5 verdi e non hanno creato deployment Vercel. L'audit successivo è read-only salvo il rollback del metadata GitHub vuoto creato accidentalmente da un comando `gh api -f` usato senza `--method GET`: eliminato il solo ID `5442987675`, poi verificati `404` e lista SHA vuota. Nessun deploy Vercel, auto-deploy Git, Production, promozione o comunicazione pubblica è autorizzato in questo change set.
 - **Test da scrivere prima/durante:** contract del kill switch manuale fail-closed e del divieto di riattivare auto-deploy; unit e subprocess security per configurazione assente, disabilitata, malformata o non coerente; regressione dei contract workflow/provisioning, guard, payload, smoke e full gate. Il runbook deve consentire soltanto dry-run/readback e contenimento per URL/ID esatto finché il mismatch provider non viene risolto e la riapertura non passa da una PR separata.
 - **Rischi/failure path:** target Production nonostante Production Branch separata e selector CLI Preview; stdout CLI assente o non conforme prima dell'inspect; record provider creato prima che il target possa essere verificato; token OIDC inviato a origin non trusted; credenziale provider esposta a codice PR non affidabile; installazione GitHub App condivisa con visibilità più ampia del singolo project, rischio accettato e compensato; deploy non riconducibile al commit/App; regione o root directory in drift; URL payload stale o riutilizzato; errore provider mascherato; smoke che passa sulla pagina sbagliata; rollback che seleziona un artifact diverso; ambiente GitHub dichiarato ma non applicato.
 - **Fuori scope:** deploy di `apps/api` e `apps/worker` finché non hanno packaging/runtime gestito; database, migration e secret applicativi; production release; load/chaos/restore; implementazione UX/UI e browser harness di `BL-079`/`QA-001`.
@@ -2571,19 +2572,20 @@ working_tree_dirty: false
 | 2026-07-14 | 50% | Integrato il contenimento e implementato il guard build Preview-only: il percorso Vercel richiede metadata `preview` concordanti, mentre Git auto-deploy resta spento. Il guard limita il completamento di un target errato, non la creazione iniziale del relativo record provider. Le review indipendenti finali non rilevano P0/P1/P2 residui. | Commit `519052649c88d84c45da92c3b35131819291a73a`; clean `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 57,1 s, senza cache: unit 33 pass/1 skip host, integration 9/9, contract 18/18, security 14 pass/3 skip host, policy/scan/artifact verdi. Unit guard 4/4, security subprocess 3/3 e contract deployment 5/5; la regressione `--allow-local` + Production è coperta. PR #13/merge `61e5cbd` restano l'evidenza del contenimento remoto con zero deployment project-scoped per `dnd-ai-web`. | **SUPERSEDED dal freeze:** il bootstrap diagnostico previsto in questo checkpoint è già stato eseguito una sola volta e non va ripetuto. |
 | 2026-07-14 | 50% | Il guard è stato integrato tramite PR #14 e merge `ee5f129`; CI PR/post-merge 5/5 verde e zero deployment project-scoped per `dnd-ai-web`. Il primo bootstrap CLI Preview è terminato sul limite file prima di creare una delivery: la root conteneva 773,1 MiB e una cache `.turbo` oltre il limite Hobby di 100 MB. La slice fail-closed `codex/bl-080-cli-payload` versiona denylist root-only e dry-run JSON obbligatorio. | PR #14; run PR `29335696502` e post-merge `29335856323`; readback `autoExposeSystemEnvs=true`, Production Branch=`release/production`, lista deployment `dnd-ai-web` vuota. CLI `55.0.0` exit `1` su `File size limit exceeded (100 MB)`; zero deployment project-scoped. TDD rosso, poi 14/14 mirati PASS; dry-run reale PASS con 158 entry/1.093.594 byte e nessun upload. Full `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 69,1 s sul diff e 56,2 s sul commit pulito `13032743552654f9f68d87050eb11cabbdd92325`, senza cache: unit 39/1 skip host, integration 9/9, contract 18/18, security 17/3 skip host. | **SUPERSEDED dal freeze:** il retry previsto in questo checkpoint è già avvenuto e ha prodotto il secondo target mismatch; non ripeterlo. |
 | 2026-07-14 | 50% | PR #15 ha integrato payload policy e dry-run bounded. Il solo bootstrap CLI autorizzato con selector Preview ha comunque creato un record Production; fermato il percorso, rimosso l'ID esatto e introdotto un interlock manuale fail-closed. Il controllo è procedurale/versionato: il possibile bypass diretto owner via CLI/dashboard resta vietato ma tecnicamente possibile. | PR #15 merge `1060228`; CI `29339984834` e `29340214947` 5/5; deployment `dpl_4yG…` osservato Production/`ERROR` e rimosso; `dnd-ai-web` project-scoped a zero deployment/alias, origin `404`, nessun nuovo smoke. Test mirati interlock 10/10 PASS; `deploy:bootstrap:check` exit atteso `1` con output statico `disabled`. Full `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 61,9 s sul working tree e 57,2 s sul commit pulito `e5dff7bf371bd91321587fecadbd8f51264cc263`, sempre senza cache: lint/build 11/11, typecheck 12/12, unit 42/1 skip host, integration 9/9, contract 18/18, security 19/3 skip host, policy/scan/artifact 3.205 file PASS. | Aprire la PR del freeze senza deploy; consentire soltanto dry-run/readback/contenimento e mantenere BL-080 aperto finché il mismatch non ha una risoluzione verificabile. |
+| 2026-07-14 | 50% | PR #16 ha integrato il freeze senza deploy. L'audit del tag CLI `55.0.0`, risolto al commit immutabile `11f0ceb`, ha circoscritto i fatti: parser/create args conservano Preview, ma `@vercel/client 17.6.4` azzera il target prima della POST; il comportamento first-deployment Production documentato da Vercel e la riproduzione CLI nell'issue aperta `#17069` formano l'ipotesi più forte, senza conferma/fix/workaround maintainer. `BL-080` passa a `BLOCKED/50%/PARTIAL`; `BL-004` diventa `READY`. | PR #16 merge `aa9342d`; CI `29343319207`/`29343526054` 5/5; Vercel project-scoped a zero deployment/alias. Record GitHub vuoto `5442987675`, creato accidentalmente dal readback `gh api -f`, eliminato per ID esatto; GET `404` e lista SHA `[]`. | Conservare il freeze, monitorare soltanto fonti ufficiali/provider issue e selezionare `BL-004`; nessun nuovo deploy reale. |
 
 ## Chiusura
 
-- **Commit/PR:** foundation PR #7; hardening PR #10; attivazione commit `7335053`, PR #12 e merge `c64d095`; contenimento commit `4d3d4ba`, PR #13 e merge `61e5cbd`; guard commit `5190526`, PR #14 e merge `ee5f129`; policy CLI commit `13032743552654f9f68d87050eb11cabbdd92325`, PR #15 e merge `10602288621210a075414e0fff6c437123022ed6`; freeze manuale commit `1cb655abee8a55b6974d90ae20b4244b12ba1192` ed evidence sync `e5dff7bf371bd91321587fecadbd8f51264cc263` sul branch `codex/bl-080-deploy-freeze`, PR/CI pending
+- **Commit/PR:** foundation PR #7; hardening PR #10; attivazione PR #12/merge `c64d095`; contenimento PR #13/merge `61e5cbd`; guard PR #14/merge `ee5f129`; policy CLI PR #15/merge `1060228`; freeze commit `1cb655abee8a55b6974d90ae20b4244b12ba1192`, evidence sync `e5dff7bf371bd91321587fecadbd8f51264cc263`, PR #16/merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`
 - **Comandi eseguiti:** preflight Git/GitHub/Vercel; web lint/typecheck/build; unit/integration/contract/security; full `pnpm verify`; build guard local/Preview/Production; deployment e CI policy; dry-run Vercel JSON e parser bounded; API GitHub environment/branch/Ruleset; Vercel CLI/API per identity/plan/project/link/settings/env/deployment/Trusted Sources/Git namespace, repository grant, activity log, deployment e alias; rimozione per deployment ID esatto; gate `deploy:bootstrap:check`
-- **Exit code:** `0` per CI PR #12/#13/#14/#15, rimozioni deployment, readback vuoti, full verify hotfix/guard/policy payload/freeze, dry-run bounded e test mirati interlock; expected `1` per simulazione Production fermata prima di Next, CLI oversize fermato prima della delivery e gate manuale disabilitato. Il secondo record Production è stato osservato `ERROR` e rimosso; il gate remoto Preview resta `FAILING` perché nessuno staging esiste ancora
-- **Report/CI URL o path:** `docs/testing/BL-080_VERIFICATION.md`; [attivazione PR #12 / run `29331343752`](https://github.com/Emacore17/dnd-ai/actions/runs/29331343752); [smoke rifiutato `29331534774`](https://github.com/Emacore17/dnd-ai/actions/runs/29331534774); PR #15 run `29339984834` e post-merge `29340214947`; entrambi i record Production rimossi e `dnd-ai-web` tornato project-scoped a zero deployment/alias
+- **Exit code:** `0` per CI PR #12/#13/#14/#15/#16, rimozioni esatte, readback vuoti, full verify hotfix/guard/policy/freeze, dry-run bounded e test mirati interlock; expected `1` per simulazione Production fermata prima di Next, CLI oversize fermato prima della delivery e gate manuale disabilitato. Il gate remoto resta `PARTIAL/BLOCKED`: nessuno staging esiste e nessun percorso first-deployment Preview-only è supportato
+- **Report/CI URL o path:** `docs/testing/BL-080_VERIFICATION.md`; [attivazione PR #12 / run `29331343752`](https://github.com/Emacore17/dnd-ai/actions/runs/29331343752); [smoke rifiutato `29331534774`](https://github.com/Emacore17/dnd-ai/actions/runs/29331534774); PR #16 run `29343319207` e post-merge `29343526054`; entrambi i record Vercel Production rimossi e `dnd-ai-web` project-scoped a zero deployment/alias
 - **Migration head:** `N/A`
 - **Contract/schema/event version:** config `runtime-config-v1`; deploy `staging-foundation-v1`; health `web-health-v1`; API/event schema `N/A`
 - **Prompt/model/eval version:** `N/A`
 - **Documenti aggiornati:** ADR-0005 proposed; runbook preview/staging; report BL-080; task/context/traceability/changelog/index/overview/config/CI in allineamento
-- **Rischi residui/TODO tracciati:** target provider inatteso ancora senza causa dopo due counterexample Production; account/piano autorizzati con vincolo Hobby esclusivo; installazione condivisa invariata come rischio accettato; Git auto-deploy, deploy manuali reali, retry/redeploy e promote vietati; guard Preview-only e payload policy verdi ma prova Preview, smoke, failure e rollback/redeploy restano aperti; interlock manuale procedurale, con bypass owner tecnicamente possibile ma non autorizzato; deployment e alias project-scoped per `dnd-ai-web` nuovamente zero
-- **Task successivo reso READY:** `—`; `BL-079` resta `BACKLOG` fino alla chiusura di BL-080
+- **Rischi residui/TODO tracciati:** omissione client Preview provata; causa server first-deployment ipotizzata ma non confermata e senza fix/workaround maintainer; account/piano Hobby esclusivi; installazione condivisa invariata; Git/deploy/retry/redeploy/promote vietati; prova Preview, smoke, failure e rollback/redeploy aperti; interlock procedurale bypassabile tecnicamente ma vietato; deployment/alias project-scoped `dnd-ai-web` zero
+- **Task successivo reso READY:** `BL-004`; `BL-079` resta `BACKLOG` fino alla chiusura di BL-080
 
 
 ## 21. Context Sync Log
@@ -2620,6 +2622,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-14 | `1060228` + working tree | BL-080 deployment freeze | Mismatch target e interlock manuale | PR #15 ha integrato payload policy e dry-run bounded. Il successivo bootstrap con selector Preview ha creato un record Production, poi osservato `ERROR` e rimosso per ID esatto; deployment/alias project-scoped per `dnd-ai-web` sono tornati a zero. Il percorso manuale approvato ora fallisce chiuso finché una PR separata non riapre la policy; il possibile bypass diretto owner resta un rischio procedurale esplicito. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | 2026-07-14 | `1cb655a` | BL-080 deployment freeze implementation | Manual bootstrap policy e runbook | Interlock `manualDeployment.enabled=false`, gate CLI statico, binding provider obbligatori alla futura riapertura e contratti anti-drift/runbook sono congelati nel commit verificato. Full gate senza cache PASS; nessun deploy reale eseguito dal change set. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | 2026-07-14 | `e5dff7b` | BL-080 clean verification | Evidence sync | Il commit documentale finale è stato verificato da working tree pulito con full gate senza cache in 57,2 s; nessun deploy Vercel è stato eseguito. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
+| 2026-07-14 | `aa9342d` | BL-080 freeze integration e provider evidence | PR #16, target audit e blocco | Freeze integrato con CI PR/post-merge 5/5 e zero deployment. Audit CLI/client + regola first-deployment + issue `vercel/vercel#17069` circoscrivono il mismatch senza fix supportato; BL-080 passa `BLOCKED/PARTIAL`, BL-004 `READY`. Il metadata GitHub vuoto creato accidentalmente da `gh api -f` è stato rimosso per ID esatto e verificato assente. | BL-004, BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | — | — | — | — | — | — |
 
 
