@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
+last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
 source_refs:
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilita
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -34,7 +34,7 @@ supersedes: null
 
 ## Verdetto corrente
 
-`IN_REVIEW/90%/PARTIAL`. Implementazione e suite specifica sono verdi sul working tree; full gate, commit pulito e CI remota devono ancora essere registrati prima di `DONE`.
+`IN_REVIEW/90%/PARTIAL`. Implementazione, suite specifica e full gate sono verdi; il commit `b1030501fd82d0396add5ff4f9df10fbaa405d0b` è verificato da worktree pulito. Restano da registrare soltanto PR e CI remota prima di `DONE`.
 
 ## Baseline verificata
 
@@ -86,7 +86,7 @@ Il source SHA protegge il file TypeScript normalizzato LF. Il contract checksum 
 | unit + contract + security migration mirati | Windows | exit `0`, 13/13 |
 | `corepack pnpm@10.34.5 audit --audit-level=high` | workspace | exit `0`, `No known vulnerabilities found` |
 | `TURBO_FORCE=true corepack pnpm@10.34.5 verify` | working tree | exit `0` in 73,4 s; lint/build 11/11, typecheck 12/12, unit 47 pass/1 skip host, integration 9/9, database 13/13, contract 22/22, security 23 pass/3 skip host, artifact 3.238 |
-| install frozen + `verify` | commit pulito | pending |
+| install frozen + `verify` | commit pulito `b1030501fd82d0396add5ff4f9df10fbaa405d0b` | install exit `0` in 0,6 s; verify exit `0` in 66,2 s senza cache, stessi conteggi del working tree |
 | `CI / Merge gate` | GitHub Actions Ubuntu | pending |
 
 Il lifecycle Docker usa porta effimera bindata a `127.0.0.1`, volume `tmpfs`, health polling bounded e rimozione per container ID completo. Un errore di teardown diverso da “container già assente” fallisce la suite. Nessun container della suite deve restare attivo al termine.
@@ -119,6 +119,6 @@ Il lifecycle Docker usa porta effimera bindata a `127.0.0.1`, volume `tmpfs`, he
 - [x] suite PostgreSQL reale e failure path mirati;
 - [x] ADR, runbook, CI e tracciabilità aggiornati;
 - [x] full gate e dependency audit sul change set;
-- [ ] commit verificato da worktree pulito;
+- [x] commit verificato da worktree pulito;
 - [ ] PR e CI remota verdi;
 - [ ] task `DONE/100%/PASSING` e successivo task coerente.

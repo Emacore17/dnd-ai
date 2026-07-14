@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
+last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -435,7 +435,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Migration test da database vuoto all’head e replay su database già aggiornato.
   - [x] Test rollback/forward-fix documentato e verifica vincoli/indici con PostgreSQL reale.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0006-postgresql-migration-foundation.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/DATABASE_MIGRATIONS.md`; `docs/testing/BL-004_VERIFICATION.md`; `docs/data/DATA_MODEL.md` resta `planned` con owner `DOC-ARCH-001`
-- **Evidenze di chiusura:** test mirati: `db:migrate:test` 13/13 e unit/contract/security migration 13/13 `PASS`. Full working-tree `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 73,4 s: lint/build 11/11, typecheck 12/12, unit 47 pass/1 skip host, integration 9/9, database 13/13, contract 22/22, security 23 pass/3 skip host, policy/scan e artifact 3.238 file `PASS`; audit high `No known vulnerabilities found`. Commit pulito, PR e CI sono ancora in chiusura; report `docs/testing/BL-004_VERIFICATION.md`; head `000001_postgresql_foundation`; contract `database-baseline-v1`; source SHA `e8543d84b9b842adf352260536dcea284c93dfb859c9ec03368f10deb9455fc7`; checksum `46a2bb9ce2ca6957a3b87e423e0ea67b36688e71ebacc84c469bdb7f7a8dc449`.
+- **Evidenze di chiusura:** test mirati: `db:migrate:test` 13/13 e unit/contract/security migration 13/13 `PASS`. Full working-tree `verify` exit `0` in 73,4 s e audit high pulito. Commit `b1030501fd82d0396add5ff4f9df10fbaa405d0b` verificato da worktree pulito: install frozen exit `0` in 0,6 s; full gate senza cache exit `0` in 66,2 s, con lint/build 11/11, typecheck 12/12, unit 47 pass/1 skip host, integration 9/9, database 13/13, contract 22/22, security 23 pass/3 skip host, policy/scan e artifact 3.238 file `PASS`. PR e CI sono ancora in chiusura; report `docs/testing/BL-004_VERIFICATION.md`; head `000001_postgresql_foundation`; contract `database-baseline-v1`; source SHA `e8543d84b9b842adf352260536dcea284c93dfb859c9ec03368f10deb9455fc7`; checksum `46a2bb9ce2ca6957a3b87e423e0ea67b36688e71ebacc84c469bdb7f7a8dc449`.
 - **Note, rischi o bloccanti:** La baseline è deliberatamente infrastrutturale: ledger/versione di compatibilità, namespace applicativo ed estensione PostgreSQL richiesta, senza anticipare tabelle di dominio. `packages/persistence` riceve config validata e non importa `packages/config`; il composition root resta esterno. La suite reale copre file migration sconosciuti/symlink fail-closed, source SHA e checksum contract, database vuoto→head, replay, DDL invalido con rollback e ledger vuoto, due runner simultanei, lock occupato, vincoli/indice, rollback locale e re-apply. `previous→head` è `N/A` per la prima migration: non esiste ancora una versione applicata precedente diversa dal database vuoto; diventa obbligatorio da `000002`. `down` è limitato a URL loopback disposable senza parametri di routing e vietato in staging/production. Fuori scope: tabelle utenti/campagne/eventi/memorie, RLS, repository, backfill, provisioning gestito e harness generale `QA-001`.
 
 ### BL-005 — Signup, verify, rate limit
@@ -2517,11 +2517,11 @@ updated_at: 2026-07-14
 agent: Codex development agent
 git_branch: codex/bl-004-persistence-baseline
 base_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
-current_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
+current_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
 spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
 context_verified: true
 test_status: PARTIAL
-working_tree_dirty: true
+working_tree_dirty: false
 ```
 
 ## Contesto letto
@@ -2548,6 +2548,7 @@ working_tree_dirty: true
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
 | 2026-07-14 | 90% | Implementata la baseline PostgreSQL 17/pgvector 0.8.2 pin a digest con runner `node-pg-migrate`, contract/checksum, composition root config, rollback local-only, harness Docker e CI. Le review hanno chiuso override di routing URL, file migration sconosciuti/symlink, cleanup e concorrenza reale. | Mirati 13/13 + 13/13 `PASS`; full `verify` working tree exit `0` in 73,4 s senza cache: unit 47/1 skip, integration 9, DB 13, contract 22, security 23/3 skip, artifact 3.238; audit high pulito. | Congelare e verificare il commit pulito, poi pubblicare la PR protetta. |
+| 2026-07-14 | 90% | Congelato e verificato il commit di implementazione da worktree pulito con lockfile frozen e cache Turbo forzatamente ignorata. | Commit `b1030501fd82d0396add5ff4f9df10fbaa405d0b`; install frozen exit `0` in 0,6 s; full `verify` exit `0` in 66,2 s, stessi conteggi del gate working tree e artifact 3.238 file. | Pubblicare PR, attendere CI remota e chiudere task/evidenze senza bypass. |
 | 2026-07-13 | 25% | Creato `AGENTS.md` con protocollo cold-start, invarianti, standard di codice/test/documentazione e policy browser. | Link esistenti verificati; SHA-256 `1c53683f00393fd1a992287d7efdd8d1b8bb9b107b6804869ead80761148756c`; suite GOV completa ancora `PARTIAL`. | Creare i quattro documenti living mancanti e simulare la cold start. |
 | 2026-07-13 | 100% | Completati contesto, indice, tracciabilità, changelog; allineata la direzione UX/UI mobile-first con studio, ADR e `BL-079`. | Structural audit e cold-start finale `PASS`; spec SHA `b639a75c26ca0dc17e54d9f1c8816de7514a5e2d54ea4cfa733f275e18fbcd84`. | Selezionare `BL-001` in una nuova sessione di sviluppo. |
 | 2026-07-13 | 25% | Auditati 101 task e 79 righe BL: grafo senza cicli/ID orfani; formalizzati i consumer UI di `BL-079`, le dipendenze differite e l’ownership del browser harness. Selezionato `BL-001`. | Nuova spec SHA `6c40a5c2b42d496c4977df157c19984175e643684cf5b2f1ec8e7ea47fc74578`; test implementativi ancora `NOT_RUN`. | Creare scaffold, checker e test negativi. |
@@ -2592,9 +2593,9 @@ working_tree_dirty: true
 
 ## Chiusura
 
-- **Commit/PR:** pending; base verificata `c72c78bbae06ebb02c7de7d63844f17065354c06`, branch `codex/bl-004-persistence-baseline`
-- **Comandi eseguiti:** preflight Git/spec; install pnpm; lint/typecheck/build persistence; unit/contract/security migration; `db:migrate:test`; task/CI policy; full `verify` senza cache; dependency audit high. Clean commit e CI sono pending.
-- **Exit code:** mirati, full gate e audit `0`; red test iniziale su discovery `.d.ts.map` e regressioni di review corretti; stato complessivo ancora `PARTIAL` fino alla verifica del commit pulito.
+- **Commit/PR:** implementazione `b1030501fd82d0396add5ff4f9df10fbaa405d0b`; PR pending; branch `codex/bl-004-persistence-baseline`
+- **Comandi eseguiti:** preflight Git/spec; install pnpm; lint/typecheck/build persistence; unit/contract/security migration; `db:migrate:test`; task/CI policy; full `verify` senza cache; dependency audit high; install frozen e clean verify sul commit `b1030501fd82d0396add5ff4f9df10fbaa405d0b`. PR e CI remota sono pending.
+- **Exit code:** mirati, full gate, audit, install frozen e clean verify `0`; red test iniziale su discovery `.d.ts.map` e regressioni di review corretti; stato complessivo ancora `PARTIAL` fino alla CI remota.
 - **Report/CI URL o path:** `docs/testing/BL-004_VERIFICATION.md`; CI pending.
 - **Migration head:** `000001_postgresql_foundation`
 - **Contract/schema/event version:** database `database-baseline-v1`; runtime config `runtime-config-v1`; API/event schema `N/A`
@@ -2640,7 +2641,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-14 | `e5dff7b` | BL-080 clean verification | Evidence sync | Il commit documentale finale è stato verificato da working tree pulito con full gate senza cache in 57,2 s; nessun deploy Vercel è stato eseguito. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | 2026-07-14 | `aa9342d` | BL-080 freeze integration e provider evidence | PR #16, target audit e blocco | Freeze integrato con CI PR/post-merge 5/5 e zero deployment. L'audit prova l'omissione client; regola first-deployment e issue `vercel/vercel#17069` sostengono un'ipotesi server non confermata e senza fix supportato. BL-080 passa `BLOCKED/PARTIAL`, BL-004 `READY`. Il metadata GitHub vuoto creato accidentalmente da `gh api -f` è stato rimosso per ID esatto e verificato assente. | BL-004, BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | 2026-07-14 | `b84f4eb` | BL-080 provider evidence clean verification | Source audit e allineamento living docs | Distinti fatti client e ipotesi server, corrette dipendenze/stati e verificato il commit pulito con full gate in 58,1 s; nessuna azione Vercel o GitHub Deployment eseguita. | BL-004, BL-079, GATE-M0, BL-070, DOC-OPS-001 |
-| 2026-07-14 | working tree da `c72c78b` | BL-004 | PostgreSQL migration foundation | Aggiunti head `000001_postgresql_foundation`, contract `database-baseline-v1`, runner/manifest fail-closed, pgvector pin a digest, rollback local-only, harness/CI e ADR-0006. Test DB mirati 13/13; full gate/commit/CI in chiusura. | BL-005, BL-007, BL-015, BL-036, BL-008, QA-001, DOC-ARCH-001 |
+| 2026-07-14 | `b103050` | BL-004 | PostgreSQL migration foundation | Aggiunti head `000001_postgresql_foundation`, contract `database-baseline-v1`, runner/manifest fail-closed, pgvector pin a digest, rollback local-only, harness/CI e ADR-0006. Mirati, full gate, audit e clean verify PASS; PR/CI in chiusura. | BL-005, BL-007, BL-015, BL-036, BL-008, QA-001, DOC-ARCH-001 |
 | — | — | — | — | — | — |
 
 

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
+last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living

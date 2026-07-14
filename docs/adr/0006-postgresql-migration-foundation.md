@@ -2,7 +2,7 @@
 status: accepted
 owner: engineering-and-data
 last_reviewed: 2026-07-14
-last_verified_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
+last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
 source_refs:
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilita
   - docs/MVP_SPEC.md#264-integration-test-database

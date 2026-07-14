@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
+last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -213,7 +213,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Completare `BL-004` sul branch `codex/bl-004-persistence-baseline`: il full gate working tree e l'audit sono verdi; resta congelare e verificare il commit pulito, quindi pubblicare la PR protetta con CI verde. Conservare invariati freeze Vercel e stato `BACKLOG` di `BL-079`; dopo la chiusura rendere `BL-008` il solo task `READY`.
+Completare `BL-004` sul branch `codex/bl-004-persistence-baseline`: commit `b103050` verificato da worktree pulito con install frozen e full gate senza cache; resta pubblicare la PR protetta e acquisire CI verde. Conservare invariati freeze Vercel e stato `BACKLOG` di `BL-079`; dopo la chiusura rendere `BL-008` il solo task `READY`.
 
 ## Rischi chiusi
 

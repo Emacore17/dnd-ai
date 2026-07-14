@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
+last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -123,6 +123,7 @@ supersedes: null
 ### Verification
 
 - BL-004 working tree: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 73,4 s senza cache; lint/build 11/11, typecheck 12/12, unit 47 pass/1 skip host, integration 9/9, database 13/13, contract 22/22, security 23 pass/3 skip host, policy/scan e artifact 3.238 file `PASS`; audit high senza vulnerabilità note.
+- BL-004 commit pulito `b1030501fd82d0396add5ff4f9df10fbaa405d0b`: install frozen exit `0` in 0,6 s; full gate senza cache exit `0` in 66,2 s con gli stessi conteggi e artifact 3.238 file.
 
 - Base `0065c012` verificata dalla CI post-merge `29315052002`, 5/5 job `SUCCESS`.
 - Foundation disabilitata integrata tramite [PR #7](https://github.com/Emacore17/dnd-ai/pull/7): run PR [`29321410036`](https://github.com/Emacore17/dnd-ai/actions/runs/29321410036) e run post-merge [`29321531038`](https://github.com/Emacore17/dnd-ai/actions/runs/29321531038) entrambe 5/5 job `SUCCESS`; artifact post-merge 3.247 file.
