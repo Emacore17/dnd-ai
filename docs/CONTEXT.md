@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 1cb655abee8a55b6974d90ae20b4244b12ba1192
+last_verified_commit: e5dff7bf371bd91321587fecadbd8f51264cc263
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -77,7 +77,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | contenimento [PR #13](https://github.com/Emacore17/dnd-ai/pull/13), guard [PR #14](https://github.com/Emacore17/dnd-ai/pull/14) e payload [PR #15](https://github.com/Emacore17/dnd-ai/pull/15) integrati; PR #15 merge `10602288621210a075414e0fff6c437123022ed6`, CI PR `29339984834` e post-merge `29340214947` 5/5 `SUCCESS`. Il successivo CLI Preview ha creato un secondo record Production, poi rimosso; readback finale project-scoped `dnd-ai-web` con zero deployment/alias e origin `404`. Freeze manuale verificato nel commit `1cb655abee8a55b6974d90ae20b4244b12ba1192`; PR/CI pending |
+| Delivery/commit | contenimento [PR #13](https://github.com/Emacore17/dnd-ai/pull/13), guard [PR #14](https://github.com/Emacore17/dnd-ai/pull/14) e payload [PR #15](https://github.com/Emacore17/dnd-ai/pull/15) integrati; PR #15 merge `10602288621210a075414e0fff6c437123022ed6`, CI PR `29339984834` e post-merge `29340214947` 5/5 `SUCCESS`. Il successivo CLI Preview ha creato un secondo record Production, poi rimosso; readback finale project-scoped `dnd-ai-web` con zero deployment/alias e origin `404`. Freeze manuale commit `1cb655abee8a55b6974d90ae20b4244b12ba1192`, evidence sync pulito `e5dff7bf371bd91321587fecadbd8f51264cc263`; PR/CI pending |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Milestone | `M0 — Fondamenta` |

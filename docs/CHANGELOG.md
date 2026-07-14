@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 1cb655abee8a55b6974d90ae20b4244b12ba1192
+last_verified_commit: e5dff7bf371bd91321587fecadbd8f51264cc263
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -119,7 +119,7 @@ supersedes: null
 - PR #15: commit policy `13032743552654f9f68d87050eb11cabbdd92325`, merge `10602288621210a075414e0fff6c437123022ed6`, CI PR `29339984834` e post-merge `29340214947` con 5/5 job `SUCCESS`; zero deployment prima del retry.
 - Secondo incidente provider: CLI pinned con selector Preview sul commit `1060228`, activity log `to production (via Vercel CLI)`, record `dpl_4yG…` osservato `target=production`/`ERROR`, rimozione per ID esatto, zero deployment/alias project-scoped per `dnd-ai-web` e origin `404`; nessun workflow smoke aggiuntivo.
 - Kill switch mirato: 10/10 test unit/contract/security `PASS`, `deploy:check` `PASS` e `deploy:bootstrap:check` expected exit `1` con output statico `disabled`.
-- Full gate del freeze sul working tree: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 61,9 s senza cache; lint/build 11/11, typecheck 12/12, unit 42 pass/1 skip host, integration 9/9, contract 18/18, security 19 pass/3 skip host, policy/secret scan e artifact 3.205 file tutti verdi.
+- Full gate del freeze: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 61,9 s sul working tree e 57,2 s sul commit pulito `e5dff7bf371bd91321587fecadbd8f51264cc263`, sempre senza cache; lint/build 11/11, typecheck 12/12, unit 42 pass/1 skip host, integration 9/9, contract 18/18, security 19 pass/3 skip host, policy/secret scan e artifact 3.205 file tutti verdi.
 
 ## 2026-07-13
 

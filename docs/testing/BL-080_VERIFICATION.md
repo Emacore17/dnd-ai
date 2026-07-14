@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: 1cb655abee8a55b6974d90ae20b4244b12ba1192
+last_verified_commit: e5dff7bf371bd91321587fecadbd8f51264cc263
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -63,7 +63,7 @@ supersedes: null
 | Contenimento corrente | commit `4d3d4baad1a57b5340c0092209cc640499aa4da8`; PR #13; CI PR `29332953627` e post-merge `29333105276` 5/5 `SUCCESS`; merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; zero deployment successivi |
 | Guard Preview-only | commit `519052649c88d84c45da92c3b35131819291a73a`; PR #14; merge `ee5f12916998cce6847fcc509d8f5e1fa05b1b9f`; CI PR/post-merge 5/5; zero deployment |
 | Contratto payload CLI | commit `13032743552654f9f68d87050eb11cabbdd92325`; PR #15; merge `10602288621210a075414e0fff6c437123022ed6`; CI PR/post-merge 5/5 `SUCCESS` |
-| Freeze bootstrap manuale | commit `1cb655abee8a55b6974d90ae20b4244b12ba1192`; branch `codex/bl-080-deploy-freeze`; PR/CI pending |
+| Freeze bootstrap manuale | commit `1cb655abee8a55b6974d90ae20b4244b12ba1192`; evidence sync pulito `e5dff7bf371bd91321587fecadbd8f51264cc263`; branch `codex/bl-080-deploy-freeze`; PR/CI pending |
 | Spec SHA-256 | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Deploy contract | `staging-foundation-v1`; provider remoto ancora collegato, mentre il repository mantiene binding versionati `null`, `source.autoDeploy=false`, `source.manualDeployment.enabled=false`, `git.deploymentEnabled=false` e build guard Preview-only |
 | Health contract | `web-health-v1` |
@@ -184,7 +184,7 @@ Il change set successivo introduce `source.manualDeployment.enabled=false` e `de
 | `tests/unit/vercel-preview-bootstrap-policy.test.mjs` | 3/3 PASS: default disabilitato, riapertura Preview-only con auto-deploy spento, policy assente/Production/simultanea rifiutata |
 | `tests/security/vercel-preview-bootstrap-gate.test.mjs` | 2/2 PASS: config corrente exit `1` statico `disabled`; argomenti inattesi non riflessi |
 | kill switch + deployment contract mirati | 10/10 PASS; `deploy:check` PASS; `deploy:bootstrap:check` expected exit `1` |
-| full gate freeze | `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 61,9 s senza cache; lint/build 11/11, typecheck 12/12, unit 42 pass/1 skip host, integration 9/9, contract 18/18, security 19 pass/3 skip host, policy/scan/artifact 3.205 file PASS |
+| full gate freeze | `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 61,9 s sul working tree e 57,2 s sul commit pulito `e5dff7bf371bd91321587fecadbd8f51264cc263`, sempre senza cache; lint/build 11/11, typecheck 12/12, unit 42 pass/1 skip host, integration 9/9, contract 18/18, security 19 pass/3 skip host, policy/scan/artifact 3.205 file PASS |
 | payload + deployment contract mirati | 14/14 PASS; `deploy:check`, task graph, secret scan ed ESLint mirati PASS |
 | dry-run Vercel reale | PASS: 158 entry, 1.093.594 byte, max 263.569 byte; framework/root/input esatti; zero deployment |
 | `TURBO_FORCE=true corepack pnpm@10.34.5 verify` sulla policy payload | PASS in 69,1 s sul diff e 56,2 s sul commit pulito `13032743552654f9f68d87050eb11cabbdd92325`; zero cache Turbo; unit 39 pass/1 skip host, integration 9/9, contract 18/18, security 17 pass/3 skip host, policy/scan/artifact verdi |
