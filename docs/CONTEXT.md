@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-13
-last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
+last_reviewed: 2026-07-14
+last_verified_commit: 0065c012ae359450b4cd38da41b001f9e922eeb8
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -49,20 +49,20 @@ supersedes: null
 
 | Campo | Valore |
 |---|---|
-| Data assoluta | 2026-07-13 |
+| Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | baseline `origin/main` a `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; branch isolato `codex/bl-003-runtime-config`; verified head `f57141341efe5df0707c77ff8ccef4f6fa15f675`; PR #6 `MERGEABLE/CLEAN` |
+| Delivery/commit | `origin/main` a `0065c012ae359450b4cd38da41b001f9e922eeb8` dopo merge della PR #6; branch attivo `codex/bl-080-staging-foundation` dalla stessa base; CI post-merge `29315052002` 5/5 job `SUCCESS` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `—` |
+| Task attivo | `BL-080 — IN_PROGRESS/25%/NOT_RUN` |
 | Ultimo task completato | `BL-003 — DONE/100%/PASSING` |
-| Prossimo task READY | `BL-080 — Fondazione preview/staging M0`; `BL-079` resta `BACKLOG` fino alla chiusura di `BL-080` |
+| Prossimo task READY | `—`; `BL-079` resta `BACKLOG` fino alla chiusura di `BL-080` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. Il web resta uno scaffold: la foundation UX/UI `BL-079` è pianificata e non fa parte di questo change set. `BL-003` implementa `runtime-config-v1`, startup API fail-fast, boundary worker, profilo migration, template service-scoped e scanner fail-closed; full verify locale, checkout pulito e CI Ubuntu sono `PASS`. Non esistono valori reali, risorse cloud o staging: `BL-080`, ora `READY`, possiede secret manager concreto, packaging, primo deploy e smoke remoto.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. `BL-003` implementa `runtime-config-v1`, startup API fail-fast, boundary worker, profilo migration, template service-scoped e scanner fail-closed; la PR #6 è integrata in `main`. Il web Next è l'unico runtime oggi direttamente deployabile; API e worker non hanno ancora packaging container/daemon. `BL-080` è iniziato per creare una preview/staging web non-production, mentre la foundation UX/UI `BL-079` resta fuori scope e bloccata fino alla disponibilità dell'ambiente. Nessuna risorsa provider o credenziale è ancora stata creata in questo task.
 
 ## Decisioni operative vigenti
 
@@ -93,7 +93,7 @@ Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web scaffold; API senza route ma con startup validate-before-bind |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
-| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; BL-003 run `29285998646` 5/5 job PASS |
+| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; post-merge BL-003 run `29315052002` 5/5 job PASS |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
 | Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file; checkout pulito BL-003 `3.554` file e CI Ubuntu `3.233` file, secret/checksum verification PASS |
 
@@ -149,12 +149,12 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | CTX-R03 | App e package di dominio restano scaffold; il web non contiene ancora la foundation UX/UI | task M0 proprietari; non inferire comportamento applicativo dalle entry point minime |
 | CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` resta in M0 e dipende dalla foundation operativa `BL-080` |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive gated o rimosso nel task `BL-079` |
-| CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | eseguire `BL-080`, ora READY, per creare l'ambiente e sbloccare lo smoke BL-079/GATE-M0 |
+| CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | `BL-080` è `IN_PROGRESS` e deve creare l'ambiente prima di sbloccare lo smoke BL-079/GATE-M0 |
 | CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based/ignore-aware |
 
 ## Prossima azione
 
-Selezionare ed eseguire `BL-080`: decidere provider/regione, definire provisioning ripetibile e verificare il primo deploy/smoke preview-staging senza valori production. `BL-079` inizierà soltanto dopo la disponibilità dell'ambiente.
+Completare la decisione provider/regione e i contract test di `BL-080`, poi provisionare soltanto la preview/staging web non-production e verificarne deploy, smoke e rollback/redeploy. `BL-079` inizierà soltanto dopo la disponibilità dell'ambiente.
 
 ## Rischi chiusi
 

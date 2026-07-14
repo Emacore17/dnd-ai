@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-13
-last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
+last_reviewed: 2026-07-14
+last_verified_commit: 0065c012ae359450b4cd38da41b001f9e922eeb8
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -50,8 +50,8 @@ supersedes: null
 > **Versione schema task:** `1.0.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `—`
-> **Prossimo task READY:** `BL-080 — Fondazione preview/staging M0`; `BL-079` resta `BACKLOG` finché lo staging non è disponibile
+> **Task attivo:** `BL-080 — Fondazione preview/staging M0`
+> **Prossimo task READY:** `—`; `BL-079` resta `BACKLOG` finché lo staging non è disponibile
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -548,10 +548,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-080 — Fondazione preview/staging M0
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
+- **Stato:** `IN_PROGRESS`
+- **Progresso:** `25%`
 - **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `YES` — commit `f57141341efe5df0707c77ff8ccef4f6fa15f675`; spec SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`; data: `2026-07-13`
+- **Contesto verificato:** `YES` — base `0065c012ae359450b4cd38da41b001f9e922eeb8`; spec SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`; data: `2026-07-14`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-002, BL-003
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§29.3–29.4, §30 Milestone 0, §31 `BL-080`, §35.1; `docs/adr/0003-ci-trust-boundary-and-artifacts.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/architecture/SYSTEM_OVERVIEW.md`
@@ -2463,20 +2463,20 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: null
+active_task: BL-080
 last_completed_task: BL-003
-next_ready_task: BL-080
-status: DONE
-progress: 100
-started_at: 2026-07-13
-updated_at: 2026-07-13
+next_ready_task: null
+status: IN_PROGRESS
+progress: 25
+started_at: 2026-07-14
+updated_at: 2026-07-14
 agent: Codex development agent
-git_branch: codex/bl-003-runtime-config
-base_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
-current_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
+git_branch: codex/bl-080-staging-foundation
+base_commit: 0065c012ae359450b4cd38da41b001f9e922eeb8
+current_commit: 0065c012ae359450b4cd38da41b001f9e922eeb8
 spec_sha256: 0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c
 context_verified: true
-test_status: PASSING
+test_status: NOT_RUN
 working_tree_dirty: true
 ```
 
@@ -2487,16 +2487,17 @@ working_tree_dirty: true
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
 - [x] ADR vigenti — ADR-0001, ADR-0002, ADR-0003 e ADR-0004
-- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CI_CD.md`; report BL-001 e BL-002
-- [x] codice, dipendenze e test correnti — tre composition root minimi, otto package condivisi incluso `config`, template service-scoped; boundary/task graph e contract baseline verdi
+- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; ADR-0003 e ADR-0004
+- [x] codice, dipendenze e test correnti — web Next deployabile; API senza container e worker senza daemon/start; CI, artifact e config contract BL-003 verdi
 
 ## Piano e scope
 
-- **Obiettivo verificabile:** introdurre un contratto di configurazione tipizzato e service-scoped che validi ogni composition root prima di bind/esecuzione e non esponga valori sensibili in errori, log o artifact.
-- **File/moduli previsti:** nuovo package `config`; composition root API e boundary worker; verifica negativa del web; CLI di check; `.env.example`; boundary/artifact policy; test unit/contract/process smoke; ADR-0002/0004, runbook configurazione, report e documenti living.
-- **Test da scrivere prima/durante:** parse valido/mancante/malformato; profili `local`/`staging`/`production`; chiavi per servizio e secret condizionali; nessun fallback cross-environment; errori redatti; process exit non-zero prima del bind; template e artifact senza secret.
-- **Rischi/failure path:** valore secret riflesso nell'errore; variabile server-only inclusa nel client; default permissivo che maschera un ambiente errato; profilo staging che eredita local/production; package non incluso in boundary/artifact; build Next priva delle variabili non sensibili richieste.
-- **Fuori scope:** provisioning e secret manager concreti, preview/staging reale e smoke remoto (`BL-080`); database/migration (`BL-004`); autenticazione (`BL-005`); queue/provider AI reali; feature flag (`BL-010`); load/chaos/restore (`BL-070`).
+- **Obiettivo verificabile:** rendere disponibile una preview/staging non-production del solo runtime oggi deployabile (`apps/web`), identificata dal commit, riproducibile e protetta da smoke/failure gate; registrare provider, regione, ownership e procedura di rollback senza introdurre credenziali production.
+- **File/moduli previsti:** decisione provider; configurazione ripetibile del progetto web; workflow/policy GitHub a privilegi minimi; script di smoke e metadati deploy; contract/negative test; runbook staging e report BL-080; documenti living e tracciabilità.
+- **Azioni esterne autorizzate:** inventario e collegamento del repository pubblico `Emacore17/dnd-ai` a una risorsa Vercel non-production; ambiente GitHub protetto; primo deploy web, smoke e rollback/redeploy. Sono esclusi production, acquisti/upgrade, accettazioni contrattuali, database/Redis/provider AI, comunicazioni pubbliche e qualunque secret in chat, log o file versionati.
+- **Test da scrivere prima/durante:** contract del workflow/provisioning per environment, least privilege, concurrency, commit immutabile e mancata promozione; smoke su URL HTTPS con commit/environment attesi e output redatto; negative path per metadati/config/secret mancanti, URL non valido, risposta non-2xx e deploy fallito; prova di rollback o redeploy dell'ultima versione valida.
+- **Rischi/failure path:** credenziale provider esposta a codice PR non affidabile; deploy non riconducibile al commit; regione o root directory in drift; URL stale o riutilizzato; errore provider mascherato; smoke che passa sulla pagina sbagliata; rollback che seleziona un artifact diverso; ambiente GitHub dichiarato ma non applicato.
+- **Fuori scope:** deploy di `apps/api` e `apps/worker` finché non hanno packaging/runtime gestito; database, migration e secret applicativi; production release; load/chaos/restore; implementazione UX/UI e browser harness di `BL-079`/`QA-001`.
 
 ## Diario sintetico
 
@@ -2525,19 +2526,20 @@ working_tree_dirty: true
 | 2026-07-13 | 90% | Verificato il commit documentale da worktree detached pulito con lockfile frozen e cache Turbo forzatamente ignorata. | Head `0d3af18`; install exit `0`; full verify exit `0` in `59,6 s`; artifact `3.212` file; audit documentale finale senza P0/P1. | Pubblicare la PR isolata e attendere CI. |
 | 2026-07-13 | 90% | La prima run Ubuntu ha dimostrato che il solo indice Git non enumerava un FIFO untracked; lo scanner ora scopre anche file non ignorati senza seguire symlink/junction e continua a rifiutare file non regolari prima della lettura. | Run `29285442650`: Quality/Tests verdi, Security `11/12`, artifact skipped e merge gate rosso; fix head `f571413`, full verify locale exit `0` in `60,4 s`, artifact `3.191` file. | Ripetere clean verify e CI Ubuntu. |
 | 2026-07-13 | 100% | Verificati fix, checkout pulito e CI; BL-003 chiuso senza introdurre staging o secret reali. | Worktree pulito head `f571413`: install frozen forzata exit `0`, full verify exit `0` in `61,0 s`, artifact `3.554` file; run `29285998646` 5/5 job `SUCCESS`, security `12/12`, artifact Ubuntu `3.233` file; PR #6 `MERGEABLE/CLEAN`. | Eseguire `BL-080`; mantenere `BL-079` in backlog fino allo staging. |
+| 2026-07-14 | 25% | Integrata PR #6 e selezionato `BL-080` da `main`; limitato il primo ambiente al web deployabile e alle sole risorse non-production, senza anticipare container API/worker o secret applicativi. | Base `0065c012`; spec SHA invariato; run CI post-merge `29315052002` completato con 5/5 job `SUCCESS`; test BL-080 `NOT_RUN`. | Verificare provider/account, formalizzare ADR e testare il contratto prima del provisioning. |
 
 ## Chiusura
 
-- **Commit/PR:** delivery branch `codex/bl-003-runtime-config` da `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; verified head `f57141341efe5df0707c77ff8ccef4f6fa15f675`; [PR #6](https://github.com/Emacore17/dnd-ai/pull/6) `MERGEABLE/CLEAN`
-- **Comandi eseguiti:** build config/runtime; unit config; process integration; contract config; security env/symlink/non-regular; lint/typecheck/build; boundary/task graph/CI policy; SAST/secret scan/audit; artifact verify
-- **Exit code:** `0` per gate mirati, full verify isolato, install frozen forzato, clean-worktree verify e CI finale; il preflight clean iniziale è documentato con exit `1` perché l'install no-op non aveva materializzato `node_modules`
-- **Report/CI URL o path:** `docs/testing/BL-003_VERIFICATION.md`; [run positiva `29285998646`](https://github.com/Emacore17/dnd-ai/actions/runs/29285998646); [failure path `29285442650`](https://github.com/Emacore17/dnd-ai/actions/runs/29285442650); primo deploy/smoke reale demandato a `BL-080`
+- **Commit/PR:** `—` — task in corso sul branch `codex/bl-080-staging-foundation`
+- **Comandi eseguiti:** preflight Git/GitHub e audit documentale iniziale
+- **Exit code:** `0` per merge PR #6, fetch e creazione branch; gate BL-080 non ancora eseguiti
+- **Report/CI URL o path:** [CI post-merge BL-003 `29315052002`](https://github.com/Emacore17/dnd-ai/actions/runs/29315052002); report BL-080 `planned`
 - **Migration head:** `N/A`
-- **Contract/schema/event version:** config contract `runtime-config-v1`; API/event schema `N/A`
+- **Contract/schema/event version:** config contract `runtime-config-v1`; deploy contract `planned`; API/event schema `N/A`
 - **Prompt/model/eval version:** `N/A`
-- **Documenti aggiornati:** `AGENTS.md`; spec/task/context/traceability/changelog/index/overview; ADR-0002/0004; runbook e report BL-003
-- **Rischi residui/TODO tracciati:** leakage nei messaggi/config artifact; cross-environment fallback; primo secret manager/deploy reale tramite `BL-080`
-- **Task successivo reso READY:** `BL-080`
+- **Documenti aggiornati:** registro iniziale `docs/TASKS.md` e `docs/CONTEXT.md`; decisione provider/runbook/report `planned`
+- **Rischi residui/TODO tracciati:** autenticazione e disponibilità provider, isolamento ambiente, artifact identity, smoke e rollback reali
+- **Task successivo reso READY:** `—`; `BL-079` resta `BACKLOG` fino alla chiusura di BL-080
 
 
 ## 21. Context Sync Log
@@ -2560,6 +2562,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `ae88583` | BL-002 post-merge | `main` e CI | PR #1 unita senza bypass; post-merge run `29257721274` con quality, tests, security, build artifact e merge gate tutti `SUCCESS`. | BL-079, GOV-002 |
 | 2026-07-13 | `1090a2a` | BL-003 | Config/runtime, secret boundary e documentazione | Aggiunti `runtime-config-v1`, startup fail-fast, template/scanner `.env`, TLS/auth managed e ADR-0004; corretto il private-hoist artifact fail-closed; `BL-004` ora dipende dal profilo migration e `BL-080` non dipende semanticamente dalla shell BL-079. Spec SHA `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`. | BL-004, BL-005, BL-008, BL-010, BL-079, BL-080, GATE-M0 |
 | 2026-07-13 | `f571413` | BL-003 closure | Secret scanner, clean verification e CI | Aggiunta discovery ignore-aware dei file speciali untracked dopo il failure path FIFO Ubuntu; clean verify e run `29285998646` chiudono BL-003. BL-080 passa a READY; BL-079 resta BACKLOG. Spec SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`. | BL-004, BL-005, BL-008, BL-010, BL-079, BL-080, GATE-M0 |
+| 2026-07-14 | `0065c01` | BL-080 start | Preview/staging scope e contesto | PR #6 integrata e post-merge CI `29315052002` PASS; selezionato BL-080 sul branch isolato con scope esterno limitato a web e risorse non-production. Nessun secret o provider resource creato. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | — | — | — | — | — | — |
 
 
