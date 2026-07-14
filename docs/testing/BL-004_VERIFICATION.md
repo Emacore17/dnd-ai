@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
+last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
 source_refs:
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilita
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -34,7 +34,7 @@ supersedes: null
 
 ## Verdetto corrente
 
-`IN_REVIEW/90%/PARTIAL`. Implementazione, suite specifica e full gate sono verdi; il commit `b1030501fd82d0396add5ff4f9df10fbaa405d0b` è verificato da worktree pulito. Restano da registrare soltanto PR e CI remota prima di `DONE`.
+`DONE/100%/PASSING`. Implementazione, suite specifica, full gate e clean verify sono verdi; la [PR #18](https://github.com/Emacore17/dnd-ai/pull/18) ha completato la CI PR [`29351291907`](https://github.com/Emacore17/dnd-ai/actions/runs/29351291907) con 5/5 job `SUCCESS`, incluso `CI / Merge gate`.
 
 ## Baseline verificata
 
@@ -73,7 +73,7 @@ Il source SHA protegge il file TypeScript normalizzato LF. Il contract checksum 
 | Rollback locale | `down` esplicito su database loopback disposable, poi re-apply convergente | `PASS` |
 | Rollback gestito | staging/production e override URL `?host`/`?port` rifiutati prima della connessione | `PASS` |
 | CLI | `status` vuoto, `up`, status con contract e `down` locale senza URL/secret in output | `PASS` |
-| CI | job Tests esegue `pnpm db:migrate:test` senza secret o service statico | `PASS` contract; CI remota pending |
+| CI | job Tests esegue `pnpm db:migrate:test` senza secret o service statico | `PASS`; run PR `29351291907` 5/5 `SUCCESS` |
 
 `previous→head` è `N/A` per la baseline iniziale: non esiste una versione applicata precedente distinta dal database vuoto. La prima migration successiva, `000002`, deve introdurre un test esplicito `000001→000002` oltre a zero→head e replay.
 
@@ -87,7 +87,7 @@ Il source SHA protegge il file TypeScript normalizzato LF. Il contract checksum 
 | `corepack pnpm@10.34.5 audit --audit-level=high` | workspace | exit `0`, `No known vulnerabilities found` |
 | `TURBO_FORCE=true corepack pnpm@10.34.5 verify` | working tree | exit `0` in 73,4 s; lint/build 11/11, typecheck 12/12, unit 47 pass/1 skip host, integration 9/9, database 13/13, contract 22/22, security 23 pass/3 skip host, artifact 3.238 |
 | install frozen + `verify` | commit pulito `b1030501fd82d0396add5ff4f9df10fbaa405d0b` | install exit `0` in 0,6 s; verify exit `0` in 66,2 s senza cache, stessi conteggi del working tree |
-| `CI / Merge gate` | GitHub Actions Ubuntu | pending |
+| `CI / Merge gate` | GitHub Actions Ubuntu, [PR #18](https://github.com/Emacore17/dnd-ai/pull/18) | [run `29351291907`](https://github.com/Emacore17/dnd-ai/actions/runs/29351291907), 5/5 job `SUCCESS` |
 
 Il lifecycle Docker usa porta effimera bindata a `127.0.0.1`, volume `tmpfs`, health polling bounded e rimozione per container ID completo. Un errore di teardown diverso da “container già assente” fallisce la suite. Nessun container della suite deve restare attivo al termine.
 
@@ -120,5 +120,5 @@ Il lifecycle Docker usa porta effimera bindata a `127.0.0.1`, volume `tmpfs`, he
 - [x] ADR, runbook, CI e tracciabilità aggiornati;
 - [x] full gate e dependency audit sul change set;
 - [x] commit verificato da worktree pulito;
-- [ ] PR e CI remota verdi;
-- [ ] task `DONE/100%/PASSING` e successivo task coerente.
+- [x] PR e CI remota verdi;
+- [x] task `DONE/100%/PASSING` e `BL-008` reso `READY`.

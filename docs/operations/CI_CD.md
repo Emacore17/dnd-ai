@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
+last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -119,7 +119,7 @@ Il job `Staging / Smoke`:
 
 Il progetto applica Standard Protection con policy SSO predefinita `all_except_custom_domains`; la Trusted Source limita già l'OIDC a issuer GitHub, audience account, repository + repository ID immutabile/ref/environment esatti e target `preview`. Il workflow non pubblica un URL non validato nell'environment GitHub. Non introdurre `VERCEL_TOKEN`, automation bypass secret, Deploy Hook, `pull_request_target`, `vercel deploy --prod`, `--prebuilt`, `promote` o checkout del commit indicato dall'evento. La Git Integration ricostruisce il commit anziché caricare `artifacts/bl002`; l'identità immutabile del deploy è quindi project ID + deployment ID + SHA + health contract.
 
-Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma né policy linked né selector CLI hanno impedito i record Production nello stato iniziale senza deployment. PR #13 ha riportato Quality a `pnpm deploy:check`, binding `null` e Git spento; PR #16 ha integrato il freeze. Project/link/Trusted Source remoti e grant condiviso restano invariati. Dry-run e contenimento sono verificati, ma ogni nuova creazione è congelata; Preview, smoke, failure e redeploy restano aperti. `BL-080` è `BLOCKED/50%/PARTIAL`, `BL-004` `IN_REVIEW/90%/PARTIAL` e `BL-079` `BACKLOG`.
+Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma né policy linked né selector CLI hanno impedito i record Production nello stato iniziale senza deployment. PR #13 ha riportato Quality a `pnpm deploy:check`, binding `null` e Git spento; PR #16 ha integrato il freeze. Project/link/Trusted Source remoti e grant condiviso restano invariati. Dry-run e contenimento sono verificati, ma ogni nuova creazione è congelata; Preview, smoke, failure e redeploy restano aperti. `BL-080` è `BLOCKED/50%/PARTIAL`, `BL-004` `DONE/100%/PASSING`, `BL-008` `READY` e `BL-079` `BACKLOG`.
 
 ## Cache e artifact
 
@@ -147,7 +147,7 @@ if ($LASTEXITCODE -ne 0) { throw "preview-dry-run: source manifest rejected" }
 
 | Gate normativo | Owner |
 |---|---|
-| migration PostgreSQL baseline, dry run e failure path | implementato da `BL-004`; CI remota/chiusura in corso |
+| migration PostgreSQL baseline, dry run e failure path | `BL-004` chiuso con CI PR `29351291907` 5/5 `SUCCESS` |
 | harness condiviso PostgreSQL/Redis e suite database funzionali successive | `QA-001` e task proprietari |
 | schema/OpenAPI/event compatibility | `BL-009` |
 | coverage rules/domain ≥80% e report | `QA-001` |

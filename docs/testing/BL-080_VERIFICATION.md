@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
+last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -244,4 +244,4 @@ Il primo full verify post-review è terminato per timeout host con exit `124` do
 - L'hardening è stato integrato su `main` a `ef803add249d16ded6f94936c59531047c8a92fa`; `release/production` è stato creato da quello SHA e protetto dalla Ruleset `18926413` strict/no-bypass senza modificare la Ruleset main `18877721` o l'environment `staging`.
 - Il progetto/provider resta collegato, ma `git.deploymentEnabled=false` e `source.autoDeploy=false` mantengono spento l'auto-deploy. `manualDeployment.enabled=false` rende fail-closed il percorso operativo approvato senza costituire enforcement provider contro un owner; la lista project-scoped di deployment e alias per `dnd-ai-web` è vuota.
 
-Finché questi punti non sono provati, `BL-080` resta `BLOCKED/50%/PARTIAL`, `BL-079` resta `BACKLOG` e nessuna evidenza locale viene presentata come staging disponibile. `BL-004`, indipendente dal provider, è stato selezionato ed è ora `IN_REVIEW`.
+Finché questi punti non sono provati, `BL-080` resta `BLOCKED/50%/PARTIAL`, `BL-079` resta `BACKLOG` e nessuna evidenza locale viene presentata come staging disponibile. `BL-004`, indipendente dal provider, è `DONE`; `BL-008` è il solo task `READY`.

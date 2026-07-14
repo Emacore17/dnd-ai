@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
+last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
@@ -69,7 +69,7 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` implementa ora la fondazione PostgreSQL/pgvector: migration head e contract versionati, composition root esterno a persistence, rollback local-only e suite container reale in CI. `BL-080` resta bloccato: i due record Production creati dal provider sono stati contenuti e rimossi; freeze, Git auto-deploy spento e gate manuale fail-closed restano invariati. Il readback finale project-scoped mostra zero deployment/alias. Non esiste ancora uno staging, quindi `BL-079` resta backlog; `BL-004` è in review e non ha eseguito alcuna operazione Vercel.
+`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` completa la fondazione PostgreSQL/pgvector: migration head e contract versionati, composition root esterno a persistence, rollback local-only e suite container reale in CI. `BL-080` resta bloccato: i due record Production creati dal provider sono stati contenuti e rimossi; freeze, Git auto-deploy spento e gate manuale fail-closed restano invariati. Non esiste ancora uno staging, quindi `BL-079` resta backlog; `BL-008` è il solo task pronto. Nessuna operazione Vercel è stata eseguita da `BL-004`.
 
 ```text
 apps/

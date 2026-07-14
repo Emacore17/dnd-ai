@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: b1030501fd82d0396add5ff4f9df10fbaa405d0b
+last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -92,18 +92,18 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-080` chiuso nella documentazione tramite [PR #17](https://github.com/Emacore17/dnd-ai/pull/17): CI PR `29346630165`, merge `c72c78bbae06ebb02c7de7d63844f17065354c06` e CI post-merge `29346792492`, tutti 5/5 `SUCCESS`; readback Vercel finale project-scoped con zero deployment/alias. Il freeze resta attivo e nessun deploy Production è autorizzato. `BL-004` parte dal merge pulito `c72c78bbae06ebb02c7de7d63844f17065354c06` sul branch dedicato `codex/bl-004-persistence-baseline` |
+| Delivery/commit | `BL-080` resta bloccato e congelato dopo [PR #17](https://github.com/Emacore17/dnd-ai/pull/17), merge `c72c78bbae06ebb02c7de7d63844f17065354c06` e CI post-merge `29346792492` 5/5; nessun deploy Production è autorizzato. `BL-004` è chiuso sulla [PR #18](https://github.com/Emacore17/dnd-ai/pull/18): implementazione `b1030501fd82d0396add5ff4f9df10fbaa405d0b`, head di evidenza `aaa17b2ada8a7bab73e3877f263b2c46c5865c13` e CI PR `29351291907` 5/5 `SUCCESS`. Nessuna operazione Vercel appartiene al change set. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-004 — IN_REVIEW/90%/PARTIAL` |
-| Ultimo task completato | `BL-003 — DONE/100%/PASSING` |
-| Prossimo task READY | `—`; `BL-079` resta `BACKLOG` fino alla chiusura di `BL-080` |
+| Task attivo | `—` |
+| Ultimo task completato | `BL-004 — DONE/100%/PASSING` |
+| Prossimo task READY | `BL-008`; `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset e `BL-003` implementa `runtime-config-v1`. `BL-080` resta bloccato sul percorso Preview-only del provider e il freeze integrato non viene modificato; lo stato Vercel finale resta zero deployment/alias. `BL-004` ha ora implementato la baseline infrastrutturale: `@dnd-ai/persistence` espone manifest/status/runner a input esplicito, il composition root valida `APP_ENV` e `MIGRATION_DATABASE_URL`, PostgreSQL 17 + pgvector 0.8.2 sono pin a digest e CI usa un container reale isolato. Head, contract, source SHA e checksum vengono verificati prima del DDL; file sconosciuti e symlink falliscono chiusi. Non sono state anticipate tabelle di dominio. `BL-079` resta `BACKLOG` fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset e `BL-003` implementa `runtime-config-v1`. `BL-080` resta bloccato sul percorso Preview-only del provider e il freeze integrato non viene modificato. `BL-004` è `DONE`: `@dnd-ai/persistence` espone manifest/status/runner a input esplicito, il composition root valida `APP_ENV` e `MIGRATION_DATABASE_URL`, PostgreSQL 17 + pgvector 0.8.2 sono pin a digest e CI usa un container reale isolato. Head, contract, source SHA e checksum vengono verificati prima del DDL; file sconosciuti e symlink falliscono chiusi. Non sono state anticipate tabelle di dominio. `BL-008` è il solo task `READY`; `BL-079` resta `BACKLOG` fino a uno staging reale.
 
 ## Decisioni operative vigenti
 
@@ -213,7 +213,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Completare `BL-004` sul branch `codex/bl-004-persistence-baseline`: commit `b103050` verificato da worktree pulito con install frozen e full gate senza cache; resta pubblicare la PR protetta e acquisire CI verde. Conservare invariati freeze Vercel e stato `BACKLOG` di `BL-079`; dopo la chiusura rendere `BL-008` il solo task `READY`.
+Integrare la [PR #18](https://github.com/Emacore17/dnd-ai/pull/18) esclusivamente tramite il merge gate protetto e verificare la CI post-merge; poi selezionare `BL-008` da `main`. Conservare invariati freeze Vercel e stato `BACKLOG` di `BL-079`.
 
 ## Rischi chiusi
 
