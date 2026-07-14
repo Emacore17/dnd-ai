@@ -192,6 +192,7 @@ function validateJobs(errors, workflow) {
     "pnpm boundaries:check",
     "pnpm tasks:check",
     "pnpm ci:workflow:check",
+    "pnpm deploy:check",
   ]);
   requireCommands(errors, "tests", jobs.tests, [
     "pnpm test:unit",

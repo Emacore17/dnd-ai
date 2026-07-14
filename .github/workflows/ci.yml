@@ -47,6 +47,9 @@ jobs:
       - name: Check CI policy
         run: pnpm ci:workflow:check
 
+      - name: Check deployment foundation
+        run: pnpm deploy:check
+
   tests:
     name: Tests
     runs-on: ubuntu-24.04

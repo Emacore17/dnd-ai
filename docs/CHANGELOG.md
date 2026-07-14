@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-13
-last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
+last_reviewed: 2026-07-14
+last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -21,6 +21,11 @@ code_refs:
   - apps/api/src/runtime.ts
   - apps/worker/src/runtime.ts
   - scripts/lib/secret-scanner.mjs
+  - .github/workflows/deployment-smoke.yml
+  - apps/web/app/health/route.ts
+  - apps/web/vercel.json
+  - infra/deployment/vercel-staging.json
+  - scripts/lib/deployment-smoke.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/ci-workflow.test.mjs
@@ -30,10 +35,39 @@ test_refs:
   - tests/contracts/runtime-config-contract.test.mjs
   - tests/security/environment-file-policy.test.mjs
   - docs/testing/BL-003_VERIFICATION.md
+  - tests/unit/deployment-smoke.test.mjs
+  - tests/integration/web-health.test.mjs
+  - tests/contracts/deployment-foundation.test.mjs
+  - tests/security/deployment-smoke-security.test.mjs
+  - docs/testing/BL-080_VERIFICATION.md
 supersedes: null
 ---
 
 # Changelog documentale e contrattuale
+
+## 2026-07-14
+
+### Added
+
+- Avviato `BL-080` da `main` dopo il merge verificato di BL-003; creato il desired state `staging-foundation-v1` per il solo web.
+- Aggiunti `apps/web/vercel.json`, Route Handler `/health` con contratto `web-health-v1`, workflow `Staging smoke` e verifier redatto con OIDC breve, senza credenziali Vercel persistenti in Actions.
+- Aggiunte suite unit, standalone integration, contract e security per origin/installation identity, OIDC, regione, timeout, failure propagation e leakage.
+- Creato l'environment GitHub `staging`, limitato a `main`, senza bypass amministratore, secret o variabili.
+- Creati ADR-0005 proposed, `docs/operations/PREVIEW_STAGING.md` e `docs/testing/BL-080_VERIFICATION.md`.
+
+### Changed
+
+- Il Quality gate verifica anche il desired state deploy; `verify` include la deployment policy.
+- Documentati Vercel/`fra1` come proposta reversibile, Git Integration nativa, `main` come Preview staging e `release/production` come Production Branch riservata.
+- Chiarito che il web ha zero variabili applicative e che i soli metadata Vercel del health endpoint non sono secret né config di dominio.
+- `BL-080` passa a `IN_PROGRESS/50%/PARTIAL`; `BL-079` resta `BACKLOG` finché project, deploy, smoke e redeploy remoti non sono provati.
+- La review indipendente ha distinto action Preview `vercel.deployment.ready` da `state.type=success`, vincolato ref/repository ai metadata runtime e l'evento all'installation ID, ignorato l'URL del payload, imposto origin esatta + Standard Protection/OIDC, vietato step/job/permission drift, limitato lo streaming body e reso il Git connect a due fasi con policy di attivazione branch-closed `{"*": false, "main": true}`.
+
+### Verification
+
+- Base `0065c012` verificata dalla CI post-merge `29315052002`, 5/5 job `SUCCESS`.
+- Full `TURBO_FORCE=true pnpm verify` finale PASS in 58,0 s senza cache Turbo: unit 29 pass/1 skip host, integration 9/9, contract 16/16, security 11 pass/3 skip host; deployment e CI policy `PASS`; artifact 3.205 file. Il rerun precedente si era fermato correttamente sul format check ed è stato corretto prima del PASS.
+- `deploy:check:linked` fallisce intenzionalmente sui binding provider ancora `null`; Vercel `whoami` fallisce senza credenziali. Questi failure path impediscono di presentare il piano locale come staging reale.
 
 ## 2026-07-13
 

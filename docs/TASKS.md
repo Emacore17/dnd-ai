@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-13
-last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
+last_reviewed: 2026-07-14
+last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -19,9 +19,15 @@ code_refs:
   - apps/api/src/runtime.ts
   - apps/worker/src/runtime.ts
   - .github/workflows/ci.yml
+  - .github/workflows/deployment-smoke.yml
+  - apps/web/app/health/route.ts
+  - apps/web/vercel.json
+  - infra/deployment/vercel-staging.json
   - scripts/lib/build-artifact.mjs
   - scripts/lib/ci-workflow-policy.mjs
   - scripts/lib/secret-scanner.mjs
+  - scripts/lib/deployment-smoke.mjs
+  - scripts/lib/deployment-workflow-policy.mjs
   - scripts/lib/workspace-boundaries.mjs
   - scripts/lib/task-graph.mjs
 test_refs:
@@ -36,6 +42,10 @@ test_refs:
   - tests/integration/runtime-startup.test.mjs
   - tests/contracts/runtime-config-contract.test.mjs
   - tests/security/environment-file-policy.test.mjs
+  - tests/unit/deployment-smoke.test.mjs
+  - tests/integration/web-health.test.mjs
+  - tests/contracts/deployment-foundation.test.mjs
+  - tests/security/deployment-smoke-security.test.mjs
 supersedes: null
 ---
 
@@ -50,8 +60,8 @@ supersedes: null
 > **Versione schema task:** `1.0.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `—`
-> **Prossimo task READY:** `BL-080 — Fondazione preview/staging M0`; `BL-079` resta `BACKLOG` finché lo staging non è disponibile
+> **Task attivo:** `BL-080 — Fondazione preview/staging M0`
+> **Prossimo task READY:** `—`; `BL-079` resta `BACKLOG` finché lo staging non è disponibile
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -548,24 +558,25 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-080 — Fondazione preview/staging M0
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `YES` — commit `f57141341efe5df0707c77ff8ccef4f6fa15f675`; spec SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`; data: `2026-07-13`
+- **Stato:** `IN_PROGRESS`
+- **Progresso:** `50%`
+- **Esito test:** `PARTIAL`
+- **Contesto verificato:** `YES` — base `0065c012ae359450b4cd38da41b001f9e922eeb8`; spec SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`; data: `2026-07-14`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-002, BL-003
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§29.3–29.4, §30 Milestone 0, §31 `BL-080`, §35.1; `docs/adr/0003-ci-trust-boundary-and-artifacts.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/architecture/SYSTEM_OVERVIEW.md`
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§29.3–29.4, §30 Milestone 0, §31 `BL-080`, §35.1; `docs/adr/0003-ci-trust-boundary-and-artifacts.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/adr/0005-vercel-web-preview-and-staging.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/PREVIEW_STAGING.md`; `docs/architecture/SYSTEM_OVERVIEW.md`
 - **Obiettivo:** Come team voglio una preview/staging M0 isolata e riproducibile, così ogni slice deployabile può essere validata prima di diventare `DONE`.
 - **Deliverable:** scelta provider e regione registrata; provisioning ripetibile; ambiente GitHub protetto; config e secret separati; deploy automatico dei runtime M0 disponibili; URL e owner redatti; smoke, rollback e runbook minimo. Preview di PR e staging possono essere risorse distinte, ma non condividono dati o credenziali production.
 - **Criterio di accettazione:** Un commit autorizzato produce un deploy identificabile e ripetibile; la baseline web e gli health check dei runtime disponibili superano smoke automatizzato; un deploy fallito non viene promosso; rollback o redeploy dell'ultima versione valida è documentato e provato; nessun secret o dato production entra in log, artifact o fixture.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Contract test del workflow/IaC: environment, least privilege, concurrency, failure propagation e artifact immutabile.
+  - [x] Contract test del workflow/desired state: environment, least privilege, concurrency, failure propagation e identità commit/deployment immutabile.
   - [ ] Deploy smoke su preview/staging con URL, commit, regione, environment e request/run ID redatti.
-  - [ ] Negative test per config mancante, secret indisponibile e deploy fallito senza promozione.
+  - [x] Negative test locale per metadata/config/OIDC mancante, origin/identity non validi, timeout e body non limitato. Il secret applicativo indisponibile è `N/A` per il web corrente, che ha zero secret per contratto.
+  - [ ] Deploy remoto fallito senza action `ready`, smoke o promozione Production.
   - [ ] Rollback o redeploy provato; baseline web corrente e health check dei runtime disponibili verificati. Lo smoke della shell mobile resta un gate di `BL-079` dopo la disponibilità dell'ambiente.
-- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; ADR-0004, ADR/provider decision e runbook ambiente
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; provider/project/region non sensibili `—`; deploy/run URL `—`; smoke/rollback `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** non include load, chaos, backup restore, production release o i gate UX della shell, posseduti da `BL-070`, `BL-079` e dai gate finali. Le dipendenze sono soddisfatte; `BL-079` consumerà l'ambiente dopo la chiusura di `BL-080`, senza dipendenza inversa.
+- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/PREVIEW_STAGING.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/adr/0005-vercel-web-preview-and-staging.md`; `docs/testing/BL-080_VERIFICATION.md`
+- **Evidenze di chiusura:** commit/PR `—`; test locali e GitHub environment in `docs/testing/BL-080_VERIFICATION.md`; provider proposto Vercel/`fra1`, project ID/scope/origin/installation ID `pending`; deploy/run URL `—`; smoke/redeploy `—`; docs parziali aggiornati
+- **Note, rischi o bloccanti:** non include load, chaos, backup restore, production release o i gate UX della shell, posseduti da `BL-070`, `BL-079` e dai gate finali. GitHub `staging` è creato e protetto su `main`; Standard Protection + Trusted Source OIDC sono versionate ma non configurate sul provider. L'attivazione Vercel richiede conferma esplicita di piano/termini e permessi GitHub App. Fino a project, deploy, smoke e redeploy reali il task resta `IN_PROGRESS` e `BL-079` resta `BACKLOG`.
 
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
 
@@ -2463,21 +2474,21 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: null
+active_task: BL-080
 last_completed_task: BL-003
-next_ready_task: BL-080
-status: DONE
-progress: 100
-started_at: 2026-07-13
-updated_at: 2026-07-13
+next_ready_task: null
+status: IN_PROGRESS
+progress: 50
+started_at: 2026-07-14
+updated_at: 2026-07-14
 agent: Codex development agent
-git_branch: codex/bl-003-runtime-config
-base_commit: d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8
-current_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
+git_branch: codex/bl-080-staging-foundation
+base_commit: 0065c012ae359450b4cd38da41b001f9e922eeb8
+current_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
 spec_sha256: 0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c
 context_verified: true
-test_status: PASSING
-working_tree_dirty: true
+test_status: PARTIAL
+working_tree_dirty: false
 ```
 
 ## Contesto letto
@@ -2487,16 +2498,17 @@ working_tree_dirty: true
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
 - [x] ADR vigenti — ADR-0001, ADR-0002, ADR-0003 e ADR-0004
-- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CI_CD.md`; report BL-001 e BL-002
-- [x] codice, dipendenze e test correnti — tre composition root minimi, otto package condivisi incluso `config`, template service-scoped; boundary/task graph e contract baseline verdi
+- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; ADR-0003 e ADR-0004
+- [x] codice, dipendenze e test correnti — web Next deployabile; API senza container e worker senza daemon/start; CI, artifact e config contract BL-003 verdi
 
 ## Piano e scope
 
-- **Obiettivo verificabile:** introdurre un contratto di configurazione tipizzato e service-scoped che validi ogni composition root prima di bind/esecuzione e non esponga valori sensibili in errori, log o artifact.
-- **File/moduli previsti:** nuovo package `config`; composition root API e boundary worker; verifica negativa del web; CLI di check; `.env.example`; boundary/artifact policy; test unit/contract/process smoke; ADR-0002/0004, runbook configurazione, report e documenti living.
-- **Test da scrivere prima/durante:** parse valido/mancante/malformato; profili `local`/`staging`/`production`; chiavi per servizio e secret condizionali; nessun fallback cross-environment; errori redatti; process exit non-zero prima del bind; template e artifact senza secret.
-- **Rischi/failure path:** valore secret riflesso nell'errore; variabile server-only inclusa nel client; default permissivo che maschera un ambiente errato; profilo staging che eredita local/production; package non incluso in boundary/artifact; build Next priva delle variabili non sensibili richieste.
-- **Fuori scope:** provisioning e secret manager concreti, preview/staging reale e smoke remoto (`BL-080`); database/migration (`BL-004`); autenticazione (`BL-005`); queue/provider AI reali; feature flag (`BL-010`); load/chaos/restore (`BL-070`).
+- **Obiettivo verificabile:** rendere disponibile una preview/staging non-production del solo runtime oggi deployabile (`apps/web`), identificata dal commit, riproducibile e protetta da smoke/failure gate; registrare provider, regione, ownership e procedura di rollback senza introdurre credenziali production.
+- **File/moduli previsti:** decisione provider; configurazione ripetibile del progetto web; workflow/policy GitHub a privilegi minimi; script di smoke e metadati deploy; contract/negative test; runbook staging e report BL-080; documenti living e tracciabilità.
+- **Azioni esterne:** ambiente GitHub `staging` protetto creato nel repository pubblico. Collegamento Vercel non-production, installazione GitHub App, primo deploy, smoke e rollback/redeploy restano subordinati alla conferma esplicita di piano/termini/permessi. Sono esclusi production, acquisti/upgrade, database/Redis/provider AI, comunicazioni pubbliche e qualunque secret in chat, log o file versionati.
+- **Test da scrivere prima/durante:** contract del workflow/provisioning per environment, least privilege, concurrency, OIDC breve, commit immutabile e mancata promozione; smoke su origin HTTPS esatta con commit/environment attesi e output redatto; negative path per metadati/config/OIDC mancanti, origin/identity non validi, risposta non-2xx e deploy fallito; prova di rollback o redeploy dell'ultima versione valida.
+- **Rischi/failure path:** token OIDC inviato a origin non trusted; credenziale provider esposta a codice PR non affidabile; deploy non riconducibile al commit/App; regione o root directory in drift; URL payload stale o riutilizzato; errore provider mascherato; smoke che passa sulla pagina sbagliata; rollback che seleziona un artifact diverso; ambiente GitHub dichiarato ma non applicato.
+- **Fuori scope:** deploy di `apps/api` e `apps/worker` finché non hanno packaging/runtime gestito; database, migration e secret applicativi; production release; load/chaos/restore; implementazione UX/UI e browser harness di `BL-079`/`QA-001`.
 
 ## Diario sintetico
 
@@ -2525,19 +2537,22 @@ working_tree_dirty: true
 | 2026-07-13 | 90% | Verificato il commit documentale da worktree detached pulito con lockfile frozen e cache Turbo forzatamente ignorata. | Head `0d3af18`; install exit `0`; full verify exit `0` in `59,6 s`; artifact `3.212` file; audit documentale finale senza P0/P1. | Pubblicare la PR isolata e attendere CI. |
 | 2026-07-13 | 90% | La prima run Ubuntu ha dimostrato che il solo indice Git non enumerava un FIFO untracked; lo scanner ora scopre anche file non ignorati senza seguire symlink/junction e continua a rifiutare file non regolari prima della lettura. | Run `29285442650`: Quality/Tests verdi, Security `11/12`, artifact skipped e merge gate rosso; fix head `f571413`, full verify locale exit `0` in `60,4 s`, artifact `3.191` file. | Ripetere clean verify e CI Ubuntu. |
 | 2026-07-13 | 100% | Verificati fix, checkout pulito e CI; BL-003 chiuso senza introdurre staging o secret reali. | Worktree pulito head `f571413`: install frozen forzata exit `0`, full verify exit `0` in `61,0 s`, artifact `3.554` file; run `29285998646` 5/5 job `SUCCESS`, security `12/12`, artifact Ubuntu `3.233` file; PR #6 `MERGEABLE/CLEAN`. | Eseguire `BL-080`; mantenere `BL-079` in backlog fino allo staging. |
+| 2026-07-14 | 25% | Integrata PR #6 e selezionato `BL-080` da `main`; limitato il primo ambiente al web deployabile e alle sole risorse non-production, senza anticipare container API/worker o secret applicativi. | Base `0065c012`; spec SHA invariato; run CI post-merge `29315052002` completato con 5/5 job `SUCCESS`; test BL-080 `NOT_RUN`. | Verificare provider/account, formalizzare ADR e testare il contratto prima del provisioning. |
+| 2026-07-14 | 50% | Proposta Vercel/`fra1` senza token persistenti; implementati desired state, `/health`, workflow dispatch trusted e smoke redatto. La review ha corretto action Preview `ready`/state `success`, identità Git/runtime/App, origin esatta, OIDC Trusted Sources, permission/step drift, body bounded e sequenza connect; auto-deploy resta disabilitato e la futura attivazione usa `{"*": false, "main": true}`. Creato GitHub environment `staging` limitato a `main`, senza bypass, secret o variabili. | Full `TURBO_FORCE=true pnpm verify` finale PASS in 58,0 s: unit 29+1 skip host; integration 9/9; contract 16/16; security 11+3 skip host; artifact 3.205 file. Targeted deployment 17/17 PASS; `deploy:check:linked` fallisce atteso sui binding provider `null`. | Pubblicare e integrare la foundation disabilitata; dopo autorizzazione collegare il project, riservare Production Branch, configurare protezione/OIDC, abilitare Preview e provare deploy, failure e redeploy. |
+| 2026-07-14 | 50% | Congelata la foundation disabilitata nel commit di implementazione; audit finale senza finding P0/P1/P2. | Commit `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af`; verifica completa e failure path già registrati nel report BL-080. | Pubblicare e integrare la foundation; mantenere chiuso il collegamento provider fino all'autorizzazione esplicita. |
 
 ## Chiusura
 
-- **Commit/PR:** delivery branch `codex/bl-003-runtime-config` da `d530f3a0bab8cc20b8eee9f63ef222e6c4bb19f8`; verified head `f57141341efe5df0707c77ff8ccef4f6fa15f675`; [PR #6](https://github.com/Emacore17/dnd-ai/pull/6) `MERGEABLE/CLEAN`
-- **Comandi eseguiti:** build config/runtime; unit config; process integration; contract config; security env/symlink/non-regular; lint/typecheck/build; boundary/task graph/CI policy; SAST/secret scan/audit; artifact verify
-- **Exit code:** `0` per gate mirati, full verify isolato, install frozen forzato, clean-worktree verify e CI finale; il preflight clean iniziale è documentato con exit `1` perché l'install no-op non aveva materializzato `node_modules`
-- **Report/CI URL o path:** `docs/testing/BL-003_VERIFICATION.md`; [run positiva `29285998646`](https://github.com/Emacore17/dnd-ai/actions/runs/29285998646); [failure path `29285442650`](https://github.com/Emacore17/dnd-ai/actions/runs/29285442650); primo deploy/smoke reale demandato a `BL-080`
+- **Commit/PR:** implementazione `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af`; PR `pending` sul branch `codex/bl-080-staging-foundation`
+- **Comandi eseguiti:** preflight Git/GitHub/Vercel; web lint/typecheck/build; unit/integration/contract/security; full `pnpm verify`; deployment e CI policy; API GitHub environment
+- **Exit code:** `0` per gate locali finali; un primo full verify post-review è scaduto con `124`/processi host residui, poi typecheck isolato e full verify forzato sono passati; `deploy:check:linked` exit `1` atteso per project ID/scope/origin/installation ID non ancora disponibili; Vercel `whoami` exit `1` atteso senza credenziali
+- **Report/CI URL o path:** `docs/testing/BL-080_VERIFICATION.md`; [CI post-merge BL-003 `29315052002`](https://github.com/Emacore17/dnd-ai/actions/runs/29315052002); deploy/smoke URL `—`
 - **Migration head:** `N/A`
-- **Contract/schema/event version:** config contract `runtime-config-v1`; API/event schema `N/A`
+- **Contract/schema/event version:** config `runtime-config-v1`; deploy `staging-foundation-v1`; health `web-health-v1`; API/event schema `N/A`
 - **Prompt/model/eval version:** `N/A`
-- **Documenti aggiornati:** `AGENTS.md`; spec/task/context/traceability/changelog/index/overview; ADR-0002/0004; runbook e report BL-003
-- **Rischi residui/TODO tracciati:** leakage nei messaggi/config artifact; cross-environment fallback; primo secret manager/deploy reale tramite `BL-080`
-- **Task successivo reso READY:** `BL-080`
+- **Documenti aggiornati:** ADR-0005 proposed; runbook preview/staging; report BL-080; task/context/traceability/changelog/index/overview/config/CI in allineamento
+- **Rischi residui/TODO tracciati:** piano/termini e GitHub App Vercel non autorizzati; project ID/scope/origin/installation ID, Standard Protection/Trusted Source remoti, negative deploy, smoke e redeploy reali
+- **Task successivo reso READY:** `—`; `BL-079` resta `BACKLOG` fino alla chiusura di BL-080
 
 
 ## 21. Context Sync Log
@@ -2560,6 +2575,8 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `ae88583` | BL-002 post-merge | `main` e CI | PR #1 unita senza bypass; post-merge run `29257721274` con quality, tests, security, build artifact e merge gate tutti `SUCCESS`. | BL-079, GOV-002 |
 | 2026-07-13 | `1090a2a` | BL-003 | Config/runtime, secret boundary e documentazione | Aggiunti `runtime-config-v1`, startup fail-fast, template/scanner `.env`, TLS/auth managed e ADR-0004; corretto il private-hoist artifact fail-closed; `BL-004` ora dipende dal profilo migration e `BL-080` non dipende semanticamente dalla shell BL-079. Spec SHA `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`. | BL-004, BL-005, BL-008, BL-010, BL-079, BL-080, GATE-M0 |
 | 2026-07-13 | `f571413` | BL-003 closure | Secret scanner, clean verification e CI | Aggiunta discovery ignore-aware dei file speciali untracked dopo il failure path FIFO Ubuntu; clean verify e run `29285998646` chiudono BL-003. BL-080 passa a READY; BL-079 resta BACKLOG. Spec SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`. | BL-004, BL-005, BL-008, BL-010, BL-079, BL-080, GATE-M0 |
+| 2026-07-14 | `0065c01` | BL-080 start | Preview/staging scope e contesto | PR #6 integrata e post-merge CI `29315052002` PASS; selezionato BL-080 sul branch isolato con scope esterno limitato a web e risorse non-production. Nessun secret o provider resource creato. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
+| 2026-07-14 | `50efcbe` | BL-080 foundation | Desired state staging, health e smoke OIDC | Congelata la foundation disabilitata: manifest Vercel branch-closed, GitHub environment `staging`, workflow a sequenza chiusa con OIDC breve e verifiche locali complete. Il task resta al 50% finché binding, deploy, smoke e redeploy remoti non sono provati. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | — | — | — | — | — | — |
 
 
