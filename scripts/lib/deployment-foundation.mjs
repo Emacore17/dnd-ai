@@ -163,6 +163,7 @@ export function validateDeploymentManifest(
     "forkProtection",
     "installationId",
     "integration",
+    "manualDeployment",
     "productionBranch",
     "repository",
     "stagingBranch",
@@ -176,6 +177,7 @@ export function validateDeploymentManifest(
   if (typeof source?.autoDeploy !== "boolean") {
     errors.push("source.autoDeploy must be a boolean");
   }
+  errors.push(...validateManualDeploymentPolicy(manifest));
   expectKeys(
     errors,
     "source.activationDeploymentPolicy",
@@ -362,6 +364,39 @@ export function validateDeploymentManifest(
   expectEqual(errors, "runtimes.web", runtimes?.web, "active");
   expectEqual(errors, "runtimes.api", runtimes?.api, "planned");
   expectEqual(errors, "runtimes.worker", runtimes?.worker, "planned");
+
+  return [...new Set(errors)].sort();
+}
+
+export function validateManualDeploymentPolicy(
+  manifest,
+  { requireEnabled = false } = {},
+) {
+  const errors = [];
+  const source = manifest?.source;
+  const manualDeployment = source?.manualDeployment;
+
+  expectKeys(errors, "source.manualDeployment", manualDeployment, [
+    "enabled",
+    "target",
+  ]);
+  if (typeof manualDeployment?.enabled !== "boolean") {
+    errors.push("source.manualDeployment.enabled must be a boolean");
+  }
+  expectEqual(
+    errors,
+    "source.manualDeployment.target",
+    manualDeployment?.target,
+    "preview",
+  );
+  if (manualDeployment?.enabled === true && source?.autoDeploy !== false) {
+    errors.push(
+      "manual deployment creation requires source.autoDeploy to remain false",
+    );
+  }
+  if (requireEnabled && manualDeployment?.enabled !== true) {
+    errors.push("manual Preview deployment creation is disabled");
+  }
 
   return [...new Set(errors)].sort();
 }

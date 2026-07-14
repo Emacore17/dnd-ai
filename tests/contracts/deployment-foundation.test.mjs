@@ -8,6 +8,7 @@ import { parse } from "yaml";
 
 import {
   validateDeploymentManifest,
+  validateManualDeploymentPolicy,
   validateVercelIgnorePolicy,
   validateVercelProjectConfig,
   validateWebBuildPolicy,
@@ -27,12 +28,14 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
     manifest,
     workflow,
     ciWorkflow,
+    repositoryPackage,
     vercelConfig,
     webPackage,
     turboConfig,
     vercelIgnore,
     gitignore,
     healthRoute,
+    stagingRunbook,
   ] = await Promise.all([
     readJson("infra", "deployment", "vercel-staging.json"),
     readFile(
@@ -43,6 +46,7 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
       path.join(repositoryRoot, ".github", "workflows", "ci.yml"),
       "utf8",
     ).then(parse),
+    readJson("package.json"),
     readJson("apps", "web", "vercel.json"),
     readJson("apps", "web", "package.json"),
     readJson("turbo.json"),
@@ -52,9 +56,18 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
       path.join(repositoryRoot, "apps", "web", "app", "health", "route.ts"),
       "utf8",
     ),
+    readFile(
+      path.join(repositoryRoot, "docs", "operations", "PREVIEW_STAGING.md"),
+      "utf8",
+    ),
   ]);
 
   assert.deepEqual(validateDeploymentManifest(manifest), []);
+  assert.equal(
+    repositoryPackage.scripts?.["deploy:bootstrap:check"],
+    "node scripts/assert-vercel-preview-bootstrap-enabled.mjs",
+    "the reviewed package command must invoke only the fail-closed bootstrap gate",
+  );
   assert.deepEqual(validateVercelProjectConfig(manifest, vercelConfig), []);
   assert.deepEqual(validateWebBuildPolicy(webPackage, turboConfig), []);
   assert.deepEqual(validateVercelIgnorePolicy(vercelIgnore), []);
@@ -64,6 +77,17 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
     main: true,
     "release/production": false,
   });
+  assert.deepEqual(manifest.source.manualDeployment, {
+    enabled: false,
+    target: "preview",
+  });
+  assert.ok(
+    validateManualDeploymentPolicy(manifest, { requireEnabled: true }).some(
+      (error) =>
+        error.includes("manual Preview deployment creation is disabled"),
+    ),
+    "manual deployment creation must stay fail-closed after the provider target mismatch",
+  );
   const renamedProject = globalThis.structuredClone(manifest);
   renamedProject.provider.project.name = "lookalike-web";
   assert.ok(
@@ -130,6 +154,43 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
   assert.match(healthRoute, /VERCEL_GIT_REPO_ID/);
   assert.match(healthRoute, /VERCEL_REGION/);
   assert.doesNotMatch(healthRoute, /NEXT_PUBLIC_/);
+  assert.match(stagingRunbook, /deploy:bootstrap:check/);
+  assert.doesNotMatch(
+    stagingRunbook,
+    /--no-wait|\bvercel(?:@[\w.-]+)?\s+redeploy\b/u,
+    "the closed runbook must not contain an executable deploy or redeploy path",
+  );
+  const deploymentCommandBlocks = [
+    ...stagingRunbook.matchAll(/```powershell\r?\n([\s\S]*?)```/gu),
+  ]
+    .map((match) => match[1])
+    .filter((block) => /\bvercel(?:@[\w.-]+)?\s+deploy\b/u.test(block));
+  assert.ok(
+    deploymentCommandBlocks.length > 0,
+    "the runbook must retain a verifiable Vercel dry-run command",
+  );
+  const deployInvocationCount = deploymentCommandBlocks.reduce(
+    (count, block) =>
+      count + [...block.matchAll(/\bvercel(?:@[\w.-]+)?\s+deploy\b/gu)].length,
+    0,
+  );
+  assert.equal(
+    deployInvocationCount,
+    1,
+    "the closed runbook must expose exactly one Vercel deploy invocation",
+  );
+  for (const block of deploymentCommandBlocks) {
+    assert.match(
+      block,
+      /--dry\b/u,
+      "every executable Vercel deploy block must be dry-run only while the gate is closed",
+    );
+    assert.doesNotMatch(
+      block,
+      /--prod\b|--target(?:=|\s+)production\b/u,
+      "a dry-run block must not encode a Production target",
+    );
+  }
 
   const unguardedWebPackage = globalThis.structuredClone(webPackage);
   unguardedWebPackage.scripts.build = "next build";
@@ -194,6 +255,16 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
       error.includes("vercel config.git.deploymentEnabled"),
     ),
     "the repository config and activation state must not drift",
+  );
+
+  const unsafeManualActivation = globalThis.structuredClone(manifest);
+  unsafeManualActivation.source.manualDeployment.enabled = true;
+  unsafeManualActivation.source.autoDeploy = true;
+  assert.ok(
+    validateDeploymentManifest(unsafeManualActivation).some((error) =>
+      error.includes("source.autoDeploy to remain false"),
+    ),
+    "manual and Git deployment creation must not be enabled together",
   );
 });
 
@@ -381,6 +452,10 @@ test("unsafe deployment workflow and environment drift fail closed", () => {
       integration: "token",
       installationId: null,
       autoDeploy: true,
+      manualDeployment: {
+        enabled: true,
+        target: "production",
+      },
       activationDeploymentPolicy: {
         "**": true,
         main: true,
@@ -420,6 +495,8 @@ test("unsafe deployment workflow and environment drift fail closed", () => {
     "activationDeploymentPolicy.release/production",
     "release/production",
     "autoDeploy requires",
+    "manualDeployment.target",
+    "source.autoDeploy to remain false",
     "different",
     "[]",
     "runtimes.api",

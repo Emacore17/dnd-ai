@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: 13032743552654f9f68d87050eb11cabbdd92325
+last_verified_commit: e5dff7bf371bd91321587fecadbd8f51264cc263
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
@@ -29,6 +29,7 @@ code_refs:
   - apps/web/scripts/vercel-preview-build-policy.mjs
   - apps/web/app/health/route.ts
   - scripts/check-deployment-foundation.mjs
+  - scripts/assert-vercel-preview-bootstrap-enabled.mjs
   - scripts/check-vercel-deploy-dry-run.mjs
   - scripts/lib/deployment-foundation.mjs
   - scripts/lib/vercel-deploy-dry-run.mjs
@@ -43,6 +44,8 @@ test_refs:
   - tests/integration/web-health.test.mjs
   - tests/unit/vercel-preview-build-policy.test.mjs
   - tests/security/vercel-preview-build-guard.test.mjs
+  - tests/unit/vercel-preview-bootstrap-policy.test.mjs
+  - tests/security/vercel-preview-bootstrap-gate.test.mjs
   - tests/unit/vercel-deploy-dry-run.test.mjs
   - tests/security/vercel-deploy-dry-run.test.mjs
 supersedes: null
@@ -121,9 +124,9 @@ Il desired state di `BL-080` seleziona Vercel Environment Variables come confine
 
 `VERCEL_TRUSTED_OIDC_TOKEN` è un valore effimero del solo step GitHub Actions: viene richiesto con `id-token: write`, mascherato immediatamente, passato al verifier tramite environment di processo e inviato esclusivamente nell'header Trusted Sources verso l'origin branch versionata. Non è un environment secret GitHub/Vercel, non viene persistito e non sostituisce le future credenziali applicative service-scoped. Emissione OIDC e Trusted Source sono controlli distinti; entrambi sono configurati e la seconda è stata riletta con audience, repository/repository ID, ref, environment e target `preview` esatti. Standard Protection usa oggi la policy SSO predefinita `all_except_custom_domains`; non creare `VERCEL_AUTOMATION_BYPASS_SECRET`.
 
-La Git Integration effettiva collega esattamente il progetto al repository autorizzato senza access token Vercel nei workflow. L'installation condivisa resta invariata per decisione PO e compensata dai controlli project-level. Production Branch Vercel continua a risultare `release/production`, ma la prima attivazione di `main` ha prodotto un deployment Production poi eliminato. Il contenimento commit `4d3d4ba`/PR #13 e il guard PR #14 sono integrati senza nuovi deployment. Il manifest è unlinked con binding `null`, `source.autoDeploy=false` e `git.deploymentEnabled=false`; lo stato remoto collegato resta distinto dal contratto versionato disabilitato. Project/deployment/run ID vengono redatti nei report; token, cookie e dati account non entrano nel repository.
+La Git Integration effettiva collega esattamente il progetto al repository autorizzato senza access token Vercel nei workflow. L'installation condivisa resta invariata per decisione PO e compensata dai controlli project-level. Production Branch Vercel continua a risultare `release/production`, ma sia la prima attivazione di `main` sia il successivo comando CLI con selector Preview hanno prodotto record Production poi eliminati. Il manifest è unlinked con binding `null`, `source.autoDeploy=false`, `source.manualDeployment.enabled=false` e `git.deploymentEnabled=false`; lo stato remoto collegato resta distinto dal contratto versionato disabilitato. Project/deployment/run ID vengono redatti nei report; token, cookie e dati account non entrano nel repository.
 
-Il flag CLI `--target=preview` è il selector del target per la sola diagnostica one-shot successiva al merge del guard. Il guard è una barriera ulteriore: rifiuta il completamento di una build non Preview, ma non impedisce la creazione iniziale del record provider. Il primo tentativo CLI è terminato sul limite file prima del deployment, con un payload da 773,1 MiB e un file cache `.turbo` da 156,5 MB; il provider è rimasto a zero deployment. La root `.vercelignore` è quindi il solo contratto di esclusione per la sorgente CLI; un `apps/web/.vercelignore` alternativo è vietato. Prima di un deploy reale, il manifest di `vercel@55.0.0 deploy . --target=preview --dry --format=json` deve superare il checker versionato con root/framework/input esatti come file regolari con hash valido, mode supportati, massimo 15.000 entry, 10 MiB complessivi, 5 MiB per file e nessun path generato, privato o non relativo. Il dry-run non carica sorgenti e non crea deployment. Non usare `--cwd apps/web`, `--prebuilt`, archivi, `--prod`, `promote`, `--skip-domain`, custom target o override manuali `VERCEL*`. La diagnostica non abilita Git auto-deploy e non soddisfa da sola il criterio di deploy automatico di `BL-080`.
+Il flag CLI `--target=preview` non è più considerato una mitigazione sufficiente: il retry sul commit `1060228` è stato classificato Production dal provider, osservato `ERROR` e rimosso per ID esatto. La root `.vercelignore` resta il solo contratto di esclusione per la sorgente CLI; un `apps/web/.vercelignore` alternativo è vietato. Il dry-run `vercel@55.0.0 deploy . --target=preview --dry --format=json` può ancora essere validato con root/framework/input esatti, mode supportati, massimo 15.000 entry, 10 MiB complessivi, 5 MiB per file e nessun path generato, privato o non relativo, perché non carica sorgenti né crea deployment. Il runbook approvato invoca `deploy:bootstrap:check`, che nello stato vigente fallisce intenzionalmente con output statico; questo interlock versionato non impedisce a un owner di bypassare il runbook e invocare direttamente la CLI. Non usare `--cwd apps/web`, `--prebuilt`, archivi, `--prod`, `promote`, `redeploy`, `--skip-domain`, custom target o override manuali `VERCEL*`.
 
 Per Next.js, le variabili `NEXT_PUBLIC_*` vengono incorporate nel bundle al build e restano congelate per quella build. Qualunque futura variabile pubblica richiede quindi review esplicita e non può contenere credenziali. Riferimento: [Next.js Environment Variables](https://nextjs.org/docs/app/guides/environment-variables).
 
@@ -138,5 +141,5 @@ Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo 
 - `BL-004`: migration executable e credenziali database locali/reali;
 - `BL-008`: log/redaction/telemetry e nuovi endpoint osservabili;
 - `BL-010`: configurazione dinamica auditata per flag e kill switch;
-- `BL-080`: project/provider web, Production Branch e Trusted Source configurati senza secret applicativi; grant condiviso accettato; contenimento PR #13 e guard PR #14 integrati, manifest fail-closed e gate payload dry-run in corso, mentre Preview/smoke/failure/redeploy restano aperti;
+- `BL-080`: project/provider web, Production Branch e Trusted Source configurati senza secret applicativi; grant condiviso accettato; contenimento, guard e payload integrati, kill switch manuale chiuso dopo il secondo target mismatch, mentre Preview/smoke/failure/redeploy restano aperti;
 - `BL-070`: hardening, load/chaos, backup restore e go/no-go.

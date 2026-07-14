@@ -2,7 +2,7 @@
 status: draft
 owner: engineering-and-operations
 last_reviewed: 2026-07-14
-last_verified_commit: 13032743552654f9f68d87050eb11cabbdd92325
+last_verified_commit: e5dff7bf371bd91321587fecadbd8f51264cc263
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -23,6 +23,7 @@ code_refs:
   - .github/workflows/ci.yml
   - .github/workflows/deployment-smoke.yml
   - scripts/check-deployment-foundation.mjs
+  - scripts/assert-vercel-preview-bootstrap-enabled.mjs
   - scripts/check-vercel-deploy-dry-run.mjs
   - scripts/lib/deployment-foundation.mjs
   - scripts/lib/vercel-deploy-dry-run.mjs
@@ -33,6 +34,8 @@ test_refs:
   - tests/unit/vercel-preview-build-policy.test.mjs
   - tests/contracts/deployment-foundation.test.mjs
   - tests/security/vercel-preview-build-guard.test.mjs
+  - tests/unit/vercel-preview-bootstrap-policy.test.mjs
+  - tests/security/vercel-preview-bootstrap-gate.test.mjs
   - tests/unit/vercel-deploy-dry-run.test.mjs
   - tests/security/vercel-deploy-dry-run.test.mjs
   - tests/integration/web-health.test.mjs
@@ -55,7 +58,7 @@ Questo runbook copre soltanto la Preview/staging non-production di `apps/web`. A
 - Deployment Protection: livello `standard`, policy SSO predefinita `all_except_custom_domains`; il readback project-level è un gate pre-merge, mentre l'accesso OIDC all'origin branch esatta può essere provato soltanto dopo che il primo deploy materializza l'alias.
 - Accesso automation: Trusted Source GitHub Actions configurata e riletta con OIDC breve, repository ID immutabile e claim repository/ref/environment esatti; non esiste alcun bypass secret.
 - Web config: zero variabili applicative e zero secret; system environment variables ed emissione OIDC del progetto abilitate; system metadata Vercel soltanto nel Route Handler `/health`.
-- Fase corrente: repository collegato e Production Branch riletta `release/production`, ma il primo merge con policy solo-`main` ha creato un deployment `production`, poi eliminato. Il contenimento PR #13 e il guard Preview-only PR #14 sono integrati; merge guard `ee5f12916998cce6847fcc509d8f5e1fa05b1b9f`, run PR `29335696502` e post-merge `29335856323` sono 5/5 verdi e il readback conferma zero deployment. Il primo CLI Preview esplicito si è fermato prima del deployment su un payload locale da 773,1 MiB con un file `.turbo` da 156,5 MB, oltre il limite Hobby di 100 MB per file. Il change set corrente introduce la denylist root e il gate dry-run prima di ritentare, senza riattivare Git. Il grant condiviso resta invariato per decisione PO.
+- Fase corrente: la policy payload della PR #15 è integrata nel merge `10602288621210a075414e0fff6c437123022ed6`; CI PR `29339984834` e post-merge `29340214947` sono 5/5 verdi. Il dry-run da `main` pulita è passato con 158 entry e 1.093.594 byte. Il successivo e unico bootstrap CLI con `--target=preview` ha tuttavia creato un secondo record `target=production`; l'inspect lo ha osservato `ERROR`, poi il record è stato rimosso per ID esatto. L'activity log Vercel attribuisce il deploy Production alla CLI sul commit `1060228`; deployment e alias project-scoped per `dnd-ai-web` sono nuovamente zero e l'origin rimossa risponde `404`. `source.manualDeployment.enabled=false` rende fail-closed il percorso operativo approvato, ma non è enforcement provider contro un owner che invochi direttamente la CLI. Il grant condiviso resta invariato per decisione PO.
 
 ## Preflight
 
@@ -91,7 +94,7 @@ La foundation disabilitata della [PR #7](https://github.com/Emacore17/dnd-ai/pul
 | Branch | `release/production` creata da `ef803add249d16ded6f94936c59531047c8a92fa` e protetta dalla Ruleset dedicata `18926413` senza bypass; Ruleset `main` `18877721` invariata; Production Branch Vercel riletta come `release/production` |
 | GitHub App | installation ID condivisa `41079282`; `isAccessRestricted=false`; 8 repository accessibili: rischio residuo esplicitamente accettato, non blocker |
 | Binding | provider remoto collegato; manifest unlinked/fail-closed integrato su `main` |
-| Deploy | storico Production incidentale rimosso; guard PR #14 integrato senza deploy; primo CLI esplicito terminato sul limite file prima del record; corrente zero deployment e zero alias del progetto |
+| Deploy | due record Production rimossi: il secondo è stato creato dalla CLI con selector Preview sul commit `1060228`, osservato `ERROR` e contenuto per ID esatto; readback project-scoped `dnd-ai-web` con zero deployment, zero alias e origin rimossa `404` |
 
 L'impostazione manuale della Production Branch è completata e il readback CLI mostra `release/production`. Non usare un account diverso, non indebolire la protezione e non effettuare push o deploy sulla branch riservata.
 
@@ -112,12 +115,12 @@ L'impostazione manuale della Production Branch è completata e il readback CLI m
    ```
 
    Il readback deve confermare installation ID `41079282`, baseline condivisa di 8 repository e presenza di `Emacore17/dnd-ai`; non richiede né autorizza la restrizione del grant o l'esplorazione degli altri repository. Una variazione del conteggio, del target project/repository o di `isAccessRestricted` è drift da registrare e valutare, non da correggere automaticamente. Non ampliare gli scope del token soltanto per il check.
-6. Abilitare gli eventi `repository_dispatch` e mantenere commenti/bot opzionali. Non creare Deploy Hook o `VERCEL_TOKEN`.
-7. Conservare il contenimento integrato: `git.deploymentEnabled=false`, `source.autoDeploy=false`, binding `null` e `deploy:check`. Il guard Preview-only è integrato con PR #14; rileggere `autoExposeSystemEnvs=true` e confermare nuovamente zero deployment/alias. Il provider build deve eseguire `node scripts/assert-vercel-preview-build.mjs` senza `--allow-local` prima del normale build.
-8. Non ripetere la precedente sequenza di attivazione. Un readback `productionBranch=release/production` e la policy `{"**": false, "main": true, "release/production": false}` non sono prove sufficienti: l'incidente PR #12 ha prodotto `target=production`. Il selector CLI `--target=preview` e il guard sono controlli distinti: il primo richiede Preview, il secondo rifiuta il completamento del build se i metadata effettivi non sono la tripla esatta `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`.
-9. Il primo bootstrap CLI ha dimostrato un failure path precedente alla creazione della delivery: 773,1 MiB di sorgenti e un file `.turbo` da 156,5 MB hanno superato il limite Hobby di 100 MB per file; il comando è terminato sul limite file e la lista deployment è rimasta vuota. Integrare una sola `.vercelignore` nella root con denylist di cache/output locali. Non creare `apps/web/.vercelignore`, non spostare il cwd in `apps/web` e non aggirare i limiti con archivi o `--prebuilt`.
-10. Prima del deploy reale, eseguire dalla root il comando Vercel `55.0.0` con `--target=preview --dry --format=json`, catturare il JSON e passarlo a `scripts/check-vercel-deploy-dry-run.mjs`. Il manifest deve riferire la root esatta e framework `nextjs`, includere gli input richiesti come file regolari con hash valido, usare soltanto mode file o directory zero-byte, restare entro 15.000 entry, 10 MiB complessivi e 5 MiB per file e non contenere discendenti cache, generati, privati o non relativi. Il dry-run non carica sorgenti e non crea deployment; qualunque failure blocca il bootstrap reale.
-11. Il guard non impedisce al provider di creare inizialmente un deployment record con target errato. Dopo il dry-run valido, il bootstrap CLI resta diagnostico one-shot: usare `--no-wait`, inspect immediato e rimozione per deployment ID esatto su mismatch. Non usare `--skip-domain`, che Vercel ammette soltanto insieme a `--prod`; restano vietati anche `--prod`, `--prebuilt`, `promote`, custom target e `--build-env`/`--env` per sovrascrivere i metadata `VERCEL*`. Soltanto una Preview verificata consente di versionare nuovamente i binding e progettare la riattivazione automatica Git in una PR separata.
+6. Confermare che gli eventi `repository_dispatch` restino abilitati e mantenere commenti/bot opzionali. Non creare Deploy Hook o `VERCEL_TOKEN`.
+7. Conservare il contenimento integrato: `git.deploymentEnabled=false`, `source.autoDeploy=false`, binding `null` e `deploy:check`. Il guard Preview-only è integrato con PR #14; rileggere `autoExposeSystemEnvs=true` e confermare nuovamente zero deployment/alias project-scoped per `dnd-ai-web`. Il provider build deve eseguire `node scripts/assert-vercel-preview-build.mjs` senza `--allow-local` prima del normale build.
+8. Non ripetere le precedenti sequenze di attivazione. Production Branch separata, policy Git branch-closed e selector CLI `--target=preview` hanno tutti preceduto almeno un record effettivo `target=production`; nessuno dei tre può essere trattato come prova preventiva del target provider.
+9. La policy payload è integrata e il dry-run bounded è passato. Conservare la sola `.vercelignore` root, non creare `apps/web/.vercelignore`, non cambiare cwd e non aggirare i limiti con archivi o `--prebuilt`.
+10. Il dry-run resta ammesso perché non carica sorgenti e non crea deployment. Deve usare Vercel `55.0.0`, root esatta, `--target=preview --dry --format=json` e `scripts/check-vercel-deploy-dry-run.mjs`; qualunque failure resta bloccante.
+11. Ogni creazione manuale è ora vietata dal desired state `source.manualDeployment.enabled=false` e da `deploy:bootstrap:check`. La riapertura richiede una PR separata che documenti la causa o una mitigazione provider verificabile, ripristini atomicamente i binding provider esatti, mantenga `source.autoDeploy=false`, aggiunga una procedura di cattura/contenimento testata e superi review/CI. Il gate non passa con soli `enabled=true` e binding `null`. Restano vietati `--prod`, `--prebuilt`, `promote`, `redeploy`, `--skip-domain`, custom target e override `--build-env`/`--env` dei metadata `VERCEL*`.
 
 Il setup resta verificabile anche quando un'impostazione Vercel richiede dashboard: desired state, project ID e drift check sono versionati; la sequenza usa CLI pinned e ogni passaggio esterno viene registrato nel report. Gli errori storici dell'automazione UI non giustificano cambio account o riduzione dei controlli; il readback CLI, non l'esito del click, è l'evidenza canonica del Branch Tracking.
 
@@ -144,9 +147,9 @@ gh api repos/Emacore17/dnd-ai/environments/staging/secrets
 gh api repos/Emacore17/dnd-ai/environments/staging/variables
 ```
 
-## Deploy e smoke
+## Deploy e smoke — gate chiuso
 
-Soltanto dopo merge del contratto payload, CI verde, readback `autoExposeSystemEnvs=true` e conferma zero deployment, eseguire dalla root del monorepo il dry-run e poi il bootstrap diagnostico esplicito. Non usare `--cwd apps/web`: la Root Directory `apps/web` è già configurata sul progetto. Non usare `--prebuilt` o un archivio: il guard deve essere eseguito nel build remoto con i metadata di sistema effettivi e il payload sorgente deve restare ispezionabile.
+Il secondo incidente ritira la procedura di deploy reale precedentemente documentata. Il comando pinned ha ricevuto `--target=preview`, ma Vercel ha creato un record Production e la CLI non ha fornito allo script lo stdout singolo atteso prima dell'inspect. Non eseguire un altro deploy reale, anche se dry-run, CI e readback risultano verdi; il solo `vercel deploy --dry` resta ammesso perché non crea record. Sono ammessi soltanto preflight, dry-run, readback e contenimento di un record già identificato.
 
 ```powershell
 git fetch --prune origin
@@ -179,95 +182,14 @@ if ($LASTEXITCODE -ne 0) { throw "preview-bootstrap: Vercel dry-run failed" }
 $dryRun | node scripts/check-vercel-deploy-dry-run.mjs
 if ($LASTEXITCODE -ne 0) { throw "preview-bootstrap: source manifest rejected" }
 
-function Remove-ExactDiagnosticDeployment {
-  param([Parameter(Mandatory = $true)][string]$DeploymentIdentifier)
-
-  corepack pnpm dlx vercel@55.0.0 remove $DeploymentIdentifier `
-    --scope emacore17s-projects `
-    --yes
-  if ($LASTEXITCODE -ne 0) { throw "preview-bootstrap: exact containment removal failed" }
+corepack pnpm@10.34.5 deploy:bootstrap:check
+if ($LASTEXITCODE -eq 0) {
+  throw "preview-bootstrap: gate unexpectedly enabled; use a reviewed future runbook"
 }
-
-$deploymentUrlOutput = @(corepack pnpm dlx vercel@55.0.0 deploy . `
-  --project dnd-ai-web `
-  --scope emacore17s-projects `
-  --target=preview `
-  --no-wait `
-  --yes)
-if ($LASTEXITCODE -ne 0) { throw "preview-bootstrap: Preview deploy command failed" }
-if ($deploymentUrlOutput.Count -ne 1) { throw "preview-bootstrap: expected one deployment URL" }
-
-$deploymentUrl = ([string]$deploymentUrlOutput[0]).Trim()
-if ($deploymentUrl -notmatch '^https://[a-z0-9-]+\.vercel\.app/?$') {
-  throw "preview-bootstrap: invalid deployment URL output"
-}
-$deploymentHost = ([Uri]$deploymentUrl).Host
-
-$inspectJson = corepack pnpm dlx vercel@55.0.0 inspect $deploymentUrl `
-  --scope emacore17s-projects `
-  --format=json
-$inspectExitCode = $LASTEXITCODE
-
-try {
-  $deployment = $inspectJson | ConvertFrom-Json -ErrorAction Stop
-} catch {
-  Remove-ExactDiagnosticDeployment -DeploymentIdentifier $deploymentUrl
-  throw "preview-bootstrap: invalid inspect JSON; exact URL removed"
-}
-
-if (
-  $null -eq $deployment -or
-  $deployment -is [System.Array] -or
-  $deployment.id -isnot [string] -or
-  $deployment.id -notmatch '^dpl_[A-Za-z0-9]+$'
-) {
-  Remove-ExactDiagnosticDeployment -DeploymentIdentifier $deploymentUrl
-  throw "preview-bootstrap: invalid deployment ID; exact URL removed"
-}
-if ($deployment.url -ne $deploymentHost) {
-  Remove-ExactDiagnosticDeployment -DeploymentIdentifier $deploymentUrl
-  throw "preview-bootstrap: deployment identity mismatch; exact URL removed"
-}
-if ($deployment.target -ne 'preview') {
-  Remove-ExactDiagnosticDeployment -DeploymentIdentifier $deployment.id
-  throw "preview-bootstrap: target mismatch; exact ID removed"
-}
-if ($inspectExitCode -ne 0) {
-  Remove-ExactDiagnosticDeployment -DeploymentIdentifier $deployment.id
-  throw "preview-bootstrap: Preview reached a terminal failure; exact ID removed"
-}
-
-$finalInspectJson = corepack pnpm dlx vercel@55.0.0 inspect $deployment.id `
-  --scope emacore17s-projects `
-  --wait `
-  --timeout=3m `
-  --format=json
-$finalInspectExitCode = $LASTEXITCODE
-
-try {
-  $finalDeployment = $finalInspectJson | ConvertFrom-Json -ErrorAction Stop
-} catch {
-  Remove-ExactDiagnosticDeployment -DeploymentIdentifier $deployment.id
-  throw "preview-bootstrap: invalid final inspect JSON; exact ID removed"
-}
-
-if (
-  $null -eq $finalDeployment -or
-  $finalDeployment -is [System.Array] -or
-  $finalDeployment.id -ne $deployment.id -or
-  $finalDeployment.url -ne $deploymentHost -or
-  $finalDeployment.target -ne 'preview'
-) {
-  Remove-ExactDiagnosticDeployment -DeploymentIdentifier $deployment.id
-  throw "preview-bootstrap: final deployment identity mismatch; exact ID removed"
-}
-if ($finalInspectExitCode -ne 0 -or $finalDeployment.readyState -ne 'READY') {
-  Remove-ExactDiagnosticDeployment -DeploymentIdentifier $deployment.id
-  throw "preview-bootstrap: Preview not READY after bounded wait; exact ID removed"
-}
+if ($LASTEXITCODE -ne 1) { throw "preview-bootstrap: invalid gate result" }
 ```
 
-Le tre asserzioni Git, l'assenza di un override annidato e il checker del manifest devono passare prima di caricare sorgenti o creare qualunque record provider. Il comando `--dry` usa lo stesso selector Preview ma non effettua upload né crea deployment; il checker fallisce chiuso su root/framework/input inattesi, budget superati o path non sicuri. Il bootstrap reale usa esattamente la `main` remota integrata, senza file locali o SHA divergenti. Per contratto CLI lo stdout del deploy contiene soltanto l'URL univoco: la procedura lo valida, esegue subito inspect JSON e lega URL, deployment ID e target. JSON, ID o identità non validi rimuovono l'URL originale esatto; soltanto dopo il match URL, target o stato non validi rimuovono il deployment ID esatto. Solo `target=preview` può entrare nell'attesa bounded; il JSON finale deve mantenere ID/URL/target e dichiarare esplicitamente `readyState=READY`, perché il timeout CLI può terminare con exit `0` mentre il deployment è ancora in coda o in build. Ogni altro stato viene rimosso per ID esatto. In caso di contenimento manuale, usare esclusivamente l'ID già verificato:
+L'exit `1` con errore statico `vercel-preview-bootstrap: disabled` è l'esito atteso. Un exit `0` indica soltanto che qualcuno ha modificato il kill switch: non autorizza un deploy usando questa versione del runbook. Se un record compare per un trigger esterno, usare l'URL univoco già osservato per l'inspect, verificare project/ID/URL e rimuovere esclusivamente l'ID esatto:
 
 ```powershell
 corepack pnpm dlx vercel@55.0.0 remove <dpl_exact_id> `
@@ -275,11 +197,11 @@ corepack pnpm dlx vercel@55.0.0 remove <dpl_exact_id> `
   --yes
 ```
 
-Non passare mai il nome progetto a `vercel remove`: quel comando opera su tutti i deployment del progetto. Se il target è Preview, attendere con inspect bounded e raccogliere i build log redatti: la build deve dimostrare il passaggio del guard prima di Next. Questo bootstrap non soddisfa da solo il requisito di deploy automatico e non sostituisce la Git Integration.
+Non passare mai il nome progetto a `vercel remove`: quel comando opera su tutti i deployment del progetto. Dopo il contenimento rileggere deployment/alias project-scoped e verificare l'origin `404`. Il secondo record è stato osservato `ERROR`, ma i build log non sono più disponibili dopo la rimozione: non attribuire l'errore al guard senza evidenza aggiuntiva.
 
 Il workflow `Staging smoke` esiste sulla default branch e reagisce all'action `vercel.deployment.ready` soltanto per project `dnd-ai-web`, ref `main`, environment `preview` e `state.type=success`; il dispatch Production dell'incidente è stato rifiutato. Il verifier fa checkout trusted di `main`, lega l'evento all'installation ID, ignora l'URL del payload e usa esclusivamente l'origin versionata. `/health` confermerà project, deployment, SHA, ref, repository, environment e regione.
 
-Smoke remoto manuale, usando soltanto metadata non sensibili; il token OIDC viene creato e mascherato dal workflow:
+Smoke remoto manuale futuro, da non eseguire finché il gate di creazione è chiuso e non esiste una Preview verificata; il token OIDC verrà creato e mascherato dal workflow:
 
 ```powershell
 gh workflow run deployment-smoke.yml --ref main `
@@ -295,23 +217,18 @@ Il report stampa host e ID redatti. `deploy:smoke` resta disponibile per fixture
 
 - Config/provider metadata o OIDC mancante: nessun fetch; exit `1` redatto.
 - Guard build: local consente soltanto l'assenza completa dei tre metadata; il percorso provider strict rifiuta metadata mancanti/incoerenti e qualunque target diverso dalla tripla Preview esatta con exit `1` statico prima di Next.
-- Payload CLI: se il dry-run fallisce, supera 15.000 entry/10 MiB totali/5 MiB per file, manca un input richiesto o include un path cache/generato/privato/non relativo, non eseguire il deploy reale. Correggere la denylist root e ripetere il dry-run; non aggiungere un ignore annidato, non cambiare cwd e non usare archivi.
+- Payload CLI: se il dry-run fallisce, supera 15.000 entry/10 MiB totali/5 MiB per file, manca un input richiesto o include un path cache/generato/privato/non relativo, correggere la denylist root e ripetere soltanto il dry-run; non aggiungere un ignore annidato, non cambiare cwd e non usare archivi.
+- Kill switch manuale: `source.manualDeployment.enabled=false` e `deploy:bootstrap:check` exit `1` sono obbligatori; qualunque divergenza blocca l'operazione e richiede review.
 - Target diverso da Preview: rimuovere immediatamente la sola delivery per deployment ID esatto, verificare URL/alias `404`, mantenere il job smoke rifiutato e lo stato versionato fail-closed; non passare il project name a `vercel remove` e non tentare promote/redeploy.
 - Prova negativa remota: sospesa finché non esiste prima una Preview riuscita e un percorso che richieda esplicitamente `target=preview` e lo confermi tramite inspect.
 - Smoke fallito: environment deployment GitHub rosso; non rendere `BL-079` READY.
-- Provider indisponibile: retry bounded manuale; non cambiare regione o provider silenziosamente.
-- Redeploy verificabile, da usare soltanto dopo la chiusura del target mismatch:
-
-  ```powershell
-  corepack pnpm dlx vercel@55.0.0 redeploy <deployment-id-or-url> --target preview --scope emacore17s-projects
-  ```
-
-  Il nuovo deployment ID deve riferire lo stesso commit e superare lo stesso smoke.
-- Rollback staging: revert del commit noto tramite PR, merge protetto su `main`, nuova Preview e smoke. Non usare Instant Rollback come prova di Preview.
+- Provider indisponibile o target mismatch: nessun retry manuale; non cambiare regione, provider o target silenziosamente. Aprire una decisione/evidenza provider e mantenere il kill switch chiuso.
+- Redeploy: vietato finché il target mismatch non è risolto e una Preview valida non esiste.
+- Rollback staging futuro: solo dopo riapertura del gate, revert del commit noto tramite PR, merge protetto su `main`, Preview verificata e smoke. Non usare Instant Rollback come prova di Preview.
 
 ## Chiusura operativa
 
-Registrare project/region/environment, SHA, deployment/run ID redatti, URL GitHub Actions, negative deploy e redeploy/revert in `docs/testing/BL-080_VERIFICATION.md`. Nessun valore production, token, cookie o screenshot con dati personali entra nel repository.
+Quando e solo quando una futura PR riaprirà esplicitamente il gate, registrare project/region/environment, SHA, deployment/run ID redatti, URL GitHub Actions, prova negativa e rollback/redeploy in `docs/testing/BL-080_VERIFICATION.md`. Con il gate corrente chiuso non eseguire tali prove remote. Nessun valore production, token, cookie o screenshot con dati personali entra nel repository.
 
 ## Riferimenti ufficiali
 
