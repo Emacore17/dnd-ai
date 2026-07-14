@@ -1,14 +1,16 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-13
-last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
+last_reviewed: 2026-07-14
+last_verified_commit: 6e87034824abeafa76c1da19cba5db81111195f2
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
   - docs/product/UX_UI_DESIGN.md
 related_tasks:
   - GOV-001
+  - GOV-002
+  - GOV-003
   - BL-002
   - BL-003
   - BL-079
@@ -18,10 +20,18 @@ code_refs:
   - packages/config
   - scripts/lib/ci-workflow-policy.mjs
   - scripts/lib/secret-scanner.mjs
+  - package.json
+  - scripts/check-docs.mjs
+  - scripts/lib/document-policy.mjs
+  - scripts/verify-affected.mjs
+  - scripts/lib/affected-verification.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/ci-workflow.test.mjs
   - tests/contracts/runtime-config-contract.test.mjs
+  - tests/contracts/agent-workflow-contract.test.mjs
+  - tests/contracts/document-policy.test.mjs
+  - tests/unit/affected-verification.test.mjs
 supersedes: null
 ---
 
@@ -61,17 +71,20 @@ L’agente non deve limitarsi a produrre codice plausibile. Deve dimostrare che 
 
 ---
 
-## 2. Ordine di lettura obbligatorio
+## 2. Lettura proporzionata e continuità della sessione
 
-All’inizio di ogni sessione o dopo un cambio significativo di branch/commit:
+Una richiesta come “prosegui” sullo stesso task **non** apre una nuova cold start. Ripetere la lettura completa senza drift osservabile è lavoro duplicato.
 
-1. leggere il `AGENTS.md` più vicino alla root e gli eventuali file omonimi applicabili alla cartella da modificare;
-2. leggere `docs/CONTEXT.md`, se presente;
-3. leggere `docs/TASKS.md`, in particolare gerarchia delle fonti, Definition of Done, task attivo, dipendenze e Context Sync Log;
-4. leggere soltanto le sezioni di [`docs/MVP_SPEC.md`](docs/MVP_SPEC.md) indicate dal task, più gli invarianti del §3 di questo file;
-5. leggere gli ADR `accepted`, la documentazione di feature, i contratti e i runbook collegati;
-6. ispezionare codice, migration, schema generati e test esistenti: la documentazione da sola non prova lo stato reale;
-7. verificare branch, working tree, commit e fingerprint della specifica.
+Eseguire la cold start soltanto quando cambia task/branch, il contesto è stato compattato o il commit osservato non coincide più con quello registrato:
+
+1. leggere navigazione, missione e §§2–7 di questo file, poi soltanto la sezione tecnica applicabile;
+2. leggere in `docs/CONTEXT.md` baseline, stato corrente, decisioni/rischi pertinenti e prossima azione, non l’intero storico;
+3. leggere in `docs/TASKS.md` §§1–7, la sola card selezionata e il registro dell’ultima esecuzione; usare ricerca mirata invece di scorrere l’intero backlog;
+4. leggere le sole sezioni di [`docs/MVP_SPEC.md`](docs/MVP_SPEC.md) e i soli ADR/documenti collegati dalla card, più gli invarianti del §4;
+5. ispezionare i moduli e i test realmente toccati;
+6. verificare branch, working tree, commit e fingerprint della specifica.
+
+Durante una continuazione sullo stesso task sono sufficienti `git status`, `git rev-parse HEAD`, il diff corrente e l’ultimo test/finding. Riaprire una fonte soltanto se il relativo file è cambiato o se emerge un conflitto.
 
 Comandi iniziali di riferimento:
 
@@ -181,15 +194,41 @@ Prima di modificare il codice:
 - impostare il task a `IN_PROGRESS`;
 - usare il livello di progresso previsto da `docs/TASKS.md`;
 - registrare data assoluta, branch, commit o SHA dei file se il repository non è versionato;
-- compilare scope, test previsti, failure path e fuori scope nel registro del task attivo.
+- compilare in forma breve corsia, scope, test previsti, failure path e fuori scope nel registro del task attivo.
+
+Questi aggiornamenti restano nel change set funzionale: non creare commit o PR separati per `25%`, `90%`, clean verify o chiusura.
 
 Durante il lavoro, aggiornare lo stato quando cambia realmente. Non usare `90%` per indicare “quasi finito” in modo soggettivo: significa `IN_REVIEW` con test specifici passati e soli gate finali/evidenze ancora aperti.
 
 Un task è `DONE` soltanto con `100%`, test `PASSING`, documentazione aggiornata ed evidenze riproducibili. Un risultato parziale resta `IN_PROGRESS` o `BLOCKED`.
 
+Lo stato di programma è canonico esclusivamente sulla default branch. In una branch di lavoro, `DONE/100%/PASSING` descrive una proposta di snapshot terminale già completa dei gate locali applicabili, non certifica la delivery remota. Lo stato di delivery non viene copiato nei documenti: è derivato come `PENDING` finché il commit non è raggiungibile da `main` e come `VERIFIED` quando il commit è stato integrato da una PR che ha superato il check protetto. Una CI rossa lascia quindi `main` invariata e richiede una correzione funzionale sul candidato, non un commit di solo stato.
+
 ---
 
 ## 6. Ciclo operativo standard
+
+### 6.0 Corsie di rischio e budget operativo
+
+Classificare il task una sola volta nel preflight e registrare la corsia nel task attivo. Se lo scope cambia verso un rischio maggiore, elevare la corsia; non abbassarla per evitare un gate.
+
+| Corsia | Quando usarla | Verifica locale prima della delivery |
+|---|---|---|
+| `FAST` | Solo documentazione, stato task o metadata; nessun runtime, workflow, dipendenza, contratto o configurazione cambia | `pnpm verify:docs`, che include metadata, freshness, riferimenti, link/path, whitespace, task graph e secret scan |
+| `STANDARD` | Codice applicativo reversibile senza auth, dati, migration, CI, dependency graph o side effect esterni | test mirati durante lo sviluppo; `pnpm verify:affected` sul candidato finale per workspace interessati e guardrail root; la CI PR esegue il gate completo |
+| `HIGH_RISK` | Security/auth/privacy, migration/schema, CI/artifact, dipendenze/lockfile, config/segreti, deploy/provider o mutazioni AI | test mirati e failure path; una sola `pnpm verify` sul candidato finale; clean checkout solo se cambiano installazione, packaging, symlink, workflow o comportamento cross-platform |
+
+Budget predefinito, derogabile soltanto con finding concreto:
+
+- preflight e lettura mirata entro 10 minuti; per un provider esterno non ancora provato, feasibility/readback timeboxed a 15 minuti prima del codice;
+- test mirati dopo batch significativi, non dopo ogni modifica; al massimo un full gate locale per candidato finale;
+- una sola review indipendente sul candidato; una seconda passata controlla esclusivamente i P0/P1 corretti, mentre i P2 non bloccanti diventano backlog;
+- discovery, ricerche read-only e suite indipendenti vanno parallelizzate; un solo agente modifica uno stesso file o change set;
+- obiettivo normale: una branch, un change set coerente, una PR e una run verde intenzionale. Un cambio materiale di scope genera un nuovo task/decisione, non una catena di workaround nella stessa card.
+
+Per task stimati `S`, il target operativo dal preflight al candidato è `FAST ≤15 min`, `STANDARD ≤60 min`, `HIGH_RISK ≤120 min`, al netto di attese esterne dichiarate. Il target non autorizza a saltare gate: se viene superato, registrare una sola causa concreta e restringere/spezzare lo scope. Ogni cinque task conclusi, ricavare le metriche da Git/PR/Actions: mediana `≤1` PR per task, `0` commit di sola evidenza, commit docs-only `≤10%` e al massimo una run remota correttiva per finding P0/P1 reale. Se il campione non rispetta i target, aprire un task `GOV`/`BUG` separato.
+
+Nessun commit o PR esclusivamente per registrare un run CI. Il candidato finale contiene già codice, test, stato e documentazione; PR, head e run GitHub sono evidenza esterna riproducibile e non richiedono un commit autoreferenziale.
 
 ### 6.1 Preflight
 
@@ -199,6 +238,8 @@ Un task è `DONE` soltanto con `100%`, test `PASSING`, documentazione aggiornata
 4. ricostruire il comportamento attuale prima di proporre la modifica;
 5. identificare happy path, negative path, retry, concorrenza, timeout, rollback e autorizzazione applicabili;
 6. confermare che il task sia la più piccola vertical slice completa.
+
+Per task dipendenti da capacità di provider o account, provare prima con documentazione ufficiale, readback e dry-run. Se l’assunzione critica non è confermata entro il timebox, applicare un solo contenimento sicuro, marcare il task `BLOCKED` e proseguire un task indipendente; non accumulare tentativi di attivazione e hotfix nello stesso task.
 
 ### 6.2 Test e progettazione
 
@@ -218,26 +259,7 @@ Un task è `DONE` soltanto con `100%`, test `PASSING`, documentazione aggiornata
 
 ### 6.4 Verifica
 
-Eseguire prima i test mirati, poi i gate più ampi applicabili. Il contratto target è definito in `docs/TASKS.md` §5:
-
-```bash
-pnpm lint
-pnpm typecheck
-pnpm build
-pnpm test:unit
-pnpm test:integration
-pnpm test:contract
-pnpm test:e2e
-pnpm test:security
-pnpm test:eval
-pnpm test:bot
-pnpm test:load
-pnpm docs:check
-pnpm db:migrate:test
-pnpm verify
-```
-
-Finché lo scaffold non espone questi script, usare comandi equivalenti espliciti e registrarli nelle evidenze. Non dichiarare un test “passato” se non è stato eseguito sul commit o sul contenuto indicato.
+Eseguire prima i test mirati e poi il solo gate previsto dalla corsia. Il catalogo completo resta in `docs/TASKS.md` §5; non eseguire suite non applicabili per abitudine. Finché lo scaffold non espone uno script necessario, usare un equivalente esplicito e registrarlo. Non dichiarare un test “passato” se non è stato eseguito sul contenuto indicato.
 
 Il check remoto stabile da rendere obbligatorio su `main` è `CI / Merge gate`: usa `always()` e fallisce se quality, test, security o build/artifact non terminano con `success`. La CI su codice PR usa soltanto `pull_request`, permessi minimi e action pin a SHA completo; `pull_request_target` è vietato. La cache ammessa nel workflow base è il solo store pnpm lockfile-scoped, mai `.env`, output, log o artifact.
 
@@ -245,11 +267,12 @@ Il check remoto stabile da rendere obbligatorio su `main` è `CI / Merge gate`: 
 
 1. rileggere il diff completo;
 2. verificare che non contenga segreti, PII, debug, snapshot accidentali o file generati non necessari;
-3. aggiornare `docs/TASKS.md`, `docs/CONTEXT.md`, tracciabilità, changelog, ADR e documenti di feature applicabili;
-4. registrare comandi, exit code, environment, commit, report, migration head e versioni di schema/prompt/eval;
-5. eseguire la verifica da checkout/worktree pulito quando possibile;
-6. passare a `IN_REVIEW`, poi a `DONE` soltanto se la Definition of Done è soddisfatta;
-7. rendere `READY` il successivo task realmente sbloccato.
+3. aggiornare prima del primo push soltanto i documenti semanticamente interessati secondo §12.1;
+4. registrare comandi, exit code, environment e versioni pertinenti; usare `N/A` una volta sola per i campi estranei;
+5. eseguire il gate della corsia e la review prevista, quindi correggere soltanto finding reali;
+6. preparare un unico candidato proposto `DONE/100%/PASSING`; lo stato canonico e quello di delivery restano distinti secondo §5.2;
+7. aprire/aggiornare una sola PR, attendere `CI / Merge gate`, integrare senza bypass e rendere `READY` il successivo task realmente sbloccato;
+8. non creare un commit post-CI o una PR post-merge solo per copiare SHA/run già disponibili su GitHub.
 
 ---
 
@@ -503,12 +526,12 @@ Regole:
 | Documento | Responsabilità | Quando aggiornarlo |
 |---|---|---|
 | `AGENTS.md` | Regole stabili per tutti gli agenti | Workflow, gerarchia delle fonti, standard o guardrail globali |
-| [`docs/TASKS.md`](docs/TASKS.md) | Stato, ordine, dipendenze, test ed evidenze | Ogni change set |
+| [`docs/TASKS.md`](docs/TASKS.md) | Stato, ordine, dipendenze, test ed evidenze | Ogni task; una sola volta nel candidato finale salvo blocker reale |
 | [`docs/MVP_SPEC.md`](docs/MVP_SPEC.md) | Requisiti e architettura normativa | Decisione approvata che modifica il prodotto/sistema |
-| `docs/CONTEXT.md` | Snapshot operativo corrente | Task attivo, milestone, commit, migration/schema/prompt/eval, rischi |
+| `docs/CONTEXT.md` | Snapshot operativo corrente | Cambio reale di task, architettura, versione, comando o rischio; non per ogni run |
 | `docs/README.md` | Indice e stato dei documenti | Nuovo documento, rename, supersede |
-| `docs/TRACEABILITY.md` | Requisito → task → codice → test → evidenza | Ogni task funzionale |
-| `docs/CHANGELOG.md` | Modifiche documentali/contrattuali significative | Decisione o release |
+| `docs/TRACEABILITY.md` | Requisito → task → codice → test → evidenza | Solo quando cambia il mapping funzionale |
+| `docs/CHANGELOG.md` | Modifiche documentali/contrattuali significative | Decisione, contratto pubblico o release; non semplice avanzamento |
 | `docs/adr/` | Decisioni e trade-off | Prima o insieme a decisioni architetturali rilevanti |
 | Documenti feature/ops/test | Comportamento implementato e runbook | Ogni cambio corrispondente |
 
@@ -530,12 +553,12 @@ Un path futuro deve essere scritto come codice e marcato `planned`; non creare l
 
 Prima di chiudere un task:
 
-- aggiornare `last_reviewed` e `last_verified_commit` nei documenti toccati;
+- aggiornare `last_reviewed` e `last_verified_commit` soltanto nei documenti semanticamente toccati; `last_verified_commit` indica una baseline già esistente, mai il commit che dovrebbe contenere sé stesso;
 - verificare che i path esistano o siano `planned`;
 - confrontare schema/API/eventi generati con le sorgenti;
 - aggiornare `docs/CONTEXT.md` e Context Sync Log;
-- eseguire `pnpm docs:check` o validazione equivalente;
-- includere il report nelle evidenze.
+- eseguire `pnpm verify:docs`, che include `pnpm docs:check`, task graph e secret scan;
+- conservare PR, head e run CI come evidenza esterna; un report dedicato è obbligatorio solo per gate, incidenti o task `HIGH_RISK` che richiedono una matrice non rappresentabile nella card.
 
 Se una modifica rende obsoleto `AGENTS.md`, aggiornarlo nello stesso change set. Se cambia soltanto lo stato corrente, aggiornare `CONTEXT`/`TASKS`, non gonfiare questo file.
 
@@ -630,7 +653,7 @@ Ogni task deve permettere a un altro agente di riprodurre la verifica. Le eviden
 ```text
 Task: <ID>
 Stato/progresso: <STATE> / <N%>
-Commit o SHA: <value>
+Commit, PR o head esterno: <value; non creare un commit per autoreferenziarlo>
 Environment: local | CI | staging | production
 Modifiche: <file/moduli e comportamento>
 Comandi eseguiti: <command>
@@ -639,7 +662,7 @@ Report/trace/request ID: <path-or-redacted-id>
 Migration head: <value-or-N/A>
 Contract/schema/event version: <value-or-N/A>
 Prompt/model/eval version: <value-or-N/A>
-Documenti aggiornati: <paths>
+Documenti aggiornati: <solo path semanticamente modificati>
 Rischi residui/TODO tracciati: <IDs-or-none>
 ```
 

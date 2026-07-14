@@ -2,12 +2,14 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+last_verified_commit: 6e87034824abeafa76c1da19cba5db81111195f2
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
 related_tasks:
   - GOV-001
+  - GOV-002
+  - GOV-003
   - BL-001
   - BL-002
   - BL-003
@@ -41,6 +43,11 @@ code_refs:
   - scripts/lib/postgres-test-container.mjs
   - infra/local/postgres.compose.yml
   - turbo.json
+  - package.json
+  - scripts/check-docs.mjs
+  - scripts/lib/document-policy.mjs
+  - scripts/verify-affected.mjs
+  - scripts/lib/affected-verification.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/ci-workflow.test.mjs
@@ -68,6 +75,9 @@ test_refs:
   - tests/contracts/database-migration-contract.test.mjs
   - tests/security/database-migration-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
+  - tests/contracts/agent-workflow-contract.test.mjs
+  - tests/contracts/document-policy.test.mjs
+  - tests/unit/affected-verification.test.mjs
 supersedes: null
 ---
 
@@ -94,6 +104,9 @@ supersedes: null
 
 ### Changed
 
+- `GOV-003` introduce `agent-workflow-v1` e task schema `1.1.0`: corsie `FAST`/`STANDARD`/`HIGH_RISK`, lettura proporzionata, feasibility esterna timeboxed, una review e un candidato/PR; lo stato di programma è canonico solo su `main`, la delivery è derivata dalla PR protetta e sono vietati commit/PR creati soltanto per copiare evidenze CI già presenti su GitHub.
+- L’audit dei task recenti rileva 17 commit documentali su 28 (60,7%); `BL-080` ha richiesto 11 PR, 23 pipeline e 115 job in 8h07m51s, ma le PR sono rimaste aperte soltanto 28m46s: il collo di bottiglia era scope/evidence churn, non il gate remoto.
+- Aggiunti `docs:check`/`verify:docs` con discovery tracked+untracked, metadata/freshness, path/ref/link, whitespace, task graph e secret scan; `verify:affected` distingue root-only da selezione workspace vuota e fallisce chiuso sul drift. `verify` completo resta obbligatorio una sola volta per i candidati `HIGH_RISK`.
 - `BL-004` passa a `DONE/100%/PASSING` dopo la [PR #18](https://github.com/Emacore17/dnd-ai/pull/18) e la CI PR [`29351291907`](https://github.com/Emacore17/dnd-ai/actions/runs/29351291907) 5/5 `SUCCESS`; `BL-008` diventa il solo task `READY`, mentre `BL-079` resta `BACKLOG` finché non esiste lo staging reale di `BL-080`.
 - Il profilo migration ora compone config validata e persistence al repository root; `down` è rifiutato fuori da `local`, senza conferma, verso un database non-loopback/non-disposable o con parametri URL che possono sovrascrivere host/porta.
 - Il job `Tests` e il gate locale eseguono la suite PostgreSQL reale: zero→head, replay, source SHA/checksum drift, file sconosciuti pre-DDL, DDL invalido transazionale, due runner simultanei, vincoli/indice, rollback e re-apply.

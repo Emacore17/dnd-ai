@@ -2,12 +2,14 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+last_verified_commit: 6e87034824abeafa76c1da19cba5db81111195f2
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
 related_tasks:
   - GOV-001
+  - GOV-002
+  - GOV-003
   - BL-001
   - BL-002
   - BL-003
@@ -48,6 +50,11 @@ code_refs:
   - apps/web/app/health/route.ts
   - .github/workflows/deployment-smoke.yml
   - scripts/lib/deployment-smoke.mjs
+  - package.json
+  - scripts/check-docs.mjs
+  - scripts/lib/document-policy.mjs
+  - scripts/verify-affected.mjs
+  - scripts/lib/affected-verification.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -81,6 +88,9 @@ test_refs:
   - tests/database/database-migrations.test.mjs
   - tests/security/database-migration-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
+  - tests/contracts/agent-workflow-contract.test.mjs
+  - tests/contracts/document-policy.test.mjs
+  - tests/unit/affected-verification.test.mjs
 supersedes: null
 ---
 
@@ -92,18 +102,18 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-080` resta bloccato e congelato dopo [PR #17](https://github.com/Emacore17/dnd-ai/pull/17), merge `c72c78bbae06ebb02c7de7d63844f17065354c06` e CI post-merge `29346792492` 5/5; nessun deploy Production è autorizzato. `BL-004` è chiuso sulla [PR #18](https://github.com/Emacore17/dnd-ai/pull/18): implementazione `b1030501fd82d0396add5ff4f9df10fbaa405d0b`, head di evidenza `aaa17b2ada8a7bab73e3877f263b2c46c5865c13` e CI PR `29351291907` 5/5 `SUCCESS`. Nessuna operazione Vercel appartiene al change set. |
+| Delivery/commit | `BL-004` è integrato su `main` nel merge `6e87034824abeafa76c1da19cba5db81111195f2`. `GOV-003` chiude nel change set corrente; head, PR e delivery si derivano da Git e dal merge gate protetto. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Milestone | `M0 — Fondamenta` |
 | Task attivo | `—` |
-| Ultimo task completato | `BL-004 — DONE/100%/PASSING` |
+| Ultimo task completato | `GOV-003 — DONE/100%/PASSING` |
 | Prossimo task READY | `BL-008`; `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset e `BL-003` implementa `runtime-config-v1`. `BL-080` resta bloccato sul percorso Preview-only del provider e il freeze integrato non viene modificato. `BL-004` è `DONE`: `@dnd-ai/persistence` espone manifest/status/runner a input esplicito, il composition root valida `APP_ENV` e `MIGRATION_DATABASE_URL`, PostgreSQL 17 + pgvector 0.8.2 sono pin a digest e CI usa un container reale isolato. Head, contract, source SHA e checksum vengono verificati prima del DDL; file sconosciuti e symlink falliscono chiusi. Non sono state anticipate tabelle di dominio. `BL-008` è il solo task `READY`; `BL-079` resta `BACKLOG` fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003` è `DONE`: l’audit di 17/28 commit documentali e 11 PR/23 pipeline di `BL-080` ha portato a corsie di rischio, lettura proporzionata, timebox provider, delivery derivata e gate rapidi fail-closed. Il candidate è stato chiuso in 43 minuti con un solo full gate e review senza P0/P1. `BL-008` è il prossimo task; `BL-079` resta `BACKLOG` fino a uno staging reale.
 
 ## Decisioni operative vigenti
 
@@ -137,6 +147,7 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web scaffold; API senza route ma con startup validate-before-bind |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
+| Agent workflow policy | `agent-workflow-v1` / task schema `1.1.0` | corsie di rischio, delivery derivata, budget e gate rapidi fail-closed verificati |
 | CI policy | `ci-policy-v1` | contenimento integrato con PR #13; run `29332953627` e `29333105276` 5/5 `SUCCESS`; gate base + `deploy:check`, workflow smoke Production rifiutato e target metadata inclusi nella chiave cache del build |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
 | Release Ruleset | `release-production-required-ci` / `18926413` | branch `release/production` creato da `ef803add249d16ded6f94936c59531047c8a92fa`; active, `CI / Merge gate` strict, `current_user_can_bypass=never`; Ruleset main invariata |
@@ -172,6 +183,8 @@ corepack pnpm@10.34.5 db:migrate:local
 corepack pnpm@10.34.5 db:rollback:local
 corepack pnpm@10.34.5 db:local:down
 corepack pnpm@10.34.5 db:migrate:test
+corepack pnpm@10.34.5 verify:docs
+corepack pnpm@10.34.5 verify:affected
 corepack pnpm@10.34.5 verify
 ```
 
@@ -200,7 +213,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 | ID | Rischio | Mitigazione/owner |
 |---|---|---|
-| CTX-R02 | `tasks:check` copre il grafo, non l’intero `docs:check` | `GOV-002` estende a link/front matter/Mermaid/generated drift |
+| CTX-R02 | `GOV-003` copre localmente front matter, freshness changed-doc, path/ref/link, whitespace e task graph, ma non section refs/Mermaid/generated drift né il gate CI dedicato | `GOV-002` completa gli ultimi controlli senza duplicare la baseline locale |
 | CTX-R03 | App e package di dominio restano scaffold; il web non contiene ancora la foundation UX/UI | task M0 proprietari; non inferire comportamento applicativo dalle entry point minime |
 | CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` resta in M0 e dipende dalla foundation operativa `BL-080` |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive gated o rimosso nel task `BL-079` |
@@ -213,7 +226,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Integrare la [PR #18](https://github.com/Emacore17/dnd-ai/pull/18) esclusivamente tramite il merge gate protetto e verificare la CI post-merge; poi selezionare `BL-008` da `main`. Conservare invariati freeze Vercel e stato `BACKLOG` di `BL-079`.
+Selezionare `BL-008` dopo l’integrazione protetta del candidate `GOV-003`. Conservare invariati freeze Vercel e stato `BACKLOG` di `BL-079`.
 
 ## Rischi chiusi
 
@@ -225,3 +238,4 @@ Integrare la [PR #18](https://github.com/Emacore17/dnd-ai/pull/18) esclusivament
 | CTX-R07 | Blocco del piano privato rimosso dal Product Owner e enforcement attivato | repository pubblico; Ruleset `18877721` active/strict/no bypass; regole applicabili a `main` verificate via API |
 | CTX-R12 | Configurazione runtime BL-003 verificata localmente, da checkout pulito e su Linux | head `f571413`; clean verify `61,0 s`; run `29285998646` 5/5 job PASS; failure path FIFO `29285442650` registrato e corretto |
 | CTX-R15 | Production Branch Vercel separata da `main` prima dell'attivazione | CLI Vercel `55.0.0`: `Production → release/production`; lista deployment vuota; branch GitHub protetta da Ruleset `18926413` |
+| CTX-R19 | Duplicazione del ciclo agente contenuta con corsie, budget, candidato unico, delivery derivata e gate fail-closed | Audit 60,7% docs-only; candidate `GOV-003` in 43 minuti; `verify:docs` 2,65 s, `verify:affected` 6,96 s, full gate unico 72,70 s; review senza P0/P1 |

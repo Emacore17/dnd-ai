@@ -2,11 +2,13 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+last_verified_commit: 6e87034824abeafa76c1da19cba5db81111195f2
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
   - GOV-001
+  - GOV-002
+  - GOV-003
   - BL-001
   - BL-002
   - BL-003
@@ -48,6 +50,11 @@ code_refs:
   - scripts/lib/workspace-boundaries.mjs
   - scripts/lib/task-graph.mjs
   - turbo.json
+  - package.json
+  - scripts/check-docs.mjs
+  - scripts/lib/document-policy.mjs
+  - scripts/verify-affected.mjs
+  - scripts/lib/affected-verification.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -77,6 +84,9 @@ test_refs:
   - tests/database/database-migrations.test.mjs
   - tests/security/database-migration-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
+  - tests/contracts/agent-workflow-contract.test.mjs
+  - tests/contracts/document-policy.test.mjs
+  - tests/unit/affected-verification.test.mjs
 supersedes: null
 ---
 
@@ -88,7 +98,7 @@ supersedes: null
 > **Studio UX/UI:** [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md)
 > **Baseline specifica:** SHA-256 `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c`
 > **Data baseline:** `2026-07-14`
-> **Versione schema task:** `1.0.0`
+> **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
 > **Task attivo:** `—`
@@ -157,26 +167,29 @@ Usare solo `0%`, `25%`, `50%`, `75%`, `90%`, `100%`.
 | `PASSING` | Tutti i test del task e i gate applicabili passano sul commit indicato. |
 | `N/A` | Ammesso solo con motivazione tecnica esplicita; mai per evitare un test richiesto. |
 
+Lo stato di programma è canonico esclusivamente sulla default branch. Il record terminale presente in una branch è una proposta completa dei gate locali, mentre la delivery è derivata da GitHub: `PENDING` finché il commit non è raggiungibile da `main`, `VERIFIED` quando è stato integrato da una PR con `CI / Merge gate` verde. La delivery non viene duplicata nelle card e una CI rossa non richiede un commit documentale di rollback, perché non modifica lo stato canonico su `main`.
+
 ## 3. Procedura obbligatoria per ogni sessione dell’agente
 
-1. Leggere `AGENTS.md` quando esiste; altrimenti eseguire prima `GOV-001`.
+Una continuazione sullo stesso task non ripete la cold start. Su task/branch nuovo o contesto compattato:
+
+1. Leggere `AGENTS.md` §§1–7 e la sola area tecnica applicabile; altrimenti eseguire prima `GOV-001`.
 2. Verificare la baseline:
    ```bash
    sha256sum docs/MVP_SPEC.md
    git rev-parse HEAD
    ```
    Il primo valore deve coincidere con la baseline dichiarata o deve essere registrata una revisione del diff.
-3. Leggere `docs/CONTEXT.md`, questo file, gli ADR vigenti e tutti i riferimenti del task.
-4. Controllare codice, migration head, contratti generati e test esistenti: la documentazione da sola non prova lo stato.
-5. Selezionare il primo task `READY` P0 con dipendenze `DONE`; non iniziare P1/P2/Post-MVP.
-6. Aggiornare subito il task a `IN_PROGRESS`, progresso `25%`, contesto verificato con commit e data assoluta.
-7. Scrivere o aggiornare prima i test che definiscono il comportamento; per bug, aggiungere un test che fallisce senza la correzione.
-8. Implementare il minimo change set completo, senza estendere silenziosamente lo scope.
-9. Eseguire i test specifici, poi i gate globali applicabili.
-10. Aggiornare documentazione, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, ADR/contratti/event catalog e questo task.
-11. Passare a `IN_REVIEW` al `90%`, rieseguire la verifica da checkout/worktree pulito.
-12. Marcare `DONE`/`100%`/`PASSING` solo dopo aver compilato le evidenze.
-13. Rendere `READY` il successivo task le cui dipendenze siano tutte `DONE`.
+3. Leggere soltanto snapshot/risks pertinenti in `CONTEXT`, §§1–7 + card/registro in questo file, sezioni spec e ADR collegati.
+4. Controllare codice, migration head, contratti generati e test realmente toccati.
+5. Selezionare il primo task `READY` P0 o il task prioritario indicato direttamente dal Product Owner.
+6. Registrare nel change set funzionale `IN_PROGRESS/25%`, corsia `FAST|STANDARD|HIGH_RISK`, scope, test e fuori scope; nessun commit di solo stato.
+7. Per provider/capacità esterne non provate, eseguire feasibility/readback entro 15 minuti prima del codice; se non confermate, un solo contenimento e `BLOCKED`.
+8. Implementare il minimo change set completo e usare test mirati per batch significativi.
+9. Eseguire il gate della corsia, una review indipendente e soltanto il follow-up dei P0/P1.
+10. Consolidare codice, test, stato e soli documenti semanticamente interessati in un unico candidato finale.
+11. Marcare il candidato proposto `DONE/100%/PASSING`, aprire una sola PR e integrare soltanto dopo `CI / Merge gate`; stato di programma e delivery seguono la semantica derivata del §2.3.
+12. Non creare commit/PR per copiare SHA o run CI; GitHub è evidenza esterna. Rendere `READY` il successivo task realmente sbloccato.
 
 Quando un requisito non è chiaro ma la specifica contiene un’assunzione esplicita, applicare l’assunzione. Una decisione che cambia scope, costi, sicurezza, legalità o architettura deve produrre ADR e aggiornamento documentale, non una scelta nascosta nel codice.
 
@@ -198,7 +211,7 @@ Un task è `DONE` solo se tutte le seguenti condizioni sono vere:
 - [ ] `docs/TRACEABILITY.md` collega requisito, task, test ed evidenza;
 - [ ] evidenze riportano commit, comandi, exit code, environment e report;
 - [ ] non restano TODO critici non tracciati;
-- [ ] il task è stato verificato da checkout/worktree pulito;
+- [ ] è stato eseguito il gate della corsia; clean checkout è obbligatorio solo per installazione, packaging, symlink, workflow o comportamento cross-platform;
 - [ ] per UI: keyboard flow e accessibility scan senza blocker;
 - [ ] per security/privacy: threat/data review aggiornata;
 - [ ] per AI: eval pertinente e impatto token/costo registrati;
@@ -208,7 +221,7 @@ Un’implementazione “funzionante a mano” ma senza test/evidenze resta `IN_P
 
 ## 5. Contratto dei comandi di qualità
 
-I seguenti comandi costituiscono il target del repository. `BL-002` e `QA-001` devono renderli disponibili; fino ad allora usare equivalenti espliciti e registrarli nelle evidenze.
+I seguenti comandi costituiscono il target del repository. Usare il minimo insieme che copre il rischio; `pnpm verify` non è il comando predefinito per ogni modifica.
 
 ```bash
 pnpm lint
@@ -224,10 +237,12 @@ pnpm test:bot
 pnpm test:load
 pnpm docs:check
 pnpm db:migrate:test
+pnpm verify:docs
+pnpm verify:affected
 pnpm verify
 ```
 
-`pnpm verify` deve aggregare almeno lint, typecheck, unit, contract, test documentali e build. Le suite più costose possono essere CI/nightly, ma il task non è `DONE` finché l’evidenza richiesta non esiste.
+Corsie: `FAST` usa `verify:docs`; `STANDARD` usa test mirati + `verify:affected` per workspace interessati e guardrail root, quindi delega il gate completo alla CI PR; `HIGH_RISK` usa test mirati + una sola `verify` finale. Le suite costose non applicabili non si eseguono per consuetudine.
 
 ## 6. Contesto e documentazione living
 
@@ -236,12 +251,12 @@ pnpm verify
 | Documento | Stato iniziale | Autorità | Aggiornamento obbligatorio |
 |---|---|---|---|
 | `docs/MVP_SPEC.md` | Esistente, canonico | Scope/architettura/requisiti | Quando una decisione approvata cambia la specifica. |
-| `docs/TASKS.md` | Esistente, operativo | Stato/dipendenze/evidenze | In ogni change set. |
+| `docs/TASKS.md` | Esistente, operativo | Stato/dipendenze/evidenze | Una volta nel candidato finale di ogni task, salvo blocker reale. |
 | [`AGENTS.md`](../AGENTS.md) | Esistente, `active` | Entry point agente | Quando cambia workflow, source hierarchy, boundary globali o policy browser/sicurezza. |
-| [`docs/CONTEXT.md`](CONTEXT.md) | Esistente, `active` | Snapshot corrente | Ogni modifica a architettura, comandi, versioni, milestone o rischio. |
+| [`docs/CONTEXT.md`](CONTEXT.md) | Esistente, `active` | Snapshot corrente | Solo cambio reale di task, architettura, comando, versione o rischio. |
 | [`docs/README.md`](README.md) | Esistente, `active` | Indice documentazione | A ogni nuovo documento/supersede. |
-| [`docs/TRACEABILITY.md`](TRACEABILITY.md) | Esistente, `active`; automatizzazione pianificata in `GOV-002` | Requisito→task→test→evidenza | In ogni task funzionale. |
-| [`docs/CHANGELOG.md`](CHANGELOG.md) | Esistente, `active`; consolidamento pianificato in `GOV-002` | Modifiche documentali/contrattuali | A ogni release/decisione significativa. |
+| [`docs/TRACEABILITY.md`](TRACEABILITY.md) | Esistente, `active`; automatizzazione pianificata in `GOV-002` | Requisito→task→test→evidenza | Solo se cambia il mapping funzionale. |
+| [`docs/CHANGELOG.md`](CHANGELOG.md) | Esistente, `active`; consolidamento pianificato in `GOV-002` | Modifiche documentali/contrattuali | Decisione, contratto pubblico o release; non semplice avanzamento. |
 | [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md) | Esistente, `active` | Contratto UX/UI mobile-first e motion | Ogni cambio a gerarchia, component stack, token, responsive o motion. |
 | [`docs/adr/0001-mobile-first-conversational-ui.md`](adr/0001-mobile-first-conversational-ui.md) | Esistente, `accepted` | Decisione UI mobile-first e stack visuale | Ogni revisione della decisione o dei guardrail. |
 | [`docs/adr/0003-ci-trust-boundary-and-artifacts.md`](adr/0003-ci-trust-boundary-and-artifacts.md) | Esistente, `accepted` | Trust boundary, gate e artifact CI | Ogni modifica a trigger, permessi, cache, scan o artifact. |
@@ -294,9 +309,11 @@ Prima di iniziare e chiudere un task:
 - confrontare SHA della specifica e commit del repository;
 - verificare che i path citati esistano o siano marcati `planned`;
 - controllare che schema/API/eventi generati non abbiano diff;
-- aggiornare `last_verified_commit` nei documenti toccati;
+- aggiornare `last_verified_commit` solo nei documenti semanticamente toccati, usando una baseline già esistente e mai un commit autoreferenziale;
 - registrare in `docs/CONTEXT.md`: milestone, task attivo, migration head, contract version, prompt/eval version, feature flag/kill switch e rischi;
-- eseguire `pnpm docs:check`.
+- eseguire `pnpm verify:docs`, che include `pnpm docs:check`, task graph e secret scan.
+
+PR/head/run CI restano evidenze esterne: non generano un commit documentale dedicato. Report separati sono richiesti soltanto per gate, incidenti o task `HIGH_RISK` con una matrice che non entra nella card.
 
 Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modificate tornano con contesto `NO` finché non revisionati.
 
@@ -317,7 +334,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | 24% | 17 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta | `IN_PROGRESS` | 36% | 18 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -629,7 +646,28 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Verificare almeno un mapping requisito→task→test→evidenza in `docs/TRACEABILITY.md`.
 - **Documentazione e contesto:** `docs/TRACEABILITY.md`, `docs/CHANGELOG.md`, `docs/adr/README.md`, `docs/README.md`, CI docs
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+- **Note, rischi o bloccanti:** `GOV-003` fornisce già il sottoinsieme locale fail-closed per front matter, freshness dei documenti modificati, path/ref/link, whitespace e task graph. Restano in questa card section refs, Mermaid, drift dei contratti generati e integrazione CI completa.
+
+### GOV-003 — Ottimizzazione del ciclo di sviluppo degli agenti
+
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — base `6e87034824abeafa76c1da19cba5db81111195f2`; spec SHA-256 `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c`; data: `2026-07-14`
+- **Priorità / stima:** `P0` / `S`
+- **Dipendenze:** GOV-001, BL-002
+- **Riferimenti obbligatori:** `AGENTS.md` §§2, 5, 6, 12, 16, 18; `docs/TASKS.md` §§3–6; `docs/CONTEXT.md`; metriche Git/PR/Actions dei task BL-003, BL-080 e BL-004
+- **Obiettivo:** Ridurre drasticamente il tempo ciclo dell’agente eliminando letture, documentazione, review e gate duplicati senza indebolire sicurezza o qualità.
+- **Deliverable:** cold-start proporzionata; corsie `FAST`/`STANDARD`/`HIGH_RISK`; timebox per feasibility esterna; una sola review e un solo candidato/PR; divieto di evidence-only commit; `docs:check`/`verify:docs` reali e selezione comportamentale `verify:affected`; baseline e target misurabili.
+- **Criterio di accettazione:** Un task standard arriva al merge gate con documentazione già consolidata e senza commit di chiusura post-CI; un task docs-only non richiede il full gate locale; un task high-risk conserva failure path e full gate finale; una continuazione non ripete la cold start. Sul campione dei cinque task successivi: mediana `≤1` PR/task, `0` commit di sola evidenza, commit docs-only `≤10%`, al massimo una run correttiva per P0/P1 e target candidato dei task `S` pari a `15/60/120` minuti per `FAST/STANDARD/HIGH_RISK`, escluse attese esterne dichiarate.
+- **Test obbligatori prima di `DONE`:**
+  - [x] Contract test di corsie, budget e comandi rapidi.
+  - [x] `verify:docs` e `verify:affected` eseguiti con exit `0` sul change set.
+  - [x] Full `verify` unico sul candidato finale perché il task modifica il workflow globale.
+  - [x] Audit indipendente senza P0/P1 e task graph coerente.
+- **Documentazione e contesto:** `AGENTS.md`; `docs/TASKS.md`; `docs/CONTEXT.md`; `docs/CHANGELOG.md`
+- **Evidenze di chiusura:** audit baseline: BL-003/BL-080/BL-004 hanno 17 commit documentali su 28 (60,7%); BL-080 ha usato 11 PR, 23 CI e 115 job in 8h07m51s, con sole 28m46s di PR aperte. Candidate in 43 minuti; `verify:docs` exit `0` in 2,65 s; `verify:affected` finale exit `0` in 6,96 s; unico `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 72,70 s: lint/build 11/11, typecheck 12/12, unit 55 pass/1 skip host, integration 9/9, database 13/13, contract 26/26, security 23 pass/3 skip host, policy/scan/docs e artifact 3.238 file `PASS`. Re-review finale: nessun P0/P1.
+- **Note, rischi o bloccanti:** Nessun blocco residuo. CI completa e Ruleset restano invariate; `HIGH_RISK` resta fail-closed. I target saranno ricalcolati da Git/PR/Actions dopo i prossimi cinque task; un mancato target genera un task `GOV`/`BUG`, non un bypass. Nessuna operazione Vercel è stata eseguita.
 
 ### QA-001 — Fondazione comune per test, fixture e comandi di qualità
 
@@ -2507,21 +2545,23 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: —
-last_completed_task: BL-004
+active_task: null
+last_completed_task: GOV-003
 next_ready_task: BL-008
 status: DONE
 progress: 100
-started_at: 2026-07-14
+started_at: 2026-07-14T19:12:45+02:00
+candidate_at: 2026-07-14T19:55:45+02:00
+cycle_target_minutes: 120
+cycle_actual_minutes: 43
 updated_at: 2026-07-14
 agent: Codex development agent
-git_branch: codex/bl-004-persistence-baseline
-base_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
-current_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+git_branch: codex/gov-003-agent-throughput
+base_commit: 6e87034824abeafa76c1da19cba5db81111195f2
+candidate_head: derive-from-git
 spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
 context_verified: true
 test_status: PASSING
-working_tree_dirty: false
 ```
 
 ## Contesto letto
@@ -2530,23 +2570,26 @@ working_tree_dirty: false
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] ADR vigenti — ADR-0001, ADR-0002, ADR-0003, ADR-0004 e ADR-0006 accepted; ADR-0005 proposed
-- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/DATABASE_MIGRATIONS.md`; ADR-0002, ADR-0003, ADR-0004 e ADR-0006
-- [x] codice, dipendenze e test correnti — runner/manifest/migration `@dnd-ai/persistence`, composition root, policy rollback, Compose/harness Docker, workflow CI e suite PostgreSQL reale
+- [x] riferimenti GOV-003 — workflow/DoD/documentazione in `AGENTS.md` e `docs/TASKS.md`; snapshot `docs/CONTEXT.md`
+- [x] evidenze correnti — cronologia Git, PR #6–#18 e run GitHub Actions dei task BL-003, BL-080 e BL-004
+- [x] codice/test interessati — `package.json`, task graph, secret scanner e nuovo contract test del workflow agente
 
 ## Piano e scope
 
-- **Obiettivo verificabile:** fornire migration PostgreSQL riproducibili e fail-closed, da database vuoto o versione precedente all'head, con replay idempotente e rollback operativo esplicito.
-- **File/moduli previsti:** runner e migration in `packages/persistence`; composition root in `scripts/`; harness PostgreSQL reale e test unit/integration/contract/security; script root e CI; ADR, migration notes, report BL-004 e living docs.
-- **Azioni esterne:** nessuna risorsa cloud o credenziale reale. I test usano esclusivamente un container PostgreSQL effimero locale/CI con credenziali sintetiche e cleanup bounded; il freeze Vercel resta invariato.
-- **Test implementati:** discovery/manifest/source checksum/head e rollback policy; config composition redatta; database vuoto→head, replay no-op, transazione DDL fallita, due runner simultanei, lock occupato, rollback local e ripristino; estensione, vincoli e indice su PostgreSQL reale; contract CLI/script/CI. `previous→head` è non applicabile alla prima migration e sarà obbligatorio da `000002`.
-- **Rischi/failure path:** URL mancante o invalido, credenziale esposta negli errori, database irraggiungibile, migration alterata o fuori ordine, schema parziale/head sconosciuto, doppia applicazione concorrente e comando distruttivo in staging/production. Tutti devono fallire senza registrare uno stato applicato falso.
-- **Fuori scope:** schema completo del §19, tabelle e repository di dominio, RLS, backfill applicativi, restore/chaos, provisioning staging/production, UI e harness container generale di `QA-001`.
+- **Corsia:** `HIGH_RISK` perché cambia il workflow globale; un solo full gate sul candidato finale.
+- **Obiettivo verificabile:** ridurre commit/PR/gate duplicati mantenendo invariati Ruleset, CI completa e gate tecnici high-risk.
+- **File/moduli previsti:** `AGENTS.md`, `docs/TASKS.md`, `docs/CONTEXT.md`, `docs/CHANGELOG.md`, `package.json`, contract test workflow.
+- **Azioni esterne:** sole letture GitHub di PR/run per le metriche; nessuna operazione Vercel o modifica provider.
+- **Test previsti:** contract mirato, `verify:docs`, `verify:affected`, task/secret policy, una sola `verify` finale e review indipendente.
+- **Rischi/failure path:** fast lane troppo permissiva, stato task falso prima della CI, evidence drift e riduzione involontaria dei gate. Mitigazione: CI/Ruleset invariati, high-risk fail-closed e `main` aggiornato solo dopo merge gate.
+- **Fuori scope:** path-aware CI e modifica dei job remoti; rivalutare soltanto se, dopo cinque task, i docs-only push restano oltre il 10%.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-14 19:55 +02:00 | 100% | Chiuso il candidato in 43 minuti con delivery derivata, una sola review più re-check dei P1 e nessun commit di sola evidenza. | Unico full `verify` exit `0` in 72,70 s; 11 lint/build, 12 typecheck, 55/1 unit, 9 integration, 13 database, 26 contract, 23/3 security; `verify:affected` finale 6,96 s; nessun P0/P1. | Pubblicare una sola PR protetta; dopo il merge selezionare `BL-008`. |
+| 2026-07-14 19:46 +02:00 | 90% | Auditato il ciclo agente e implementati corsie/budget, stato delivery derivato, docs gate tracked+untracked e selezione workspace fail-closed. La prima review ha rilevato tre P1 reali, corretti senza indebolire CI/Ruleset. | Baseline: 17/28 commit docs; BL-080 11 PR/23 pipeline/115 job. Targeted 11/11 `PASS`; `verify:docs` exit `0` in 2,65 s; `verify:affected` exit `0` in 7,22 s. | Chiudere la re-review dei P1 ed eseguire l’unico full `verify` finale. |
 | 2026-07-14 | 90% | Implementata la baseline PostgreSQL 17/pgvector 0.8.2 pin a digest con runner `node-pg-migrate`, contract/checksum, composition root config, rollback local-only, harness Docker e CI. Le review hanno chiuso override di routing URL, file migration sconosciuti/symlink, cleanup e concorrenza reale. | Mirati 13/13 + 13/13 `PASS`; full `verify` working tree exit `0` in 73,4 s senza cache: unit 47/1 skip, integration 9, DB 13, contract 22, security 23/3 skip, artifact 3.238; audit high pulito. | Congelare e verificare il commit pulito, poi pubblicare la PR protetta. |
 | 2026-07-14 | 90% | Congelato e verificato il commit di implementazione da worktree pulito con lockfile frozen e cache Turbo forzatamente ignorata. | Commit `b1030501fd82d0396add5ff4f9df10fbaa405d0b`; install frozen exit `0` in 0,6 s; full `verify` exit `0` in 66,2 s, stessi conteggi del gate working tree e artifact 3.238 file. | Pubblicare PR, attendere CI remota e chiudere task/evidenze senza bypass. |
 | 2026-07-14 | 100% | Pubblicata la PR protetta e acquisito il merge gate remoto senza bypass; `BL-004` chiuso e `BL-008` reso unico task `READY`. | [PR #18](https://github.com/Emacore17/dnd-ai/pull/18), head `aaa17b2ada8a7bab73e3877f263b2c46c5865c13`, [run `29351291907`](https://github.com/Emacore17/dnd-ai/actions/runs/29351291907) 5/5 job `SUCCESS`, inclusi suite PostgreSQL reale e `CI / Merge gate`. | Integrare la PR tramite Ruleset, verificare CI post-merge e selezionare `BL-008` da `main`. |
@@ -2594,15 +2637,15 @@ working_tree_dirty: false
 
 ## Chiusura
 
-- **Commit/PR:** implementazione `b1030501fd82d0396add5ff4f9df10fbaa405d0b`; evidenza `aaa17b2ada8a7bab73e3877f263b2c46c5865c13`; [PR #18](https://github.com/Emacore17/dnd-ai/pull/18); branch `codex/bl-004-persistence-baseline`
-- **Comandi eseguiti:** preflight Git/spec; install pnpm; lint/typecheck/build persistence; unit/contract/security migration; `db:migrate:test`; task/CI policy; full `verify` senza cache; dependency audit high; install frozen e clean verify sul commit `b1030501fd82d0396add5ff4f9df10fbaa405d0b`; CI PR protetta.
-- **Exit code:** mirati, full gate, audit, install frozen e clean verify `0`; [run CI `29351291907`](https://github.com/Emacore17/dnd-ai/actions/runs/29351291907) 5/5 job `SUCCESS`; red test iniziale su discovery `.d.ts.map` e regressioni di review corretti.
-- **Report/CI URL o path:** `docs/testing/BL-004_VERIFICATION.md`; [PR #18](https://github.com/Emacore17/dnd-ai/pull/18); [CI `29351291907`](https://github.com/Emacore17/dnd-ai/actions/runs/29351291907).
-- **Migration head:** `000001_postgresql_foundation`
-- **Contract/schema/event version:** database `database-baseline-v1`; runtime config `runtime-config-v1`; API/event schema `N/A`
-- **Prompt/model/eval version:** `N/A`
-- **Documenti aggiornati:** ADR-0006, runbook database, report BL-004 e living docs; chiusura verificata.
-- **Rischi residui/TODO tracciati:** Docker è necessario per la suite; il primo upgrade non-vuoto sarà verificabile solo con `000002`; provider DB gestito e credenziali reali restano fuori scope. Freeze Vercel invariato.
+- **Commit/PR:** candidate head derivato da Git; branch `codex/gov-003-agent-throughput`; delivery derivata dalla PR protetta, non duplicata nel documento.
+- **Comandi eseguiti:** audit Git/PR/Actions; contract workflow/document/affected; `verify:docs`; `verify:affected`; un solo full `TURBO_FORCE=true corepack pnpm@10.34.5 verify`; review indipendente e re-check dei soli P1.
+- **Exit code:** tutti i gate finali `0`; full gate 72,70 s; candidate creato in 43 minuti.
+- **Report/CI URL o path:** card `GOV-003`; Git head/PR/run restano evidenza esterna.
+- **Migration head:** `N/A` — nessun cambio database.
+- **Contract/schema/event version:** workflow agente e document policy locali; API/event schema `N/A`.
+- **Prompt/model/eval version:** `N/A`.
+- **Documenti aggiornati:** `AGENTS.md`, `docs/TASKS.md`, `docs/CONTEXT.md`, `docs/CHANGELOG.md`.
+- **Rischi residui/TODO tracciati:** misurare i prossimi cinque task; `GOV-002` completa section refs/Mermaid/generated drift/CI. Freeze Vercel invariato.
 - **Task successivo reso READY:** `BL-008`. `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale.
 
 
@@ -2644,7 +2687,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-14 | `b84f4eb` | BL-080 provider evidence clean verification | Source audit e allineamento living docs | Distinti fatti client e ipotesi server, corrette dipendenze/stati e verificato il commit pulito con full gate in 58,1 s; nessuna azione Vercel o GitHub Deployment eseguita. | BL-004, BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | 2026-07-14 | `b103050` | BL-004 | PostgreSQL migration foundation | Aggiunti head `000001_postgresql_foundation`, contract `database-baseline-v1`, runner/manifest fail-closed, pgvector pin a digest, rollback local-only, harness/CI e ADR-0006. Mirati, full gate, audit e clean verify PASS; PR/CI in chiusura. | BL-005, BL-007, BL-015, BL-036, BL-008, QA-001, DOC-ARCH-001 |
 | 2026-07-14 | `aaa17b2` | BL-004 closure | PR protetta, CI e stato backlog | [PR #18](https://github.com/Emacore17/dnd-ai/pull/18) e run `29351291907` 5/5 chiudono la baseline PostgreSQL; `BL-008` passa `READY`, `BL-079` resta `BACKLOG` e il freeze Vercel non cambia. | BL-005, BL-007, BL-008, BL-015, BL-036, BL-079, QA-001, DOC-ARCH-001 |
-| — | — | — | — | — | — |
+| 2026-07-14 | candidate head derivato da Git | GOV-003 throughput | Workflow agente e gate locali | Baseline 60,7% docs-only; introdotti corsie/budget, delivery derivata, docs check tracked+untracked e affected selection fail-closed. Candidate in 43 minuti, full gate unico e review senza P0/P1; CI/Ruleset/Vercel invariati. | BL-008, GOV-002 |
 
 
 ## 22. Checklist di fine sessione dell’agente
@@ -2662,7 +2705,7 @@ Prima di terminare una sessione di coding:
 - [ ] il successivo task `READY` è corretto in base alle dipendenze;
 - [ ] non sono stati avviati task P1/P2/Post-MVP senza autorizzazione;
 - [ ] secret, PII, prompt sensibili e output non redatti non sono stati committati;
-- [ ] le evidenze riportano data assoluta, commit ed environment.
+- [ ] le evidenze riportano data assoluta, head Git/PR esterni ed environment senza commit autoreferenziali.
 
 ---
 
