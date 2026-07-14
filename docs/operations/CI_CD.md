@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: 1766406b9bd701a9880705b371fdc0b05a73abe1
+last_verified_commit: ef803add249d16ded6f94936c59531047c8a92fa
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -51,11 +51,13 @@ supersedes: null
 
 Trigger: PR, push su `main`, merge queue e dispatch manuale. Il workflow non usa path filter, così il check richiesto non resta pending su cambi non selezionati.
 
-## Ruleset obbligatoria su `main`
+## Ruleset obbligatorie su `main` e `release/production`
 
-La Ruleset GitHub deve essere `active`, target `~DEFAULT_BRANCH`, richiedere una pull request e il solo status check `CI / Merge gate`, senza bypass ordinario. Il check va selezionato dopo almeno una run completata; GitHub identifica il contesto con il nome del job, non con il nome del workflow.
+Le due Ruleset GitHub devono essere `active`, richiedere una pull request e il solo status check `CI / Merge gate`, senza bypass ordinario. `main-required-ci` usa il target `~DEFAULT_BRANCH`; `release-production-required-ci` usa l'inclusione esatta `refs/heads/release/production`. Il check va selezionato dopo almeno una run completata; GitHub identifica il contesto con il nome del job, non con il nome del workflow.
 
 Stato corrente: la Ruleset [`main-required-ci` (`18877721`)](https://github.com/Emacore17/dnd-ai/rules/18877721) è `active` sul repository pubblico, target `~DEFAULT_BRANCH`, senza bypass. Richiede una pull request e il solo check `CI / Merge gate` in modalità strict, vincolato a GitHub Actions con `integration_id=15368`. L'API delle regole applicabili a `main` conferma la stessa configurazione.
+
+La branch riservata `release/production` è stata creata da `ef803add249d16ded6f94936c59531047c8a92fa` e protetta dalla Ruleset dedicata [`18926413`](https://github.com/Emacore17/dnd-ai/rules/18926413), attiva e senza bypass. La creazione non ha modificato la Ruleset `main-required-ci` `18877721`, l'environment GitHub `staging` limitato a `main` o la lista deployment Vercel, ancora vuota.
 
 Verifica operativa:
 
@@ -85,7 +87,7 @@ Il job `Staging / Smoke`:
 
 Il progetto applica Standard Protection con policy SSO predefinita `all_except_custom_domains`; la Trusted Source limita già l'OIDC a issuer GitHub, audience account, repository + repository ID immutabile/ref/environment esatti e target `preview`. Il workflow non pubblica un URL non validato nell'environment GitHub. Non introdurre `VERCEL_TOKEN`, automation bypass secret, Deploy Hook, `pull_request_target`, `vercel deploy --prod` o checkout del commit indicato dall'evento. La Git Integration ricostruisce il commit anziché caricare `artifacts/bl002`; l'identità immutabile del deploy è quindi project ID + deployment ID + SHA + health contract.
 
-Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Project ID `prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`, scope `emacore17s-projects` e GitHub App installation ID `41079282` sono noti esternamente; l'origin resta mancante e i binding versionati non sono ancora completi. `pnpm deploy:check` passa sul piano, mentre `pnpm deploy:check:linked` fallisce chiuso. L'attivazione resta bloccata perché la Production Branch provider è ancora `main` e il grant App vede 8 repository (`isAccessRestricted=false`). La policy finale deve usare la deny-all ricorsiva `{"**": false, "main": true, "release/production": false}`: `*` non copre in modo affidabile branch con `/`. Il contract test deve imporla nella config Vercel e richiedere automaticamente `deploy:check:linked` nel Quality gate quando `source.autoDeploy` diventa `true`.
+Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Project ID `prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`, scope `emacore17s-projects` e GitHub App installation ID `41079282` sono noti esternamente; l'alias branch deterministico non è ancora registrato/confermato e i binding versionati non sono completi. `pnpm deploy:check` passa sul piano, mentre `pnpm deploy:check:linked` fallisce chiuso. L'attivazione resta bloccata perché la Production Branch provider è ancora `main`, non per il grant App condiviso: il Product Owner ha deciso di mantenere `isAccessRestricted=false` con 8 repository per evitare perdita di accesso ad altri progetti e ne ha accettato il rischio residuo. I controlli compensativi sono link project/repository/repository ID esatti, Trusted Source OIDC exact-match, Fork/Standard Protection, environment `staging` solo `main`, smoke fail-closed e readback drift. La policy finale deve usare la deny-all ricorsiva `{"**": false, "main": true, "release/production": false}`: `*` non copre in modo affidabile branch con `/`. Il contract test deve imporla nella config Vercel e richiedere automaticamente `deploy:check:linked` nel Quality gate quando `source.autoDeploy` diventa `true`.
 
 ## Cache e artifact
 
