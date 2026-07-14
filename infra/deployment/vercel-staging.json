@@ -5,9 +5,9 @@
     "cliVersion": "55.0.0",
     "project": {
       "name": "dnd-ai-web",
-      "id": null,
-      "scopeSlug": null,
-      "stagingOrigin": null,
+      "id": "prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ",
+      "scopeSlug": "emacore17s-projects",
+      "stagingOrigin": "https://dnd-ai-web-git-main-emacore17s-projects.vercel.app",
       "rootDirectory": "apps/web",
       "framework": "nextjs"
     },
@@ -16,8 +16,8 @@
   "source": {
     "repository": "Emacore17/dnd-ai",
     "integration": "vercel-github-app",
-    "installationId": null,
-    "autoDeploy": false,
+    "installationId": 41079282,
+    "autoDeploy": true,
     "activationDeploymentPolicy": {
       "**": false,
       "main": true,

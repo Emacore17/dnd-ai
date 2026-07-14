@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: ef803add249d16ded6f94936c59531047c8a92fa
+last_verified_commit: 70f726d5a7fd9feed1a338d4c24bbedecc0bbe0b
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -19,6 +19,7 @@ code_refs:
   - scripts/assert-ci-results.mjs
   - scripts/create-build-artifact.mjs
   - .github/workflows/deployment-smoke.yml
+  - apps/web/vercel.json
   - infra/deployment/vercel-staging.json
   - scripts/check-deployment-foundation.mjs
   - scripts/lib/deployment-foundation.mjs
@@ -73,7 +74,7 @@ Non disabilitare il gate per risolvere una coda. Se un job viene cancellato o sa
 
 ## Preview/staging web
 
-`BL-080` aggiunge un workflow separato `Staging smoke`; non modifica il trust boundary della PR e non distribuisce da GitHub Actions. Il progetto Vercel `dnd-ai-web` è collegato a `Emacore17/dnd-ai`, ma auto-deploy resta disabilitato e non esiste alcun deployment. Dopo l'attivazione, la Git Integration sarà la sorgente del deploy automatico e invierà `repository_dispatch` con action `vercel.deployment.ready` quando una Preview è costruita ma non promossa. Il payload valido porta `state.type=success`: action e state appartengono a due contratti distinti e sono entrambi verificati.
+`BL-080` aggiunge un workflow separato `Staging smoke`; non modifica il trust boundary della PR e non distribuisce da GitHub Actions. Il progetto Vercel `dnd-ai-web` è collegato a `Emacore17/dnd-ai`; nel change set di attivazione `source.autoDeploy=true` coincide con una deny-all che abilita soltanto `main`, quindi la PR stessa resta senza deployment. Dopo il merge protetto la Git Integration sarà la sorgente del primo deploy automatico e invierà `repository_dispatch` con action `vercel.deployment.ready` quando una Preview è costruita ma non promossa. Il payload valido porta `state.type=success`: action e state appartengono a due contratti distinti e sono entrambi verificati.
 
 Il job `Staging / Smoke`:
 
@@ -87,7 +88,7 @@ Il job `Staging / Smoke`:
 
 Il progetto applica Standard Protection con policy SSO predefinita `all_except_custom_domains`; la Trusted Source limita già l'OIDC a issuer GitHub, audience account, repository + repository ID immutabile/ref/environment esatti e target `preview`. Il workflow non pubblica un URL non validato nell'environment GitHub. Non introdurre `VERCEL_TOKEN`, automation bypass secret, Deploy Hook, `pull_request_target`, `vercel deploy --prod` o checkout del commit indicato dall'evento. La Git Integration ricostruisce il commit anziché caricare `artifacts/bl002`; l'identità immutabile del deploy è quindi project ID + deployment ID + SHA + health contract.
 
-Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Project ID `prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`, scope `emacore17s-projects` e GitHub App installation ID `41079282` sono noti esternamente; l'alias branch deterministico non è ancora registrato/confermato e i binding versionati non sono completi. `pnpm deploy:check` passa sul piano, mentre `pnpm deploy:check:linked` fallisce chiuso. L'attivazione resta bloccata perché la Production Branch provider è ancora `main`, non per il grant App condiviso: il Product Owner ha deciso di mantenere `isAccessRestricted=false` con 8 repository per evitare perdita di accesso ad altri progetti e ne ha accettato il rischio residuo. I controlli compensativi sono link project/repository/repository ID esatti, Trusted Source OIDC exact-match, Fork/Standard Protection, environment `staging` solo `main`, smoke fail-closed e readback drift. La policy finale deve usare la deny-all ricorsiva `{"**": false, "main": true, "release/production": false}`: `*` non copre in modo affidabile branch con `/`. Il contract test deve imporla nella config Vercel e richiedere automaticamente `deploy:check:linked` nel Quality gate quando `source.autoDeploy` diventa `true`.
+Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Project ID `prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`, scope `emacore17s-projects`, GitHub App installation ID `41079282` e alias `https://dnd-ai-web-git-main-emacore17s-projects.vercel.app` sono registrati atomicamente; Production Branch Vercel è stata riletta come `release/production`. `pnpm deploy:check` e `pnpm deploy:check:linked` passano localmente e il Quality gate usa il secondo comando. La policy applicata è la deny-all ricorsiva `{"**": false, "main": true, "release/production": false}`: `*` non copre in modo affidabile branch con `/`. L'origin è versionata ma non ancora materializzata; la PR deve lasciare la lista deployment vuota e soltanto il merge su `main` può produrre la Preview. Il Product Owner ha deciso di mantenere `isAccessRestricted=false` con 8 repository per evitare perdita di accesso ad altri progetti e ne ha accettato il rischio residuo. I controlli compensativi sono link project/repository/repository ID esatti, Trusted Source OIDC exact-match, Fork/Standard Protection, environment `staging` solo `main`, smoke fail-closed e readback drift.
 
 ## Cache e artifact
 
