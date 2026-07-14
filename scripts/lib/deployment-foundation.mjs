@@ -158,12 +158,12 @@ export function validateDeploymentManifest(
     errors,
     "source.activationDeploymentPolicy",
     source?.activationDeploymentPolicy,
-    ["*", "main"],
+    ["**", "main", "release/production"],
   );
   expectEqual(
     errors,
-    "source.activationDeploymentPolicy.*",
-    source?.activationDeploymentPolicy?.["*"],
+    "source.activationDeploymentPolicy.**",
+    source?.activationDeploymentPolicy?.["**"],
     false,
   );
   expectEqual(
@@ -171,6 +171,12 @@ export function validateDeploymentManifest(
     "source.activationDeploymentPolicy.main",
     source?.activationDeploymentPolicy?.main,
     true,
+  );
+  expectEqual(
+    errors,
+    "source.activationDeploymentPolicy.release/production",
+    source?.activationDeploymentPolicy?.["release/production"],
+    false,
   );
   expectEqual(
     errors,
@@ -190,6 +196,23 @@ export function validateDeploymentManifest(
   if (requireLinked && source?.installationId === null) {
     errors.push(
       "source.installationId is required after GitHub App installation",
+    );
+  }
+  const providerBindings = [
+    project?.id,
+    project?.scopeSlug,
+    project?.stagingOrigin,
+    source?.installationId,
+  ];
+  const populatedProviderBindings = providerBindings.filter(
+    (value) => value !== null,
+  ).length;
+  if (
+    populatedProviderBindings !== 0 &&
+    populatedProviderBindings !== providerBindings.length
+  ) {
+    errors.push(
+      "provider project ID, scope slug, staging origin and GitHub App installation ID must be recorded atomically",
     );
   }
   expectEqual(errors, "source.stagingBranch", source?.stagingBranch, "main");
@@ -317,6 +340,59 @@ export function validateDeploymentManifest(
   expectEqual(errors, "runtimes.web", runtimes?.web, "active");
   expectEqual(errors, "runtimes.api", runtimes?.api, "planned");
   expectEqual(errors, "runtimes.worker", runtimes?.worker, "planned");
+
+  return [...new Set(errors)].sort();
+}
+
+export function validateVercelProjectConfig(manifest, config) {
+  const errors = [];
+
+  expectKeys(errors, "vercel config", config, [
+    "$schema",
+    "framework",
+    "git",
+    "regions",
+  ]);
+  expectEqual(
+    errors,
+    "vercel config.$schema",
+    config?.$schema,
+    "https://openapi.vercel.sh/vercel.json",
+  );
+  expectEqual(errors, "vercel config.framework", config?.framework, "nextjs");
+  expectArray(errors, "vercel config.regions", config?.regions, ["fra1"]);
+
+  const git = config?.git;
+  expectKeys(errors, "vercel config.git", git, ["deploymentEnabled"]);
+  const deploymentEnabled = git?.deploymentEnabled;
+  if (manifest?.source?.autoDeploy === false) {
+    expectEqual(
+      errors,
+      "vercel config.git.deploymentEnabled",
+      deploymentEnabled,
+      false,
+    );
+  } else if (manifest?.source?.autoDeploy === true) {
+    const activationPolicy = manifest?.source?.activationDeploymentPolicy;
+    expectKeys(
+      errors,
+      "vercel config.git.deploymentEnabled",
+      deploymentEnabled,
+      ["**", "main", "release/production"],
+    );
+    for (const branchPattern of ["**", "main", "release/production"]) {
+      expectEqual(
+        errors,
+        `vercel config.git.deploymentEnabled.${branchPattern}`,
+        deploymentEnabled?.[branchPattern],
+        activationPolicy?.[branchPattern],
+      );
+    }
+  } else {
+    errors.push(
+      "vercel config.git.deploymentEnabled cannot be validated until source.autoDeploy is boolean",
+    );
+  }
 
   return [...new Set(errors)].sort();
 }

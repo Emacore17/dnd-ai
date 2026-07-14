@@ -34,7 +34,11 @@ function manifestFixture() {
       integration: "vercel-github-app",
       installationId: 12345678,
       autoDeploy: false,
-      activationDeploymentPolicy: { "*": false, main: true },
+      activationDeploymentPolicy: {
+        "**": false,
+        main: true,
+        "release/production": false,
+      },
       stagingBranch: "main",
       productionBranch: "release/production",
       forkProtection: true,

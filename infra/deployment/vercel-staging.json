@@ -19,8 +19,9 @@
     "installationId": null,
     "autoDeploy": false,
     "activationDeploymentPolicy": {
-      "*": false,
-      "main": true
+      "**": false,
+      "main": true,
+      "release/production": false
     },
     "stagingBranch": "main",
     "productionBranch": "release/production",

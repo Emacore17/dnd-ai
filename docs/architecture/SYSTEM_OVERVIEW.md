@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
+last_verified_commit: 770206d9e2aba1b6b8b5d19bf72e7226b3df3d82
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
@@ -26,6 +26,8 @@ code_refs:
   - apps/web/app/health/route.ts
   - infra/deployment/vercel-staging.json
   - .github/workflows/deployment-smoke.yml
+  - scripts/check-deployment-foundation.mjs
+  - scripts/lib/deployment-foundation.mjs
 test_refs:
   - tests/unit/build-artifact.test.mjs
   - tests/contracts/workspace-boundaries.test.mjs
@@ -41,7 +43,7 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile e `BL-002` la pipeline fail-closed. `BL-003` aggiunge configurazione runtime server-only e startup fail-fast. `BL-080` ha implementato localmente la fondazione deploy del web e un GitHub environment staging; il project Vercel e le prove remote restano aperti. La UI resta uno scaffold e database, queue, contratti di dominio, adapter AI e autenticazione restano assegnati ai task M0 successivi.
+`BL-001` introduce un monorepo TypeScript buildabile e `BL-002` la pipeline fail-closed. `BL-003` aggiunge configurazione runtime server-only e startup fail-fast. `BL-080` ha implementato la fondazione deploy del web, creato il GitHub environment staging e collegato il progetto Vercel reale con auto-deploy spento. La Trusted Source OIDC è configurata, ma non esiste ancora alcun deployment: Production Branch, grant GitHub App repository-only, binding finali e prove remote restano aperti. La UI resta uno scaffold e database, queue, contratti di dominio, adapter AI e autenticazione restano assegnati ai task M0 successivi.
 
 ```text
 apps/
@@ -99,7 +101,7 @@ Il contratto `runtime-config-v1` distingue API, worker e migration. `APP_ENV` ac
 
 L'API valida prima di costruire Fastify e aprire il listener. Il worker valida prima dell'inizializzatore iniettato; il migration profile è pronto per l'executable di `BL-004`. Il web corrente non consuma config runtime e non importa `@dnd-ai/config`.
 
-Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, Vercel config `fra1` e health contract `web-health-v1`; Vercel resta proposto, non collegato e con auto-deploy staticamente disabilitato fino alla verifica della Production Branch. Il desired state mantiene Standard Protection e prepara una Trusted Source GitHub OIDC vincolata a repository ID/ref/environment, senza secret persistenti. Gli artifact API/worker correnti restano output di build, non immagini/container operativi.
+Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, health contract `web-health-v1` e progetto Vercel `dnd-ai-web` (`prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`) nello scope `emacore17s-projects`, collegato a `Emacore17/dnd-ai` con Root Directory `apps/web`, Next.js e regione `fra1`. Fork Protection, system environment variables ed emissione OIDC sono abilitate; le variabili applicative sono zero. La Trusted Source GitHub Actions è exact-match sui claim attesi. Auto-deploy resta disabilitato e non esiste alcun deployment. La Production Branch è ancora `main` e l'installazione GitHub App `41079282` vede 8 repository invece del solo target; lo staging non è quindi disponibile. Gli artifact API/worker correnti restano output di build, non immagini/container operativi.
 
 ## Comandi disponibili in BL-001/BL-002/BL-003
 
@@ -126,7 +128,7 @@ corepack pnpm@10.34.5 verify
 
 Nel workflow CI base le action esterne sono pin a SHA completo, checkout non persiste credenziali e i permessi globali sono read-only. La cache gestita da `setup-node` contiene soltanto lo store pnpm indicizzato dal lockfile. Security esegue SAST locale fail-on-warning, test/secret scan e dependency audit; non riceve secret applicativi.
 
-Il workflow deployment smoke è separato: riceve un evento dalla Vercel GitHub App, esegue una sequenza chiusa sul verifier trusted di `main` nell'environment GitHub `staging` e usa `id-token: write` soltanto per ottenere un OIDC breve. Il token raggiunge esclusivamente l'origin branch esatta registrata; l'URL dell'evento è ignorato e Standard Protection resta attiva. API e worker non partecipano finché non hanno packaging operativo.
+Il workflow deployment smoke è separato: dopo la chiusura dei blocker provider, riceverà un evento dalla Vercel GitHub App, eseguirà una sequenza chiusa sul verifier trusted di `main` nell'environment GitHub `staging` e userà `id-token: write` soltanto per ottenere un OIDC breve. Il token potrà raggiungere esclusivamente l'origin branch esatta registrata; l'URL dell'evento è ignorato e Standard Protection resta attiva. Installation ID `41079282` e Trusted Source sono acquisiti, ma origin, grant repository-only e Production Branch non lo sono; questo percorso non è stato eseguito. API e worker non partecipano finché non hanno packaging operativo.
 
 Il build produce `artifacts/bl002`: `scripts/lib/build-artifact.mjs` copia soltanto output esplicitamente ammessi, incluso `packages/config/dist`, rifiuta link esterni/path sensibili e file ambientali, scansiona i file e registra byte+SHA-256 in `build-artifact-v1`. L’upload usa soltanto questo staging validato.
 
