@@ -6,6 +6,28 @@ const PROJECT_NAME_PATTERN = /^[a-z0-9](?:[a-z0-9._-]{0,98}[a-z0-9])?$/;
 // eslint-disable-next-line security/detect-unsafe-regex
 const SCOPE_SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9_-]{0,46}[a-z0-9])?$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
+const VERCEL_IGNORE_PATTERNS = [
+  ".git/",
+  "node_modules/",
+  ".pnpm-store/",
+  ".turbo/",
+  ".next/",
+  ".vercel/",
+  ".agents/",
+  ".codex/",
+  ".vscode/",
+  "dist/",
+  "coverage/",
+  "test-results/",
+  "playwright-report/",
+  "/artifacts/",
+  "*.tsbuildinfo",
+  ".env",
+  ".env.*",
+  "*.log",
+  ".DS_Store",
+  "Thumbs.db",
+];
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -421,6 +443,34 @@ export function validateWebBuildPolicy(webPackage, turboConfig) {
     "VERCEL_ENV",
     "VERCEL_TARGET_ENV",
   ]);
+
+  return [...new Set(errors)].sort();
+}
+
+export function validateVercelIgnorePolicy(
+  contents,
+  { hasProjectLevelOverride = false } = {},
+) {
+  const errors = [];
+  if (typeof contents !== "string") {
+    errors.push(".vercelignore must be text");
+  } else {
+    const patterns = contents
+      .split(/\r?\n/u)
+      .filter((line) => line.length > 0 && !line.startsWith("#"));
+    expectArray(
+      errors,
+      ".vercelignore patterns",
+      patterns,
+      VERCEL_IGNORE_PATTERNS,
+    );
+  }
+
+  if (hasProjectLevelOverride) {
+    errors.push(
+      "apps/web/.vercelignore must not override the root upload policy",
+    );
+  }
 
   return [...new Set(errors)].sort();
 }

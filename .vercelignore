@@ -1,0 +1,21 @@
+# Local and generated content must never enter the Vercel CLI source payload.
+.git/
+node_modules/
+.pnpm-store/
+.turbo/
+.next/
+.vercel/
+.agents/
+.codex/
+.vscode/
+dist/
+coverage/
+test-results/
+playwright-report/
+/artifacts/
+*.tsbuildinfo
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db

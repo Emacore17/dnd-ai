@@ -8,6 +8,7 @@ import { parse } from "yaml";
 
 import {
   validateDeploymentManifest,
+  validateVercelIgnorePolicy,
   validateVercelProjectConfig,
   validateWebBuildPolicy,
 } from "../../scripts/lib/deployment-foundation.mjs";
@@ -29,6 +30,7 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
     vercelConfig,
     webPackage,
     turboConfig,
+    vercelIgnore,
     gitignore,
     healthRoute,
   ] = await Promise.all([
@@ -44,6 +46,7 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
     readJson("apps", "web", "vercel.json"),
     readJson("apps", "web", "package.json"),
     readJson("turbo.json"),
+    readFile(path.join(repositoryRoot, ".vercelignore"), "utf8"),
     readFile(path.join(repositoryRoot, ".gitignore"), "utf8"),
     readFile(
       path.join(repositoryRoot, "apps", "web", "app", "health", "route.ts"),
@@ -54,6 +57,7 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
   assert.deepEqual(validateDeploymentManifest(manifest), []);
   assert.deepEqual(validateVercelProjectConfig(manifest, vercelConfig), []);
   assert.deepEqual(validateWebBuildPolicy(webPackage, turboConfig), []);
+  assert.deepEqual(validateVercelIgnorePolicy(vercelIgnore), []);
   assert.deepEqual(validateDeploymentWorkflow(workflow), []);
   assert.deepEqual(manifest.source.activationDeploymentPolicy, {
     "**": false,
@@ -153,6 +157,32 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
       error.includes("turbo tasks.build.env"),
     ),
     "Vercel target metadata must participate in the build cache key",
+  );
+
+  const missingTurboIgnore = vercelIgnore.replace(".turbo/\n", "");
+  assert.ok(
+    validateVercelIgnorePolicy(missingTurboIgnore).some((error) =>
+      error.includes(".vercelignore patterns"),
+    ),
+    "the CLI upload policy must exclude local Turbo cache",
+  );
+
+  const whitespacePrefixedTurboIgnore = vercelIgnore.replace(
+    ".turbo/\n",
+    " .turbo/\n",
+  );
+  assert.ok(
+    validateVercelIgnorePolicy(whitespacePrefixedTurboIgnore).some((error) =>
+      error.includes(".vercelignore patterns"),
+    ),
+    "the upload policy must reject whitespace that changes ignore semantics",
+  );
+
+  assert.ok(
+    validateVercelIgnorePolicy(vercelIgnore, {
+      hasProjectLevelOverride: true,
+    }).some((error) => error.includes("apps/web/.vercelignore")),
+    "a project-level ignore file must not silently override the root policy",
   );
 
   const activationStateDrift = globalThis.structuredClone(vercelConfig);

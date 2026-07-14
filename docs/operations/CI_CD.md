@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
+last_verified_commit: 13032743552654f9f68d87050eb11cabbdd92325
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -13,6 +13,7 @@ related_tasks:
   - QA-001
   - BL-070
 code_refs:
+  - .vercelignore
   - .github/workflows/ci.yml
   - .github/actions/setup-workspace/action.yml
   - packages/config
@@ -25,7 +26,9 @@ code_refs:
   - apps/web/scripts/vercel-preview-build-policy.mjs
   - infra/deployment/vercel-staging.json
   - scripts/check-deployment-foundation.mjs
+  - scripts/check-vercel-deploy-dry-run.mjs
   - scripts/lib/deployment-foundation.mjs
+  - scripts/lib/vercel-deploy-dry-run.mjs
   - scripts/smoke-web-deployment.mjs
   - turbo.json
 test_refs:
@@ -40,6 +43,8 @@ test_refs:
   - tests/security/deployment-smoke-security.test.mjs
   - tests/unit/vercel-preview-build-policy.test.mjs
   - tests/security/vercel-preview-build-guard.test.mjs
+  - tests/unit/vercel-deploy-dry-run.test.mjs
+  - tests/security/vercel-deploy-dry-run.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
 supersedes: null
 ---
@@ -80,11 +85,13 @@ Non disabilitare il gate per risolvere una coda. Se un job viene cancellato o sa
 
 ## Preview/staging web
 
-`BL-080` aggiunge un workflow separato `Staging smoke`; non modifica il trust boundary della PR e non distribuisce da GitHub Actions. La PR #12 è rimasta senza deployment, ma il merge su `main` ha generato un deployment Production. Il relativo `repository_dispatch` ha creato un job `Staging / Smoke` `skipped`, perché il predicate accetta soltanto payload Preview validi. Il contenimento PR #13 è integrato, Git auto-deploy resta disabilitato e CI verde non viene trattata come prova del target provider.
+`BL-080` aggiunge un workflow separato `Staging smoke`; non modifica il trust boundary della PR e non distribuisce da GitHub Actions. La PR #12 è rimasta senza deployment, ma il merge su `main` ha generato un deployment Production. Il relativo `repository_dispatch` ha creato un job `Staging / Smoke` `skipped`, perché il predicate accetta soltanto payload Preview validi. Il contenimento PR #13 e il guard Preview-only PR #14 sono integrati; merge `ee5f12916998cce6847fcc509d8f5e1fa05b1b9f`, CI PR `29335696502` e post-merge `29335856323` sono 5/5 verdi, Git auto-deploy resta disabilitato e il readback conferma zero deployment. CI verde non viene trattata come prova del target provider.
 
 La build Vercel usa un entrypoint distinto e obbligatorio: `apps/web/vercel.json` imposta `buildCommand` a `node scripts/assert-vercel-preview-build.mjs && pnpm run build`; il primo controllo strict prosegue soltanto con la tripla esatta `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`. Il normale `pnpm build` locale accetta soltanto l'assenza contemporanea dei tre metadata; valori parziali, incoerenti, Production, development o custom falliscono prima di Next con errore statico redatto. `turbo.json` include i tre valori nella chiave del task build, così una cache locale non può confondere modalità local e Preview.
 
-Il guard non seleziona l'environment e non impedisce al provider di creare un record deployment: può soltanto bloccare il completamento della build dopo che Vercel ha scelto il target. Dopo il merge del guard, l'unico selector autorizzato per la prima diagnosi è `vercel deploy --target=preview` dalla `main` pulita, in sessione locale già autenticata. È una prova one-shot e non il deploy automatico di accettazione; `--prebuilt`, `--prod` e `promote` sono vietati, mentre `git.deploymentEnabled=false` e `source.autoDeploy=false` restano invariati.
+Il guard non seleziona l'environment e non impedisce al provider di creare un record deployment: può soltanto bloccare il completamento della build dopo che Vercel ha scelto il target. Il primo `vercel deploy --target=preview --no-wait` dalla root è terminato sul limite file prima della creazione del deployment: la sorgente calcolata era 773,1 MiB e conteneva un file `.turbo` da 156,5 MB, oltre il limite Hobby di 100 MB per file. Il readback successivo è rimasto a zero deployment.
+
+La CLI ha un confine sorgenti distinto dall'artifact CI: la denylist root `.vercelignore` esclude cache e output generati, e non deve esistere un override `apps/web/.vercelignore`. Prima di qualunque deploy reale, `vercel@55.0.0 deploy . --project dnd-ai-web --scope emacore17s-projects --target=preview --dry --format=json --yes` deve completare senza upload/deployment e il JSON catturato deve superare `scripts/check-vercel-deploy-dry-run.mjs`. Il checker richiede root esatta, framework `nextjs`, file indispensabili regolari con hash valido, mode file/directory zero-byte supportati, path univoci e sicuri, massimo 15.000 entry, massimo 10 MiB totali e massimo 5 MiB per file. Soltanto dopo questo gate è autorizzata la diagnostica one-shot da `main` pulita. `--cwd apps/web`, `--prebuilt`, archivi, `--prod`, `promote`, `--skip-domain`, custom target e override manuali `VERCEL*` sono vietati; `git.deploymentEnabled=false` e `source.autoDeploy=false` restano invariati.
 
 Il job `Staging / Smoke`:
 
@@ -98,7 +105,7 @@ Il job `Staging / Smoke`:
 
 Il progetto applica Standard Protection con policy SSO predefinita `all_except_custom_domains`; la Trusted Source limita già l'OIDC a issuer GitHub, audience account, repository + repository ID immutabile/ref/environment esatti e target `preview`. Il workflow non pubblica un URL non validato nell'environment GitHub. Non introdurre `VERCEL_TOKEN`, automation bypass secret, Deploy Hook, `pull_request_target`, `vercel deploy --prod`, `--prebuilt`, `promote` o checkout del commit indicato dall'evento. La Git Integration ricostruisce il commit anziché caricare `artifacts/bl002`; l'identità immutabile del deploy è quindi project ID + deployment ID + SHA + health contract.
 
-Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma la policy linked non ha impedito il target Production. PR #13 ha riportato il Quality gate a `pnpm deploy:check`, binding versionati `null` e `git.deploymentEnabled=false`; `deploy:check:linked` fallisce intenzionalmente. Project/link/Trusted Source remoti restano configurati e il grant condiviso resta invariato per decisione PO. Dopo il merge del guard è ammessa soltanto la diagnostica CLI Preview esplicita descritta sopra; smoke, failure e redeploy restano gate aperti. `BL-080` resta `IN_PROGRESS/50%/FAILING` e `BL-079` `BACKLOG`.
+Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma la policy linked non ha impedito il target Production. PR #13 ha riportato il Quality gate a `pnpm deploy:check`, binding versionati `null` e `git.deploymentEnabled=false`; `deploy:check:linked` fallisce intenzionalmente. PR #14 ha integrato il guard senza deployment. Project/link/Trusted Source remoti restano configurati e il grant condiviso resta invariato per decisione PO. Il gate payload dry-run deve ora passare prima di ripetere la diagnostica CLI Preview; smoke, failure e redeploy restano aperti. `BL-080` resta `IN_PROGRESS/50%/FAILING` e `BL-079` `BACKLOG`.
 
 ## Cache e artifact
 
@@ -115,6 +122,10 @@ corepack pnpm@10.34.5 audit --audit-level=high
 corepack pnpm@10.34.5 artifact:prepare
 corepack pnpm@10.34.5 artifact:verify
 corepack pnpm@10.34.5 deploy:check
+$dryRun = corepack pnpm dlx vercel@55.0.0 deploy . --project dnd-ai-web --scope emacore17s-projects --target=preview --dry --format=json --yes
+if ($LASTEXITCODE -ne 0) { throw "preview-dry-run: Vercel command failed" }
+$dryRun | node scripts/check-vercel-deploy-dry-run.mjs
+if ($LASTEXITCODE -ne 0) { throw "preview-dry-run: source manifest rejected" }
 ```
 
 ## Gate differiti e owner
