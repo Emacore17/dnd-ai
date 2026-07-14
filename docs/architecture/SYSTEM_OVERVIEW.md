@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-13
+last_reviewed: 2026-07-14
 last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
@@ -23,12 +23,17 @@ code_refs:
   - scripts/lib/workspace-boundaries.mjs
   - .github/workflows/ci.yml
   - scripts/lib/ci-workflow-policy.mjs
+  - apps/web/app/health/route.ts
+  - infra/deployment/vercel-staging.json
+  - .github/workflows/deployment-smoke.yml
 test_refs:
   - tests/unit/build-artifact.test.mjs
   - tests/contracts/workspace-boundaries.test.mjs
   - tests/contracts/ci-workflow.test.mjs
   - tests/contracts/runtime-config-contract.test.mjs
   - tests/integration/runtime-startup.test.mjs
+  - tests/integration/web-health.test.mjs
+  - tests/contracts/deployment-foundation.test.mjs
 supersedes: null
 ---
 
@@ -36,11 +41,11 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile e `BL-002` la pipeline fail-closed. `BL-003` aggiunge configurazione runtime server-only e startup fail-fast; il web resta uno scaffold e database, queue, contratti di dominio, adapter AI e autenticazione restano assegnati ai task M0 successivi.
+`BL-001` introduce un monorepo TypeScript buildabile e `BL-002` la pipeline fail-closed. `BL-003` aggiunge configurazione runtime server-only e startup fail-fast. `BL-080` ha implementato localmente la fondazione deploy del web e un GitHub environment staging; il project Vercel e le prove remote restano aperti. La UI resta uno scaffold e database, queue, contratti di dominio, adapter AI e autenticazione restano assegnati ai task M0 successivi.
 
 ```text
 apps/
-  web/             Next.js App Router; superficie browser scaffold
+  web/             Next.js App Router; scaffold browser + `/health` deploy metadata
   api/             Fastify composition root; config prima del bind
   worker/          config prima dell'initializer; BullMQ pianificato
 packages/
@@ -94,7 +99,7 @@ Il contratto `runtime-config-v1` distingue API, worker e migration. `APP_ENV` ac
 
 L'API valida prima di costruire Fastify e aprire il listener. Il worker valida prima dell'inizializzatore iniettato; il migration profile è pronto per l'executable di `BL-004`. Il web corrente non consuma config runtime e non importa `@dnd-ai/config`.
 
-Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). `BL-080` possiede provider, secret manager, packaging deployabile e primo smoke remoto; gli artifact API/worker correnti restano output di build, non immagini/container operativi.
+Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, Vercel config `fra1` e health contract `web-health-v1`; Vercel resta proposto, non collegato e con auto-deploy staticamente disabilitato fino alla verifica della Production Branch. Il desired state mantiene Standard Protection e prepara una Trusted Source GitHub OIDC vincolata a repository ID/ref/environment, senza secret persistenti. Gli artifact API/worker correnti restano output di build, non immagini/container operativi.
 
 ## Comandi disponibili in BL-001/BL-002/BL-003
 
@@ -109,16 +114,19 @@ corepack pnpm@10.34.5 config:check
 corepack pnpm@10.34.5 scan:sast
 corepack pnpm@10.34.5 boundaries:check
 corepack pnpm@10.34.5 tasks:check
+corepack pnpm@10.34.5 deploy:check
 corepack pnpm@10.34.5 verify
 ```
 
-`verify` copre format, lint, typecheck, build, unit, integration, contract, security, package/task/CI policy e artifact verification. I comandi unit/integration preparano autonomamente i dist richiesti da un checkout pulito. Test container, browser/E2E, migration, eval, bot e load restano responsabilità dei task proprietari, soprattutto `QA-001`; nessun comando futuro è simulato da un no-op.
+`verify` copre format, lint, typecheck, build, unit, integration, contract, security, package/task/CI/deployment policy e artifact verification. I comandi unit/integration preparano autonomamente i dist richiesti da un checkout pulito; l'integration suite avvia anche il server standalone web e verifica `/health`. Test container, browser/E2E, migration, eval, bot e load restano responsabilità dei task proprietari, soprattutto `QA-001`; nessun comando futuro è simulato da un no-op.
 
 ## CI e supply chain
 
 `.github/workflows/ci.yml` separa quality, test, security e build. `CI / Merge gate` usa `always()` e considera valido soltanto `success` per ogni job richiesto, così failure, cancellation e skip non vengono mascherati. Il workflow usa `pull_request`, push `main`, merge queue e dispatch manuale; `pull_request_target` è vietato dalla policy automatica.
 
-Le action esterne sono pin a SHA completo, checkout non persiste credenziali e i permessi globali sono read-only. La cache gestita da `setup-node` contiene soltanto lo store pnpm indicizzato dal lockfile. Security esegue SAST locale fail-on-warning, test/secret scan e dependency audit; non riceve secret applicativi.
+Nel workflow CI base le action esterne sono pin a SHA completo, checkout non persiste credenziali e i permessi globali sono read-only. La cache gestita da `setup-node` contiene soltanto lo store pnpm indicizzato dal lockfile. Security esegue SAST locale fail-on-warning, test/secret scan e dependency audit; non riceve secret applicativi.
+
+Il workflow deployment smoke è separato: riceve un evento dalla Vercel GitHub App, esegue una sequenza chiusa sul verifier trusted di `main` nell'environment GitHub `staging` e usa `id-token: write` soltanto per ottenere un OIDC breve. Il token raggiunge esclusivamente l'origin branch esatta registrata; l'URL dell'evento è ignorato e Standard Protection resta attiva. API e worker non partecipano finché non hanno packaging operativo.
 
 Il build produce `artifacts/bl002`: `scripts/lib/build-artifact.mjs` copia soltanto output esplicitamente ammessi, incluso `packages/config/dist`, rifiuta link esterni/path sensibili e file ambientali, scansiona i file e registra byte+SHA-256 in `build-artifact-v1`. L’upload usa soltanto questo staging validato.
 

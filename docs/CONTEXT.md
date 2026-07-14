@@ -25,6 +25,10 @@ code_refs:
   - scripts/lib/ci-workflow-policy.mjs
   - scripts/lib/build-artifact.mjs
   - scripts/lib/secret-scanner.mjs
+  - infra/deployment/vercel-staging.json
+  - apps/web/app/health/route.ts
+  - .github/workflows/deployment-smoke.yml
+  - scripts/lib/deployment-smoke.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -40,6 +44,11 @@ test_refs:
   - tests/contracts/runtime-config-contract.test.mjs
   - tests/security/environment-file-policy.test.mjs
   - docs/testing/BL-003_VERIFICATION.md
+  - tests/unit/deployment-smoke.test.mjs
+  - tests/integration/web-health.test.mjs
+  - tests/contracts/deployment-foundation.test.mjs
+  - tests/security/deployment-smoke-security.test.mjs
+  - docs/testing/BL-080_VERIFICATION.md
 supersedes: null
 ---
 
@@ -55,14 +64,14 @@ supersedes: null
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-080 — IN_PROGRESS/25%/NOT_RUN` |
+| Task attivo | `BL-080 — IN_PROGRESS/50%/PARTIAL` |
 | Ultimo task completato | `BL-003 — DONE/100%/PASSING` |
 | Prossimo task READY | `—`; `BL-079` resta `BACKLOG` fino alla chiusura di `BL-080` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. `BL-003` implementa `runtime-config-v1`, startup API fail-fast, boundary worker, profilo migration, template service-scoped e scanner fail-closed; la PR #6 è integrata in `main`. Il web Next è l'unico runtime oggi direttamente deployabile; API e worker non hanno ancora packaging container/daemon. `BL-080` è iniziato per creare una preview/staging web non-production, mentre la foundation UX/UI `BL-079` resta fuori scope e bloccata fino alla disponibilità dell'ambiente. Nessuna risorsa provider o credenziale è ancora stata creata in questo task.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. `BL-003` implementa `runtime-config-v1` ed è integrato in `main`. Il web Next è l'unico runtime oggi deployabile; API e worker non hanno container/daemon. `BL-080` ha ora desired state Vercel, health contract e workflow smoke fail-closed: Standard Protection resta attiva e GitHub ottiene solo un OIDC breve, mai un token Vercel persistente. Project ID, scope slug, branch origin e installation ID restano `null`; l'auto-deploy è disabilitato finché la Production Branch non viene riservata. GitHub environment `staging` esiste, accetta solo `main`, disabilita il bypass amministratore e contiene zero secret/variabili. Nessun account/project/deploy Vercel è stato creato: piano/termini e permessi GitHub App richiedono conferma esplicita. `BL-079` resta fuori scope e bloccato fino allo staging reale.
 
 ## Decisioni operative vigenti
 
@@ -74,8 +83,9 @@ supersedes: null
 - Visual language premium contemporaneo per casual gamer, senza chrome pseudo-medievale/fantasy.
 - Workspace e direzioni di dipendenza secondo ADR-0002; manifest/import/cicli falliscono chiuso tramite checker versionato.
 - Configurazione runtime server-only validata ai composition root; nessun valore secret nel client, nei default, nei log o nei documenti. ADR-0004 accepted durante `BL-003`.
+- Preview/staging web proposta su Vercel con Root Directory `apps/web`, compute `fra1`, Git Integration nativa, production branch riservata, policy deploy branch-closed, Standard Protection e Trusted Source GitHub OIDC vincolata a repository ID/ref/environment; ADR-0005 resta proposed fino alla prova remota e all'autorizzazione del piano.
 
-Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md), [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md) e [`ADR-0004`](adr/0004-runtime-configuration-and-secret-injection.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Configurazione operativa: [`CONFIGURATION.md`](operations/CONFIGURATION.md). Architettura implementata: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md).
+Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md), [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md) e [`ADR-0004`](adr/0004-runtime-configuration-and-secret-injection.md). ADR-0005 è [`proposed`](adr/0005-vercel-web-preview-and-staging.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Configurazione operativa: [`CONFIGURATION.md`](operations/CONFIGURATION.md) e [`PREVIEW_STAGING.md`](operations/PREVIEW_STAGING.md). Architettura implementata: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md).
 
 ## Versioni e head
 
@@ -87,13 +97,14 @@ Decisioni complete: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`
 | Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
 | Eval suite version | `N/A` | harness non creato |
 | Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
+| Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | locale PASS; GitHub environment protetto; Vercel project/deploy pending |
 | Design contract | `ux-ui-2026-07-13` | documentato, non implementato |
 | ADR UI | `ADR-0001 accepted` | vigente |
 | Toolchain | Node `24.11.0` (engine `>=22.12.0`); pnpm `10.34.5`; Turbo `2.10.4`; TypeScript `6.0.3` | pinning e lockfile presenti |
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web scaffold; API senza route ma con startup validate-before-bind |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
-| CI policy | `ci-policy-v1` | PR/push/merge queue; action pin; permissions; fan-in `CI / Merge gate`; post-merge BL-003 run `29315052002` 5/5 job PASS |
+| CI policy | `ci-policy-v1` | gate base + `deploy:check`; workflow smoke separato con `contents: read`, OIDC breve e step allowlisted su repository dispatch; post-merge BL-003 run `29315052002` 5/5 job PASS |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
 | Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file; checkout pulito BL-003 `3.554` file e CI Ubuntu `3.233` file, secret/checksum verification PASS |
 
@@ -113,6 +124,9 @@ corepack pnpm@10.34.5 test:security
 corepack pnpm@10.34.5 boundaries:check
 corepack pnpm@10.34.5 tasks:check
 corepack pnpm@10.34.5 ci:workflow:check
+corepack pnpm@10.34.5 deploy:check
+corepack pnpm@10.34.5 deploy:check:linked
+corepack pnpm@10.34.5 deploy:smoke
 corepack pnpm@10.34.5 scan:sast
 corepack pnpm@10.34.5 scan:secrets
 corepack pnpm@10.34.5 artifact:prepare
@@ -138,6 +152,7 @@ Le decisioni `OD-01..OD-20` restano in `docs/MVP_SPEC.md` §34. Quelle che posso
 
 - `OD-07` auth build vs managed;
 - `OD-08` regione dati/telemetry.
+- autorizzazione del piano/account Vercel e dei permessi della GitHub App; Hobby è valido soltanto per uso personale/non commerciale.
 
 Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di prodotto: `BL-079` deve validarli tramite contrast/performance gate e può scegliere il fallback più semplice.
 
@@ -151,10 +166,11 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive gated o rimosso nel task `BL-079` |
 | CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | `BL-080` è `IN_PROGRESS` e deve creare l'ambiente prima di sbloccare lo smoke BL-079/GATE-M0 |
 | CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based/ignore-aware |
+| CTX-R14 | Attivare Vercel senza conferma può accettare termini incompatibili, ampliare permessi GitHub o creare un deploy Production iniziale | ADR-0005 resta proposed; fondazione su `main` con `git.deploymentEnabled=false`, conferma esplicita, App limitata al repo, Standard Protection/Trusted Source riletti e Production Branch verificata prima dell'attivazione |
 
 ## Prossima azione
 
-Completare la decisione provider/regione e i contract test di `BL-080`, poi provisionare soltanto la preview/staging web non-production e verificarne deploy, smoke e rollback/redeploy. `BL-079` inizierà soltanto dopo la disponibilità dell'ambiente.
+Integrare prima la foundation con auto-deploy disabilitato. Ottenuta conferma esplicita del piano/termini Vercel e dei permessi GitHub App, collegare il project web, riservare e rileggere la Production Branch, configurare Standard Protection + Trusted Source OIDC, poi registrare i binding reali e abilitare con un secondo change set verificato. Provare Preview, failure senza promozione e redeploy/smoke; `BL-079` inizierà soltanto dopo la disponibilità reale dell'ambiente.
 
 ## Rischi chiusi
 

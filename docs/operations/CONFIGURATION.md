@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering-and-security
-last_reviewed: 2026-07-13
+last_reviewed: 2026-07-14
 last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
@@ -21,12 +21,16 @@ code_refs:
   - apps/api/.env.example
   - apps/worker/.env.example
   - packages/persistence/.env.example
+  - infra/deployment/vercel-staging.json
+  - apps/web/app/health/route.ts
 test_refs:
   - tests/unit/runtime-config.test.mjs
   - tests/integration/runtime-startup.test.mjs
   - tests/contracts/runtime-config-contract.test.mjs
   - tests/security/environment-file-policy.test.mjs
   - tests/security/secret-scanner.test.mjs
+  - tests/contracts/deployment-foundation.test.mjs
+  - tests/integration/web-health.test.mjs
 supersedes: null
 ---
 
@@ -58,7 +62,7 @@ Una preview non introduce il valore `preview`: usa lo schema `staging`, ma non n
 | worker | `WORKER_REDIS_URL` | secret-bearing | URL Redis con credenziale worker distinta e `rediss:` nei profili gestiti |
 | migration | `APP_ENV` | non secret | stesso discriminatore canonico |
 | migration | `MIGRATION_DATABASE_URL` | secret-bearing | URL PostgreSQL con credenziale migration distinta e TLS nei profili gestiti |
-| web | nessuna | `N/A` | la shell statica corrente non consuma config runtime |
+| web | nessuna applicativa | `N/A` | la shell corrente non consuma config prodotto; `/health` legge soltanto system metadata Vercel server-side |
 
 Non aggiungere chiavi AI, auth, telemetry, storage o flag finché il task proprietario non introduce un consumer e i relativi test. Il web non dipende da `@dnd-ai/config`; nessun valore di questa matrice usa il prefisso `NEXT_PUBLIC_`.
 
@@ -97,7 +101,11 @@ La configurazione è validata prima della creazione dell'app Fastify e del bind.
 
 Il secret manager della piattaforma inietta soltanto le chiavi del servizio avviato. Non usare file `.env` nell'artifact, variabili condivise fra tutti i runtime o secret di production in preview/staging. Staging e production richiedono password service-scoped e trasporto cifrato; il provider deve inoltre garantire TLS 1.2+ secondo la specifica. Il processo usa la stessa CLI senza `--env-file` come preflight dopo l'iniezione.
 
-`BL-080` deve registrare provider, project/resource ID, regione, environment, owner e run ID non sensibili; deve provare missing-secret, deploy fallito, smoke e rollback. I valori non entrano in documenti, chat, log, screenshot o artifact.
+Il desired state di `BL-080` seleziona Vercel Environment Variables come confine futuro, ma dichiara correttamente `variables: []` e `secrets: []`: il web non ha un consumer applicativo. `VERCEL_PROJECT_ID`, `VERCEL_DEPLOYMENT_ID`, `VERCEL_GIT_COMMIT_SHA`, `VERCEL_GIT_COMMIT_REF`, `VERCEL_GIT_REPO_OWNER`, `VERCEL_GIT_REPO_SLUG`, `VERCEL_GIT_REPO_ID`, `VERCEL_ENV` e `VERCEL_REGION` sono metadata di sistema server-side usati esclusivamente da `/health`; non sono configurazione di dominio né vengono prefissati `NEXT_PUBLIC_`.
+
+`VERCEL_TRUSTED_OIDC_TOKEN` è un valore effimero del solo step GitHub Actions: viene richiesto con `id-token: write`, mascherato immediatamente, passato al verifier tramite environment di processo e inviato esclusivamente nell'header Trusted Sources verso l'origin branch versionata. Non è un environment secret GitHub/Vercel, non viene persistito e non sostituisce le future credenziali applicative service-scoped. Standard Protection resta attiva; non creare `VERCEL_AUTOMATION_BYPASS_SECRET`.
+
+La Git Integration proposta evita un access token Vercel nei workflow. Project ID, scope slug, installation/deployment ID, regione, environment e run ID sono non sensibili ma vengono comunque redatti nei report automatici. Il token OIDC non viene mai stampato. I valori production, token, cookie e dati account non entrano in documenti, chat, log, screenshot o artifact.
 
 Per Next.js, le variabili `NEXT_PUBLIC_*` vengono incorporate nel bundle al build e restano congelate per quella build. Qualunque futura variabile pubblica richiede quindi review esplicita e non può contenere credenziali. Riferimento: [Next.js Environment Variables](https://nextjs.org/docs/app/guides/environment-variables).
 
@@ -112,5 +120,5 @@ Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo 
 - `BL-004`: migration executable e credenziali database locali/reali;
 - `BL-008`: log/redaction/telemetry e nuovi endpoint osservabili;
 - `BL-010`: configurazione dinamica auditata per flag e kill switch;
-- `BL-080`: provider, regione, secret manager, packaging, deploy e primo smoke preview/staging;
+- `BL-080`: desired state/provider web, GitHub environment, deploy e primo smoke preview/staging; project e prove remote ancora aperti;
 - `BL-070`: hardening, load/chaos, backup restore e go/no-go.

@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-13
+last_reviewed: 2026-07-14
 last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - AGENTS.md
@@ -17,6 +17,7 @@ code_refs: []
 test_refs:
   - AGENTS_VALIDATION.txt
   - docs/testing/BL-003_VERIFICATION.md
+  - docs/testing/BL-080_VERIFICATION.md
 supersedes: null
 ---
 
@@ -50,6 +51,9 @@ supersedes: null
 | [`adr/0004-runtime-configuration-and-secret-injection.md`](adr/0004-runtime-configuration-and-secret-injection.md) | Decisione accepted su config server-only, profili e secret injection |
 | [`operations/CONFIGURATION.md`](operations/CONFIGURATION.md) | Matrice variabili, setup locale, redazione e ownership ambienti |
 | [`testing/BL-003_VERIFICATION.md`](testing/BL-003_VERIFICATION.md) | Evidenze locali, clean-worktree e CI Linux di BL-003 |
+| [`adr/0005-vercel-web-preview-and-staging.md`](adr/0005-vercel-web-preview-and-staging.md) | Decisione proposed su provider, trust boundary e staging web |
+| [`operations/PREVIEW_STAGING.md`](operations/PREVIEW_STAGING.md) | Desired state, setup sicuro, smoke e recupero preview/staging |
+| [`testing/BL-080_VERIFICATION.md`](testing/BL-080_VERIFICATION.md) | Evidenze parziali e gate remoti ancora aperti di BL-080 |
 
 ## Documenti pianificati
 

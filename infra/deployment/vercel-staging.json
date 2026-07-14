@@ -1,0 +1,56 @@
+{
+  "contractVersion": "staging-foundation-v1",
+  "provider": {
+    "name": "vercel",
+    "cliVersion": "55.0.0",
+    "project": {
+      "name": "dnd-ai-web",
+      "id": null,
+      "scopeSlug": null,
+      "stagingOrigin": null,
+      "rootDirectory": "apps/web",
+      "framework": "nextjs"
+    },
+    "regions": ["fra1"]
+  },
+  "source": {
+    "repository": "Emacore17/dnd-ai",
+    "integration": "vercel-github-app",
+    "installationId": null,
+    "autoDeploy": false,
+    "activationDeploymentPolicy": {
+      "*": false,
+      "main": true
+    },
+    "stagingBranch": "main",
+    "productionBranch": "release/production",
+    "forkProtection": true
+  },
+  "deploymentProtection": {
+    "mode": "standard",
+    "method": "vercel-authentication",
+    "trustedSource": {
+      "provider": "github-actions",
+      "issuer": "https://token.actions.githubusercontent.com",
+      "audience": "https://github.com/Emacore17",
+      "claims": {
+        "repository": "Emacore17/dnd-ai",
+        "repository_id": "1299266814",
+        "ref": "refs/heads/main",
+        "environment": "staging"
+      },
+      "targetEnvironments": ["preview"]
+    }
+  },
+  "environments": {
+    "vercel": "preview",
+    "github": "staging",
+    "variables": [],
+    "secrets": []
+  },
+  "runtimes": {
+    "web": "active",
+    "api": "planned",
+    "worker": "planned"
+  }
+}

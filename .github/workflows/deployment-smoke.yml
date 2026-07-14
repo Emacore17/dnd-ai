@@ -1,0 +1,75 @@
+name: Staging smoke
+
+on:
+  repository_dispatch:
+    types:
+      - vercel.deployment.ready
+  workflow_dispatch:
+    inputs:
+      project_id:
+        description: Non-secret Vercel project ID
+        required: true
+        type: string
+      deployment_id:
+        description: Non-secret Vercel deployment ID
+        required: true
+        type: string
+      commit_sha:
+        description: Full Git commit SHA deployed by Vercel
+        required: true
+        type: string
+      environment:
+        description: Vercel environment expected by the health contract
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: staging-smoke-dnd-ai-web-main
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Staging / Smoke
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'repository_dispatch' &&
+      github.event.client_payload.project.name == 'dnd-ai-web' &&
+      github.event.client_payload.git.ref == 'main' &&
+      github.event.client_payload.environment == 'preview' &&
+      github.event.client_payload.state.type == 'success')
+    environment:
+      name: staging
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout trusted smoke verifier
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .node-version
+
+      - name: Request short-lived deployment access
+        id: oidc
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const token = await core.getIDToken();
+            core.setSecret(token);
+            core.setOutput("token", token);
+
+      - name: Verify deployment identity and health
+        env:
+          VERCEL_TRUSTED_OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+        run: node scripts/smoke-web-deployment.mjs
