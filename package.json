@@ -18,6 +18,7 @@
     "ci:workflow:check": "node scripts/check-ci-workflow.mjs",
     "deploy:check": "node scripts/check-deployment-foundation.mjs",
     "deploy:check:linked": "node scripts/check-deployment-foundation.mjs --require-linked",
+    "deploy:bootstrap:check": "node scripts/assert-vercel-preview-bootstrap-enabled.mjs",
     "deploy:smoke": "node scripts/smoke-web-deployment.mjs",
     "scan:sast": "eslint scripts apps packages --max-warnings 0",
     "scan:secrets": "node scripts/scan-secrets.mjs",

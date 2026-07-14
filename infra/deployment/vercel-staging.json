@@ -18,6 +18,10 @@
     "integration": "vercel-github-app",
     "installationId": null,
     "autoDeploy": false,
+    "manualDeployment": {
+      "enabled": false,
+      "target": "preview"
+    },
     "activationDeploymentPolicy": {
       "**": false,
       "main": true,

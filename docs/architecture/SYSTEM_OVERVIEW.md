@@ -32,6 +32,7 @@ code_refs:
   - infra/deployment/vercel-staging.json
   - .github/workflows/deployment-smoke.yml
   - scripts/check-deployment-foundation.mjs
+  - scripts/assert-vercel-preview-bootstrap-enabled.mjs
   - scripts/check-vercel-deploy-dry-run.mjs
   - scripts/lib/deployment-foundation.mjs
   - scripts/lib/vercel-deploy-dry-run.mjs
@@ -46,6 +47,8 @@ test_refs:
   - tests/contracts/deployment-foundation.test.mjs
   - tests/unit/vercel-preview-build-policy.test.mjs
   - tests/security/vercel-preview-build-guard.test.mjs
+  - tests/unit/vercel-preview-bootstrap-policy.test.mjs
+  - tests/security/vercel-preview-bootstrap-gate.test.mjs
   - tests/unit/vercel-deploy-dry-run.test.mjs
   - tests/security/vercel-deploy-dry-run.test.mjs
 supersedes: null
@@ -55,7 +58,7 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile e `BL-002` la pipeline fail-closed. `BL-003` aggiunge configurazione runtime server-only e startup fail-fast. `BL-080` ha implementato la foundation deploy, l'environment GitHub e il collegamento Vercel. La prima attivazione ha però creato un target Production da `main`; la delivery è stata eliminata. Il contenimento PR #13 e il guard Preview-only PR #14 sono integrati; il merge guard `ee5f12916998cce6847fcc509d8f5e1fa05b1b9f`, le run `29335696502`/`29335856323` 5/5 verdi e il readback con zero deployment costituiscono il nuovo baseline. Il primo CLI Preview esplicito si è fermato prima del deployment su un payload locale da 773,1 MiB contenente un file `.turbo` da 156,5 MB. Manifest unlinked, Git auto-deploy disabilitato e `deploy:check` restano vigenti; la slice corrente aggiunge una denylist root e un gate dry-run sul payload. Non esiste ancora uno staging. Il grant GitHub App condiviso resta un rischio residuo accettato, non la causa attribuita dell'incidente. La UI resta uno scaffold e i successivi moduli M0 non sono sbloccati.
+`BL-001` introduce un monorepo TypeScript buildabile e `BL-002` la pipeline fail-closed. `BL-003` aggiunge configurazione runtime server-only e startup fail-fast. `BL-080` ha implementato la foundation deploy, l'environment GitHub e il collegamento Vercel. Due percorsi distinti hanno però creato record Production: l'attivazione Git da `main` e il successivo CLI con selector Preview. Entrambi sono stati contenuti e rimossi. PR #13/#14/#15 hanno integrato contenimento, guard Preview-only e payload policy; le CI della PR #15 e post-merge sono 5/5 verdi. Il readback corrente project-scoped per `dnd-ai-web` mostra zero deployment/alias e l'origin rimossa risponde `404`. Manifest unlinked, Git auto-deploy disabilitato, `manualDeployment.enabled=false`, `deploy:check` e `deploy:bootstrap:check` mantengono fail-closed il percorso operativo approvato; l'interlock manuale resta procedurale e non impedisce tecnicamente un bypass owner. Non esiste ancora uno staging. Il grant GitHub App condiviso resta un rischio residuo accettato, non la causa attribuita degli incidenti. La UI resta uno scaffold e i successivi moduli M0 non sono sbloccati.
 
 ```text
 apps/
@@ -113,7 +116,7 @@ Il contratto `runtime-config-v1` distingue API, worker e migration. `APP_ENV` ac
 
 L'API valida prima di costruire Fastify e aprire il listener. Il worker valida prima dell'inizializzatore iniettato; il migration profile è pronto per l'executable di `BL-004`. Il web corrente non consuma config runtime e non importa `@dnd-ai/config`.
 
-Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, health contract `web-health-v1` e progetto Vercel collegato al repository corretto con Root Directory `apps/web`, Next.js e `fra1`. Fork Protection, OIDC e Trusted Source sono configurati; zero variabili applicative. Production Branch Vercel=`release/production`, branch release e Ruleset restano invariati. La policy linked ha però prodotto un deployment Production da `main`, confermato `success` prima della rimozione. PR #13 ha riportato il contratto versionato a stato unlinked/fail-closed e il provider a zero deployment; PR #14 ha integrato il guard che accetta soltanto `VERCEL=1`, `VERCEL_ENV=preview` e `VERCEL_TARGET_ENV=preview`. Git auto-deploy resta spento. La CLI deve partire dalla root: `.vercelignore` esclude cache e output generati, mentre `scripts/check-vercel-deploy-dry-run.mjs` valida il manifest Vercel `55.0.0` prima di consentire upload o creazione del deployment. Il contratto impone root esatta, framework Next.js, input richiesti come file regolari con hash valido, mode supportati, massimo 15.000 entry, 10 MiB totali e 5 MiB per file; un `apps/web/.vercelignore` alternativo non è ammesso. Il guard può impedire il completamento, non la creazione iniziale del record deployment. Lo staging non è disponibile.
+Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, health contract `web-health-v1` e progetto Vercel collegato al repository corretto con Root Directory `apps/web`, Next.js e `fra1`. Fork Protection, OIDC e Trusted Source sono configurati; zero variabili applicative. Production Branch Vercel=`release/production`, branch release e Ruleset restano invariati. La policy linked e, successivamente, il comando CLI con `--target=preview` hanno però prodotto due record Production poi rimossi. PR #13 ha riportato il contratto versionato a stato unlinked/fail-closed; PR #14 ha integrato il guard che accetta soltanto `VERCEL=1`, `VERCEL_ENV=preview` e `VERCEL_TARGET_ENV=preview`; PR #15 ha integrato il confine payload. Il secondo record è stato osservato `ERROR`, rimosso per ID esatto e l'origin restituisce `404`; activity log Vercel attribuisce il target Production alla CLI sul commit `1060228`. Git auto-deploy resta spento. `.vercelignore` e `scripts/check-vercel-deploy-dry-run.mjs` consentono soltanto un dry-run bounded dalla root. `source.manualDeployment.enabled=false` e `deploy:bootstrap:check` rendono fail-closed il percorso operativo approvato, ma non sono enforcement provider contro un owner che invochi direttamente la CLI. Lo staging non è disponibile.
 
 ## Comandi disponibili in BL-001/BL-002/BL-003/BL-080
 
@@ -132,7 +135,7 @@ corepack pnpm@10.34.5 deploy:check
 corepack pnpm@10.34.5 verify
 ```
 
-`verify` copre format, lint, typecheck, build, unit, integration, contract, security, package/task/CI/deployment policy e artifact verification. I comandi unit/integration preparano autonomamente i dist richiesti da un checkout pulito; l'integration suite avvia anche il server standalone web e verifica `/health`. Il dry-run provider non appartiene a `verify`: usa la sequenza PowerShell fail-closed con controllo separato degli exit code documentata in [`PREVIEW_STAGING.md`](../operations/PREVIEW_STAGING.md#deploy-e-smoke), mai una pipeline che possa mascherare il fallimento upstream. Test container, browser/E2E, migration, eval, bot e load restano responsabilità dei task proprietari, soprattutto `QA-001`; nessun comando futuro è simulato da un no-op.
+`verify` copre format, lint, typecheck, build, unit, integration, contract, security, package/task/CI/deployment policy e artifact verification. I comandi unit/integration preparano autonomamente i dist richiesti da un checkout pulito; l'integration suite avvia anche il server standalone web e verifica `/health`. Il dry-run provider non appartiene a `verify`: usa la sequenza PowerShell fail-closed con controllo separato degli exit code documentata in [`PREVIEW_STAGING.md`](../operations/PREVIEW_STAGING.md#deploy-e-smoke--gate-chiuso), mai una pipeline che possa mascherare il fallimento upstream. `deploy:bootstrap:check` deve invece fallire con exit `1` nello stato vigente. Test container, browser/E2E, migration, eval, bot e load restano responsabilità dei task proprietari, soprattutto `QA-001`; nessun comando futuro è simulato da un no-op.
 
 ## CI e supply chain
 
@@ -140,7 +143,7 @@ corepack pnpm@10.34.5 verify
 
 Nel workflow CI base le action esterne sono pin a SHA completo, checkout non persiste credenziali e i permessi globali sono read-only. La cache gestita da `setup-node` contiene soltanto lo store pnpm indicizzato dal lockfile. Security esegue SAST locale fail-on-warning, test/secret scan e dependency audit; non riceve secret applicativi.
 
-Il workflow deployment smoke è separato e accetta soltanto payload Preview coerenti. Sul dispatch del deployment Production il job è risultato `skipped`, quindi nessun token o fetch è stato eseguito. Dopo il merge del guard, il primo tentativo CLI non ha creato un deployment: il payload locale sovradimensionato è stato rifiutato sul limite file. Prima di una nuova diagnostica remota, il comando ufficiale `--dry` deve produrre un manifest JSON che superi il checker versionato; soltanto dopo è ammesso il selector `--target=preview`. Non usare `--cwd apps/web`, `--prebuilt`, archivi, `--prod`, `promote`, `--skip-domain`, custom target o override manuali `VERCEL*`. Il percorso Preview resta non verificato; API e worker non partecipano finché non hanno packaging operativo.
+Il workflow deployment smoke è separato e accetta soltanto payload Preview coerenti. Sul dispatch del primo deployment Production il job è risultato `skipped`, quindi nessun token o fetch è stato eseguito; il secondo record Production non ha generato un nuovo smoke. Il dry-run bounded è passato, ma il selector `--target=preview` non ha impedito la classificazione Production: nessun altro deploy reale o redeploy è autorizzato finché il mismatch non viene risolto e il percorso non viene riaperto con PR separata. Non usare `--cwd apps/web`, `--prebuilt`, archivi, `--prod`, `promote`, `--skip-domain`, custom target o override manuali `VERCEL*`. Il percorso Preview resta non verificato; API e worker non partecipano finché non hanno packaging operativo.
 
 Il build produce `artifacts/bl002`: `scripts/lib/build-artifact.mjs` copia soltanto output esplicitamente ammessi, incluso `packages/config/dist`, rifiuta link esterni/path sensibili e file ambientali, scansiona i file e registra byte+SHA-256 in `build-artifact-v1`. L’upload usa soltanto questo staging validato.
 
