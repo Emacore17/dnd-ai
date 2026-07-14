@@ -6,7 +6,10 @@ import { fileURLToPath, URL } from "node:url";
 
 import { parse } from "yaml";
 
-import { validateDeploymentManifest } from "../../scripts/lib/deployment-foundation.mjs";
+import {
+  validateDeploymentManifest,
+  validateVercelProjectConfig,
+} from "../../scripts/lib/deployment-foundation.mjs";
 import { validateDeploymentWorkflow } from "../../scripts/lib/deployment-workflow-policy.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
@@ -43,7 +46,13 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
     ]);
 
   assert.deepEqual(validateDeploymentManifest(manifest), []);
+  assert.deepEqual(validateVercelProjectConfig(manifest, vercelConfig), []);
   assert.deepEqual(validateDeploymentWorkflow(workflow), []);
+  assert.deepEqual(manifest.source.activationDeploymentPolicy, {
+    "**": false,
+    main: true,
+    "release/production": false,
+  });
   const renamedProject = globalThis.structuredClone(manifest);
   renamedProject.provider.project.name = "lookalike-web";
   assert.ok(
@@ -108,6 +117,81 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
   assert.match(healthRoute, /VERCEL_GIT_REPO_ID/);
   assert.match(healthRoute, /VERCEL_REGION/);
   assert.doesNotMatch(healthRoute, /NEXT_PUBLIC_/);
+
+  const prematurelyEnabled = globalThis.structuredClone(vercelConfig);
+  prematurelyEnabled.git.deploymentEnabled =
+    manifest.source.activationDeploymentPolicy;
+  assert.ok(
+    validateVercelProjectConfig(manifest, prematurelyEnabled).some((error) =>
+      error.includes("vercel config.git.deploymentEnabled must be false"),
+    ),
+    "the repository config must stay disabled until activation is recorded",
+  );
+});
+
+test("deployment branch policy denies every branch except staging main", async () => {
+  const manifest = await readJson("infra", "deployment", "vercel-staging.json");
+
+  const singleStarFallback = globalThis.structuredClone(manifest);
+  singleStarFallback.source.activationDeploymentPolicy = {
+    "*": false,
+    main: true,
+    "release/production": false,
+  };
+  assert.ok(
+    validateDeploymentManifest(singleStarFallback).some((error) =>
+      error.includes("source.activationDeploymentPolicy"),
+    ),
+    "a single-star fallback must not stand in for the recursive minimatch glob",
+  );
+
+  const productionEnabled = globalThis.structuredClone(manifest);
+  productionEnabled.source.activationDeploymentPolicy["release/production"] =
+    true;
+  assert.ok(
+    validateDeploymentManifest(productionEnabled).some((error) =>
+      error.includes(
+        "source.activationDeploymentPolicy.release/production must be false",
+      ),
+    ),
+    "the production branch must remain explicitly disabled",
+  );
+});
+
+test("provider bindings are either all absent or all recorded", async () => {
+  const manifest = await readJson("infra", "deployment", "vercel-staging.json");
+  const partialBindings = [
+    [
+      "project ID",
+      (candidate) => (candidate.provider.project.id = "prj_1234567890"),
+    ],
+    [
+      "scope slug",
+      (candidate) =>
+        (candidate.provider.project.scopeSlug = "emacore17s-projects"),
+    ],
+    [
+      "staging origin",
+      (candidate) =>
+        (candidate.provider.project.stagingOrigin =
+          "https://dnd-ai-web-git-main-emacore17s-projects.vercel.app"),
+    ],
+    [
+      "installation ID",
+      (candidate) => (candidate.source.installationId = 41079282),
+    ],
+  ];
+
+  for (const [label, applyBinding] of partialBindings) {
+    const candidate = globalThis.structuredClone(manifest);
+    applyBinding(candidate);
+    assert.ok(
+      validateDeploymentManifest(candidate).some((error) =>
+        error.includes("must be recorded atomically"),
+      ),
+      `${label} alone must fail the provider binding policy`,
+    );
+  }
 });
 
 test("deployment workflow rejects job permission overrides and additional jobs", async () => {
@@ -221,7 +305,11 @@ test("unsafe deployment workflow and environment drift fail closed", () => {
       integration: "token",
       installationId: null,
       autoDeploy: true,
-      activationDeploymentPolicy: { "*": true, main: true },
+      activationDeploymentPolicy: {
+        "**": true,
+        main: true,
+        "release/production": true,
+      },
       stagingBranch: "main",
       productionBranch: "main",
       forkProtection: false,
@@ -252,7 +340,8 @@ test("unsafe deployment workflow and environment drift fail closed", () => {
     "apps/web",
     "fra1",
     "vercel-github-app",
-    "activationDeploymentPolicy.*",
+    "activationDeploymentPolicy.**",
+    "activationDeploymentPolicy.release/production",
     "release/production",
     "autoDeploy requires",
     "different",

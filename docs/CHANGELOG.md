@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 52bf58d9f9cb9cab6ad0cc1b1602d7556067b578
+last_verified_commit: 1766406b9bd701a9880705b371fdc0b05a73abe1
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -25,6 +25,8 @@ code_refs:
   - apps/web/app/health/route.ts
   - apps/web/vercel.json
   - infra/deployment/vercel-staging.json
+  - scripts/check-deployment-foundation.mjs
+  - scripts/lib/deployment-foundation.mjs
   - scripts/lib/deployment-smoke.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
@@ -53,6 +55,7 @@ supersedes: null
 - Aggiunti `apps/web/vercel.json`, Route Handler `/health` con contratto `web-health-v1`, workflow `Staging smoke` e verifier redatto con OIDC breve, senza credenziali Vercel persistenti in Actions.
 - Aggiunte suite unit, standalone integration, contract e security per origin/installation identity, OIDC, regione, timeout, failure propagation e leakage.
 - Creato l'environment GitHub `staging`, limitato a `main`, senza bypass amministratore, secret o variabili.
+- Autorizzato il solo piano Vercel Hobby personale/non commerciale e verificata in modo redatto l'identità esclusiva indicata dal Product Owner; creato `dnd-ai-web` (`prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`) nello scope `emacore17s-projects` e collegato a `Emacore17/dnd-ai` (repository ID `1299266814`) senza produrre deployment.
 - Creati ADR-0005 proposed, `docs/operations/PREVIEW_STAGING.md` e `docs/testing/BL-080_VERIFICATION.md`.
 
 ### Changed
@@ -61,14 +64,17 @@ supersedes: null
 - Documentati Vercel/`fra1` come proposta reversibile, Git Integration nativa, `main` come Preview staging e `release/production` come Production Branch riservata.
 - Chiarito che il web ha zero variabili applicative e che i soli metadata Vercel del health endpoint non sono secret né config di dominio.
 - `BL-080` passa a `IN_PROGRESS/50%/PARTIAL`; `BL-079` resta `BACKLOG` finché project, deploy, smoke e redeploy remoti non sono provati.
-- La review indipendente ha distinto action Preview `vercel.deployment.ready` da `state.type=success`, vincolato ref/repository ai metadata runtime e l'evento all'installation ID, ignorato l'URL del payload, imposto origin esatta + Standard Protection/OIDC, vietato step/job/permission drift, limitato lo streaming body e reso il Git connect a due fasi con policy di attivazione branch-closed `{"*": false, "main": true}`.
+- La review indipendente ha distinto action Preview `vercel.deployment.ready` da `state.type=success`, vincolato ref/repository ai metadata runtime e l'evento all'installation ID, ignorato l'URL del payload, imposto origin esatta + Standard Protection/OIDC, vietato step/job/permission drift, limitato lo streaming body e reso il Git connect a due fasi con policy di attivazione branch-closed ricorsiva `{"**": false, "main": true, "release/production": false}`; `**` evita che branch con `/` sfuggano alla deny-all.
+- Il readback provider conferma Root Directory `apps/web`, Next.js, `fra1`, Fork Protection, system environment variables ed emissione OIDC abilitate, zero variabili applicative e Standard Protection con SSO predefinito `all_except_custom_domains`. Trusted Source GitHub Actions configurata con claim exact-match e installation ID `41079282` acquisito; Production Branch ancora `main`, grant App ampio (`isAccessRestricted=false`, 8 repository), origin non acquisita e blocco dell'automazione UI locale mantengono `BL-080` parziale.
 
 ### Verification
 
 - Base `0065c012` verificata dalla CI post-merge `29315052002`, 5/5 job `SUCCESS`.
 - Foundation disabilitata integrata tramite [PR #7](https://github.com/Emacore17/dnd-ai/pull/7): run PR [`29321410036`](https://github.com/Emacore17/dnd-ai/actions/runs/29321410036) e run post-merge [`29321531038`](https://github.com/Emacore17/dnd-ai/actions/runs/29321531038) entrambe 5/5 job `SUCCESS`; artifact post-merge 3.247 file.
-- Full `TURBO_FORCE=true pnpm verify` finale PASS in 58,0 s senza cache Turbo: unit 29 pass/1 skip host, integration 9/9, contract 16/16, security 11 pass/3 skip host; deployment e CI policy `PASS`; artifact 3.205 file. Il rerun precedente si era fermato correttamente sul format check ed è stato corretto prima del PASS.
-- `deploy:check:linked` fallisce intenzionalmente sui binding provider ancora `null`; Vercel `whoami` fallisce senza credenziali. Questi failure path impediscono di presentare il piano locale come staging reale.
+- Full verify della foundation pre-provider PASS in 58,0 s senza cache Turbo: unit 29 pass/1 skip host, integration 9/9, contract 16/16, security 11 pass/3 skip host; artifact 3.205 file.
+- Hardening corrente verificato con `TURBO_FORCE=true pnpm verify` exit `0` in 75,4 s: unit 29 pass/1 skip host, integration 9/9, contract 18/18, security 11 pass/3 skip host, deployment/task/secret policy e artifact 3.205 file `PASS`. Il checker ora confronta `apps/web/vercel.json` con il desired state e rifiuta sia la glob singola `*` sia qualunque popolamento parziale dei quattro binding provider.
+- Commit hardening `1766406b9bd701a9880705b371fdc0b05a73abe1` pubblicato nella [PR #10](https://github.com/Emacore17/dnd-ai/pull/10): [run `29326093430`](https://github.com/Emacore17/dnd-ai/actions/runs/29326093430) 5/5 `SUCCESS`; readback provider post-PR ancora a zero deployment.
+- `deploy:check:linked` fallisce intenzionalmente sui binding versionati ancora `null`. L'identità Vercel autorizzata e il piano Hobby risultano verificati in modo redatto, ma la lista deployment è vuota e i blocker provider impediscono di presentare il progetto collegato come staging reale.
 
 ## 2026-07-13
 

@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
+last_verified_commit: 1766406b9bd701a9880705b371fdc0b05a73abe1
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -30,6 +30,8 @@ code_refs:
   - scripts/lib/secret-scanner.mjs
   - infra/deployment/vercel-staging.json
   - .github/workflows/deployment-smoke.yml
+  - scripts/check-deployment-foundation.mjs
+  - scripts/lib/deployment-foundation.mjs
   - scripts/lib/deployment-smoke.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
@@ -57,7 +59,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-080` è `IN_PROGRESS`: desired state, health contract, workflow/test e GitHub environment sono implementati, mentre project/deploy/smoke/redeploy Vercel restano aperti e ADR-0005 è proposed. `BL-079` resta `BACKLOG` fino allo staging reale. I riferimenti futuri restano marcati `planned`; `GOV-002` estenderà il controllo documentale.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-080` è `IN_PROGRESS`: desired state, health contract, workflow/test, GitHub environment, progetto Vercel e Trusted Source exact-match sono disponibili, ma non esiste alcun deployment. Production Branch, grant GitHub App repository-only, binding finali, deploy/smoke/redeploy restano aperti e ADR-0005 è proposed. `BL-079` resta `BACKLOG` fino allo staging reale. I riferimenti futuri restano marcati `planned`; `GOV-002` estenderà il controllo documentale.
 
 ## Governance e baseline
 
@@ -76,8 +78,8 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Gate fallito rende la PR non mergeabile | spec §31 `BL-002`; card BL-002 | BL-002 | Ruleset `main-required-ci` `18877721` | PR negativa #3/run `29256736728`: gate FAIL e `mergeStateStatus=BLOCKED`; regole `main` verificate via API | PASS |
 | Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; full verify locale/clean; CI `29285998646`; report BL-003 | DONE; PASS locale/clean/CI |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
-| Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner fail-closed; manifest web con zero secret; Git Integration senza token Vercel persistente e Trusted Source OIDC breve | config/security suite; environment GitHub zero secret; token mancante/malformato fail-before-fetch | BL-003 PASS; BL-080 boundary locale PASS, provider pending |
-| Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | `staging-foundation-v1`, `/health`, Standard Protection + OIDC, workflow dispatch e environment GitHub; auto-deploy disabilitato e project Vercel pending | unit smoke, standalone integration, contract/security; report BL-080 | BL-080 IN_PROGRESS/50%; remoto pending |
+| Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner fail-closed; web con zero secret/variabili applicative; Git Integration reale senza token Vercel persistente; emissione OIDC e Trusted Source exact-match abilitate | config/security suite; environment GitHub e progetto Vercel con zero secret applicativi; token mancante/malformato fail-before-fetch | BL-003 PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
+| Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | `staging-foundation-v1`, `/health`, progetto `dnd-ai-web` collegato, Standard Protection, Trusted Source e environment GitHub; auto-deploy disabilitato | unit smoke, standalone integration, contract/security; PR #10/run `29326093430` 5/5 `SUCCESS`; provider readback e report BL-080 | BL-080 IN_PROGRESS/50%; zero deploy, Production Branch/grant repository-only/origin pending |
 | Deploy web riconducibile a project/deployment/SHA/ref/repository/regione | spec §29.4; ADR-0005 proposed | BL-080 | `web-health-v1`, origin branch esatta, installation ID, `scripts/lib/deployment-smoke.mjs` | action ready/state success, event URL ignorato, mismatch Git/runtime, timeout, body bounded, redaction + server standalone | locale PASS; deploy/redeploy remoto pending |
 
 ## UX/UI P0
