@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
+last_verified_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -11,13 +11,21 @@ related_tasks:
   - BL-001
   - BL-002
   - BL-003
+  - BL-004
   - BL-079
   - BL-080
-code_refs: []
+code_refs:
+  - packages/persistence
+  - scripts/run-database-migrations.mjs
+  - infra/local/postgres.compose.yml
 test_refs:
   - AGENTS_VALIDATION.txt
   - docs/testing/BL-003_VERIFICATION.md
   - docs/testing/BL-080_VERIFICATION.md
+  - tests/database/database-migrations.test.mjs
+  - tests/database/database-migration-cli.test.mjs
+  - tests/database/database-migration-failure.test.mjs
+  - docs/testing/BL-004_VERIFICATION.md
 supersedes: null
 ---
 
@@ -54,6 +62,9 @@ supersedes: null
 | [`adr/0005-vercel-web-preview-and-staging.md`](adr/0005-vercel-web-preview-and-staging.md) | Decisione proposed su provider, trust boundary e staging web |
 | [`operations/PREVIEW_STAGING.md`](operations/PREVIEW_STAGING.md) | Desired state, setup sicuro, smoke e recupero preview/staging |
 | [`testing/BL-080_VERIFICATION.md`](testing/BL-080_VERIFICATION.md) | Evidenze parziali e gate remoti ancora aperti di BL-080 |
+| [`adr/0006-postgresql-migration-foundation.md`](adr/0006-postgresql-migration-foundation.md) | Decisione accepted su tool, baseline, checksum, lock e rollback database |
+| [`operations/DATABASE_MIGRATIONS.md`](operations/DATABASE_MIGRATIONS.md) | Runbook locale/CI per PostgreSQL e migrazioni forward-only |
+| [`testing/BL-004_VERIFICATION.md`](testing/BL-004_VERIFICATION.md) | Evidenze riproducibili e gate di chiusura della fondazione migration BL-004 |
 
 ## Documenti pianificati
 

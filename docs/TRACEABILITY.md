@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
+last_verified_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -43,6 +43,11 @@ code_refs:
   - scripts/check-vercel-deploy-dry-run.mjs
   - scripts/lib/vercel-deploy-dry-run.mjs
   - scripts/lib/deployment-smoke.mjs
+  - packages/persistence
+  - scripts/run-database-migrations.mjs
+  - scripts/lib/database-migration-policy.mjs
+  - scripts/lib/postgres-test-container.mjs
+  - infra/local/postgres.compose.yml
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -68,6 +73,13 @@ test_refs:
   - tests/unit/vercel-deploy-dry-run.test.mjs
   - tests/security/vercel-deploy-dry-run.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
+  - tests/database/database-migrations.test.mjs
+  - tests/database/database-migration-cli.test.mjs
+  - tests/database/database-migration-failure.test.mjs
+  - tests/unit/database-migration-policy.test.mjs
+  - tests/contracts/database-migration-contract.test.mjs
+  - tests/security/database-migration-security.test.mjs
+  - docs/testing/BL-004_VERIFICATION.md
 supersedes: null
 ---
 
@@ -75,7 +87,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-080` è `BLOCKED/50%/PARTIAL`: contenimento PR #13, guard PR #14, policy payload PR #15 e freeze PR #16 sono integrati; CI PR `29343319207` e post-merge `29343526054` della PR #16 sono 5/5 verdi e non hanno creato deployment Vercel. L'audit Vercel CLI `55.0.0` dimostra che il target Preview viene rimosso dal body da `@vercel/client 17.6.4`; la regola first-deployment Production e l'issue aperta `vercel/vercel#17069` sostengono l'ipotesi server più forte, non ancora confermata, e non esiste un fix/workaround maintainer. Il progetto resta project-scoped a zero deployment/alias; Git e manual deploy sono spenti. Preview/smoke/failure/redeploy restano aperti e ADR-0005 è proposed. `BL-004` è `READY`; `BL-079` resta `BACKLOG` fino allo staging reale.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. La provider evidence di `BL-080` è integrata tramite PR #17/merge `c72c78b`, con CI PR `29346630165` e post-merge `29346792492` 5/5 verdi; Vercel resta project-scoped a zero deployment/alias e il freeze non cambia. `BL-004` è `IN_REVIEW/90%/PARTIAL`: migration head `000001_postgresql_foundation`, contract `database-baseline-v1`, PostgreSQL 17/pgvector 0.8.2 reale, suite mirata 13/13 verde; full gate, commit pulito e CI sono in chiusura. `BL-079` resta `BACKLOG` fino allo staging reale.
 
 ## Governance e baseline
 
@@ -95,6 +107,8 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; full verify locale/clean; CI `29285998646`; report BL-003 | DONE; PASS locale/clean/CI |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
 | Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner fail-closed; web con zero secret/variabili applicative; Git Integration reale senza token Vercel persistente; emissione OIDC e Trusted Source exact-match abilitate | config/security suite; environment GitHub e progetto Vercel con zero secret applicativi; token mancante/malformato fail-before-fetch | BL-003 PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
+| Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | implementato; suite DB 13/13 PASS, full/clean/CI da registrare |
+| Rollback database fail-closed e forward-only gestito | spec §§19.5, 29.5; ADR-0006 | BL-004 | policy CLI e runbook `DATABASE_MIGRATIONS.md` | DDL invalido annullato con ledger 0; `down` solo loopback disposable senza query routing e con conferma; staging/production rifiutati | PASS mirato; full/CI da registrare |
 | Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | foundation, `/health`, progetto collegato, protezioni, Git auto-deploy spento e guard Preview-only | PR #12 e CLI su `1060228` entrambi Production/rimossi; freeze PR #16/merge `aa9342d`, CI `29343319207`/`29343526054` verdi e zero deploy; audit omissione client + ipotesi first-deployment + issue CLI `#17069` | BL-080 BLOCKED/PARTIAL; nessuno staging; serve fix/workaround provider; BL-079 BACKLOG |
 | Build provider limitato a Preview senza leakage | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `apps/web/vercel.json`, build script dedicato, policy pura e target metadata nella cache Turbo | unit policy, security subprocess e contract deployment versionati; build Vercel richiede `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`; locale ammesso solo con tutti assenti | guard integrato; secondo record Production `ERROR`, ma log post-rimozione insufficienti per attribuire l'errore al guard |
 | Payload CLI minimo e verificato prima di creare deployment | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `.vercelignore`, dry-run parser e deployment foundation contract | test unit/security/contract; dry-run `nextjs` dalla root con 158 entry e 1.093.594 byte; mode/hash/symlink, cache/output/env/path non relativi e budget oltre soglia falliscono chiusi | PR #15/merge `1060228`, CI PR/post-merge verdi; contratto payload PASS |

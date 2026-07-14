@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
+last_verified_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -18,6 +18,13 @@ code_refs:
   - apps
   - packages
   - packages/config
+  - packages/persistence/src/migration-runner.ts
+  - packages/persistence/src/migration-manifest.ts
+  - packages/persistence/src/migrations/000001_postgresql_foundation.ts
+  - infra/local/postgres.compose.yml
+  - scripts/run-database-migrations.mjs
+  - scripts/lib/database-migration-policy.mjs
+  - scripts/lib/postgres-test-container.mjs
   - apps/api/src/runtime.ts
   - apps/worker/src/runtime.ts
   - .github/workflows/ci.yml
@@ -63,6 +70,13 @@ test_refs:
   - tests/security/vercel-deploy-dry-run.test.mjs
   - tests/unit/vercel-preview-bootstrap-policy.test.mjs
   - tests/security/vercel-preview-bootstrap-gate.test.mjs
+  - tests/unit/database-migration-policy.test.mjs
+  - tests/contracts/database-migration-contract.test.mjs
+  - tests/database/database-migration-cli.test.mjs
+  - tests/database/database-migration-failure.test.mjs
+  - tests/database/database-migrations.test.mjs
+  - tests/security/database-migration-security.test.mjs
+  - docs/testing/BL-004_VERIFICATION.md
 supersedes: null
 ---
 
@@ -77,8 +91,8 @@ supersedes: null
 > **Versione schema task:** `1.0.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-080 — Fondazione preview/staging M0`
-> **Prossimo task READY:** `BL-004`; `BL-079` resta `BACKLOG` finché lo staging non è disponibile
+> **Task attivo:** `BL-004 — Tool migration e schema baseline`
+> **Prossimo task READY:** `—`; `BL-079` resta `BACKLOG` finché lo staging non è disponibile
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -405,24 +419,24 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-004 — Tool migration e schema baseline
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Stato:** `IN_REVIEW`
+- **Progresso:** `90%`
+- **Esito test:** `PARTIAL`
+- **Contesto verificato:** `YES` — commit/SHA: `c72c78bbae06ebb02c7de7d63844f17065354c06`; data: `2026-07-14`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-001, BL-003
 - **Dipendenze operative aggiuntive:** BL-001, BL-003
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §19.5 Migrazioni e compatibilità; `docs/MVP_SPEC.md` §29.5 Migrazioni zero-downtime; `docs/MVP_SPEC.md` §26.4 Integration test database; `docs/MVP_SPEC.md` §31 `BL-004`; `docs/MVP_SPEC.md` §35.1; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/operations/CONFIGURATION.md`
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §19.5 Migrazioni e compatibilità; `docs/MVP_SPEC.md` §29.5 Migrazioni zero-downtime; `docs/MVP_SPEC.md` §26.4 Integration test database; `docs/MVP_SPEC.md` §31 `BL-004`; `docs/MVP_SPEC.md` §35.1; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/adr/0006-postgresql-migration-foundation.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/DATABASE_MIGRATIONS.md`
 - **Obiettivo:** Come backend voglio migrations riproducibili.
 - **Deliverable:** Tool migration e schema baseline.
 - **Criterio di accettazione:** Migrazione da DB vuoto e rollback operativo documentato.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Test di accettazione automatizzato: Migrazione da DB vuoto e rollback operativo documentato.
-  - [ ] Migration test da database vuoto all’head e replay su database già aggiornato.
-  - [ ] Test rollback/forward-fix documentato e verifica vincoli/indici con PostgreSQL reale.
-- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`; `docs/operations/CONFIGURATION.md`; migration notes; `docs/data/DATA_MODEL.md` resta `planned` con owner `DOC-ARCH-001`
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+  - [x] Test di accettazione automatizzato: Migrazione da DB vuoto e rollback operativo documentato.
+  - [x] Migration test da database vuoto all’head e replay su database già aggiornato.
+  - [x] Test rollback/forward-fix documentato e verifica vincoli/indici con PostgreSQL reale.
+- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0006-postgresql-migration-foundation.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/DATABASE_MIGRATIONS.md`; `docs/testing/BL-004_VERIFICATION.md`; `docs/data/DATA_MODEL.md` resta `planned` con owner `DOC-ARCH-001`
+- **Evidenze di chiusura:** test mirati: `db:migrate:test` 13/13 e unit/contract/security migration 13/13 `PASS`. Full working-tree `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 73,4 s: lint/build 11/11, typecheck 12/12, unit 47 pass/1 skip host, integration 9/9, database 13/13, contract 22/22, security 23 pass/3 skip host, policy/scan e artifact 3.238 file `PASS`; audit high `No known vulnerabilities found`. Commit pulito, PR e CI sono ancora in chiusura; report `docs/testing/BL-004_VERIFICATION.md`; head `000001_postgresql_foundation`; contract `database-baseline-v1`; source SHA `e8543d84b9b842adf352260536dcea284c93dfb859c9ec03368f10deb9455fc7`; checksum `46a2bb9ce2ca6957a3b87e423e0ea67b36688e71ebacc84c469bdb7f7a8dc449`.
+- **Note, rischi o bloccanti:** La baseline è deliberatamente infrastrutturale: ledger/versione di compatibilità, namespace applicativo ed estensione PostgreSQL richiesta, senza anticipare tabelle di dominio. `packages/persistence` riceve config validata e non importa `packages/config`; il composition root resta esterno. La suite reale copre file migration sconosciuti/symlink fail-closed, source SHA e checksum contract, database vuoto→head, replay, DDL invalido con rollback e ledger vuoto, due runner simultanei, lock occupato, vincoli/indice, rollback locale e re-apply. `previous→head` è `N/A` per la prima migration: non esiste ancora una versione applicata precedente diversa dal database vuoto; diventa obbligatorio da `000002`. `down` è limitato a URL loopback disposable senza parametri di routing e vietato in staging/production. Fuori scope: tabelle utenti/campagne/eventi/memorie, RLS, repository, backfill, provisioning gestito e harness generale `QA-001`.
 
 ### BL-005 — Signup, verify, rate limit
 
@@ -2493,21 +2507,21 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: BL-080
+active_task: BL-004
 last_completed_task: BL-003
-next_ready_task: BL-004
-status: BLOCKED
-progress: 50
+next_ready_task: —
+status: IN_REVIEW
+progress: 90
 started_at: 2026-07-14
 updated_at: 2026-07-14
 agent: Codex development agent
-git_branch: codex/bl-080-provider-evidence
-base_commit: aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d
-current_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
+git_branch: codex/bl-004-persistence-baseline
+base_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
+current_commit: c72c78bbae06ebb02c7de7d63844f17065354c06
 spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
 context_verified: true
 test_status: PARTIAL
-working_tree_dirty: false
+working_tree_dirty: true
 ```
 
 ## Contesto letto
@@ -2516,23 +2530,24 @@ working_tree_dirty: false
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] ADR vigenti — ADR-0001, ADR-0002, ADR-0003 e ADR-0004
-- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/PREVIEW_STAGING.md`; `docs/testing/BL-080_VERIFICATION.md`; ADR-0003, ADR-0004 e ADR-0005 proposed
-- [x] codice, dipendenze e test correnti — web Next deployabile; API senza container e worker senza daemon/start; CI, artifact e config contract BL-003 verdi
+- [x] ADR vigenti — ADR-0001, ADR-0002, ADR-0003, ADR-0004 e ADR-0006 accepted; ADR-0005 proposed
+- [x] documenti collegati — `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/DATABASE_MIGRATIONS.md`; ADR-0002, ADR-0003, ADR-0004 e ADR-0006
+- [x] codice, dipendenze e test correnti — runner/manifest/migration `@dnd-ai/persistence`, composition root, policy rollback, Compose/harness Docker, workflow CI e suite PostgreSQL reale
 
 ## Piano e scope
 
-- **Obiettivo verificabile:** rendere disponibile una preview/staging non-production del solo runtime oggi deployabile (`apps/web`), identificata dal commit, riproducibile e protetta da smoke/failure gate; registrare provider, regione, ownership e procedura di rollback senza introdurre credenziali production.
-- **File/moduli previsti:** decisione provider; configurazione ripetibile del progetto web; workflow/policy GitHub a privilegi minimi; script di smoke e metadati deploy; contract/negative test; runbook staging e report BL-080; documenti living e tracciabilità.
-- **Azioni esterne:** ambiente GitHub `staging`, Ruleset, Trusted Source, account/piano e grant condiviso restano invariati. PR #16 ha integrato il freeze nel merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; CI PR `29343319207` e post-merge `29343526054` sono 5/5 verdi e non hanno creato deployment Vercel. L'audit successivo è read-only salvo il rollback del metadata GitHub vuoto creato accidentalmente da un comando `gh api -f` usato senza `--method GET`: eliminato il solo ID `5442987675`, poi verificati `404` e lista SHA vuota. Nessun deploy Vercel, auto-deploy Git, Production, promozione o comunicazione pubblica è autorizzato in questo change set.
-- **Test da scrivere prima/durante:** contract del kill switch manuale fail-closed e del divieto di riattivare auto-deploy; unit e subprocess security per configurazione assente, disabilitata, malformata o non coerente; regressione dei contract workflow/provisioning, guard, payload, smoke e full gate. Il runbook deve consentire soltanto dry-run/readback e contenimento per URL/ID esatto finché il mismatch provider non viene risolto e la riapertura non passa da una PR separata.
-- **Rischi/failure path:** target Production nonostante Production Branch separata e selector CLI Preview; stdout CLI assente o non conforme prima dell'inspect; record provider creato prima che il target possa essere verificato; token OIDC inviato a origin non trusted; credenziale provider esposta a codice PR non affidabile; installazione GitHub App condivisa con visibilità più ampia del singolo project, rischio accettato e compensato; deploy non riconducibile al commit/App; regione o root directory in drift; URL payload stale o riutilizzato; errore provider mascherato; smoke che passa sulla pagina sbagliata; rollback che seleziona un artifact diverso; ambiente GitHub dichiarato ma non applicato.
-- **Fuori scope:** deploy di `apps/api` e `apps/worker` finché non hanno packaging/runtime gestito; database, migration e secret applicativi; production release; load/chaos/restore; implementazione UX/UI e browser harness di `BL-079`/`QA-001`.
+- **Obiettivo verificabile:** fornire migration PostgreSQL riproducibili e fail-closed, da database vuoto o versione precedente all'head, con replay idempotente e rollback operativo esplicito.
+- **File/moduli previsti:** runner e migration in `packages/persistence`; composition root in `scripts/`; harness PostgreSQL reale e test unit/integration/contract/security; script root e CI; ADR, migration notes, report BL-004 e living docs.
+- **Azioni esterne:** nessuna risorsa cloud o credenziale reale. I test usano esclusivamente un container PostgreSQL effimero locale/CI con credenziali sintetiche e cleanup bounded; il freeze Vercel resta invariato.
+- **Test implementati:** discovery/manifest/source checksum/head e rollback policy; config composition redatta; database vuoto→head, replay no-op, transazione DDL fallita, due runner simultanei, lock occupato, rollback local e ripristino; estensione, vincoli e indice su PostgreSQL reale; contract CLI/script/CI. `previous→head` è non applicabile alla prima migration e sarà obbligatorio da `000002`.
+- **Rischi/failure path:** URL mancante o invalido, credenziale esposta negli errori, database irraggiungibile, migration alterata o fuori ordine, schema parziale/head sconosciuto, doppia applicazione concorrente e comando distruttivo in staging/production. Tutti devono fallire senza registrare uno stato applicato falso.
+- **Fuori scope:** schema completo del §19, tabelle e repository di dominio, RLS, backfill applicativi, restore/chaos, provisioning staging/production, UI e harness container generale di `QA-001`.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-14 | 90% | Implementata la baseline PostgreSQL 17/pgvector 0.8.2 pin a digest con runner `node-pg-migrate`, contract/checksum, composition root config, rollback local-only, harness Docker e CI. Le review hanno chiuso override di routing URL, file migration sconosciuti/symlink, cleanup e concorrenza reale. | Mirati 13/13 + 13/13 `PASS`; full `verify` working tree exit `0` in 73,4 s senza cache: unit 47/1 skip, integration 9, DB 13, contract 22, security 23/3 skip, artifact 3.238; audit high pulito. | Congelare e verificare il commit pulito, poi pubblicare la PR protetta. |
 | 2026-07-13 | 25% | Creato `AGENTS.md` con protocollo cold-start, invarianti, standard di codice/test/documentazione e policy browser. | Link esistenti verificati; SHA-256 `1c53683f00393fd1a992287d7efdd8d1b8bb9b107b6804869ead80761148756c`; suite GOV completa ancora `PARTIAL`. | Creare i quattro documenti living mancanti e simulare la cold start. |
 | 2026-07-13 | 100% | Completati contesto, indice, tracciabilità, changelog; allineata la direzione UX/UI mobile-first con studio, ADR e `BL-079`. | Structural audit e cold-start finale `PASS`; spec SHA `b639a75c26ca0dc17e54d9f1c8816de7514a5e2d54ea4cfa733f275e18fbcd84`. | Selezionare `BL-001` in una nuova sessione di sviluppo. |
 | 2026-07-13 | 25% | Auditati 101 task e 79 righe BL: grafo senza cicli/ID orfani; formalizzati i consumer UI di `BL-079`, le dipendenze differite e l’ownership del browser harness. Selezionato `BL-001`. | Nuova spec SHA `6c40a5c2b42d496c4977df157c19984175e643684cf5b2f1ec8e7ea47fc74578`; test implementativi ancora `NOT_RUN`. | Creare scaffold, checker e test negativi. |
@@ -2577,16 +2592,16 @@ working_tree_dirty: false
 
 ## Chiusura
 
-- **Commit/PR:** foundation PR #7; hardening PR #10; attivazione PR #12/merge `c64d095`; contenimento PR #13/merge `61e5cbd`; guard PR #14/merge `ee5f129`; policy CLI PR #15/merge `1060228`; freeze commit `1cb655abee8a55b6974d90ae20b4244b12ba1192`, evidence sync `e5dff7bf371bd91321587fecadbd8f51264cc263`, PR #16/merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; provider evidence `b84f4eb79000ab78b524d463582eb28013c9da2c`
-- **Comandi eseguiti:** preflight Git/GitHub/Vercel; audit read-only sorgente Vercel; web lint/typecheck/build; unit/integration/contract/security; full `pnpm verify`; task/deployment/CI policy e secret scan; build guard local/Preview/Production; dry-run Vercel JSON e parser bounded; API GitHub environment/branch/Ruleset; Vercel CLI/API per identity/plan/project/link/settings/env/deployment/Trusted Sources/Git namespace, repository grant, activity log, deployment e alias; rimozione per deployment ID esatto; gate `deploy:bootstrap:check`
-- **Exit code:** `0` per CI PR #12/#13/#14/#15/#16, rimozioni esatte, readback vuoti, full verify hotfix/guard/policy/freeze/provider evidence, dry-run bounded e test mirati interlock; expected `1` per simulazione Production fermata prima di Next, CLI oversize fermato prima della delivery e gate manuale disabilitato. Il gate remoto resta `PARTIAL/BLOCKED`: nessuno staging esiste e nessun percorso first-deployment Preview-only è supportato
-- **Report/CI URL o path:** `docs/testing/BL-080_VERIFICATION.md`; [attivazione PR #12 / run `29331343752`](https://github.com/Emacore17/dnd-ai/actions/runs/29331343752); [smoke rifiutato `29331534774`](https://github.com/Emacore17/dnd-ai/actions/runs/29331534774); PR #16 run `29343319207` e post-merge `29343526054`; entrambi i record Vercel Production rimossi e `dnd-ai-web` project-scoped a zero deployment/alias
-- **Migration head:** `N/A`
-- **Contract/schema/event version:** config `runtime-config-v1`; deploy `staging-foundation-v1`; health `web-health-v1`; API/event schema `N/A`
+- **Commit/PR:** pending; base verificata `c72c78bbae06ebb02c7de7d63844f17065354c06`, branch `codex/bl-004-persistence-baseline`
+- **Comandi eseguiti:** preflight Git/spec; install pnpm; lint/typecheck/build persistence; unit/contract/security migration; `db:migrate:test`; task/CI policy; full `verify` senza cache; dependency audit high. Clean commit e CI sono pending.
+- **Exit code:** mirati, full gate e audit `0`; red test iniziale su discovery `.d.ts.map` e regressioni di review corretti; stato complessivo ancora `PARTIAL` fino alla verifica del commit pulito.
+- **Report/CI URL o path:** `docs/testing/BL-004_VERIFICATION.md`; CI pending.
+- **Migration head:** `000001_postgresql_foundation`
+- **Contract/schema/event version:** database `database-baseline-v1`; runtime config `runtime-config-v1`; API/event schema `N/A`
 - **Prompt/model/eval version:** `N/A`
-- **Documenti aggiornati:** ADR-0005 proposed; runbook preview/staging; report BL-080; task/context/traceability/changelog/index/overview/config/CI in allineamento
-- **Rischi residui/TODO tracciati:** omissione client Preview provata; causa server first-deployment ipotizzata ma non confermata e senza fix/workaround maintainer; account/piano Hobby esclusivi; installazione condivisa invariata; Git/deploy/retry/redeploy/promote vietati; prova Preview, smoke, failure e rollback/redeploy aperti; interlock procedurale bypassabile tecnicamente ma vietato; deployment/alias project-scoped `dnd-ai-web` zero
-- **Task successivo reso READY:** `BL-004`; `BL-079` resta `BACKLOG` fino alla chiusura di BL-080
+- **Documenti aggiornati:** ADR-0006, runbook database, report BL-004 e living docs; verifica finale pending.
+- **Rischi residui/TODO tracciati:** Docker è necessario per la suite; il primo upgrade non-vuoto sarà verificabile solo con `000002`; provider DB gestito e credenziali reali restano fuori scope. Freeze Vercel invariato.
+- **Task successivo reso READY:** `—` finché BL-004 non è `DONE`; poi `BL-008`. `BL-079` resta `BACKLOG` fino alla chiusura di BL-080.
 
 
 ## 21. Context Sync Log
@@ -2625,6 +2640,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-14 | `e5dff7b` | BL-080 clean verification | Evidence sync | Il commit documentale finale è stato verificato da working tree pulito con full gate senza cache in 57,2 s; nessun deploy Vercel è stato eseguito. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | 2026-07-14 | `aa9342d` | BL-080 freeze integration e provider evidence | PR #16, target audit e blocco | Freeze integrato con CI PR/post-merge 5/5 e zero deployment. L'audit prova l'omissione client; regola first-deployment e issue `vercel/vercel#17069` sostengono un'ipotesi server non confermata e senza fix supportato. BL-080 passa `BLOCKED/PARTIAL`, BL-004 `READY`. Il metadata GitHub vuoto creato accidentalmente da `gh api -f` è stato rimosso per ID esatto e verificato assente. | BL-004, BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | 2026-07-14 | `b84f4eb` | BL-080 provider evidence clean verification | Source audit e allineamento living docs | Distinti fatti client e ipotesi server, corrette dipendenze/stati e verificato il commit pulito con full gate in 58,1 s; nessuna azione Vercel o GitHub Deployment eseguita. | BL-004, BL-079, GATE-M0, BL-070, DOC-OPS-001 |
+| 2026-07-14 | working tree da `c72c78b` | BL-004 | PostgreSQL migration foundation | Aggiunti head `000001_postgresql_foundation`, contract `database-baseline-v1`, runner/manifest fail-closed, pgvector pin a digest, rollback local-only, harness/CI e ADR-0006. Test DB mirati 13/13; full gate/commit/CI in chiusura. | BL-005, BL-007, BL-015, BL-036, BL-008, QA-001, DOC-ARCH-001 |
 | — | — | — | — | — | — |
 
 

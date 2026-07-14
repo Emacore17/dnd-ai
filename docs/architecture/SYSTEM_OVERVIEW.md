@@ -21,6 +21,11 @@ code_refs:
   - apps/api
   - apps/worker
   - packages/config
+  - packages/persistence/src/migration-manifest.ts
+  - packages/persistence/src/migration-runner.ts
+  - packages/persistence/src/migrations/000001_postgresql_foundation.ts
+  - infra/local/postgres.compose.yml
+  - scripts/run-database-migrations.mjs
   - packages
   - scripts/lib/workspace-boundaries.mjs
   - .github/workflows/ci.yml
@@ -52,6 +57,11 @@ test_refs:
   - tests/security/vercel-preview-bootstrap-gate.test.mjs
   - tests/unit/vercel-deploy-dry-run.test.mjs
   - tests/security/vercel-deploy-dry-run.test.mjs
+  - tests/contracts/database-migration-contract.test.mjs
+  - tests/database/database-migration-cli.test.mjs
+  - tests/database/database-migration-failure.test.mjs
+  - tests/database/database-migrations.test.mjs
+  - tests/security/database-migration-security.test.mjs
 supersedes: null
 ---
 
@@ -59,7 +69,7 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile e `BL-002` la pipeline fail-closed. `BL-003` aggiunge configurazione runtime server-only e startup fail-fast. `BL-080` ha implementato la foundation deploy, l'environment GitHub e il collegamento Vercel. Due percorsi distinti hanno però creato record Production: l'attivazione Git da `main` e il successivo CLI con selector Preview. Entrambi sono stati contenuti e rimossi. PR #13/#14/#15/#16 hanno integrato contenimento, guard Preview-only, payload policy e freeze; PR #16/merge `aa9342d` ha CI PR/post-merge 5/5 verde e non ha creato deployment. Il readback project-scoped per `dnd-ai-web` mostra zero deployment/alias. L'audit CLI `55.0.0` prova che `@vercel/client 17.6.4` omette il target Preview prima della POST; la regola first-deployment e l'issue `vercel/vercel#17069` sostengono l'ipotesi server più forte, ancora senza conferma o fix supportato. Manifest unlinked, Git auto-deploy disabilitato, `manualDeployment.enabled=false`, `deploy:check` e `deploy:bootstrap:check` mantengono fail-closed il percorso approvato. Non esiste ancora uno staging: `BL-080` è bloccato, `BL-079` resta backlog e `BL-004` è il prossimo task M0 ready.
+`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` implementa ora la fondazione PostgreSQL/pgvector: migration head e contract versionati, composition root esterno a persistence, rollback local-only e suite container reale in CI. `BL-080` resta bloccato: i due record Production creati dal provider sono stati contenuti e rimossi; freeze, Git auto-deploy spento e gate manuale fail-closed restano invariati. Il readback finale project-scoped mostra zero deployment/alias. Non esiste ancora uno staging, quindi `BL-079` resta backlog; `BL-004` è in review e non ha eseguito alcuna operazione Vercel.
 
 ```text
 apps/
@@ -72,7 +82,7 @@ packages/
   domain/          entità, comandi, porte e invarianti puri
   rules/           Rules Engine deterministico
   ai/              porte, prompt/context e adapter AI futuri
-  persistence/     implementazioni repository e migration future
+  persistence/     manifest, runner e baseline migration; repository di dominio futuri
   observability/   logging, tracing e metriche condivise future
   testing/         fixture/fake condivisi senza logica di produzione
 ```
@@ -106,6 +116,8 @@ App→app, package→app, import relativi che escono dal package e cicli workspa
 | TypeScript | `6.0.3` |
 | Next.js / React | `16.2.10` / `19.2.7` |
 | Fastify | `5.10.0` |
+| PostgreSQL / pgvector | `17` / `0.8.2` |
+| node-pg-migrate / pg | `8.0.4` / `8.22.0` |
 
 TypeScript 7 non è stato selezionato perché `typescript-eslint@8.63.0` dichiara compatibilità `<6.1.0`. ESLint resta sulla linea `9.39.2`, compatibile con i plugin transitivi di Next 16.
 
@@ -115,11 +127,11 @@ La supply-chain policy pnpm permette install script soltanto a `sharp` (runtime 
 
 Il contratto `runtime-config-v1` distingue API, worker e migration. `APP_ENV` accetta `local`, `staging` e `production`; preview usa lo schema staging con risorse isolate. URL database/Redis sono service-scoped, i profili gestiti richiedono credenziale e trasporto cifrato e gli errori riportano soltanto i nomi delle chiavi invalide.
 
-L'API valida prima di costruire Fastify e aprire il listener. Il worker valida prima dell'inizializzatore iniettato; il migration profile è pronto per l'executable di `BL-004`. Il web corrente non consuma config runtime e non importa `@dnd-ai/config`.
+L'API valida prima di costruire Fastify e aprire il listener. Il worker valida prima dell'inizializzatore iniettato. Il composition root migration valida il profilo prima di passare la sola URL a `@dnd-ai/persistence`; il package persistence non importa config e non legge l'ambiente. Il web corrente non consuma config runtime e non importa `@dnd-ai/config`.
 
 Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, health contract `web-health-v1` e progetto Vercel collegato al repository corretto con Root Directory `apps/web`, Next.js e `fra1`. Fork Protection, OIDC e Trusted Source sono configurati; zero variabili applicative. Production Branch Vercel=`release/production`, branch release e Ruleset restano invariati. La policy linked e il comando CLI con `--target=preview` hanno prodotto due record Production poi rimossi. PR #13/#14/#15/#16 hanno riportato il contratto a stato unlinked/fail-closed, aggiunto guard, payload bounded e freeze. Il client Vercel omette l'esplicito target Preview prima della POST, quindi non esiste oggi un percorso first-deployment Preview-only verificato. Git auto-deploy resta spento. `.vercelignore` e `scripts/check-vercel-deploy-dry-run.mjs` consentono soltanto un dry-run bounded dalla root. `source.manualDeployment.enabled=false` e `deploy:bootstrap:check` rendono fail-closed il percorso operativo approvato, ma non sono enforcement provider contro un owner. Lo staging non è disponibile.
 
-## Comandi disponibili in BL-001/BL-002/BL-003/BL-080
+## Comandi disponibili in BL-001/BL-002/BL-003/BL-004/BL-080
 
 ```bash
 corepack pnpm@10.34.5 install --frozen-lockfile
@@ -132,15 +144,21 @@ corepack pnpm@10.34.5 config:check
 corepack pnpm@10.34.5 scan:sast
 corepack pnpm@10.34.5 boundaries:check
 corepack pnpm@10.34.5 tasks:check
+corepack pnpm@10.34.5 db:local:up
+corepack pnpm@10.34.5 db:migrate:status:local
+corepack pnpm@10.34.5 db:migrate:local
+corepack pnpm@10.34.5 db:rollback:local
+corepack pnpm@10.34.5 db:local:down
+corepack pnpm@10.34.5 db:migrate:test
 corepack pnpm@10.34.5 deploy:check
 corepack pnpm@10.34.5 verify
 ```
 
-`verify` copre format, lint, typecheck, build, unit, integration, contract, security, package/task/CI/deployment policy e artifact verification. I comandi unit/integration preparano autonomamente i dist richiesti da un checkout pulito; l'integration suite avvia anche il server standalone web e verifica `/health`. Il dry-run provider non appartiene a `verify`: usa la sequenza PowerShell fail-closed con controllo separato degli exit code documentata in [`PREVIEW_STAGING.md`](../operations/PREVIEW_STAGING.md#deploy-e-smoke--gate-chiuso), mai una pipeline che possa mascherare il fallimento upstream. `deploy:bootstrap:check` deve invece fallire con exit `1` nello stato vigente. Test container, browser/E2E, migration, eval, bot e load restano responsabilità dei task proprietari, soprattutto `QA-001`; nessun comando futuro è simulato da un no-op.
+`verify` copre format, lint, typecheck, build, unit, integration, database migration, contract, security, package/task/CI/deployment policy e artifact verification. I comandi preparano autonomamente i dist richiesti da un checkout pulito; la suite database usa PostgreSQL reale pin a digest, porta loopback effimera, `tmpfs`, polling bounded e cleanup fail-closed. Il dry-run provider non appartiene a `verify`: usa la sequenza PowerShell fail-closed documentata in [`PREVIEW_STAGING.md`](../operations/PREVIEW_STAGING.md#deploy-e-smoke--gate-chiuso). `deploy:bootstrap:check` deve fallire con exit `1` nello stato vigente. Browser/E2E, eval, bot, load e harness condiviso restano responsabilità dei task proprietari; nessun comando futuro è simulato da un no-op.
 
 ## CI e supply chain
 
-`.github/workflows/ci.yml` separa quality, test, security e build. `CI / Merge gate` usa `always()` e considera valido soltanto `success` per ogni job richiesto, così failure, cancellation e skip non vengono mascherati. Il workflow usa `pull_request`, push `main`, merge queue e dispatch manuale; `pull_request_target` è vietato dalla policy automatica.
+`.github/workflows/ci.yml` separa quality, test, security e build. Il job Tests esegue anche `pnpm db:migrate:test` su container effimero senza secret CI. `CI / Merge gate` usa `always()` e considera valido soltanto `success` per ogni job richiesto, così failure, cancellation e skip non vengono mascherati. Il workflow usa `pull_request`, push `main`, merge queue e dispatch manuale; `pull_request_target` è vietato dalla policy automatica.
 
 Nel workflow CI base le action esterne sono pin a SHA completo, checkout non persiste credenziali e i permessi globali sono read-only. La cache gestita da `setup-node` contiene soltanto lo store pnpm indicizzato dal lockfile. Security esegue SAST locale fail-on-warning, test/secret scan e dependency audit; non riceve secret applicativi.
 
@@ -150,4 +168,4 @@ Il build produce `artifacts/bl002`: `scripts/lib/build-artifact.mjs` copia solta
 
 ## Frontend e design
 
-`apps/web` contiene una pagina Server Component minima soltanto per validare il build Next.js. Non è la shell di gioco e non anticipa componenti ad hoc. `BL-079` resta in backlog dietro `BL-080` e installerà shadcn/ui, AI Elements selettivi, Motion e il sistema visuale descritto in `docs/product/UX_UI_DESIGN.md`; nel frattempo lo sviluppo M0 prosegue dal task indipendente `BL-004`.
+`apps/web` contiene una pagina Server Component minima soltanto per validare il build Next.js. Non è la shell di gioco e non anticipa componenti ad hoc. `BL-079` resta in backlog dietro `BL-080` e installerà shadcn/ui, AI Elements selettivi, Motion e il sistema visuale descritto in `docs/product/UX_UI_DESIGN.md`; la fondazione database `BL-004` è indipendente dallo staging e si chiude senza anticipare UI.

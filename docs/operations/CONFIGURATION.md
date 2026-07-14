@@ -22,6 +22,10 @@ code_refs:
   - apps/api/.env.example
   - apps/worker/.env.example
   - packages/persistence/.env.example
+  - packages/persistence/src/migration-runner.ts
+  - scripts/run-database-migrations.mjs
+  - scripts/lib/database-migration-policy.mjs
+  - infra/local/postgres.compose.yml
   - infra/deployment/vercel-staging.json
   - apps/web/package.json
   - apps/web/vercel.json
@@ -48,6 +52,10 @@ test_refs:
   - tests/security/vercel-preview-bootstrap-gate.test.mjs
   - tests/unit/vercel-deploy-dry-run.test.mjs
   - tests/security/vercel-deploy-dry-run.test.mjs
+  - tests/unit/database-migration-policy.test.mjs
+  - tests/contracts/database-migration-contract.test.mjs
+  - tests/database/database-migration-cli.test.mjs
+  - tests/security/database-migration-security.test.mjs
 supersedes: null
 ---
 
@@ -93,7 +101,7 @@ Copy-Item apps/worker/.env.example apps/worker/.env.local
 Copy-Item packages/persistence/.env.example packages/persistence/.env.local
 ```
 
-Sostituire ogni `<set-in-local-env-file>` senza committare il risultato. I template non contengono password né URL funzionanti per scelta: `BL-004` definirà utenti e database locali reali.
+Sostituire i placeholder dei template API e worker senza committare il risultato. Il template persistence è un'eccezione deliberata: contiene soltanto la URL funzionante del Compose locale, con credenziali sintetiche note `dnd_migration_local` e database `dnd_ai_local` su `127.0.0.1:55432`. Non è un secret e non deve essere riutilizzata o resa raggiungibile fuori dall'host locale.
 
 Verificare i tre profili dopo il build del parser:
 
@@ -112,7 +120,20 @@ corepack pnpm@10.34.5 build
 corepack pnpm@10.34.5 --filter @dnd-ai/api start:local
 ```
 
-La configurazione è validata prima della creazione dell'app Fastify e del bind. Le URL vengono validate ma non connesse finché database e Redis non sono implementati dai task proprietari.
+La configurazione API è validata prima della creazione dell'app Fastify e del bind; API e worker non aprono ancora database/Redis. Il composition root migration, invece, usa già `MIGRATION_DATABASE_URL` per status e DDL dopo la validazione, senza stamparla o passarla come argomento CLI.
+
+Per il database locale e le migration:
+
+```powershell
+corepack pnpm@10.34.5 db:local:up
+corepack pnpm@10.34.5 db:migrate:status:local
+corepack pnpm@10.34.5 db:migrate:local
+corepack pnpm@10.34.5 db:rollback:local
+corepack pnpm@10.34.5 db:local:down
+corepack pnpm@10.34.5 db:migrate:test
+```
+
+Il percorso completo, inclusi lock, checksum, rollback e failure path, è in [`DATABASE_MIGRATIONS.md`](DATABASE_MIGRATIONS.md). In staging/production la URL migration è sempre secret-bearing, service-scoped e iniettata; il valore sintetico locale non costituisce un fallback.
 
 ## Staging e production
 
@@ -138,7 +159,7 @@ Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo 
 
 ## Ownership successiva
 
-- `BL-004`: migration executable e credenziali database locali/reali;
+- `BL-004`: migration executable, Compose e credenziali esclusivamente sintetiche locali implementati; le credenziali reali/gestite restano al provisioning dell'ambiente proprietario;
 - `BL-008`: log/redaction/telemetry e nuovi endpoint osservabili;
 - `BL-010`: configurazione dinamica auditata per flag e kill switch;
 - `BL-080`: project/provider web, Production Branch e Trusted Source configurati senza secret applicativi; freeze integrato; task bloccato finché il provider non offre un first-deployment Preview-only supportato;

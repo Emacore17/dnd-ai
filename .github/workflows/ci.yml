@@ -69,6 +69,9 @@ jobs:
       - name: Integration tests
         run: pnpm test:integration
 
+      - name: PostgreSQL migration tests
+        run: pnpm db:migrate:test
+
       - name: Contract tests
         run: pnpm test:contract
 
