@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 70f726d5a7fd9feed1a338d4c24bbedecc0bbe0b
+last_verified_commit: c64d09528dae2c1fd5e4ba3de7d17d15573dd71a
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -72,6 +72,9 @@ supersedes: null
 - Riletta Vercel Production Branch=`release/production` con zero deployment; il blocker pre-attivazione è chiuso senza cambiare account, piano o grant condiviso.
 - Preparato il change set `codex/bl-080-enable-preview`: project ID, scope, origin main e installation ID sono registrati atomicamente; `source.autoDeploy=true` coincide con `git.deploymentEnabled={"**": false, "main": true, "release/production": false}` e il Quality gate usa `deploy:check:linked`. La PR resta deny-all e non deve produrre deploy; l'origin sarà materializzata solo dal merge protetto su `main`.
 - Resi adattivi i negative test di drift attivazione e binding all-or-none, così restano efficaci sia nella foundation disabilitata sia nello stato linked.
+- Integrata l'attivazione tramite PR #12 dopo CI 5/5 verde e zero deployment sulla PR; il primo deploy del merge `c64d095` è stato però classificato Production da Vercel nonostante Production Branch=`release/production`.
+- Il deployment ha raggiunto `success` e ricevuto alias prima della rimozione; il dispatch `ready` è stato rifiutato dal job smoke. Deployment e alias project-scoped sono poi tornati a zero e gli URL a `404`.
+- Avviato il hotfix `codex/bl-080-fail-closed-hotfix`: ripristina binding versionati `null`, `source.autoDeploy=false`, `git.deploymentEnabled=false`, Quality gate `deploy:check` e negative test pre-attivazione. `BL-080` passa a `IN_PROGRESS/50%/FAILING`; ADR-0005 resta proposed e `BL-079` BACKLOG.
 
 ### Verification
 
@@ -84,6 +87,8 @@ supersedes: null
 - Checkpoint documentale e normativo verificato con `TURBO_FORCE=true pnpm verify` exit `0` in 70,8 s: unit 29 pass/1 skip host, integration 9/9, contract 18/18, security 11 pass/3 skip host, task/deploy policy, secret scan e artifact 3.205 file `PASS`.
 - Nel checkpoint pre-attivazione `deploy:check:linked` falliva intenzionalmente sui binding versionati ancora `null`. L'identità Vercel autorizzata e il piano Hobby risultavano verificati in modo redatto, ma la lista deployment era vuota e i blocker provider impedivano di presentare il progetto collegato come staging reale.
 - Checkpoint di attivazione: CLI Vercel `55.0.0` mostra `Production → release/production` e zero deployment; audit GitHub conferma Ruleset release `18926413`, Ruleset main `18877721` ed environment `staging` senza drift. `TURBO_FORCE=true corepack pnpm@10.34.5 verify` passa in 65,3 s con lint/build 11/11, typecheck 12/12, unit 29+1 skip host, integration 9/9, contract 18/18, security 11+3 skip host, policy/secret scan e artifact 3.205 file; PR e prove remote restano pending.
+- PR #12: run `29331343752` e post-merge `29331482831` 5/5 `SUCCESS`; deployment Production confermato anche da GitHub deployment `5440323678`/status `success`; smoke run `29331534774` `skipped`; Vercel deletion alle `2026-07-14T12:10:52.918Z` e readback finale deployment/alias zero.
+- Hotfix fail-closed verificato localmente con `TURBO_FORCE=true corepack pnpm@10.34.5 verify` PASS in 61,0 s: unit 29+1 skip host, integration 9/9, contract 18/18, security 11+3 skip host, policy/scan/artifact 3.205 file.
 
 ## 2026-07-13
 

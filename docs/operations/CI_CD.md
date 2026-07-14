@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: 70f726d5a7fd9feed1a338d4c24bbedecc0bbe0b
+last_verified_commit: c64d09528dae2c1fd5e4ba3de7d17d15573dd71a
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -74,7 +74,7 @@ Non disabilitare il gate per risolvere una coda. Se un job viene cancellato o sa
 
 ## Preview/staging web
 
-`BL-080` aggiunge un workflow separato `Staging smoke`; non modifica il trust boundary della PR e non distribuisce da GitHub Actions. Il progetto Vercel `dnd-ai-web` è collegato a `Emacore17/dnd-ai`; nel change set di attivazione `source.autoDeploy=true` coincide con una deny-all che abilita soltanto `main`, quindi la PR stessa resta senza deployment. Dopo il merge protetto la Git Integration sarà la sorgente del primo deploy automatico e invierà `repository_dispatch` con action `vercel.deployment.ready` quando una Preview è costruita ma non promossa. Il payload valido porta `state.type=success`: action e state appartengono a due contratti distinti e sono entrambi verificati.
+`BL-080` aggiunge un workflow separato `Staging smoke`; non modifica il trust boundary della PR e non distribuisce da GitHub Actions. La PR #12 è rimasta senza deployment, ma il merge su `main` ha generato un deployment Production. Il relativo `repository_dispatch` ha creato un job `Staging / Smoke` `skipped`, perché il predicate accetta soltanto payload Preview validi. Il hotfix ripristina auto-deploy disabilitato; CI verde non viene trattata come prova del target provider.
 
 Il job `Staging / Smoke`:
 
@@ -88,7 +88,7 @@ Il job `Staging / Smoke`:
 
 Il progetto applica Standard Protection con policy SSO predefinita `all_except_custom_domains`; la Trusted Source limita già l'OIDC a issuer GitHub, audience account, repository + repository ID immutabile/ref/environment esatti e target `preview`. Il workflow non pubblica un URL non validato nell'environment GitHub. Non introdurre `VERCEL_TOKEN`, automation bypass secret, Deploy Hook, `pull_request_target`, `vercel deploy --prod` o checkout del commit indicato dall'evento. La Git Integration ricostruisce il commit anziché caricare `artifacts/bl002`; l'identità immutabile del deploy è quindi project ID + deployment ID + SHA + health contract.
 
-Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Project ID `prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`, scope `emacore17s-projects`, GitHub App installation ID `41079282` e alias `https://dnd-ai-web-git-main-emacore17s-projects.vercel.app` sono registrati atomicamente; Production Branch Vercel è stata riletta come `release/production`. `pnpm deploy:check` e `pnpm deploy:check:linked` passano localmente e il Quality gate usa il secondo comando. La policy applicata è la deny-all ricorsiva `{"**": false, "main": true, "release/production": false}`: `*` non copre in modo affidabile branch con `/`. L'origin è versionata ma non ancora materializzata; la PR deve lasciare la lista deployment vuota e soltanto il merge su `main` può produrre la Preview. Il Product Owner ha deciso di mantenere `isAccessRestricted=false` con 8 repository per evitare perdita di accesso ad altri progetti e ne ha accettato il rischio residuo. I controlli compensativi sono link project/repository/repository ID esatti, Trusted Source OIDC exact-match, Fork/Standard Protection, environment `staging` solo `main`, smoke fail-closed e readback drift.
+Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma la policy linked non ha impedito il target Production. Il hotfix riporta il Quality gate a `pnpm deploy:check`, binding versionati `null` e `git.deploymentEnabled=false`; `deploy:check:linked` torna a fallire intenzionalmente. Project/link/Trusted Source remoti restano configurati e il grant condiviso resta invariato per decisione PO. Nessuna nuova delivery è autorizzata finché il target Preview non è selezionabile e verificabile esplicitamente.
 
 ## Cache e artifact
 
@@ -105,7 +105,6 @@ corepack pnpm@10.34.5 audit --audit-level=high
 corepack pnpm@10.34.5 artifact:prepare
 corepack pnpm@10.34.5 artifact:verify
 corepack pnpm@10.34.5 deploy:check
-corepack pnpm@10.34.5 deploy:check:linked
 ```
 
 ## Gate differiti e owner
