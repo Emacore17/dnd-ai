@@ -118,14 +118,15 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
   assert.match(healthRoute, /VERCEL_REGION/);
   assert.doesNotMatch(healthRoute, /NEXT_PUBLIC_/);
 
-  const prematurelyEnabled = globalThis.structuredClone(vercelConfig);
-  prematurelyEnabled.git.deploymentEnabled =
-    manifest.source.activationDeploymentPolicy;
+  const activationStateDrift = globalThis.structuredClone(vercelConfig);
+  activationStateDrift.git.deploymentEnabled = manifest.source.autoDeploy
+    ? false
+    : manifest.source.activationDeploymentPolicy;
   assert.ok(
-    validateVercelProjectConfig(manifest, prematurelyEnabled).some((error) =>
-      error.includes("vercel config.git.deploymentEnabled must be false"),
+    validateVercelProjectConfig(manifest, activationStateDrift).some((error) =>
+      error.includes("vercel config.git.deploymentEnabled"),
     ),
-    "the repository config must stay disabled until activation is recorded",
+    "the repository config and activation state must not drift",
   );
 });
 
@@ -160,6 +161,14 @@ test("deployment branch policy denies every branch except staging main", async (
 
 test("provider bindings are either all absent or all recorded", async () => {
   const manifest = await readJson("infra", "deployment", "vercel-staging.json");
+  const unlinkedBaseline = globalThis.structuredClone(manifest);
+  unlinkedBaseline.provider.project.id = null;
+  unlinkedBaseline.provider.project.scopeSlug = null;
+  unlinkedBaseline.provider.project.stagingOrigin = null;
+  unlinkedBaseline.source.installationId = null;
+  unlinkedBaseline.source.autoDeploy = false;
+  assert.deepEqual(validateDeploymentManifest(unlinkedBaseline), []);
+
   const partialBindings = [
     [
       "project ID",
@@ -183,7 +192,7 @@ test("provider bindings are either all absent or all recorded", async () => {
   ];
 
   for (const [label, applyBinding] of partialBindings) {
-    const candidate = globalThis.structuredClone(manifest);
+    const candidate = globalThis.structuredClone(unlinkedBaseline);
     applyBinding(candidate);
     assert.ok(
       validateDeploymentManifest(candidate).some((error) =>
