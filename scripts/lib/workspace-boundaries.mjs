@@ -12,6 +12,7 @@ const DEPENDENCY_FIELDS = [
 ];
 
 export const WORKSPACE_POLICY = Object.freeze({
+  "@dnd-ai/config": [],
   "@dnd-ai/contracts": [],
   "@dnd-ai/domain": [],
   "@dnd-ai/rules": ["@dnd-ai/domain"],
@@ -28,6 +29,7 @@ export const WORKSPACE_POLICY = Object.freeze({
   ],
   "@dnd-ai/web": ["@dnd-ai/contracts", "@dnd-ai/observability"],
   "@dnd-ai/api": [
+    "@dnd-ai/config",
     "@dnd-ai/contracts",
     "@dnd-ai/domain",
     "@dnd-ai/rules",
@@ -36,6 +38,7 @@ export const WORKSPACE_POLICY = Object.freeze({
     "@dnd-ai/observability",
   ],
   "@dnd-ai/worker": [
+    "@dnd-ai/config",
     "@dnd-ai/contracts",
     "@dnd-ai/domain",
     "@dnd-ai/rules",

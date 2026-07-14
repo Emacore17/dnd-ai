@@ -2,23 +2,29 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-13
-last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
 related_tasks:
   - BL-002
+  - BL-003
+  - BL-080
   - QA-001
   - BL-070
 code_refs:
   - .github/workflows/ci.yml
   - .github/actions/setup-workspace/action.yml
+  - packages/config
   - scripts/assert-ci-results.mjs
   - scripts/create-build-artifact.mjs
 test_refs:
+  - tests/unit/build-artifact.test.mjs
   - tests/contracts/ci-workflow.test.mjs
   - tests/integration/ci-gate.test.mjs
   - tests/security/sast-config.test.mjs
+  - tests/contracts/runtime-config-contract.test.mjs
+  - tests/integration/runtime-startup.test.mjs
   - docs/testing/BL-002_VERIFICATION.md
 supersedes: null
 ---
@@ -29,7 +35,7 @@ supersedes: null
 
 | Job | Responsabilità | Failure behavior |
 |---|---|---|
-| `Quality` | format, lint, typecheck, confini, task graph e policy CI | blocca build e gate |
+| `Quality` | format, lint, typecheck con declaration dependency build, confini, task graph e policy CI | blocca build e gate |
 | `Tests` | unit, integration e contract | la fixture rossa prova exit `1` |
 | `Security` | SAST locale, test/secret scan e dependency audit | warning SAST, high/critical o scan fallito bloccano |
 | `Build artifact` | build completo, staging allowlisted, manifest e upload | manca/secret/checksum/symlink non sicuro bloccano |
@@ -59,7 +65,7 @@ Non disabilitare il gate per risolvere una coda. Se un job viene cancellato o sa
 
 La setup action installa Node/pnpm pin e usa soltanto `setup-node` con cache `pnpm` e `pnpm-lock.yaml`. Non aggiungere env, home, workspace, `.turbo`, `.next`, `node_modules` o report al path cache.
 
-L’artifact caricato è soltanto `artifacts/bl002`, directory ignorata da Git e rigenerata da zero. `manifest.json` usa schema `build-artifact-v1`; `payload/` contiene gli output ammessi. `include-hidden-files: true` è necessario per la struttura `.next`, ma è sicuro soltanto perché lo staging rifiuta `.env`, credenziali, log, symlink esterni e file con pattern secret prima dell’upload.
+L’artifact caricato è soltanto `artifacts/bl002`, directory ignorata da Git e rigenerata da zero. `manifest.json` usa schema `build-artifact-v1`; `payload/` contiene gli output ammessi, incluso `packages/config/dist` ma mai file ambientali. `include-hidden-files: true` è necessario per la struttura `.next`, ma è sicuro soltanto perché lo staging rifiuta `.env`, credenziali, log, symlink esterni e file con pattern secret prima dell’upload.
 
 Comandi locali:
 
@@ -79,7 +85,9 @@ corepack pnpm@10.34.5 artifact:verify
 | schema/OpenAPI/event compatibility | `BL-009` |
 | coverage rules/domain ≥80% e report | `QA-001` |
 | browser, bundle e accessibility budget | `BL-079`, `QA-001` |
+| secret manager, preview/staging M0, deploy smoke e rollback minimo | `BL-080`; contratto di injection già in `BL-003` |
 | eval prompt/schema | `BL-068` |
-| container, SBOM, image scan, staging/prod, rollback | `BL-070` |
+| container, SBOM, image scan, load/chaos, restore e release hardening | `BL-070` |
 
 I comandi non ancora implementati non hanno placeholder verdi: entrano nel workflow insieme al rispettivo runtime e acceptance test.
+`BL-080` è il primo owner deployabile della milestone M0: sceglie secret manager/provider e registra project/resource ID, regione, environment, commit e run URL senza includere credenziali. Deve usare `runtime-config-v1`, dati sintetici e un environment protetto; il suo smoke sblocca i consumer pianificati e `GATE-M0`. La separazione definitiva staging/production, il load profile e i drill operativi restano a `BL-070`.

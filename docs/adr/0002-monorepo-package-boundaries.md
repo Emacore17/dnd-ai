@@ -2,19 +2,22 @@
 status: accepted
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md#112-forma-del-sistema
   - docs/MVP_SPEC.md#113-moduli-applicativi
   - AGENTS.md#9-confini-architetturali-e-struttura-target
 related_tasks:
   - BL-001
+  - BL-003
 code_refs:
   - pnpm-workspace.yaml
+  - packages/config
   - turbo.json
   - scripts/lib/workspace-boundaries.mjs
 test_refs:
   - tests/contracts/workspace-boundaries.test.mjs
+  - tests/contracts/runtime-config-contract.test.mjs
 supersedes: null
 ---
 
@@ -31,11 +34,12 @@ L’MVP richiede un modular monolith TypeScript con tre runtime, moduli di domin
 ## Decisione
 
 1. Il workspace usa `pnpm@10.34.5` e Turborepo `2.10.4`, entrambi pinning nel repository.
-2. I runtime sono `apps/web`, `apps/api` e `apps/worker`; i moduli condivisi sono `contracts`, `domain`, `rules`, `ai`, `persistence`, `observability` e `testing`.
+2. I runtime sono `apps/web`, `apps/api` e `apps/worker`; i moduli condivisi sono `config`, `contracts`, `domain`, `rules`, `ai`, `persistence`, `observability` e `testing`.
 3. Il package `ai` resta unico fino a quando porte e adapter reali rendono utile una separazione; nessun SDK provider può entrare in `domain` o `rules`.
 4. La policy allowlist è codice versionato. Un checker analizza manifest, import statici/dinamici, import relativi cross-package e cicli.
 5. Ogni nuova relazione workspace deve modificare consapevolmente policy, documentazione e test; un import non autorizzato fallisce chiuso.
 6. Lo scaffold non aggiunge servizi, database o astrazioni di dominio vuote. I package espongono entry point minimi e ricevono contenuto nei task proprietari.
+7. `config` è un leaf package server-only senza dipendenze workspace. Può essere importato dai composition root API/worker, non dal web o dai package di dominio; il futuro migration executable comporrà `config` e `persistence` senza rendere quest'ultimo dipendente dalla configurazione ambientale.
 
 ## Alternative considerate
 
@@ -55,6 +59,7 @@ Rinviato: `ai-core`/`ai-adapters` senza porte o adapter concreti produrrebbero s
 
 - build, lint e typecheck sono eseguibili per ogni workspace;
 - dominio e regole restano indipendenti dall’infrastruttura per costruzione;
+- configurazione ambientale e secret non attraversano il boundary browser/domain;
 - aggiungere una relazione richiede un change esplicito alla allowlist;
 - il checker custom va mantenuto e sarà integrato nella CI da `BL-002`;
 - la policy dovrà evolvere quando nascono application service o adapter concreti, senza indebolire gli invarianti di `AGENTS.md`.

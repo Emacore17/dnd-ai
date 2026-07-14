@@ -1,10 +1,8 @@
-import Fastify, {
-  type FastifyInstance,
-  type FastifyServerOptions,
-} from "fastify";
-
-export function createApiApp(
-  options: FastifyServerOptions = {},
-): FastifyInstance {
-  return Fastify(options);
-}
+export { createApiApp } from "./app.js";
+export {
+  createConfiguredApiApp,
+  startApi,
+  type ConfiguredApiApp,
+  type CreateConfiguredApiAppOptions,
+  type StartedApi,
+} from "./runtime.js";

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: 7c6c7071d027c55aeffbc7279b8ca3765ea26c37
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -10,9 +10,13 @@ related_tasks:
   - GOV-001
   - BL-001
   - BL-002
+  - BL-003
+  - BL-079
+  - BL-080
 code_refs: []
 test_refs:
   - AGENTS_VALIDATION.txt
+  - docs/testing/BL-003_VERIFICATION.md
 supersedes: null
 ---
 
@@ -43,6 +47,9 @@ supersedes: null
 | [`adr/0003-ci-trust-boundary-and-artifacts.md`](adr/0003-ci-trust-boundary-and-artifacts.md) | Decisione accepted su trust boundary, cache, gate e artifact CI |
 | [`operations/CI_CD.md`](operations/CI_CD.md) | Contratto operativo della pipeline e configurazione Ruleset |
 | [`testing/BL-002_VERIFICATION.md`](testing/BL-002_VERIFICATION.md) | Evidenze locali e remote di BL-002 |
+| [`adr/0004-runtime-configuration-and-secret-injection.md`](adr/0004-runtime-configuration-and-secret-injection.md) | Decisione accepted su config server-only, profili e secret injection |
+| [`operations/CONFIGURATION.md`](operations/CONFIGURATION.md) | Matrice variabili, setup locale, redazione e ownership ambienti |
+| [`testing/BL-003_VERIFICATION.md`](testing/BL-003_VERIFICATION.md) | Evidenze locali, clean-worktree e CI Linux di BL-003 |
 
 ## Documenti pianificati
 

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-13
-last_verified_commit: ae88583dc2cc8ae9d8e869f5ca324c5b3585095e
+last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -10,10 +10,26 @@ related_tasks:
   - GOV-001
   - BL-001
   - BL-002
+  - BL-003
   - BL-079
-code_refs: []
+  - BL-080
+code_refs:
+  - .github/workflows/ci.yml
+  - scripts/lib/build-artifact.mjs
+  - scripts/lib/ci-workflow-policy.mjs
+  - packages/config
+  - apps/api/src/runtime.ts
+  - apps/worker/src/runtime.ts
+  - scripts/lib/secret-scanner.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
+  - tests/contracts/ci-workflow.test.mjs
+  - tests/unit/build-artifact.test.mjs
+  - tests/unit/runtime-config.test.mjs
+  - tests/integration/runtime-startup.test.mjs
+  - tests/contracts/runtime-config-contract.test.mjs
+  - tests/security/environment-file-policy.test.mjs
+  - docs/testing/BL-003_VERIFICATION.md
 supersedes: null
 ---
 
@@ -32,6 +48,10 @@ supersedes: null
 - Creati `docs/architecture/SYSTEM_OVERVIEW.md` e ADR-0002 sui confini del monorepo.
 - Aggiunti workflow GitHub Actions, policy CI versionata, suite unit/integration/security, SAST locale fail-on-warning, secret scan, dependency audit, artifact allowlisted e ADR-0003 per `BL-002`.
 - Creati `docs/operations/CI_CD.md` e `docs/testing/BL-002_VERIFICATION.md`.
+- Aggiunto `BL-080` in M0 per possedere provisioning e primo smoke preview/staging; `BL-003` ne fornisce il contratto di configurazione e `BL-070` resta dedicato all'hardening pre-release.
+- Aggiunto `@dnd-ai/config` con Zod 4, profili API/worker/migration, CLI redatta, output frozen e config error senza valori/cause.
+- Aggiunti startup API validate-before-bind, composition boundary worker, template `.env.example` service-scoped e ADR-0004.
+- Creati `docs/operations/CONFIGURATION.md` e `docs/testing/BL-003_VERIFICATION.md`; aggiunte suite unit, process integration, contract e security per `BL-003`.
 
 ### Changed
 
@@ -45,6 +65,14 @@ supersedes: null
 - Aggiunto un override pnpm a `postcss@8.5.10` per correggere il finding moderato transitivo `GHSA-qx2v-qp2m-jg93`; audit successivo senza vulnerabilità note.
 - Il quality contract locale ora include format, unit, integration, contract, security, workflow policy, build e artifact verification; le suite future restano assegnate ai task proprietari.
 - Attivata sul repository pubblico la Ruleset `main-required-ci` (`18877721`), strict e senza bypass, con `CI / Merge gate` richiesto da GitHub Actions; `BL-002` passa a `DONE` e `BL-079` a `READY`.
+- Corrette le dipendenze di `BL-079`: il primo staging non è più un gate senza owner, ma una dipendenza esplicita da `BL-080`; `BL-003` resta il task attivo e la foundation UX/UI non viene anticipata in questo change set.
+- Precisata la DoD: un prerequisito del primo ambiente può chiudere con evidence local/contract motivata, mentre `BL-080` possiede il primo deploy/smoke reale.
+- `BL-004` dipende da `BL-003` per il profilo migration; `config` è un leaf server-only importabile solo dai composition root API/worker.
+- Il minimo Node passa a `>=22.12.0`; `typecheck` costruisce prima le declaration delle dipendenze workspace per funzionare da checkout pulito.
+- Staging/production richiedono URL strutturali, credenziali service-scoped, PostgreSQL TLS con un solo `sslmode` allowlisted e Redis `rediss:`.
+- Il secret scanner rifiuta qualsiasi `.env`/`.env.*` tracciato salvo `.env.example`, anche senza pattern token noto, e scopre file untracked/speciali mediante traversal Git-ignore-aware senza seguire symlink o junction.
+- Il packager omette soltanto i private-hoist pnpm non tracciati e privi di mirror nell'output Next standalone; target esterni e link ordinari senza mirror restano fail-closed.
+- `BL-003` passa a `DONE`; `BL-080` diventa il prossimo task `READY`, mentre `BL-079` resta `BACKLOG` fino alla disponibilità dello staging.
 
 ### Verification
 
@@ -60,5 +88,8 @@ supersedes: null
 - Dopo la pubblicazione, run positiva `29255261423` tutta verde e PR negativa #3/run `29256736728` con tests/gate rossi, artifact skipped e `mergeStateStatus=BLOCKED`; PR chiusa senza merge e branch rimossa.
 - Working tree di chiusura BL-002: `TURBO_FORCE=true pnpm verify` exit `0` in 53,9 s; front matter/link documentali, task graph, CI policy e secret scan `PASS`.
 - PR #1 unita senza bypass nel commit `ae88583dc2cc8ae9d8e869f5ca324c5b3585095e`; post-merge run `29257721274` su `main` con tutti i cinque job `SUCCESS`.
-- Spec baseline corrente: SHA `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`; il run sul commit di implementazione usava `5bdf152a6c535470d239ad72772603d17d53cc82cc3c02f09bf44cbe1ef47e90` prima del solo aggiornamento front matter.
+- La prima CI BL-003, run `29285442650` su `4622d5c`, ha fallito Security `11/12` perché il solo indice Git non enumerava un FIFO untracked; Build artifact è stato saltato e il merge gate ha fallito. Il failure path ha prodotto il fix ignore-aware `f571413`.
+- BL-003 verificato su head `f57141341efe5df0707c77ff8ccef4f6fa15f675`: full verify locale exit `0` in `60,4 s`, artifact `3.191` file; worktree pulito con install frozen forzata exit `0` e verify exit `0` in `61,0 s`, artifact `3.554` file. Il primo install frozen nel worktree era un no-op e il verify preliminare ha fallito per dipendenze non materializzate; non è stato contato come gate applicativo.
+- Run finale `29285998646`: Quality, Tests, Security, Build artifact e `CI / Merge gate` tutti `SUCCESS`; Security Linux `12/12`, artifact Ubuntu `3.233` file e PR #6 `MERGEABLE/CLEAN`; audit senza vulnerabilità note.
+- Spec baseline corrente: SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`; include il contratto config e l'ownership staging `BL-080`, senza evidenze d'implementazione `BL-079`.
 - Evidenze: `AGENTS_VALIDATION.txt`; `docs/testing/BL-001_VERIFICATION.md`.
