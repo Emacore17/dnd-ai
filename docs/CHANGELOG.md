@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: c64d09528dae2c1fd5e4ba3de7d17d15573dd71a
+last_verified_commit: 61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -24,10 +24,14 @@ code_refs:
   - .github/workflows/deployment-smoke.yml
   - apps/web/app/health/route.ts
   - apps/web/vercel.json
+  - apps/web/package.json
+  - apps/web/scripts/assert-vercel-preview-build.mjs
+  - apps/web/scripts/vercel-preview-build-policy.mjs
   - infra/deployment/vercel-staging.json
   - scripts/check-deployment-foundation.mjs
   - scripts/lib/deployment-foundation.mjs
   - scripts/lib/deployment-smoke.mjs
+  - turbo.json
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/ci-workflow.test.mjs
@@ -41,6 +45,8 @@ test_refs:
   - tests/integration/web-health.test.mjs
   - tests/contracts/deployment-foundation.test.mjs
   - tests/security/deployment-smoke-security.test.mjs
+  - tests/unit/vercel-preview-build-policy.test.mjs
+  - tests/security/vercel-preview-build-guard.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
 supersedes: null
 ---
@@ -74,7 +80,9 @@ supersedes: null
 - Resi adattivi i negative test di drift attivazione e binding all-or-none, così restano efficaci sia nella foundation disabilitata sia nello stato linked.
 - Integrata l'attivazione tramite PR #12 dopo CI 5/5 verde e zero deployment sulla PR; il primo deploy del merge `c64d095` è stato però classificato Production da Vercel nonostante Production Branch=`release/production`.
 - Il deployment ha raggiunto `success` e ricevuto alias prima della rimozione; il dispatch `ready` è stato rifiutato dal job smoke. Deployment e alias project-scoped sono poi tornati a zero e gli URL a `404`.
-- Avviato il hotfix `codex/bl-080-fail-closed-hotfix`: ripristina binding versionati `null`, `source.autoDeploy=false`, `git.deploymentEnabled=false`, Quality gate `deploy:check` e negative test pre-attivazione. `BL-080` passa a `IN_PROGRESS/50%/FAILING`; ADR-0005 resta proposed e `BL-079` BACKLOG.
+- Integrato il contenimento `codex/bl-080-fail-closed-hotfix` tramite commit `4d3d4ba`, PR #13 e merge `61e5cbd`: binding versionati `null`, `source.autoDeploy=false`, `git.deploymentEnabled=false`, Quality gate `deploy:check` e negative test pre-attivazione sono nuovamente la baseline sicura. CI PR e post-merge sono 5/5 verdi; nessun nuovo dispatch o deployment è stato osservato. `BL-080` resta `IN_PROGRESS/50%/FAILING`; ADR-0005 resta proposed e `BL-079` BACKLOG.
+- Aggiunto un guard build Preview-only dentro `apps/web`: il percorso Vercel strict richiede `VERCEL=1`, `VERCEL_ENV=preview` e `VERCEL_TARGET_ENV=preview`, mentre il normale build locale accetta soltanto l'assenza completa dei tre metadata. `vercel.json` impone il guard prima di `pnpm run build`; Turbo include i tre metadata nella cache key e il deployment contract rifiuta qualunque drift del comando.
+- Chiarito che il guard impedisce a un target non-Preview di completare il build, ma non impedisce al provider di creare inizialmente un deployment record. Il futuro bootstrap resta diagnostico one-shot con selector CLI `--target=preview`, `--no-wait`, inspect immediato, rimozione per deployment ID esatto e auto-deploy Git spento; `--skip-domain` è escluso perché richiede `--prod`, mentre `--prod`, `--prebuilt` e promote restano vietati.
 
 ### Verification
 
@@ -89,6 +97,9 @@ supersedes: null
 - Checkpoint di attivazione: CLI Vercel `55.0.0` mostra `Production → release/production` e zero deployment; audit GitHub conferma Ruleset release `18926413`, Ruleset main `18877721` ed environment `staging` senza drift. `TURBO_FORCE=true corepack pnpm@10.34.5 verify` passa in 65,3 s con lint/build 11/11, typecheck 12/12, unit 29+1 skip host, integration 9/9, contract 18/18, security 11+3 skip host, policy/secret scan e artifact 3.205 file; PR e prove remote restano pending.
 - PR #12: run `29331343752` e post-merge `29331482831` 5/5 `SUCCESS`; deployment Production confermato anche da GitHub deployment `5440323678`/status `success`; smoke run `29331534774` `skipped`; Vercel deletion alle `2026-07-14T12:10:52.918Z` e readback finale deployment/alias zero.
 - Hotfix fail-closed verificato localmente con `TURBO_FORCE=true corepack pnpm@10.34.5 verify` PASS in 61,0 s: unit 29+1 skip host, integration 9/9, contract 18/18, security 11+3 skip host, policy/scan/artifact 3.205 file.
+- Contenimento pubblicato nella [PR #13](https://github.com/Emacore17/dnd-ai/pull/13): run PR `29332953627` e post-merge `29333105276` con 5/5 job `SUCCESS`; merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; readback successivo con zero deployment e nessun nuovo smoke dispatch.
+- Guard Preview-only mirato: unit 4/4, security subprocess 3/3 e deployment contract 5/5 `PASS`; `deploy:check`, task graph, ESLint e Prettier mirati `PASS`. La simulazione Production, anche con `--allow-local`, termina con exit `1`/`target-not-preview` prima di Next; la simulazione Preview completa il build Next.js `16.2.10` e genera `/health`. Le review indipendenti finali non rilevano P0/P1/P2 residui.
+- Full gate del guard: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 60,2 s; unit 33 pass/1 skip host, security 14 pass/3 skip host, integration/contract/policy/scan/artifact verdi.
 
 ## 2026-07-13
 

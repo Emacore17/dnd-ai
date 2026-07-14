@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "node scripts/assert-vercel-preview-build.mjs && pnpm run build",
   "framework": "nextjs",
   "git": {
     "deploymentEnabled": false

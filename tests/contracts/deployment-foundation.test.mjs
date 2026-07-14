@@ -9,6 +9,7 @@ import { parse } from "yaml";
 import {
   validateDeploymentManifest,
   validateVercelProjectConfig,
+  validateWebBuildPolicy,
 } from "../../scripts/lib/deployment-foundation.mjs";
 import { validateDeploymentWorkflow } from "../../scripts/lib/deployment-workflow-policy.mjs";
 
@@ -21,32 +22,38 @@ async function readJson(...segments) {
 }
 
 test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", async () => {
-  const [manifest, workflow, ciWorkflow, vercelConfig, gitignore, healthRoute] =
-    await Promise.all([
-      readJson("infra", "deployment", "vercel-staging.json"),
-      readFile(
-        path.join(
-          repositoryRoot,
-          ".github",
-          "workflows",
-          "deployment-smoke.yml",
-        ),
-        "utf8",
-      ).then(parse),
-      readFile(
-        path.join(repositoryRoot, ".github", "workflows", "ci.yml"),
-        "utf8",
-      ).then(parse),
-      readJson("apps", "web", "vercel.json"),
-      readFile(path.join(repositoryRoot, ".gitignore"), "utf8"),
-      readFile(
-        path.join(repositoryRoot, "apps", "web", "app", "health", "route.ts"),
-        "utf8",
-      ),
-    ]);
+  const [
+    manifest,
+    workflow,
+    ciWorkflow,
+    vercelConfig,
+    webPackage,
+    turboConfig,
+    gitignore,
+    healthRoute,
+  ] = await Promise.all([
+    readJson("infra", "deployment", "vercel-staging.json"),
+    readFile(
+      path.join(repositoryRoot, ".github", "workflows", "deployment-smoke.yml"),
+      "utf8",
+    ).then(parse),
+    readFile(
+      path.join(repositoryRoot, ".github", "workflows", "ci.yml"),
+      "utf8",
+    ).then(parse),
+    readJson("apps", "web", "vercel.json"),
+    readJson("apps", "web", "package.json"),
+    readJson("turbo.json"),
+    readFile(path.join(repositoryRoot, ".gitignore"), "utf8"),
+    readFile(
+      path.join(repositoryRoot, "apps", "web", "app", "health", "route.ts"),
+      "utf8",
+    ),
+  ]);
 
   assert.deepEqual(validateDeploymentManifest(manifest), []);
   assert.deepEqual(validateVercelProjectConfig(manifest, vercelConfig), []);
+  assert.deepEqual(validateWebBuildPolicy(webPackage, turboConfig), []);
   assert.deepEqual(validateDeploymentWorkflow(workflow), []);
   assert.deepEqual(manifest.source.activationDeploymentPolicy, {
     "**": false,
@@ -98,6 +105,8 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
   }
   assert.deepEqual(vercelConfig, {
     $schema: "https://openapi.vercel.sh/vercel.json",
+    buildCommand:
+      "node scripts/assert-vercel-preview-build.mjs && pnpm run build",
     framework: "nextjs",
     git: {
       deploymentEnabled: manifest.source.autoDeploy
@@ -117,6 +126,34 @@ test("the Vercel staging manifest and GitHub smoke workflow satisfy policy", asy
   assert.match(healthRoute, /VERCEL_GIT_REPO_ID/);
   assert.match(healthRoute, /VERCEL_REGION/);
   assert.doesNotMatch(healthRoute, /NEXT_PUBLIC_/);
+
+  const unguardedWebPackage = globalThis.structuredClone(webPackage);
+  unguardedWebPackage.scripts.build = "next build";
+  assert.ok(
+    validateWebBuildPolicy(unguardedWebPackage, turboConfig).some((error) =>
+      error.includes("web package.scripts.build"),
+    ),
+    "the package build must not bypass the Preview guard",
+  );
+
+  const permissiveProviderConfig = globalThis.structuredClone(vercelConfig);
+  permissiveProviderConfig.buildCommand =
+    "node scripts/assert-vercel-preview-build.mjs --allow-local && pnpm run build";
+  assert.ok(
+    validateVercelProjectConfig(manifest, permissiveProviderConfig).some(
+      (error) => error.includes("vercel config.buildCommand"),
+    ),
+    "the provider build must invoke the guard without local fallback",
+  );
+
+  const unkeyedTurboConfig = globalThis.structuredClone(turboConfig);
+  delete unkeyedTurboConfig.tasks.build.env;
+  assert.ok(
+    validateWebBuildPolicy(webPackage, unkeyedTurboConfig).some((error) =>
+      error.includes("turbo tasks.build.env"),
+    ),
+    "Vercel target metadata must participate in the build cache key",
+  );
 
   const activationStateDrift = globalThis.structuredClone(vercelConfig);
   activationStateDrift.git.deploymentEnabled = manifest.source.autoDeploy

@@ -349,6 +349,7 @@ export function validateVercelProjectConfig(manifest, config) {
 
   expectKeys(errors, "vercel config", config, [
     "$schema",
+    "buildCommand",
     "framework",
     "git",
     "regions",
@@ -360,6 +361,12 @@ export function validateVercelProjectConfig(manifest, config) {
     "https://openapi.vercel.sh/vercel.json",
   );
   expectEqual(errors, "vercel config.framework", config?.framework, "nextjs");
+  expectEqual(
+    errors,
+    "vercel config.buildCommand",
+    config?.buildCommand,
+    "node scripts/assert-vercel-preview-build.mjs && pnpm run build",
+  );
   expectArray(errors, "vercel config.regions", config?.regions, ["fra1"]);
 
   const git = config?.git;
@@ -393,6 +400,27 @@ export function validateVercelProjectConfig(manifest, config) {
       "vercel config.git.deploymentEnabled cannot be validated until source.autoDeploy is boolean",
     );
   }
+
+  return [...new Set(errors)].sort();
+}
+
+export function validateWebBuildPolicy(webPackage, turboConfig) {
+  const errors = [];
+
+  if (!isRecord(webPackage?.scripts)) {
+    errors.push("web package.scripts must be an object");
+  }
+  expectEqual(
+    errors,
+    "web package.scripts.build",
+    webPackage?.scripts?.build,
+    "node scripts/assert-vercel-preview-build.mjs --allow-local && next build",
+  );
+  expectArray(errors, "turbo tasks.build.env", turboConfig?.tasks?.build?.env, [
+    "VERCEL",
+    "VERCEL_ENV",
+    "VERCEL_TARGET_ENV",
+  ]);
 
   return [...new Set(errors)].sort();
 }

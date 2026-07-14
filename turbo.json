@@ -8,6 +8,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["VERCEL", "VERCEL_ENV", "VERCEL_TARGET_ENV"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "lint": {

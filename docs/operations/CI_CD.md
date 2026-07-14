@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: c64d09528dae2c1fd5e4ba3de7d17d15573dd71a
+last_verified_commit: 61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
@@ -19,11 +19,15 @@ code_refs:
   - scripts/assert-ci-results.mjs
   - scripts/create-build-artifact.mjs
   - .github/workflows/deployment-smoke.yml
+  - apps/web/package.json
   - apps/web/vercel.json
+  - apps/web/scripts/assert-vercel-preview-build.mjs
+  - apps/web/scripts/vercel-preview-build-policy.mjs
   - infra/deployment/vercel-staging.json
   - scripts/check-deployment-foundation.mjs
   - scripts/lib/deployment-foundation.mjs
   - scripts/smoke-web-deployment.mjs
+  - turbo.json
 test_refs:
   - tests/unit/build-artifact.test.mjs
   - tests/contracts/ci-workflow.test.mjs
@@ -34,6 +38,8 @@ test_refs:
   - docs/testing/BL-002_VERIFICATION.md
   - tests/contracts/deployment-foundation.test.mjs
   - tests/security/deployment-smoke-security.test.mjs
+  - tests/unit/vercel-preview-build-policy.test.mjs
+  - tests/security/vercel-preview-build-guard.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
 supersedes: null
 ---
@@ -58,7 +64,7 @@ Le due Ruleset GitHub devono essere `active`, richiedere una pull request e il s
 
 Stato corrente: la Ruleset [`main-required-ci` (`18877721`)](https://github.com/Emacore17/dnd-ai/rules/18877721) è `active` sul repository pubblico, target `~DEFAULT_BRANCH`, senza bypass. Richiede una pull request e il solo check `CI / Merge gate` in modalità strict, vincolato a GitHub Actions con `integration_id=15368`. L'API delle regole applicabili a `main` conferma la stessa configurazione.
 
-La branch riservata `release/production` è stata creata da `ef803add249d16ded6f94936c59531047c8a92fa` e protetta dalla Ruleset dedicata [`18926413`](https://github.com/Emacore17/dnd-ai/rules/18926413), attiva e senza bypass. La creazione non ha modificato la Ruleset `main-required-ci` `18877721`, l'environment GitHub `staging` limitato a `main` o la lista deployment Vercel, ancora vuota.
+La branch riservata `release/production` è stata creata da `ef803add249d16ded6f94936c59531047c8a92fa` e protetta dalla Ruleset dedicata [`18926413`](https://github.com/Emacore17/dnd-ai/rules/18926413), attiva e senza bypass. Il contenimento commit `4d3d4ba` è stato integrato con PR #13 nel merge `61e5cbd`; run PR `29332953627` e post-merge `29333105276` sono 5/5 `SUCCESS`, senza nuovi deployment Vercel nel readback successivo. Ruleset `main`, branch release ed environment GitHub `staging` non sono stati modificati.
 
 Verifica operativa:
 
@@ -74,7 +80,11 @@ Non disabilitare il gate per risolvere una coda. Se un job viene cancellato o sa
 
 ## Preview/staging web
 
-`BL-080` aggiunge un workflow separato `Staging smoke`; non modifica il trust boundary della PR e non distribuisce da GitHub Actions. La PR #12 è rimasta senza deployment, ma il merge su `main` ha generato un deployment Production. Il relativo `repository_dispatch` ha creato un job `Staging / Smoke` `skipped`, perché il predicate accetta soltanto payload Preview validi. Il hotfix ripristina auto-deploy disabilitato; CI verde non viene trattata come prova del target provider.
+`BL-080` aggiunge un workflow separato `Staging smoke`; non modifica il trust boundary della PR e non distribuisce da GitHub Actions. La PR #12 è rimasta senza deployment, ma il merge su `main` ha generato un deployment Production. Il relativo `repository_dispatch` ha creato un job `Staging / Smoke` `skipped`, perché il predicate accetta soltanto payload Preview validi. Il contenimento PR #13 è integrato, Git auto-deploy resta disabilitato e CI verde non viene trattata come prova del target provider.
+
+La build Vercel usa un entrypoint distinto e obbligatorio: `apps/web/vercel.json` imposta `buildCommand` a `node scripts/assert-vercel-preview-build.mjs && pnpm run build`; il primo controllo strict prosegue soltanto con la tripla esatta `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`. Il normale `pnpm build` locale accetta soltanto l'assenza contemporanea dei tre metadata; valori parziali, incoerenti, Production, development o custom falliscono prima di Next con errore statico redatto. `turbo.json` include i tre valori nella chiave del task build, così una cache locale non può confondere modalità local e Preview.
+
+Il guard non seleziona l'environment e non impedisce al provider di creare un record deployment: può soltanto bloccare il completamento della build dopo che Vercel ha scelto il target. Dopo il merge del guard, l'unico selector autorizzato per la prima diagnosi è `vercel deploy --target=preview` dalla `main` pulita, in sessione locale già autenticata. È una prova one-shot e non il deploy automatico di accettazione; `--prebuilt`, `--prod` e `promote` sono vietati, mentre `git.deploymentEnabled=false` e `source.autoDeploy=false` restano invariati.
 
 Il job `Staging / Smoke`:
 
@@ -86,9 +96,9 @@ Il job `Staging / Smoke`:
 - ignora l'URL dell'evento e usa esclusivamente l'origin branch esatta versionata dopo aver verificato installation ID della GitHub App, project/deployment ID, SHA, ref, repository, environment, regione e `/health`;
 - propaga ogni failure e annulla run stale per project/ref.
 
-Il progetto applica Standard Protection con policy SSO predefinita `all_except_custom_domains`; la Trusted Source limita già l'OIDC a issuer GitHub, audience account, repository + repository ID immutabile/ref/environment esatti e target `preview`. Il workflow non pubblica un URL non validato nell'environment GitHub. Non introdurre `VERCEL_TOKEN`, automation bypass secret, Deploy Hook, `pull_request_target`, `vercel deploy --prod` o checkout del commit indicato dall'evento. La Git Integration ricostruisce il commit anziché caricare `artifacts/bl002`; l'identità immutabile del deploy è quindi project ID + deployment ID + SHA + health contract.
+Il progetto applica Standard Protection con policy SSO predefinita `all_except_custom_domains`; la Trusted Source limita già l'OIDC a issuer GitHub, audience account, repository + repository ID immutabile/ref/environment esatti e target `preview`. Il workflow non pubblica un URL non validato nell'environment GitHub. Non introdurre `VERCEL_TOKEN`, automation bypass secret, Deploy Hook, `pull_request_target`, `vercel deploy --prod`, `--prebuilt`, `promote` o checkout del commit indicato dall'evento. La Git Integration ricostruisce il commit anziché caricare `artifacts/bl002`; l'identità immutabile del deploy è quindi project ID + deployment ID + SHA + health contract.
 
-Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma la policy linked non ha impedito il target Production. Il hotfix riporta il Quality gate a `pnpm deploy:check`, binding versionati `null` e `git.deploymentEnabled=false`; `deploy:check:linked` torna a fallire intenzionalmente. Project/link/Trusted Source remoti restano configurati e il grant condiviso resta invariato per decisione PO. Nessuna nuova delivery è autorizzata finché il target Preview non è selezionabile e verificabile esplicitamente.
+Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma la policy linked non ha impedito il target Production. PR #13 ha riportato il Quality gate a `pnpm deploy:check`, binding versionati `null` e `git.deploymentEnabled=false`; `deploy:check:linked` fallisce intenzionalmente. Project/link/Trusted Source remoti restano configurati e il grant condiviso resta invariato per decisione PO. Dopo il merge del guard è ammessa soltanto la diagnostica CLI Preview esplicita descritta sopra; smoke, failure e redeploy restano gate aperti. `BL-080` resta `IN_PROGRESS/50%/FAILING` e `BL-079` `BACKLOG`.
 
 ## Cache e artifact
 

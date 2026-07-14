@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: c64d09528dae2c1fd5e4ba3de7d17d15573dd71a
+last_verified_commit: 61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -29,7 +29,11 @@ code_refs:
   - scripts/lib/build-artifact.mjs
   - scripts/lib/secret-scanner.mjs
   - infra/deployment/vercel-staging.json
+  - apps/web/package.json
   - apps/web/vercel.json
+  - apps/web/scripts/assert-vercel-preview-build.mjs
+  - apps/web/scripts/vercel-preview-build-policy.mjs
+  - turbo.json
   - .github/workflows/deployment-smoke.yml
   - scripts/check-deployment-foundation.mjs
   - scripts/lib/deployment-foundation.mjs
@@ -52,6 +56,8 @@ test_refs:
   - tests/integration/web-health.test.mjs
   - tests/contracts/deployment-foundation.test.mjs
   - tests/security/deployment-smoke-security.test.mjs
+  - tests/unit/vercel-preview-build-policy.test.mjs
+  - tests/security/vercel-preview-build-guard.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
 supersedes: null
 ---
@@ -60,7 +66,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-080` è `IN_PROGRESS/50%/FAILING`: Production Branch, Trusted Source e controlli locali risultavano verdi, ma il primo merge di attivazione ha creato un deployment Production da `main`. La delivery è stata eliminata, il job smoke è stato rifiutato e il hotfix ripristina il manifest fail-closed. Preview/smoke/failure/redeploy restano aperti e ADR-0005 è proposed. Il grant GitHub App condiviso resta un rischio accettato, non una causa dimostrata. `BL-079` resta `BACKLOG` fino allo staging reale.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-080` è `IN_PROGRESS/50%/FAILING`: Production Branch, Trusted Source e controlli locali risultavano verdi, ma il primo merge di attivazione ha creato un deployment Production da `main`. La delivery è stata eliminata e il job smoke rifiutato. Il contenimento commit `4d3d4ba`/PR #13 è integrato nel merge `61e5cbd`; run `29332953627` e `29333105276` sono 5/5 verdi e non hanno prodotto nuovi deployment. Il change set corrente aggiunge un build guard Preview-only, mentre Git auto-deploy resta spento. Preview/smoke/failure/redeploy restano aperti e ADR-0005 è proposed. Il grant GitHub App condiviso resta un rischio accettato, non una causa dimostrata. `BL-079` resta `BACKLOG` fino allo staging reale.
 
 ## Governance e baseline
 
@@ -80,8 +86,9 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; full verify locale/clean; CI `29285998646`; report BL-003 | DONE; PASS locale/clean/CI |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
 | Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner fail-closed; web con zero secret/variabili applicative; Git Integration reale senza token Vercel persistente; emissione OIDC e Trusted Source exact-match abilitate | config/security suite; environment GitHub e progetto Vercel con zero secret applicativi; token mancante/malformato fail-before-fetch | BL-003 PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
-| Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | foundation, `/health`, progetto collegato, protezioni e hotfix `git.deploymentEnabled=false` | suite locali PASS storica; PR #12/CI verde; GitHub deployment `5440323678` Production/success; rimozione e zero-current readback | BL-080 FAILING; nessuno staging; target mismatch e hotfix aperti; BL-079 BACKLOG |
-| Deploy web riconducibile a project/deployment/SHA/ref/repository/regione | spec §29.4; ADR-0005 proposed | BL-080 | `web-health-v1`, smoke fail-closed, manifest unlinked nel hotfix | dispatch Production rifiutato; run `29331534774` skipped; URL/alias dopo rimozione `404` | controllo di rifiuto PASS; requisito Preview FAILING |
+| Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | foundation, `/health`, progetto collegato, protezioni, Git auto-deploy spento e guard Preview-only | PR #12/CI verde; GitHub deployment `5440323678` Production/success; rimozione; PR #13/run `29332953627`, merge `61e5cbd`/run `29333105276` e zero post-merge deployment | BL-080 FAILING; nessuno staging; prova Preview ancora aperta; BL-079 BACKLOG |
+| Build provider limitato a Preview senza leakage | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `apps/web/vercel.json`, build script dedicato, policy pura e target metadata nella cache Turbo | unit policy, security subprocess e contract deployment versionati; build Vercel richiede `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`; locale ammesso solo con tutti assenti | guard implementato nel change set; prova provider pending |
+| Deploy web riconducibile a project/deployment/SHA/ref/repository/regione | spec §29.4; ADR-0005 proposed | BL-080 | `web-health-v1`, smoke fail-closed, manifest unlinked dopo PR #13 | dispatch Production rifiutato; run `29331534774` skipped; URL/alias dopo rimozione `404`; selector CLI Preview ancora non eseguito | controllo di rifiuto PASS; requisito Preview FAILING |
 
 ## UX/UI P0
 
