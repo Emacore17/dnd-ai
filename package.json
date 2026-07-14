@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "format:check": "prettier --check \".github/**/*.{yml,yaml}\" \"infra/**/*.json\" \"scripts/**/*.mjs\" \"tests/**/*.mjs\" \"*.{json,mjs,yaml,yml}\" \"apps/**/*.{json,ts,tsx}\" \"packages/**/*.{json,ts,tsx}\"",
+    "format:check": "prettier --check \".github/**/*.{yml,yaml}\" \"infra/**/*.json\" \"scripts/**/*.mjs\" \"tests/**/*.mjs\" \"*.{json,mjs,yaml,yml}\" \"apps/**/*.{json,mjs,ts,tsx}\" \"packages/**/*.{json,ts,tsx}\"",
     "lint": "eslint scripts tests eslint.config.mjs && turbo run lint",
     "typecheck": "turbo run typecheck",
     "boundaries:check": "node scripts/check-boundaries.mjs",
@@ -31,7 +31,7 @@
     "test:integration": "turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/worker --filter=@dnd-ai/web && node --test tests/integration/*.test.mjs",
     "test:contract": "node --test tests/contracts/*.test.mjs",
     "test:security": "node --test tests/security/*.test.mjs && node scripts/scan-secrets.mjs",
-    "verify": "prettier --check \".github/**/*.{yml,yaml}\" \"infra/**/*.json\" \"scripts/**/*.mjs\" \"tests/**/*.mjs\" \"*.{json,mjs,yaml,yml}\" \"apps/**/*.{json,ts,tsx}\" \"packages/**/*.{json,ts,tsx}\" && eslint scripts tests eslint.config.mjs && eslint scripts apps packages --max-warnings 0 && turbo run lint && turbo run typecheck && turbo run build && node --test tests/unit/*.test.mjs && node --test tests/integration/*.test.mjs && node --test tests/contracts/*.test.mjs && node --test tests/security/*.test.mjs && node scripts/check-boundaries.mjs && node scripts/check-task-graph.mjs && node scripts/check-ci-workflow.mjs && node scripts/check-deployment-foundation.mjs && node scripts/scan-secrets.mjs && node scripts/create-build-artifact.mjs && node scripts/verify-build-artifact.mjs"
+    "verify": "prettier --check \".github/**/*.{yml,yaml}\" \"infra/**/*.json\" \"scripts/**/*.mjs\" \"tests/**/*.mjs\" \"*.{json,mjs,yaml,yml}\" \"apps/**/*.{json,mjs,ts,tsx}\" \"packages/**/*.{json,ts,tsx}\" && eslint scripts tests eslint.config.mjs && eslint scripts apps packages --max-warnings 0 && turbo run lint && turbo run typecheck && turbo run build && node --test tests/unit/*.test.mjs && node --test tests/integration/*.test.mjs && node --test tests/contracts/*.test.mjs && node --test tests/security/*.test.mjs && node scripts/check-boundaries.mjs && node scripts/check-task-graph.mjs && node scripts/check-ci-workflow.mjs && node scripts/check-deployment-foundation.mjs && node scripts/scan-secrets.mjs && node scripts/create-build-artifact.mjs && node scripts/verify-build-artifact.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",

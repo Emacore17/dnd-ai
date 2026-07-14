@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: c64d09528dae2c1fd5e4ba3de7d17d15573dd71a
+last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -26,7 +26,11 @@ code_refs:
   - scripts/lib/build-artifact.mjs
   - scripts/lib/secret-scanner.mjs
   - infra/deployment/vercel-staging.json
+  - apps/web/package.json
   - apps/web/vercel.json
+  - apps/web/scripts/assert-vercel-preview-build.mjs
+  - apps/web/scripts/vercel-preview-build-policy.mjs
+  - turbo.json
   - scripts/check-deployment-foundation.mjs
   - scripts/lib/deployment-foundation.mjs
   - apps/web/app/health/route.ts
@@ -51,6 +55,8 @@ test_refs:
   - tests/integration/web-health.test.mjs
   - tests/contracts/deployment-foundation.test.mjs
   - tests/security/deployment-smoke-security.test.mjs
+  - tests/unit/vercel-preview-build-policy.test.mjs
+  - tests/security/vercel-preview-build-guard.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
 supersedes: null
 ---
@@ -63,7 +69,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | attivazione integrata tramite [PR #12](https://github.com/Emacore17/dnd-ai/pull/12) nel merge `c64d09528dae2c1fd5e4ba3de7d17d15573dd71a`; il primo deploy è stato classificato `production` in conflitto con il readback Production Branch=`release/production`, ha ricevuto alias prima della rimozione ed è stato eliminato; lista deployment provider tornata a zero e hotfix fail-closed in corso su `codex/bl-080-fail-closed-hotfix` |
+| Delivery/commit | attivazione [PR #12](https://github.com/Emacore17/dnd-ai/pull/12) integrata nel merge `c64d09528dae2c1fd5e4ba3de7d17d15573dd71a`; il primo deploy è stato classificato `production`, ha ricevuto alias ed è stato eliminato. Il contenimento commit `4d3d4baad1a57b5340c0092209cc640499aa4da8` è stato integrato con [PR #13](https://github.com/Emacore17/dnd-ai/pull/13) nel merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; run PR `29332953627` e post-merge `29333105276` 5/5 `SUCCESS`, con zero nuovi deployment nel readback successivo. Guard Preview-only congelato nel commit `519052649c88d84c45da92c3b35131819291a73a` e verificato da working tree pulito |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Milestone | `M0 — Fondamenta` |
@@ -74,7 +80,7 @@ supersedes: null
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. `BL-003` implementa `runtime-config-v1` ed è integrato in `main`. Il web Next è l'unico runtime oggi deployabile; API e worker non hanno container/daemon. La foundation disabilitata di `BL-080` è integrata in `main` tramite PR #7 e l'hardening branch-closed tramite PR #10: desired state Vercel, health contract e workflow smoke sono quindi presenti sulla default branch. Il Product Owner ha autorizzato il solo piano Hobby personale/non-commerciale, la sola identità Vercel esclusiva verificata in forma redatta e GitHub `Emacore17`; account alternativi, acquisti e upgrade restano vietati. Il project `dnd-ai-web` (`prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`) nello scope `emacore17s-projects` è collegato a `Emacore17/dnd-ai` (`repository_id=1299266814`) con root `apps/web`, Next.js, `fra1`, fork protection, system env/OIDC e Standard Protection predefinita; contiene zero env applicative. La Trusted Source GitHub Actions è configurata e riletta con audience, repository/repository ID, ref, environment e target `preview` esatti. Su decisione esplicita del Product Owner l'installazione GitHub App condivisa resta invariata (`isAccessRestricted=false`, 8 repository), perché restringerla toglierebbe accesso ad altri progetti: il perimetro più ampio è un rischio residuo accettato, mitigato da link project/repository esatto, Trusted Source exact-match, environment protetto e policy Git branch-closed. Il branch `release/production` è protetto dalla Ruleset dedicata `release-production-required-ci` (`18926413`) con `CI / Merge gate` strict e `current_user_can_bypass=never`; la Ruleset main `18877721` e GitHub environment `staging` restano invariati. Il readback Vercel indicava Production Branch=`release/production`, ma il merge protetto PR #12 su `main` ha prodotto `dpl_Cag…` con `target=production`; il workflow `Staging smoke` run `29331534774` ha rifiutato il payload e risulta `skipped`. L'activity log prova che gli alias sono stati assegnati prima del completamento della rimozione. Il deployment è stato poi eliminato e i readback deployment/alias del progetto sono tornati vuoti. La causa resta sconosciuta: il hotfix corrente ripristina manifest versionato unlinked, `source.autoDeploy=false`, `git.deploymentEnabled=false` e Quality gate non-linked. `BL-079` resta fuori scope e bloccato fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. `BL-003` implementa `runtime-config-v1` ed è integrato in `main`. Il web Next è l'unico runtime oggi deployabile; API e worker non hanno container/daemon. La foundation disabilitata di `BL-080` è integrata in `main` tramite PR #7 e l'hardening branch-closed tramite PR #10: desired state Vercel, health contract e workflow smoke sono quindi presenti sulla default branch. Il Product Owner ha autorizzato il solo piano Hobby personale/non-commerciale, la sola identità Vercel esclusiva verificata in forma redatta e GitHub `Emacore17`; account alternativi, acquisti e upgrade restano vietati. Il project `dnd-ai-web` (`prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`) nello scope `emacore17s-projects` è collegato a `Emacore17/dnd-ai` (`repository_id=1299266814`) con root `apps/web`, Next.js, `fra1`, fork protection, system env/OIDC e Standard Protection predefinita; contiene zero env applicative. La Trusted Source GitHub Actions è configurata e riletta con audience, repository/repository ID, ref, environment e target `preview` esatti. Su decisione esplicita del Product Owner l'installazione GitHub App condivisa resta invariata (`isAccessRestricted=false`, 8 repository), perché restringerla toglierebbe accesso ad altri progetti: il perimetro più ampio è un rischio residuo accettato, mitigato da link project/repository esatto, Trusted Source exact-match, environment protetto e policy Git branch-closed. Il branch `release/production` è protetto dalla Ruleset dedicata `release-production-required-ci` (`18926413`) con `CI / Merge gate` strict e `current_user_can_bypass=never`; la Ruleset main `18877721` e GitHub environment `staging` restano invariati. Il readback Vercel indicava Production Branch=`release/production`, ma il merge protetto PR #12 su `main` ha prodotto `dpl_Cag…` con `target=production`; il workflow `Staging smoke` run `29331534774` ha rifiutato il payload e risulta `skipped`. L'activity log prova che gli alias sono stati assegnati prima del completamento della rimozione. Il deployment è stato poi eliminato. Il contenimento PR #13 è integrato su `main`: manifest versionato unlinked, `source.autoDeploy=false`, `git.deploymentEnabled=false` e Quality gate non-linked; run PR/post-merge 5/5 verdi e readback successivo ancora a zero deployment. Il change set corrente aggiunge un build guard Preview-only: `apps/web/vercel.json` impone `node scripts/assert-vercel-preview-build.mjs && pnpm run build`, con un primo controllo strict che accetta soltanto `VERCEL=1` con `VERCEL_ENV=preview` e `VERCEL_TARGET_ENV=preview`; il normale build locale è ammesso solo quando tutti e tre i metadata sono assenti. Il guard blocca il completamento di una build non Preview, ma non può impedire al provider di creare inizialmente un record deployment o sceglierne il target. `BL-079` resta fuori scope e `BACKLOG` fino a uno staging reale.
 
 ## Decisioni operative vigenti
 
@@ -86,7 +92,7 @@ supersedes: null
 - Visual language premium contemporaneo per casual gamer, senza chrome pseudo-medievale/fantasy.
 - Workspace e direzioni di dipendenza secondo ADR-0002; manifest/import/cicli falliscono chiuso tramite checker versionato.
 - Configurazione runtime server-only validata ai composition root; nessun valore secret nel client, nei default, nei log o nei documenti. ADR-0004 accepted durante `BL-003`.
-- Preview/staging web in preparazione su Vercel Hobby con Root Directory `apps/web`, compute `fra1`, Git Integration nativa, Production Branch riservata e Trusted Source exact-match. Il grant condiviso `41079282` non viene ristretto per decisione esplicita del Product Owner ed è trattato come rischio residuo accettato con controlli compensativi project-level. La policy `{"**": false, "main": true, "release/production": false}` non ha garantito il target Preview sul primo merge ed è sospesa; il repository torna fail-closed con auto-deploy disabilitato finché un controllo provider indipendente non prova `target=preview`. ADR-0005 resta proposed.
+- Preview/staging web in preparazione su Vercel Hobby con Root Directory `apps/web`, compute `fra1`, Git Integration nativa, Production Branch riservata e Trusted Source exact-match. Il grant condiviso `41079282` non viene ristretto per decisione esplicita del Product Owner ed è trattato come rischio residuo accettato con controlli compensativi project-level. La policy `{"**": false, "main": true, "release/production": false}` non ha garantito il target Preview sul primo merge ed è sospesa; Git auto-deploy resta disabilitato. Il selector ufficiale `vercel deploy --target=preview` potrà essere usato una sola volta come diagnostica dopo il merge del guard, mai con `--prebuilt`, `--prod` o `promote`; non sostituisce il percorso automatico richiesto da `BL-080`. ADR-0005 resta proposed.
 
 Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md), [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md) e [`ADR-0004`](adr/0004-runtime-configuration-and-secret-injection.md). ADR-0005 è [`proposed`](adr/0005-vercel-web-preview-and-staging.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Configurazione operativa: [`CONFIGURATION.md`](operations/CONFIGURATION.md) e [`PREVIEW_STAGING.md`](operations/PREVIEW_STAGING.md). Architettura implementata: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md).
 
@@ -100,14 +106,14 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
 | Eval suite version | `N/A` | harness non creato |
 | Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
-| Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | project remoto, link Git, Production Branch e Trusted Source esistono; il manifest versionato torna unlinked/fail-closed dopo il deployment Production inatteso; Preview/smoke/failure/redeploy pending |
+| Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento PR #13 integrato; manifest unlinked/fail-closed, Git auto-deploy spento e build provider Preview-only nel change set corrente; Preview/smoke/failure/redeploy pending |
 | Design contract | `ux-ui-2026-07-13` | documentato, non implementato |
 | ADR UI | `ADR-0001 accepted` | vigente |
 | Toolchain | Node `24.11.0` (engine `>=22.12.0`); pnpm `10.34.5`; Turbo `2.10.4`; TypeScript `6.0.3` | pinning e lockfile presenti |
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web scaffold; API senza route ma con startup validate-before-bind |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
-| CI policy | `ci-policy-v1` | hotfix ripristina il gate base + `deploy:check`; workflow smoke separato ha rifiutato il dispatch Production con job `skipped`; full verify hotfix PASS in 61,0 s |
+| CI policy | `ci-policy-v1` | contenimento integrato con PR #13; run `29332953627` e `29333105276` 5/5 `SUCCESS`; gate base + `deploy:check`, workflow smoke Production rifiutato e target metadata inclusi nella chiave cache del build |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
 | Release Ruleset | `release-production-required-ci` / `18926413` | branch `release/production` creato da `ef803add249d16ded6f94936c59531047c8a92fa`; active, `CI / Merge gate` strict, `current_user_can_bypass=never`; Ruleset main invariata |
 | Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file; checkout pulito BL-003 `3.554` file e CI Ubuntu `3.233` file, secret/checksum verification PASS |
@@ -156,7 +162,7 @@ Le decisioni `OD-01..OD-20` restano in `docs/MVP_SPEC.md` §34. Quelle che posso
 
 - `OD-07` auth build vs managed;
 - `OD-08` regione dati/telemetry.
-- Il target provider effettivo è un blocker operativo di `BL-080`: il readback Production Branch=`release/production` non ha impedito un deployment `production` da `main`. Nessuna nuova attivazione è ammessa finché la causa e un controllo preventivo affidabile non sono documentati. Il piano/account Vercel Hobby resta autorizzato soltanto per uso personale/non commerciale e con identità esclusiva; l'installazione condivisa `41079282` non viene ristretta per decisione PO.
+- Il target provider effettivo è un blocker operativo di `BL-080`: il readback Production Branch=`release/production` non ha impedito un deployment `production` da `main`. Nessuna riattivazione Git è ammessa finché la discrepanza non è isolata e mitigata da una prova Preview reale. Il piano/account Vercel Hobby resta autorizzato soltanto per uso personale/non commerciale e con identità esclusiva; l'installazione condivisa `41079282` non viene ristretta per decisione PO.
 
 Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di prodotto: `BL-079` deve validarli tramite contrast/performance gate e può scegliere il fallback più semplice.
 
@@ -168,14 +174,14 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | CTX-R03 | App e package di dominio restano scaffold; il web non contiene ancora la foundation UX/UI | task M0 proprietari; non inferire comportamento applicativo dalle entry point minime |
 | CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` resta in M0 e dipende dalla foundation operativa `BL-080` |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive gated o rimosso nel task `BL-079` |
-| CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | `BL-080` è `IN_PROGRESS/FAILING`; ripristinare prima il fail-closed e risolvere il target mismatch senza sbloccare BL-079/GATE-M0 |
+| CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | `BL-080` resta `IN_PROGRESS/50%/FAILING`; contenimento integrato, guard Preview-only e prova provider ancora da chiudere senza sbloccare BL-079/GATE-M0 |
 | CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based/ignore-aware |
-| CTX-R14 | L'installazione condivisa `41079282` vede 8 repository e non può essere ristretta senza togliere accesso ad altri progetti; un deploy manuale resterebbe possibile a un owner | Production Branch Vercel separata, Ruleset `18926413` strict/no-bypass, Trusted Source exact-match, link project/repository esatto, environment `staging` protetto e policy branch-closed compensano il grant condiviso accettato dal PO; nessun deploy/promote manuale è autorizzato e il readback deve confermare zero Production |
-| CTX-R16 | Il readback Production Branch non ha predetto il target effettivo: `main` ha creato un deployment Production e ricevuto alias | Hotfix fail-closed immediato; zero nuovi deploy; conservare activity/run evidence; non riattivare finché causa e verifica preventiva `target=preview` non sono dimostrate |
+| CTX-R14 | L'installazione condivisa `41079282` vede 8 repository e non può essere ristretta senza togliere accesso ad altri progetti; un deploy manuale resterebbe possibile a un owner | Production Branch Vercel separata, Ruleset `18926413` strict/no-bypass, Trusted Source exact-match, link project/repository esatto, environment `staging` protetto e policy Git disabilitata compensano il grant condiviso accettato dal PO; sono vietati Production e promote, mentre una sola diagnostica CLI Preview è ammessa dopo il merge del guard |
+| CTX-R16 | Il readback Production Branch non ha predetto il target effettivo: `main` ha creato un deployment Production e ricevuto alias | Contenimento PR #13 integrato e zero deploy post-merge; il selector CLI esplicito richiede Preview, mentre il guard blocca il completamento se i metadata non sono Preview ma non previene la creazione iniziale del record provider; Git auto-deploy resta spento |
 
 ## Prossima azione
 
-Pubblicare e integrare con merge gate il hotfix `codex/bl-080-fail-closed-hotfix`, che ripristina `git.deploymentEnabled=false`, manifest unlinked e `deploy:check`; verificare zero nuovi deployment prima e dopo il merge. Poi ricostruire con evidenza ufficiale la causa del target mismatch e definire un percorso che garantisca preventivamente `target=preview`. Non eseguire smoke, failure probe, redeploy o nuove attivazioni finché questo gate non è chiuso. `BL-079` resta `BACKLOG`.
+Integrare con merge gate il guard Preview-only mantenendo `git.deploymentEnabled=false`, `source.autoDeploy=false`, binding versionati `null` e `deploy:check`; confermare ancora zero deployment dopo il merge. Solo allora eseguire una diagnostica one-shot dal checkout pulito di `main` con CLI pinned e selector esplicito `--target=preview`: mai `--prebuilt`, `--prod` o `promote`. Ispezionare immediatamente target e metadata; qualunque target diverso da Preview deve restare in errore e venire rimosso senza smoke. La diagnostica non chiude il requisito di deploy automatico. `BL-080` resta `IN_PROGRESS/50%/FAILING` e `BL-079` `BACKLOG`.
 
 ## Rischi chiusi
 

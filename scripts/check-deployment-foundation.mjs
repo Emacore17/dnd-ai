@@ -7,6 +7,7 @@ import { parse } from "yaml";
 import {
   validateDeploymentManifest,
   validateVercelProjectConfig,
+  validateWebBuildPolicy,
 } from "./lib/deployment-foundation.mjs";
 import { validateDeploymentWorkflow } from "./lib/deployment-workflow-policy.mjs";
 
@@ -22,15 +23,19 @@ async function readYaml(...segments) {
   return parse(await readFile(path.join(repositoryRoot, ...segments), "utf8"));
 }
 
-const [manifest, workflow, vercelConfig] = await Promise.all([
-  readJson("infra", "deployment", "vercel-staging.json"),
-  readYaml(".github", "workflows", "deployment-smoke.yml"),
-  readJson("apps", "web", "vercel.json"),
-]);
+const [manifest, workflow, vercelConfig, webPackage, turboConfig] =
+  await Promise.all([
+    readJson("infra", "deployment", "vercel-staging.json"),
+    readYaml(".github", "workflows", "deployment-smoke.yml"),
+    readJson("apps", "web", "vercel.json"),
+    readJson("apps", "web", "package.json"),
+    readJson("turbo.json"),
+  ]);
 const requireLinked = process.argv.includes("--require-linked");
 const errors = [
   ...validateDeploymentManifest(manifest, { requireLinked }),
   ...validateVercelProjectConfig(manifest, vercelConfig),
+  ...validateWebBuildPolicy(webPackage, turboConfig),
   ...validateDeploymentWorkflow(workflow),
 ];
 

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: c64d09528dae2c1fd5e4ba3de7d17d15573dd71a
+last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
@@ -24,11 +24,15 @@ code_refs:
   - .github/workflows/ci.yml
   - scripts/lib/ci-workflow-policy.mjs
   - apps/web/app/health/route.ts
+  - apps/web/package.json
   - apps/web/vercel.json
+  - apps/web/scripts/assert-vercel-preview-build.mjs
+  - apps/web/scripts/vercel-preview-build-policy.mjs
   - infra/deployment/vercel-staging.json
   - .github/workflows/deployment-smoke.yml
   - scripts/check-deployment-foundation.mjs
   - scripts/lib/deployment-foundation.mjs
+  - turbo.json
 test_refs:
   - tests/unit/build-artifact.test.mjs
   - tests/contracts/workspace-boundaries.test.mjs
@@ -37,6 +41,8 @@ test_refs:
   - tests/integration/runtime-startup.test.mjs
   - tests/integration/web-health.test.mjs
   - tests/contracts/deployment-foundation.test.mjs
+  - tests/unit/vercel-preview-build-policy.test.mjs
+  - tests/security/vercel-preview-build-guard.test.mjs
 supersedes: null
 ---
 
@@ -44,11 +50,11 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile e `BL-002` la pipeline fail-closed. `BL-003` aggiunge configurazione runtime server-only e startup fail-fast. `BL-080` ha implementato la foundation deploy, l'environment GitHub e il collegamento Vercel. La prima attivazione ha però creato un target Production da `main`; la delivery è stata eliminata e il hotfix ripristina manifest unlinked, auto-deploy disabilitato e `deploy:check`. Non esiste uno staging disponibile. Il grant GitHub App condiviso resta un rischio residuo accettato, non la causa attribuita dell'incidente. La UI resta uno scaffold e i successivi moduli M0 non sono sbloccati.
+`BL-001` introduce un monorepo TypeScript buildabile e `BL-002` la pipeline fail-closed. `BL-003` aggiunge configurazione runtime server-only e startup fail-fast. `BL-080` ha implementato la foundation deploy, l'environment GitHub e il collegamento Vercel. La prima attivazione ha però creato un target Production da `main`; la delivery è stata eliminata. Il contenimento commit `4d3d4ba`/PR #13 è integrato nel merge `61e5cbd`, con CI PR/post-merge 5/5 verde e zero nuovi deployment nel readback successivo. Manifest unlinked, Git auto-deploy disabilitato e `deploy:check` restano vigenti; il change set corrente aggiunge una barriera build Preview-only. Non esiste ancora uno staging. Il grant GitHub App condiviso resta un rischio residuo accettato, non la causa attribuita dell'incidente. La UI resta uno scaffold e i successivi moduli M0 non sono sbloccati.
 
 ```text
 apps/
-  web/             Next.js App Router; scaffold browser + `/health` deploy metadata
+  web/             Next.js App Router; scaffold, build guard Preview-only + `/health`
   api/             Fastify composition root; config prima del bind
   worker/          config prima dell'initializer; BullMQ pianificato
 packages/
@@ -102,7 +108,7 @@ Il contratto `runtime-config-v1` distingue API, worker e migration. `APP_ENV` ac
 
 L'API valida prima di costruire Fastify e aprire il listener. Il worker valida prima dell'inizializzatore iniettato; il migration profile è pronto per l'executable di `BL-004`. Il web corrente non consuma config runtime e non importa `@dnd-ai/config`.
 
-Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, health contract `web-health-v1` e progetto Vercel collegato al repository corretto con Root Directory `apps/web`, Next.js e `fra1`. Fork Protection, OIDC e Trusted Source sono configurati; zero variabili applicative. Production Branch Vercel=`release/production`, branch release e Ruleset restano invariati. La policy linked ha però prodotto un deployment Production da `main`, confermato `success` prima della rimozione. Il hotfix riporta il contratto versionato a stato unlinked/fail-closed; deployment e alias correnti del progetto sono vuoti e lo staging non è disponibile.
+Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, health contract `web-health-v1` e progetto Vercel collegato al repository corretto con Root Directory `apps/web`, Next.js e `fra1`. Fork Protection, OIDC e Trusted Source sono configurati; zero variabili applicative. Production Branch Vercel=`release/production`, branch release e Ruleset restano invariati. La policy linked ha però prodotto un deployment Production da `main`, confermato `success` prima della rimozione. PR #13 ha riportato il contratto versionato a stato unlinked/fail-closed e il provider a zero deployment; Git auto-deploy resta spento. `vercel.json` obbliga il build provider a passare dal guard che accetta soltanto `VERCEL=1`, `VERCEL_ENV=preview` e `VERCEL_TARGET_ENV=preview`; il build locale è ammesso solo con i tre metadata assenti. Il guard può impedire il completamento, non la creazione iniziale del record deployment. Lo staging non è disponibile.
 
 ## Comandi disponibili in BL-001/BL-002/BL-003/BL-080
 
@@ -129,7 +135,7 @@ corepack pnpm@10.34.5 verify
 
 Nel workflow CI base le action esterne sono pin a SHA completo, checkout non persiste credenziali e i permessi globali sono read-only. La cache gestita da `setup-node` contiene soltanto lo store pnpm indicizzato dal lockfile. Security esegue SAST locale fail-on-warning, test/secret scan e dependency audit; non riceve secret applicativi.
 
-Il workflow deployment smoke è separato e accetta soltanto payload Preview coerenti. Sul dispatch del deployment Production il job è risultato `skipped`, quindi nessun token o fetch è stato eseguito. Il percorso Preview resta non verificato; API e worker non partecipano finché non hanno packaging operativo.
+Il workflow deployment smoke è separato e accetta soltanto payload Preview coerenti. Sul dispatch del deployment Production il job è risultato `skipped`, quindi nessun token o fetch è stato eseguito. Dopo il merge del guard, una sola diagnostica remota avviata dalla CLI locale con selector `--target=preview` è ammessa; non usa `--prebuilt`, `--prod` o `promote`, non abilita Git auto-deploy e non sostituisce la prova automatica richiesta. Il percorso Preview resta non verificato; API e worker non partecipano finché non hanno packaging operativo.
 
 Il build produce `artifacts/bl002`: `scripts/lib/build-artifact.mjs` copia soltanto output esplicitamente ammessi, incluso `packages/config/dist`, rifiuta link esterni/path sensibili e file ambientali, scansiona i file e registra byte+SHA-256 in `build-artifact-v1`. L’upload usa soltanto questo staging validato.
 
