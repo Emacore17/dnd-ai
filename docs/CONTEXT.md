@@ -60,7 +60,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `origin/main` a `52bf58d9f9cb9cab6ad0cc1b1602d7556067b578` dopo merge della PR #7; CI post-merge `29321531038` 5/5 job `SUCCESS` |
+| Delivery/commit | foundation applicativa integrata tramite PR #7 nel merge `52bf58d9f9cb9cab6ad0cc1b1602d7556067b578`; CI post-merge `29321531038` 5/5 job `SUCCESS`; evidenze living integrate tramite PR #8 |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c` |
 | Milestone | `M0 — Fondamenta` |
