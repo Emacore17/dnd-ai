@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61
+last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -2493,11 +2493,11 @@ updated_at: 2026-07-14
 agent: Codex development agent
 git_branch: codex/bl-080-explicit-preview-guard
 base_commit: 61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61
-current_commit: 61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61
+current_commit: 519052649c88d84c45da92c3b35131819291a73a
 spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
 context_verified: true
 test_status: FAILING
-working_tree_dirty: true
+working_tree_dirty: false
 ```
 
 ## Contesto letto
@@ -2559,7 +2559,7 @@ working_tree_dirty: true
 | 2026-07-14 | 50% | Completato localmente il change set linked: binding atomici, deny-all con solo `main`, release esplicitamente negata e Quality gate linked; definita la prova negativa su branch effimera non mergiata. | `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 65,3 s: lint/build 11/11, typecheck 12/12, unit 29+1 skip host, integration 9/9, contract 18/18, security 11+3 skip host, policy/scan/artifact 3.205 file PASS. | Chiudere review indipendente, committare e aprire PR; confermare zero deployment prima del merge. |
 | 2026-07-14 | 50% | Pubblicata e integrata l'attivazione branch-closed senza bypass; PR e CI non hanno prodotto deployment. | Commit `7335053`; PR #12; run `29331343752` 5/5 `SUCCESS`; merge `c64d095`; readback pre-merge Production Branch=`release/production` e zero deployment. | Osservare il primo deploy di `main` e fermarsi su qualunque target Production. |
 | 2026-07-14 | 50% | Il primo deploy post-merge è risultato `target=production`: stop immediato, rimozione del deployment e hotfix fail-closed. | Deployment `dpl_Cag…`; activity `production` con alias assegnati; smoke run `29331534774` `skipped`; deployment e alias del progetto poi vuoti. Hotfix full verify PASS in 61,0 s; causa provider ancora sconosciuta. | Integrare il hotfix con zero nuovi deploy; investigare il target prima di ogni riattivazione. |
-| 2026-07-14 | 50% | Integrato il contenimento e implementato il guard build Preview-only: il percorso Vercel richiede metadata `preview` concordanti, mentre Git auto-deploy resta spento. Il guard limita il completamento di un target errato, non la creazione iniziale del relativo record provider. Le review indipendenti finali non rilevano P0/P1/P2 residui. | PR #13; CI PR `29332953627` e post-merge `29333105276` 5/5 `SUCCESS`; merge `61e5cbd`; readback Vercel successivo con zero deployment. `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 60,2 s; unit 33 pass/1 skip host, security 14 pass/3 skip host; unit guard 4/4, security subprocess 3/3 e contract deployment 5/5. La regressione `--allow-local` + Production è coperta; Production simulata exit `1` prima di Next e Preview simulata completa Next build. | Commit e PR del guard senza deploy; dopo merge/CI/readback eseguire il bootstrap CLI diagnostico esplicito. |
+| 2026-07-14 | 50% | Integrato il contenimento e implementato il guard build Preview-only: il percorso Vercel richiede metadata `preview` concordanti, mentre Git auto-deploy resta spento. Il guard limita il completamento di un target errato, non la creazione iniziale del relativo record provider. Le review indipendenti finali non rilevano P0/P1/P2 residui. | Commit `519052649c88d84c45da92c3b35131819291a73a`; clean `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 57,1 s, senza cache: unit 33 pass/1 skip host, integration 9/9, contract 18/18, security 14 pass/3 skip host, policy/scan/artifact verdi. Unit guard 4/4, security subprocess 3/3 e contract deployment 5/5; la regressione `--allow-local` + Production è coperta. PR #13/merge `61e5cbd` restano l'evidenza del contenimento remoto con zero deployment. | Aprire la PR del guard senza deploy; dopo merge/CI/readback eseguire il bootstrap CLI diagnostico esplicito. |
 
 ## Chiusura
 

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61
+last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -69,7 +69,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | attivazione [PR #12](https://github.com/Emacore17/dnd-ai/pull/12) integrata nel merge `c64d09528dae2c1fd5e4ba3de7d17d15573dd71a`; il primo deploy è stato classificato `production`, ha ricevuto alias ed è stato eliminato. Il contenimento commit `4d3d4baad1a57b5340c0092209cc640499aa4da8` è stato integrato con [PR #13](https://github.com/Emacore17/dnd-ai/pull/13) nel merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; run PR `29332953627` e post-merge `29333105276` 5/5 `SUCCESS`, con zero nuovi deployment nel readback successivo |
+| Delivery/commit | attivazione [PR #12](https://github.com/Emacore17/dnd-ai/pull/12) integrata nel merge `c64d09528dae2c1fd5e4ba3de7d17d15573dd71a`; il primo deploy è stato classificato `production`, ha ricevuto alias ed è stato eliminato. Il contenimento commit `4d3d4baad1a57b5340c0092209cc640499aa4da8` è stato integrato con [PR #13](https://github.com/Emacore17/dnd-ai/pull/13) nel merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; run PR `29332953627` e post-merge `29333105276` 5/5 `SUCCESS`, con zero nuovi deployment nel readback successivo. Guard Preview-only congelato nel commit `519052649c88d84c45da92c3b35131819291a73a` e verificato da working tree pulito |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Milestone | `M0 — Fondamenta` |

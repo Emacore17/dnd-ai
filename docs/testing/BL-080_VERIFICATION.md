@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: 61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61
+last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -53,6 +53,7 @@ supersedes: null
 | Foundation su `main` | PR #7; merge `52bf58d9f9cb9cab6ad0cc1b1602d7556067b578` |
 | Hardening corrente | commit `1766406b9bd701a9880705b371fdc0b05a73abe1`; PR #10; run `29326093430` 5/5 `SUCCESS`; merge `ef803add249d16ded6f94936c59531047c8a92fa` |
 | Contenimento corrente | commit `4d3d4baad1a57b5340c0092209cc640499aa4da8`; PR #13; CI PR `29332953627` e post-merge `29333105276` 5/5 `SUCCESS`; merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; zero deployment successivi |
+| Guard Preview-only | commit `519052649c88d84c45da92c3b35131819291a73a`; review indipendenti zero P0/P1/P2; clean verify senza cache PASS |
 | Spec SHA-256 | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Deploy contract | `staging-foundation-v1`; provider remoto ancora collegato, mentre il repository mantiene binding versionati `null`, `source.autoDeploy=false`, `git.deploymentEnabled=false` e build guard Preview-only |
 | Health contract | `web-health-v1` |
@@ -140,7 +141,7 @@ La rimozione è stata richiesta quando il CLI mostrava ancora `BUILDING`, ma l'a
 | Review indipendenti finali | zero P0/P1/P2; incluso il caso regressione Production con `--allow-local`, che termina ancora su `target-not-preview` |
 | Build Command simulato con Production | expected FAIL exit `1` su `target-not-preview` prima dell'avvio di Next |
 | Build Command simulato con Preview | PASS; Next.js `16.2.10` compila e genera `/`, `/_not-found`, `/health` |
-| `TURBO_FORCE=true corepack pnpm@10.34.5 verify` sul guard | PASS in 60,2 s; zero cache Turbo; unit 33 pass/1 skip host, security 14 pass/3 skip host, integration/contract/policy/scan/artifact verdi |
+| `TURBO_FORCE=true corepack pnpm@10.34.5 verify` sul guard | PASS preliminare in 60,2 s e PASS sul commit pulito `5190526` in 57,1 s; zero cache Turbo; unit 33 pass/1 skip host, integration 9/9, contract 18/18, security 14 pass/3 skip host, policy/scan/artifact verdi |
 
 Il primo full verify post-review è terminato per timeout host con exit `124` dopo 184 s e ha lasciato processi `corepack pnpm verify`/Turbo typecheck figli. I soli processi identificati sono stati terminati, `pnpm typecheck` è passato isolatamente e un rerun completo con cache Turbo forzatamente ignorata ha chiuso i gate in 61,4 s. Dopo l'hardening OIDC/origin, un primo rerun si è fermato correttamente al format check di `deployment-foundation.mjs`; Prettier ha corretto il solo layout e il successivo gate è passato in 58,0 s. Il change set della policy branch `**`, confronto con `apps/web/vercel.json` e atomicità dei quattro binding è passato in 75,4 s. Il checkpoint documentale precedente ha aggiunto la decisione normativa sul grant condiviso, la branch/Ruleset release e la sequenza origin non circolare: `TURBO_FORCE=true pnpm verify` è passato con exit `0` in 70,8 s. Sul change set di attivazione `TURBO_FORCE=true corepack pnpm@10.34.5 verify` è passato con exit `0` in 65,3 s: lint e build 11/11, typecheck 12/12, unit 29+1 skip host, integration 9/9, contract 18/18, security 11+3 skip host, task/deploy/CI policy, secret scan e artifact 3.205 file tutti verdi, con zero cache Turbo. Il guard corrente ha poi chiuso lo stesso gate con exit `0` in 60,2 s; le suite aggiornate contano 33 unit PASS/1 skip host e 14 security PASS/3 skip host. Il build web successivo alla rimozione di `.env.local` è passato senza caricare il file. Né timeout né format failure vengono contati come PASS.
 

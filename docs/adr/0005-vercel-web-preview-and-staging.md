@@ -2,7 +2,7 @@
 status: proposed
 owner: engineering-and-operations
 last_reviewed: 2026-07-14
-last_verified_commit: 61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61
+last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd

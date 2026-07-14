@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61
+last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -99,7 +99,7 @@ supersedes: null
 - Hotfix fail-closed verificato localmente con `TURBO_FORCE=true corepack pnpm@10.34.5 verify` PASS in 61,0 s: unit 29+1 skip host, integration 9/9, contract 18/18, security 11+3 skip host, policy/scan/artifact 3.205 file.
 - Contenimento pubblicato nella [PR #13](https://github.com/Emacore17/dnd-ai/pull/13): run PR `29332953627` e post-merge `29333105276` con 5/5 job `SUCCESS`; merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; readback successivo con zero deployment e nessun nuovo smoke dispatch.
 - Guard Preview-only mirato: unit 4/4, security subprocess 3/3 e deployment contract 5/5 `PASS`; `deploy:check`, task graph, ESLint e Prettier mirati `PASS`. La simulazione Production, anche con `--allow-local`, termina con exit `1`/`target-not-preview` prima di Next; la simulazione Preview completa il build Next.js `16.2.10` e genera `/health`. Le review indipendenti finali non rilevano P0/P1/P2 residui.
-- Full gate del guard: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 60,2 s; unit 33 pass/1 skip host, security 14 pass/3 skip host, integration/contract/policy/scan/artifact verdi.
+- Full gate del guard: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 60,2 s sul diff e in 57,1 s sul commit pulito `519052649c88d84c45da92c3b35131819291a73a`; unit 33 pass/1 skip host, integration 9/9, contract 18/18, security 14 pass/3 skip host, policy/scan/artifact verdi.
 
 ## 2026-07-13
 
