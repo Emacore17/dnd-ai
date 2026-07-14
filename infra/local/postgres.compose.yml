@@ -1,0 +1,25 @@
+name: dnd-ai-local
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.2-pg17-trixie@sha256:5c97c57367a485a8e99389548db67d441ab1a878f5492c3df04989f34ecf3c75
+    environment:
+      POSTGRES_DB: dnd_ai_local
+      POSTGRES_PASSWORD: dnd_migration_local
+      POSTGRES_USER: dnd_migration_local
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U dnd_migration_local -d dnd_ai_local
+      interval: 1s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    restart: unless-stopped
+    volumes:
+      - dnd-ai-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  dnd-ai-postgres-data:

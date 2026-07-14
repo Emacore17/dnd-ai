@@ -67,9 +67,12 @@ test("service-specific local templates expose only their own configuration surfa
       api.API_REDIS_URL,
       worker.WORKER_DATABASE_URL,
       worker.WORKER_REDIS_URL,
-      migration.MIGRATION_DATABASE_URL,
     ],
-    Array.from({ length: 5 }, () => "<set-in-local-env-file>"),
+    Array.from({ length: 4 }, () => "<set-in-local-env-file>"),
+  );
+  assert.equal(
+    migration.MIGRATION_DATABASE_URL,
+    "postgresql://dnd_migration_local:dnd_migration_local@127.0.0.1:55432/dnd_ai_local",
   );
 });
 

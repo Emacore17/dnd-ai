@@ -2,9 +2,10 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
+last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
+  - docs/MVP_SPEC.md#264-integration-test-database
   - docs/MVP_SPEC.md#294-cicd
 related_tasks:
   - BL-002
@@ -18,6 +19,10 @@ code_refs:
   - .github/workflows/ci.yml
   - .github/actions/setup-workspace/action.yml
   - packages/config
+  - packages/persistence/src/migration-runner.ts
+  - packages/persistence/src/migrations/000001_postgresql_foundation.ts
+  - scripts/lib/postgres-test-container.mjs
+  - infra/local/postgres.compose.yml
   - scripts/assert-ci-results.mjs
   - scripts/create-build-artifact.mjs
   - .github/workflows/deployment-smoke.yml
@@ -50,6 +55,11 @@ test_refs:
   - tests/unit/vercel-deploy-dry-run.test.mjs
   - tests/security/vercel-deploy-dry-run.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
+  - tests/contracts/database-migration-contract.test.mjs
+  - tests/database/database-migration-cli.test.mjs
+  - tests/database/database-migration-failure.test.mjs
+  - tests/database/database-migrations.test.mjs
+  - docs/testing/BL-004_VERIFICATION.md
 supersedes: null
 ---
 
@@ -60,7 +70,7 @@ supersedes: null
 | Job | Responsabilità | Failure behavior |
 |---|---|---|
 | `Quality` | format, lint, typecheck con declaration dependency build, confini, task graph, policy CI e desired state deploy | blocca build e gate |
-| `Tests` | unit, integration e contract | la fixture rossa prova exit `1` |
+| `Tests` | unit, integration, migration PostgreSQL reale e contract | fixture rossa o failure/cleanup database propagano exit non-zero |
 | `Security` | SAST locale, test/secret scan e dependency audit | warning SAST, high/critical o scan fallito bloccano |
 | `Build artifact` | build completo, staging allowlisted, manifest e upload | manca/secret/checksum/symlink non sicuro bloccano |
 | `CI / Merge gate` | fan-in con `always()` | passa solo con quattro risultati `success` |
@@ -109,7 +119,7 @@ Il job `Staging / Smoke`:
 
 Il progetto applica Standard Protection con policy SSO predefinita `all_except_custom_domains`; la Trusted Source limita già l'OIDC a issuer GitHub, audience account, repository + repository ID immutabile/ref/environment esatti e target `preview`. Il workflow non pubblica un URL non validato nell'environment GitHub. Non introdurre `VERCEL_TOKEN`, automation bypass secret, Deploy Hook, `pull_request_target`, `vercel deploy --prod`, `--prebuilt`, `promote` o checkout del commit indicato dall'evento. La Git Integration ricostruisce il commit anziché caricare `artifacts/bl002`; l'identità immutabile del deploy è quindi project ID + deployment ID + SHA + health contract.
 
-Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma né policy linked né selector CLI hanno impedito i record Production nello stato iniziale senza deployment. PR #13 ha riportato Quality a `pnpm deploy:check`, binding `null` e Git spento; PR #16 ha integrato il freeze. Project/link/Trusted Source remoti e grant condiviso restano invariati. Dry-run e contenimento sono verificati, ma ogni nuova creazione è congelata; Preview, smoke, failure e redeploy restano aperti. `BL-080` è `BLOCKED/50%/PARTIAL`, `BL-004` `READY` e `BL-079` `BACKLOG`.
+Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma né policy linked né selector CLI hanno impedito i record Production nello stato iniziale senza deployment. PR #13 ha riportato Quality a `pnpm deploy:check`, binding `null` e Git spento; PR #16 ha integrato il freeze. Project/link/Trusted Source remoti e grant condiviso restano invariati. Dry-run e contenimento sono verificati, ma ogni nuova creazione è congelata; Preview, smoke, failure e redeploy restano aperti. `BL-080` è `BLOCKED/50%/PARTIAL`, `BL-004` `DONE/100%/PASSING`, `BL-008` `READY` e `BL-079` `BACKLOG`.
 
 ## Cache e artifact
 
@@ -121,6 +131,7 @@ Comandi locali:
 
 ```powershell
 corepack pnpm@10.34.5 verify
+corepack pnpm@10.34.5 db:migrate:test
 corepack pnpm@10.34.5 scan:sast
 corepack pnpm@10.34.5 audit --audit-level=high
 corepack pnpm@10.34.5 artifact:prepare
@@ -136,7 +147,8 @@ if ($LASTEXITCODE -ne 0) { throw "preview-dry-run: source manifest rejected" }
 
 | Gate normativo | Owner |
 |---|---|
-| migration dry run/PG/Redis | `BL-004`, `QA-001` |
+| migration PostgreSQL baseline, dry run e failure path | `BL-004` chiuso con CI PR `29351291907` 5/5 `SUCCESS` |
+| harness condiviso PostgreSQL/Redis e suite database funzionali successive | `QA-001` e task proprietari |
 | schema/OpenAPI/event compatibility | `BL-009` |
 | coverage rules/domain ≥80% e report | `QA-001` |
 | browser, bundle e accessibility budget | `BL-079`, `QA-001` |

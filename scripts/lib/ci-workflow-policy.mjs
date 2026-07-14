@@ -197,6 +197,7 @@ function validateJobs(errors, workflow) {
   requireCommands(errors, "tests", jobs.tests, [
     "pnpm test:unit",
     "pnpm test:integration",
+    "pnpm db:migrate:test",
     "pnpm test:contract",
   ]);
   requireCommands(errors, "security", jobs.security, [

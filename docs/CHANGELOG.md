@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
+last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -36,6 +36,10 @@ code_refs:
   - scripts/check-vercel-deploy-dry-run.mjs
   - scripts/lib/vercel-deploy-dry-run.mjs
   - scripts/lib/deployment-smoke.mjs
+  - packages/persistence
+  - scripts/run-database-migrations.mjs
+  - scripts/lib/postgres-test-container.mjs
+  - infra/local/postgres.compose.yml
   - turbo.json
 test_refs:
   - AGENTS_VALIDATION.txt
@@ -57,6 +61,13 @@ test_refs:
   - tests/unit/vercel-deploy-dry-run.test.mjs
   - tests/security/vercel-deploy-dry-run.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
+  - tests/database/database-migrations.test.mjs
+  - tests/database/database-migration-cli.test.mjs
+  - tests/database/database-migration-failure.test.mjs
+  - tests/unit/database-migration-policy.test.mjs
+  - tests/contracts/database-migration-contract.test.mjs
+  - tests/security/database-migration-security.test.mjs
+  - docs/testing/BL-004_VERIFICATION.md
 supersedes: null
 ---
 
@@ -66,6 +77,10 @@ supersedes: null
 
 ### Added
 
+- Avviato `BL-004` dal merge protetto `c72c78b`; aggiunti `node-pg-migrate@8.0.4`, `pg@8.22.0`, runner tipizzato e composition root redatto senza importare config da persistence.
+- Creata la migration `000001_postgresql_foundation` con estensione `vector`, namespace `app`/`infra`, ledger tool e `infra.migration_contracts` per checksum, contract version e compatibilità.
+- Aggiunti PostgreSQL 17/pgvector 0.8.2 a digest immutabile, harness Docker CLI con cleanup bounded e fail-closed, comandi locali/migration e gate seriale `db:migrate:test` in CI/`verify`.
+- Accettato ADR-0006 e creati il runbook `DATABASE_MIGRATIONS.md` e il report `BL-004_VERIFICATION.md`; il modello dati di dominio resta pianificato in `DOC-ARCH-001`.
 - Avviato `BL-080` da `main` dopo il merge verificato di BL-003; creato il desired state `staging-foundation-v1` per il solo web.
 - Aggiunti `apps/web/vercel.json`, Route Handler `/health` con contratto `web-health-v1`, workflow `Staging smoke` e verifier redatto con OIDC breve, senza credenziali Vercel persistenti in Actions.
 - Aggiunte suite unit, standalone integration, contract e security per origin/installation identity, OIDC, regione, timeout, failure propagation e leakage.
@@ -79,6 +94,10 @@ supersedes: null
 
 ### Changed
 
+- `BL-004` passa a `DONE/100%/PASSING` dopo la [PR #18](https://github.com/Emacore17/dnd-ai/pull/18) e la CI PR [`29351291907`](https://github.com/Emacore17/dnd-ai/actions/runs/29351291907) 5/5 `SUCCESS`; `BL-008` diventa il solo task `READY`, mentre `BL-079` resta `BACKLOG` finché non esiste lo staging reale di `BL-080`.
+- Il profilo migration ora compone config validata e persistence al repository root; `down` è rifiutato fuori da `local`, senza conferma, verso un database non-loopback/non-disposable o con parametri URL che possono sovrascrivere host/porta.
+- Il job `Tests` e il gate locale eseguono la suite PostgreSQL reale: zero→head, replay, source SHA/checksum drift, file sconosciuti pre-DDL, DDL invalido transazionale, due runner simultanei, vincoli/indice, rollback e re-apply.
+- La provider evidence BL-080 è stata integrata tramite PR #17/merge `c72c78b`, con run `29346630165`/`29346792492` 5/5 e readback Vercel finale a zero deployment/alias; il freeze resta invariato.
 - Il Quality gate verifica anche il desired state deploy; `verify` include la deployment policy.
 - Documentati Vercel/`fra1` come proposta reversibile, Git Integration nativa, `main` come Preview staging e `release/production` come Production Branch riservata.
 - Chiarito che il web ha zero variabili applicative e che i soli metadata Vercel del health endpoint non sono secret né config di dominio.
@@ -103,6 +122,10 @@ supersedes: null
 - Corretto un incidente di readback: `gh api -f ref=...` senza `--method GET` ha creato il metadata GitHub Deployment vuoto `5442987675`. Il solo record accidentale, privo di status e controparte Vercel, è stato eliminato per ID esatto; GET `404` e lista SHA vuota hanno confermato il ripristino.
 
 ### Verification
+
+- BL-004 working tree: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 73,4 s senza cache; lint/build 11/11, typecheck 12/12, unit 47 pass/1 skip host, integration 9/9, database 13/13, contract 22/22, security 23 pass/3 skip host, policy/scan e artifact 3.238 file `PASS`; audit high senza vulnerabilità note.
+- BL-004 commit pulito `b1030501fd82d0396add5ff4f9df10fbaa405d0b`: install frozen exit `0` in 0,6 s; full gate senza cache exit `0` in 66,2 s con gli stessi conteggi e artifact 3.238 file.
+- BL-004 head di evidenza `aaa17b2ada8a7bab73e3877f263b2c46c5865c13`: [CI PR `29351291907`](https://github.com/Emacore17/dnd-ai/actions/runs/29351291907) con Quality, Tests, Security, Build artifact e `CI / Merge gate` 5/5 `SUCCESS`; il job Tests ha eseguito la suite PostgreSQL migration reale.
 
 - Base `0065c012` verificata dalla CI post-merge `29315052002`, 5/5 job `SUCCESS`.
 - Foundation disabilitata integrata tramite [PR #7](https://github.com/Emacore17/dnd-ai/pull/7): run PR [`29321410036`](https://github.com/Emacore17/dnd-ai/actions/runs/29321410036) e run post-merge [`29321531038`](https://github.com/Emacore17/dnd-ai/actions/runs/29321531038) entrambe 5/5 job `SUCCESS`; artifact post-merge 3.247 file.

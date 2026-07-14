@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
+last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -18,6 +18,13 @@ code_refs:
   - apps
   - packages
   - packages/config
+  - packages/persistence/src/migration-runner.ts
+  - packages/persistence/src/migration-manifest.ts
+  - packages/persistence/src/migrations/000001_postgresql_foundation.ts
+  - infra/local/postgres.compose.yml
+  - scripts/run-database-migrations.mjs
+  - scripts/lib/database-migration-policy.mjs
+  - scripts/lib/postgres-test-container.mjs
   - apps/api/src/runtime.ts
   - apps/worker/src/runtime.ts
   - scripts/lib/workspace-boundaries.mjs
@@ -67,6 +74,13 @@ test_refs:
   - tests/unit/vercel-deploy-dry-run.test.mjs
   - tests/security/vercel-deploy-dry-run.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
+  - tests/unit/database-migration-policy.test.mjs
+  - tests/contracts/database-migration-contract.test.mjs
+  - tests/database/database-migration-cli.test.mjs
+  - tests/database/database-migration-failure.test.mjs
+  - tests/database/database-migrations.test.mjs
+  - tests/security/database-migration-security.test.mjs
+  - docs/testing/BL-004_VERIFICATION.md
 supersedes: null
 ---
 
@@ -78,18 +92,18 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | contenimento [PR #13](https://github.com/Emacore17/dnd-ai/pull/13), guard [PR #14](https://github.com/Emacore17/dnd-ai/pull/14), payload [PR #15](https://github.com/Emacore17/dnd-ai/pull/15) e freeze [PR #16](https://github.com/Emacore17/dnd-ai/pull/16) integrati. PR #16: commit verificato `e5dff7bf371bd91321587fecadbd8f51264cc263`, CI PR `29343319207`, merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d` e CI post-merge `29343526054`, tutti 5/5 `SUCCESS`; nessun deployment Vercel creato e readback project-scoped `dnd-ai-web` con zero deployment/alias. L'audit sorgente della CLI `55.0.0` prova l'omissione client del target Preview prima della POST; la regola server del primo deployment resta l'ipotesi più forte, senza conferma/fix del maintainer. Provider evidence commit `b84f4eb79000ab78b524d463582eb28013c9da2c` verificato da working tree pulito in 58,1 s |
+| Delivery/commit | `BL-080` resta bloccato e congelato dopo [PR #17](https://github.com/Emacore17/dnd-ai/pull/17), merge `c72c78bbae06ebb02c7de7d63844f17065354c06` e CI post-merge `29346792492` 5/5; nessun deploy Production è autorizzato. `BL-004` è chiuso sulla [PR #18](https://github.com/Emacore17/dnd-ai/pull/18): implementazione `b1030501fd82d0396add5ff4f9df10fbaa405d0b`, head di evidenza `aaa17b2ada8a7bab73e3877f263b2c46c5865c13` e CI PR `29351291907` 5/5 `SUCCESS`. Nessuna operazione Vercel appartiene al change set. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-080 — BLOCKED/50%/PARTIAL` |
-| Ultimo task completato | `BL-003 — DONE/100%/PASSING` |
-| Prossimo task READY | `BL-004`; `BL-079` resta `BACKLOG` fino alla chiusura di `BL-080` |
+| Task attivo | `—` |
+| Ultimo task completato | `BL-004 — DONE/100%/PASSING` |
+| Prossimo task READY | `BL-008`; `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset e `BL-003` implementa `runtime-config-v1`. Il web Next è l'unico runtime oggi deployabile. Il progetto Hobby `dnd-ai-web` è collegato al repository esatto con root `apps/web`, Next.js, `fra1`, Fork/Standard Protection, system env/OIDC e Trusted Source exact-match; contiene zero env applicative. Il grant GitHub App condiviso resta invariato per decisione PO e rischio accettato. `release/production` è protetta e Vercel la rilegge come Production Branch, ma PR #12 ha prodotto un primo record Production da `main`, poi eliminato. PR #13/#14/#15 hanno integrato contenimento, guard e payload. Il dry-run da `main` pulita è passato con 158 entry/1.093.594 byte, ma il singolo CLI `--target=preview` ha creato un secondo record `target=production`, osservato `ERROR` e rimosso per ID esatto. Activity log Vercel: “to production (via Vercel CLI)” sul commit `1060228`; nessun nuovo smoke, readback project-scoped `dnd-ai-web` con zero deployment/alias e origin `404`. I log build non sono più disponibili, quindi `ERROR` non viene attribuito al guard. PR #16 ha integrato l'interlock senza creare deployment: CI PR/post-merge 5/5 verde. L'audit del tag Vercel CLI `55.0.0`, risolto al commit immutabile `11f0cebacce81dfb713b3cb2d4622e49da0fb475`, dimostra che il parser conserva `preview`, ma `@vercel/client 17.6.4` imposta il target a `undefined` prima della POST; la regola Vercel documentata sul primo deployment e l'issue pubblica `vercel/vercel#17069` formano l'ipotesi più forte per i due counterexample, senza costituire conferma o fix del provider. Il desired state mantiene binding `null`, `source.autoDeploy=false`, `source.manualDeployment.enabled=false` e `git.deploymentEnabled=false`; `deploy:bootstrap:check` chiude proceduralmente il percorso approvato. `BL-080` è bloccato su un percorso Preview-only supportato; `BL-004` è il prossimo task `READY` e `BL-079` resta `BACKLOG` fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset e `BL-003` implementa `runtime-config-v1`. `BL-080` resta bloccato sul percorso Preview-only del provider e il freeze integrato non viene modificato. `BL-004` è `DONE`: `@dnd-ai/persistence` espone manifest/status/runner a input esplicito, il composition root valida `APP_ENV` e `MIGRATION_DATABASE_URL`, PostgreSQL 17 + pgvector 0.8.2 sono pin a digest e CI usa un container reale isolato. Head, contract, source SHA e checksum vengono verificati prima del DDL; file sconosciuti e symlink falliscono chiusi. Non sono state anticipate tabelle di dominio. `BL-008` è il solo task `READY`; `BL-079` resta `BACKLOG` fino a uno staging reale.
 
 ## Decisioni operative vigenti
 
@@ -101,15 +115,16 @@ supersedes: null
 - Visual language premium contemporaneo per casual gamer, senza chrome pseudo-medievale/fantasy.
 - Workspace e direzioni di dipendenza secondo ADR-0002; manifest/import/cicli falliscono chiuso tramite checker versionato.
 - Configurazione runtime server-only validata ai composition root; nessun valore secret nel client, nei default, nei log o nei documenti. ADR-0004 accepted durante `BL-003`.
+- Fondazione database secondo ADR-0006: migration forward-only negli ambienti gestiti, `down` soltanto local/disposable con conferma, manifest/checksum immutabili, transazione singola e advisory lock fail-fast.
 - Preview/staging web in preparazione su Vercel Hobby con Root Directory `apps/web`, compute `fra1`, Git Integration nativa, Production Branch riservata e Trusted Source exact-match. Il grant condiviso `41079282` non viene ristretto per decisione PO ed è un rischio residuo accettato. Vercel CLI `55.0.0` elimina il target Preview dal body e il provider ha restituito Production; l'applicazione della regola first-deployment, coerente con `vercel/vercel#17069`, resta un'ipotesi non confermata. Finché non esiste un fix/workaround supportato, Git auto-deploy e creazione manuale approvata restano disabilitati. Sono ammessi solo dry-run/readback/contenimento; `--archive`, `--prebuilt`, `--prod`, `promote`, `redeploy`, `--cwd apps/web` e override dei metadata sono vietati. ADR-0005 resta proposed.
 
-Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md), [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md) e [`ADR-0004`](adr/0004-runtime-configuration-and-secret-injection.md). ADR-0005 è [`proposed`](adr/0005-vercel-web-preview-and-staging.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Configurazione operativa: [`CONFIGURATION.md`](operations/CONFIGURATION.md) e [`PREVIEW_STAGING.md`](operations/PREVIEW_STAGING.md). Architettura implementata: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md).
+Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md), [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md), [`ADR-0004`](adr/0004-runtime-configuration-and-secret-injection.md) e [`ADR-0006`](adr/0006-postgresql-migration-foundation.md). ADR-0005 è [`proposed`](adr/0005-vercel-web-preview-and-staging.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Configurazione operativa: [`CONFIGURATION.md`](operations/CONFIGURATION.md), [`DATABASE_MIGRATIONS.md`](operations/DATABASE_MIGRATIONS.md) e [`PREVIEW_STAGING.md`](operations/PREVIEW_STAGING.md). Architettura implementata: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md).
 
 ## Versioni e head
 
 | Elemento | Versione/head | Stato |
 |---|---|---|
-| Migration head | `N/A` | package persistence presente come scaffold; migration non implementate |
+| Migration head | `000001_postgresql_foundation` | baseline infrastrutturale implementata e testata su PostgreSQL reale; contract `database-baseline-v1`, source SHA `e8543d84…45fc7`, checksum `46a2bb9c…dc449` |
 | Contract/API/event schema | `N/A` | package contracts presente come scaffold; schema non implementati |
 | Rules version | `N/A` | package rules presente come scaffold; cataloghi/formule non implementati |
 | Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
@@ -118,7 +133,7 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
 | Design contract | `ux-ui-2026-07-13` | documentato, non implementato |
 | ADR UI | `ADR-0001 accepted` | vigente |
-| Toolchain | Node `24.11.0` (engine `>=22.12.0`); pnpm `10.34.5`; Turbo `2.10.4`; TypeScript `6.0.3` | pinning e lockfile presenti |
+| Toolchain | Node `24.11.0` (engine `>=22.12.0`); pnpm `10.34.5`; Turbo `2.10.4`; TypeScript `6.0.3`; PostgreSQL `17`; pgvector `0.8.2`; node-pg-migrate `8.0.4`; pg `8.22.0`; Docker `29.2.1` | pinning e lockfile presenti; immagine DB pin a digest |
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web scaffold; API senza route ma con startup validate-before-bind |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
@@ -129,7 +144,7 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 
 ## Comandi disponibili
 
-Sono disponibili i comandi locali del perimetro `BL-001`/`BL-002`/`BL-003`/`BL-080`:
+Sono disponibili i comandi locali del perimetro `BL-001`/`BL-002`/`BL-003`/`BL-004`/`BL-080`:
 
 ```powershell
 corepack pnpm@10.34.5 lint
@@ -151,10 +166,16 @@ corepack pnpm@10.34.5 scan:secrets
 corepack pnpm@10.34.5 artifact:prepare
 corepack pnpm@10.34.5 artifact:verify
 corepack pnpm@10.34.5 config:check
+corepack pnpm@10.34.5 db:local:up
+corepack pnpm@10.34.5 db:migrate:status:local
+corepack pnpm@10.34.5 db:migrate:local
+corepack pnpm@10.34.5 db:rollback:local
+corepack pnpm@10.34.5 db:local:down
+corepack pnpm@10.34.5 db:migrate:test
 corepack pnpm@10.34.5 verify
 ```
 
-E2E, eval, bot, load, migration e il test harness container/browser completo restano pianificati nei task proprietari, soprattutto `QA-001`; non vanno sostituiti da no-op.
+E2E, eval, bot, load e il test harness container/browser generale restano pianificati nei task proprietari, soprattutto `QA-001`; non vanno sostituiti da no-op. La suite migration è reale e fa parte di `verify`/CI; il harness condiviso futuro potrà consolidarne il lifecycle senza cambiare il contratto.
 
 Verifiche documentali manuali correnti:
 
@@ -188,10 +209,11 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | CTX-R14 | L'installazione condivisa `41079282` vede 8 repository e non può essere ristretta senza togliere accesso ad altri progetti; un owner può bypassare l'interlock procedurale e invocare direttamente CLI/UI | Controlli project-level, Git disabilitato, `manualDeployment.enabled=false`, runbook fail-closed e divieto esplicito di deploy reale; l'interlock non viene presentato come enforcement provider |
 | CTX-R16 | Il client Vercel omette il target Preview e il provider ha restituito due record Production; la causa server resta non confermata | Entrambi rimossi; freeze PR #16 integrato; riapertura solo con fix/workaround provider supportato, containment testato e PR separata |
 | CTX-R17 | Il CLI dalla root può includere cache/output ignorati da Git e superare limiti o ampliare il payload | `.vercelignore` root-only e dry-run JSON fail-closed con budget/path/input obbligatori; contratto integrato in PR #15 e dry-run corrente PASS |
+| CTX-R18 | La suite migration richiede Docker e il primo upgrade da una versione applicata non è rappresentabile finché esiste soltanto `000001` | Harness bounded con cleanup fail-closed; zero→head/replay/rollback coperti ora, previous→head obbligatorio all'introduzione di `000002` |
 
 ## Prossima azione
 
-Conservare il freeze integrato da PR #16 e monitorare soltanto, in lettura, `vercel/vercel#17069` o una risposta ufficiale che offra un percorso first-deployment Preview-only. Nessun deploy reale/redeploy è autorizzato; la riapertura richiede una PR separata con fix/workaround supportato e containment testato. `BL-080` resta `BLOCKED/50%/PARTIAL`, `BL-079` `BACKLOG`; selezionare `BL-004`, primo task P0 con dipendenze `DONE`, su un branch dedicato.
+Integrare la [PR #18](https://github.com/Emacore17/dnd-ai/pull/18) esclusivamente tramite il merge gate protetto e verificare la CI post-merge; poi selezionare `BL-008` da `main`. Conservare invariati freeze Vercel e stato `BACKLOG` di `BL-079`.
 
 ## Rischi chiusi
 
