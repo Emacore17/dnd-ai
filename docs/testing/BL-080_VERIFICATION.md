@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
+last_verified_commit: 52bf58d9f9cb9cab6ad0cc1b1602d7556067b578
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -30,16 +30,17 @@ supersedes: null
 
 ## Stato corrente
 
-`BL-080` resta `IN_PROGRESS/50%`: contratto, health endpoint, workflow e GitHub environment sono implementati e verificati localmente; l'auto-deploy è disabilitato per rendere sicuro il futuro Git connect. Account/project Vercel, deploy remoto, smoke, failure deploy e redeploy non sono ancora disponibili. ADR-0005 resta `proposed` fino all'autorizzazione del piano/termini e alla prova reale.
+`BL-080` resta `IN_PROGRESS/50%`: contratto, health endpoint e workflow sono integrati su `main`, con CI di PR e post-merge verde; l'auto-deploy è disabilitato per rendere sicuro il futuro Git connect. Account/project Vercel, deploy remoto, smoke, failure deploy e redeploy non sono ancora disponibili. ADR-0005 resta `proposed` fino all'autorizzazione del piano/termini e alla prova reale.
 
 | Campo | Valore |
 |---|---|
 | Data | 2026-07-14 |
 | Ambiente locale | Windows; Node `24.11.0`; pnpm `10.34.5` |
-| Branch | `codex/bl-080-staging-foundation` |
+| Branch di implementazione | `codex/bl-080-staging-foundation` |
 | Base verificata | `0065c012ae359450b4cd38da41b001f9e922eeb8`; CI post-merge `29315052002` 5/5 `SUCCESS` |
 | Commit task iniziale | `4a9754b61a3693145ebe5f42a0eef43e47b4c364` |
 | Commit implementazione | `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af` |
+| Foundation su `main` | PR #7; merge `52bf58d9f9cb9cab6ad0cc1b1602d7556067b578` |
 | Spec SHA-256 | `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c` |
 | Deploy contract | `staging-foundation-v1`; project ID/scope/origin/App installation `pending` |
 | Health contract | `web-health-v1` |
@@ -91,7 +92,6 @@ Il primo full verify post-review è terminato per timeout host con exit `124` do
 ## Gate ancora aperti
 
 - conferma esplicita di un account/piano Vercel compatibile e dei relativi termini/permessi GitHub App;
-- foundation disabilitata integrata in `main`, perché workflow e config del Git connect devono provenire dalla default branch;
 - project ID, scope slug, origin branch e installation ID reali; Root Directory, Fork Protection, system env e Production Branch riservata verificati mentre auto-deploy è spento;
 - Standard Protection/Vercel Authentication e Trusted Source GitHub OIDC configurate e rilette senza bypass secret;
 - secondo change set con `source.autoDeploy=true`, config Git branch-closed `{"*": false, "main": true}` e Quality gate `deploy:check:linked`;
@@ -99,6 +99,13 @@ Il primo full verify post-review è terminato per timeout host con exit `124` do
 - workflow smoke remoto su `main` e GitHub environment `staging`;
 - deploy fallito senza action `ready`, smoke o promozione;
 - redeploy dello stesso SHA oppure revert+deploy, seguito da smoke;
-- checkout pulito e CI della PR; il full verify forzato sul working tree è PASS.
+- checkout pulito del successivo change set di attivazione.
+
+## Evidenza GitHub della foundation
+
+- [PR #7](https://github.com/Emacore17/dnd-ai/pull/7) integrata senza bypass nel merge commit `52bf58d9f9cb9cab6ad0cc1b1602d7556067b578`.
+- [Run PR `29321410036`](https://github.com/Emacore17/dnd-ai/actions/runs/29321410036): Quality, Tests, Security, Build artifact e `CI / Merge gate` tutti `SUCCESS`.
+- [Run post-merge `29321531038`](https://github.com/Emacore17/dnd-ai/actions/runs/29321531038): 5/5 job `SUCCESS`; artifact allowlisted 3.247 file, artifact ID `8306136134`.
+- Il merge non ha prodotto deploy: project/provider restano scollegati, `git.deploymentEnabled=false` e `source.autoDeploy=false`.
 
 Finché questi punti non sono provati, `BL-079` resta `BACKLOG` e nessuna evidenza locale viene presentata come staging disponibile.

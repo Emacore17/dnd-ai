@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
+last_verified_commit: 52bf58d9f9cb9cab6ad0cc1b1602d7556067b578
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -66,6 +66,7 @@ supersedes: null
 ### Verification
 
 - Base `0065c012` verificata dalla CI post-merge `29315052002`, 5/5 job `SUCCESS`.
+- Foundation disabilitata integrata tramite [PR #7](https://github.com/Emacore17/dnd-ai/pull/7): run PR [`29321410036`](https://github.com/Emacore17/dnd-ai/actions/runs/29321410036) e run post-merge [`29321531038`](https://github.com/Emacore17/dnd-ai/actions/runs/29321531038) entrambe 5/5 job `SUCCESS`; artifact post-merge 3.247 file.
 - Full `TURBO_FORCE=true pnpm verify` finale PASS in 58,0 s senza cache Turbo: unit 29 pass/1 skip host, integration 9/9, contract 16/16, security 11 pass/3 skip host; deployment e CI policy `PASS`; artifact 3.205 file. Il rerun precedente si era fermato correttamente sul format check ed è stato corretto prima del PASS.
 - `deploy:check:linked` fallisce intenzionalmente sui binding provider ancora `null`; Vercel `whoami` fallisce senza credenziali. Questi failure path impediscono di presentare il piano locale come staging reale.
 
