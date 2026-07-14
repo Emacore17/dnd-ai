@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: 1766406b9bd701a9880705b371fdc0b05a73abe1
+last_verified_commit: ef803add249d16ded6f94936c59531047c8a92fa
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
@@ -107,7 +107,7 @@ Il desired state di `BL-080` seleziona Vercel Environment Variables come confine
 
 `VERCEL_TRUSTED_OIDC_TOKEN` è un valore effimero del solo step GitHub Actions: viene richiesto con `id-token: write`, mascherato immediatamente, passato al verifier tramite environment di processo e inviato esclusivamente nell'header Trusted Sources verso l'origin branch versionata. Non è un environment secret GitHub/Vercel, non viene persistito e non sostituisce le future credenziali applicative service-scoped. Emissione OIDC e Trusted Source sono controlli distinti; entrambi sono configurati e la seconda è stata riletta con audience, repository/repository ID, ref, environment e target `preview` esatti. Standard Protection usa oggi la policy SSO predefinita `all_except_custom_domains`; non creare `VERCEL_AUTOMATION_BYPASS_SECRET`.
 
-La Git Integration effettiva collega `dnd-ai-web` al repository autorizzato `Emacore17/dnd-ai` senza access token Vercel nei workflow. L'auto-deploy è ancora spento e non esiste alcun deployment. Project ID, scope slug, installation/deployment ID, regione, environment e run ID sono non sensibili ma vengono comunque redatti nei report automatici. Il token OIDC non viene mai stampato. I valori production, token, cookie e dati account non entrano in documenti, chat, log, screenshot o artifact.
+La Git Integration effettiva collega esattamente `dnd-ai-web` al repository autorizzato `Emacore17/dnd-ai` (repository ID `1299266814`) senza access token Vercel nei workflow. L'installation `41079282` resta condivisa (`isAccessRestricted=false`, 8 repository) per decisione esplicita del Product Owner: restringerla farebbe perdere accesso ad altri progetti. È un rischio residuo accettato e compensato da link esatti, Trusted Source exact-match, Fork/Standard Protection, policy Git branch-closed, environment `staging` limitato a `main`, smoke fail-closed e readback di drift. L'auto-deploy è ancora spento e non esiste alcun deployment. Project ID, scope slug, installation/deployment ID, regione, environment e run ID sono non sensibili ma vengono comunque redatti nei report automatici. Il token OIDC non viene mai stampato. I valori production, token, cookie e dati account non entrano in documenti, chat, log, screenshot o artifact.
 
 Per Next.js, le variabili `NEXT_PUBLIC_*` vengono incorporate nel bundle al build e restano congelate per quella build. Qualunque futura variabile pubblica richiede quindi review esplicita e non può contenere credenziali. Riferimento: [Next.js Environment Variables](https://nextjs.org/docs/app/guides/environment-variables).
 
@@ -122,5 +122,5 @@ Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo 
 - `BL-004`: migration executable e credenziali database locali/reali;
 - `BL-008`: log/redaction/telemetry e nuovi endpoint osservabili;
 - `BL-010`: configurazione dinamica auditata per flag e kill switch;
-- `BL-080`: project/provider web, GitHub environment e Trusted Source exact-match creati senza secret applicativi; Production Branch, grant GitHub App repository-only, binding completi, deploy e primo smoke preview/staging ancora aperti;
+- `BL-080`: project/provider web, branch GitHub `release/production` protetta, environment e Trusted Source exact-match creati senza secret applicativi; grant GitHub App condiviso accettato, mentre Production Branch Vercel, binding completi, deploy e primo smoke preview/staging restano aperti;
 - `BL-070`: hardening, load/chaos, backup restore e go/no-go.

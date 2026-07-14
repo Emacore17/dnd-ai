@@ -2,7 +2,7 @@
 status: draft
 owner: engineering-and-operations
 last_reviewed: 2026-07-14
-last_verified_commit: 1766406b9bd701a9880705b371fdc0b05a73abe1
+last_verified_commit: ef803add249d16ded6f94936c59531047c8a92fa
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -35,13 +35,13 @@ Questo runbook copre soltanto la Preview/staging non-production di `apps/web`. A
 - Provider autorizzato: Vercel Hobby per uso personale/non commerciale; project `dnd-ai-web` (`prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`) nello scope `emacore17s-projects`; Root Directory `apps/web`.
 - Compute: `fra1`; CDN/asset globali; data residency ancora aperta in `OD-08`.
 - Vercel environment: `preview`; Git branch staging: `main`.
-- Production Branch desiderata: `release/production`; lo stato provider è ancora `main`, quindi l'attivazione è bloccata.
+- Production Branch desiderata: `release/production`; la branch GitHub esiste ed è protetta, ma lo stato provider è ancora `main`, quindi l'attivazione è bloccata.
 - GitHub environment: `staging`, policy branch `main`, zero secret.
 - Bypass amministratore dell'environment: disabilitato.
 - Deployment Protection: livello `standard`, policy SSO predefinita `all_except_custom_domains`; la copertura dell'origin staging deve essere riletta prima dell'attivazione.
 - Accesso automation: Trusted Source GitHub Actions configurata e riletta con OIDC breve, repository ID immutabile e claim repository/ref/environment esatti; non esiste alcun bypass secret.
 - Web config: zero variabili applicative e zero secret; system environment variables ed emissione OIDC del progetto abilitate; system metadata Vercel soltanto nel Route Handler `/health`.
-- Fase corrente: repository `Emacore17/dnd-ai` (ID `1299266814`) collegato, GitHub App installation ID `41079282`, `git.deploymentEnabled=false` e `source.autoDeploy=false`; la lista deployment è vuota. Il grant dell'App è però ampio (`isAccessRestricted=false`, 8 repository) e deve essere ridotto prima dell'attivazione.
+- Fase corrente: repository `Emacore17/dnd-ai` (ID `1299266814`) collegato, GitHub App installation ID `41079282`, `git.deploymentEnabled=false` e `source.autoDeploy=false`; la lista deployment è vuota. Il grant condiviso (`isAccessRestricted=false`, 8 repository) resta intenzionalmente invariato per non perdere accesso ad altri progetti ed è un rischio residuo accettato, non un blocker di `BL-080`.
 
 ## Preflight
 
@@ -54,7 +54,7 @@ corepack pnpm dlx vercel@55.0.0 --version
 corepack pnpm dlx vercel@55.0.0 whoami
 ```
 
-Nel checkpoint corrente `deploy:check` passa e `deploy:check:linked` fallisce ancora sui quattro binding versionati `null`: project ID, scope slug, origin branch e GitHub App installation ID. Project ID, scope e installation ID `41079282` sono già noti esternamente, ma non vanno registrati separatamente finché l'origin non consente un change set linked atomico e il grant App non è repository-only. `whoami` deve essere eseguito soltanto in forma redatta; non passare token in command line, workflow o documenti. Il link CLI ha creato un `.env.local` effimero ignorato, rimosso subito dopo il readback senza leggerne il contenuto; non conservarlo come configurazione del progetto.
+Nel checkpoint corrente `deploy:check` passa e `deploy:check:linked` fallisce ancora sui quattro binding versionati `null`: project ID, scope slug, origin branch e GitHub App installation ID. Project ID, scope e installation ID `41079282` sono già noti esternamente, ma non vanno registrati separatamente finché l'origin non consente un change set linked atomico. `whoami` deve essere eseguito soltanto in forma redatta; non passare token in command line, workflow o documenti. Il link CLI ha creato un `.env.local` effimero ignorato, rimosso subito dopo il readback senza leggerne il contenuto; non conservarlo come configurazione del progetto.
 
 ## Attivazione provider
 
@@ -74,18 +74,18 @@ Questo prerequisito è soddisfatto dalla [PR #7](https://github.com/Emacore17/dn
 | Build | Root Directory `apps/web`; framework Next.js; regione `fra1` |
 | Sicurezza/config | Fork Protection, system environment variables ed emissione OIDC abilitate; zero variabili applicative |
 | Deployment Protection | Standard con SSO predefinito `all_except_custom_domains`; Trusted Source GitHub Actions exact-match configurata e riletta |
-| Branch | Production Branch ancora `main`: hard blocker; target desiderato `release/production` |
-| GitHub App | installation ID `41079282`; `isAccessRestricted=false`; 8 repository accessibili: hard blocker least-privilege |
-| Binding | project ID, scope e installation ID noti; origin staging non acquisita; manifest ancora atomicamente non linked |
+| Branch | `release/production` creata da `ef803add249d16ded6f94936c59531047c8a92fa` e protetta dalla Ruleset dedicata `18926413` senza bypass; Ruleset `main` `18877721` invariata; Production Branch Vercel ancora `main`: hard blocker |
+| GitHub App | installation ID condivisa `41079282`; `isAccessRestricted=false`; 8 repository accessibili: rischio residuo esplicitamente accettato, non blocker |
+| Binding | project ID, scope e installation ID noti; alias branch deterministico non ancora registrato/verificato; manifest ancora atomicamente non linked |
 | Deploy | nessun deployment creato |
 
-L'automazione UI locale non ha consentito di completare i controlli che richiedono dashboard. Non usare un account diverso, non indebolire la protezione e non simulare i binding mancanti per aggirare il blocco.
+L'impostazione della Production Branch richiede ancora il passaggio manuale nella dashboard. Non usare un account diverso, non indebolire la protezione e non simulare i binding mancanti per aggirare il blocco.
 
 ### Proseguimento sicuro
 
 1. Non ricreare il progetto e non ripetere il Git connect: rileggere prima lo stato esistente e confermare che la lista deployment sia ancora vuota.
-2. In GitHub > Settings > Applications > Installed GitHub Apps > Vercel, ridurre l'accesso a **Only select repositories** includendo `Emacore17/dnd-ai`. Il checkpoint corrente vede 8 repository: prima di salvare, verificare l'impatto sugli altri progetti Vercel dell'account e non interrompere risorse estranee senza istruzione specifica. Rileggere poi `isAccessRestricted=true` e l'elenco con il solo repository target.
-3. Con auto-deploy ancora disabilitato, impostare la Production Branch a `release/production` nella pagina Settings > Environments > Production > Branch Tracking e rileggere l'impostazione. Se il provider richiede che la branch esista, crearla e proteggerla soltanto in questa fase disabilitata; non effettuare push dopo la selezione.
+2. Non restringere l'installation GitHub App `41079282`: è condivisa e il Product Owner ha stabilito che una restrizione farebbe perdere accesso ad altri progetti. Rileggere invece l'esatto link project `dnd-ai-web`/repository `Emacore17/dnd-ai`/repository ID `1299266814` e trattare `isAccessRestricted=false` con 8 repository come baseline accettata; non ispezionare contenuti estranei al task.
+3. Confermare che `release/production` punti inizialmente a `ef803add249d16ded6f94936c59531047c8a92fa`, che la Ruleset dedicata `18926413` sia attiva e senza bypass e che la Ruleset `main-required-ci` `18877721` sia invariata. Con auto-deploy ancora disabilitato, impostare poi la Production Branch a `release/production` nella pagina Settings > Environments > Production > Branch Tracking e rileggere l'impostazione; non effettuare push sulla branch riservata.
 4. La Trusted Source è già presente: non crearne una seconda. Rileggere issuer `https://token.actions.githubusercontent.com`, audience `https://github.com/Emacore17`, repository `Emacore17/dnd-ai`, repository ID `1299266814`, ref `refs/heads/main`, environment Actions `staging` e target Vercel `preview`; non creare Protection Bypass for Automation.
 5. Verificare installation ID e grant senza stampare token o dati account. Gli endpoint GitHub sotto richiedono un token compatibile; il token OAuth corrente di `gh` può rispondere `403`, quindi il readback canonico può essere eseguito anche con gli endpoint ufficiali Vercel `GET /v1/integrations/git-namespaces` e `GET /v1/integrations/search-repo` tramite un client autenticato che non persista né stampi il token:
 
@@ -97,10 +97,10 @@ L'automazione UI locale non ha consentito di completare i controlli che richiedo
      --jq '.repositories[].full_name'
    ```
 
-   Il grant deve elencare `Emacore17/dnd-ai` e nessun repository non autorizzato. Non ampliare gli scope del token soltanto per il check.
+   Il readback deve confermare installation ID `41079282`, baseline condivisa di 8 repository e presenza di `Emacore17/dnd-ai`; non richiede né autorizza la restrizione del grant o l'esplorazione degli altri repository. Una variazione del conteggio, del target project/repository o di `isAccessRestricted` è drift da registrare e valutare, non da correggere automaticamente. Non ampliare gli scope del token soltanto per il check.
 6. Abilitare gli eventi `repository_dispatch` e mantenere commenti/bot opzionali. Non creare Deploy Hook o `VERCEL_TOKEN`.
-7. Aprire un secondo change set di attivazione che registra tutti i binding reali, imposta `source.autoDeploy=true`, configura `git.deploymentEnabled` come `{"**": false, "main": true, "release/production": false}`, sostituisce nel Quality gate `deploy:check` con `deploy:check:linked` e aggiorna i test adattivi. `**` è la deny-all ricorsiva necessaria per includere branch con `/`; `*` non è ammesso come fallback. La PR di attivazione deve restare senza deployment; il contract test confronta la config con `source.activationDeploymentPolicy` prima del merge.
-8. Solo il merge protetto del change set di attivazione può produrre la prima Preview di `main`. Acquisire l'origin branch effettiva dal deployment/provider, senza dedurla da un template. Se prima di quel merge compare un deployment, oppure il deployment è `production`, fermarsi e registrare il finding.
+7. Dopo il readback della Production Branch, aprire un secondo change set di attivazione che registra atomicamente project ID, scope, installation ID e l'alias branch deterministico documentato `https://dnd-ai-web-git-main-emacore17s-projects.vercel.app`; imposta `source.autoDeploy=true`; configura `git.deploymentEnabled` come `{"**": false, "main": true, "release/production": false}`; sostituisce nel Quality gate `deploy:check` con `deploy:check:linked` e aggiorna i test adattivi. La formula usa esclusivamente project name, branch e scope già riletti e coincide con il contratto provider; non deriva dall'URL non affidabile di un evento. `**` è la deny-all ricorsiva necessaria per includere branch con `/`; `*` non è ammesso come fallback. La PR di attivazione deve restare senza deployment; il contract test confronta la config con `source.activationDeploymentPolicy` prima del merge.
+8. Solo il merge protetto del change set di attivazione può produrre la prima Preview di `main`. Rileggere il deployment/provider e confermare che l'alias materializzato coincida esattamente con l'origin versionata; lo smoke continua a ignorare l'URL del dispatch. Se prima di quel merge compare un deployment, oppure il deployment è `production`, fermarsi e registrare il finding.
 
 Il setup resta verificabile anche quando un'impostazione Vercel richiede dashboard: desired state, project ID e drift check sono versionati; la sequenza usa CLI pinned e ogni passaggio esterno viene registrato nel report. Un blocco dell'automazione UI resta un blocker esplicito, non un'autorizzazione a cambiare account o ridurre i controlli.
 

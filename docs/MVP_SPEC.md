@@ -1,8 +1,8 @@
 ---
 status: active
 owner: product-and-engineering
-last_reviewed: 2026-07-13
-last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
+last_reviewed: 2026-07-14
+last_verified_commit: ef803add249d16ded6f94936c59531047c8a92fa
 source_refs: []
 related_tasks:
   - GOV-001
@@ -3805,6 +3805,8 @@ Pipeline GitHub Actions o equivalente:
 15. smoke e automatic rollback su health/error threshold.
 
 Usare OIDC federation CI→cloud, non long-lived cloud keys.
+
+Per la staging M0 di `BL-080`, l’installazione GitHub App Vercel account-scoped resta intenzionalmente condivisa quando restringerla revocerebbe l’accesso agli altri progetti già collegati. L’eccezione è tracciata in ADR-0005 e non amplia l’autorizzazione di `dnd-ai`: project ID, repository e repository ID, branch, GitHub environment, target Vercel, origin e installation ID devono restare exact-match; Fork Protection, Standard Protection, policy deploy branch-closed e smoke fail-closed sono controlli compensativi obbligatori. Una futura restrizione richiede una nuova decisione del Product Owner e una migrazione che non interrompa gli altri progetti.
 
 ## 29.5 Migrazioni zero-downtime
 
