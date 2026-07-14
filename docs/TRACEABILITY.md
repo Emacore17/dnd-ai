@@ -33,10 +33,13 @@ code_refs:
   - apps/web/vercel.json
   - apps/web/scripts/assert-vercel-preview-build.mjs
   - apps/web/scripts/vercel-preview-build-policy.mjs
+  - .vercelignore
   - turbo.json
   - .github/workflows/deployment-smoke.yml
   - scripts/check-deployment-foundation.mjs
   - scripts/lib/deployment-foundation.mjs
+  - scripts/check-vercel-deploy-dry-run.mjs
+  - scripts/lib/vercel-deploy-dry-run.mjs
   - scripts/lib/deployment-smoke.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
@@ -58,6 +61,8 @@ test_refs:
   - tests/security/deployment-smoke-security.test.mjs
   - tests/unit/vercel-preview-build-policy.test.mjs
   - tests/security/vercel-preview-build-guard.test.mjs
+  - tests/unit/vercel-deploy-dry-run.test.mjs
+  - tests/security/vercel-deploy-dry-run.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
 supersedes: null
 ---
@@ -66,7 +71,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-080` è `IN_PROGRESS/50%/FAILING`: Production Branch, Trusted Source e controlli locali risultavano verdi, ma il primo merge di attivazione ha creato un deployment Production da `main`. La delivery è stata eliminata e il job smoke rifiutato. Il contenimento commit `4d3d4ba`/PR #13 è integrato nel merge `61e5cbd`; run `29332953627` e `29333105276` sono 5/5 verdi e non hanno prodotto nuovi deployment. Il change set corrente aggiunge un build guard Preview-only, mentre Git auto-deploy resta spento. Preview/smoke/failure/redeploy restano aperti e ADR-0005 è proposed. Il grant GitHub App condiviso resta un rischio accettato, non una causa dimostrata. `BL-079` resta `BACKLOG` fino allo staging reale.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-080` è `IN_PROGRESS/50%/FAILING`: il deployment Production incidentale da `main` è stato eliminato e il contenimento PR #13 integrato; il guard Preview-only PR #14 è poi entrato nel merge `ee5f129` con CI PR/post-merge 5/5 e zero deployment. Il primo bootstrap CLI successivo si è fermato prima della creazione della delivery perché cache `.turbo` locale oltre 100 MB era entrata nel payload da 773,1 MiB. La slice corrente aggiunge `.vercelignore` root-only e validazione fail-closed del dry-run; Git auto-deploy resta spento. Preview/smoke/failure/redeploy restano aperti e ADR-0005 è proposed. Il grant GitHub App condiviso resta un rischio accettato, non una causa dimostrata. `BL-079` resta `BACKLOG` fino allo staging reale.
 
 ## Governance e baseline
 
@@ -86,8 +91,9 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; full verify locale/clean; CI `29285998646`; report BL-003 | DONE; PASS locale/clean/CI |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
 | Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner fail-closed; web con zero secret/variabili applicative; Git Integration reale senza token Vercel persistente; emissione OIDC e Trusted Source exact-match abilitate | config/security suite; environment GitHub e progetto Vercel con zero secret applicativi; token mancante/malformato fail-before-fetch | BL-003 PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
-| Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | foundation, `/health`, progetto collegato, protezioni, Git auto-deploy spento e guard Preview-only | PR #12/CI verde; GitHub deployment `5440323678` Production/success; rimozione; PR #13/run `29332953627`, merge `61e5cbd`/run `29333105276` e zero post-merge deployment | BL-080 FAILING; nessuno staging; prova Preview ancora aperta; BL-079 BACKLOG |
-| Build provider limitato a Preview senza leakage | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `apps/web/vercel.json`, build script dedicato, policy pura e target metadata nella cache Turbo | unit policy, security subprocess e contract deployment versionati; build Vercel richiede `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`; locale ammesso solo con tutti assenti | guard implementato nel change set; prova provider pending |
+| Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | foundation, `/health`, progetto collegato, protezioni, Git auto-deploy spento e guard Preview-only | PR #12/Production/rimozione; contenimento PR #13; guard PR #14/run `29335696502`, merge `ee5f129`/run `29335856323`; zero deployment; bootstrap upload oversize fermato prima della delivery | BL-080 FAILING; nessuno staging; prova Preview ancora aperta; BL-079 BACKLOG |
+| Build provider limitato a Preview senza leakage | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `apps/web/vercel.json`, build script dedicato, policy pura e target metadata nella cache Turbo | unit policy, security subprocess e contract deployment versionati; build Vercel richiede `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`; locale ammesso solo con tutti assenti | guard integrato tramite PR #14; prova provider pending |
+| Payload CLI minimo e verificato prima di creare deployment | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `.vercelignore`, dry-run parser e deployment foundation contract | test unit/security/contract; dry-run `nextjs` dalla root con 158 entry e 1.093.267 byte; mode/hash/symlink, cache/output/env/path non relativi e budget oltre soglia falliscono chiusi | implementato localmente; merge/CI e retry Preview pending |
 | Deploy web riconducibile a project/deployment/SHA/ref/repository/regione | spec §29.4; ADR-0005 proposed | BL-080 | `web-health-v1`, smoke fail-closed, manifest unlinked dopo PR #13 | dispatch Production rifiutato; run `29331534774` skipped; URL/alias dopo rimozione `404`; selector CLI Preview ancora non eseguito | controllo di rifiuto PASS; requisito Preview FAILING |
 
 ## UX/UI P0

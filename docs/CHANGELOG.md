@@ -27,9 +27,12 @@ code_refs:
   - apps/web/package.json
   - apps/web/scripts/assert-vercel-preview-build.mjs
   - apps/web/scripts/vercel-preview-build-policy.mjs
+  - .vercelignore
   - infra/deployment/vercel-staging.json
   - scripts/check-deployment-foundation.mjs
   - scripts/lib/deployment-foundation.mjs
+  - scripts/check-vercel-deploy-dry-run.mjs
+  - scripts/lib/vercel-deploy-dry-run.mjs
   - scripts/lib/deployment-smoke.mjs
   - turbo.json
 test_refs:
@@ -47,6 +50,8 @@ test_refs:
   - tests/security/deployment-smoke-security.test.mjs
   - tests/unit/vercel-preview-build-policy.test.mjs
   - tests/security/vercel-preview-build-guard.test.mjs
+  - tests/unit/vercel-deploy-dry-run.test.mjs
+  - tests/security/vercel-deploy-dry-run.test.mjs
   - docs/testing/BL-080_VERIFICATION.md
 supersedes: null
 ---
@@ -64,6 +69,7 @@ supersedes: null
 - Creata la branch riservata `release/production` da `ef803add249d16ded6f94936c59531047c8a92fa` e protetta con la Ruleset dedicata `18926413`, attiva e senza bypass; la Ruleset `main-required-ci` `18877721` è rimasta invariata.
 - Autorizzato il solo piano Vercel Hobby personale/non commerciale e verificata in modo redatto l'identità esclusiva indicata dal Product Owner; creato `dnd-ai-web` (`prj_lR2dL0wwAvLmDzjvbpDkhS3V7xoQ`) nello scope `emacore17s-projects` e collegato a `Emacore17/dnd-ai` (repository ID `1299266814`) senza produrre deployment.
 - Creati ADR-0005 proposed, `docs/operations/PREVIEW_STAGING.md` e `docs/testing/BL-080_VERIFICATION.md`.
+- Aggiunti `.vercelignore` root-only e un checker JSON del dry-run Vercel con output statico, budget sorgente e allowlist degli input obbligatori.
 
 ### Changed
 
@@ -83,6 +89,8 @@ supersedes: null
 - Integrato il contenimento `codex/bl-080-fail-closed-hotfix` tramite commit `4d3d4ba`, PR #13 e merge `61e5cbd`: binding versionati `null`, `source.autoDeploy=false`, `git.deploymentEnabled=false`, Quality gate `deploy:check` e negative test pre-attivazione sono nuovamente la baseline sicura. CI PR e post-merge sono 5/5 verdi; nessun nuovo dispatch o deployment è stato osservato. `BL-080` resta `IN_PROGRESS/50%/FAILING`; ADR-0005 resta proposed e `BL-079` BACKLOG.
 - Aggiunto un guard build Preview-only dentro `apps/web`: il percorso Vercel strict richiede `VERCEL=1`, `VERCEL_ENV=preview` e `VERCEL_TARGET_ENV=preview`, mentre il normale build locale accetta soltanto l'assenza completa dei tre metadata. `vercel.json` impone il guard prima di `pnpm run build`; Turbo include i tre metadata nella cache key e il deployment contract rifiuta qualunque drift del comando.
 - Chiarito che il guard impedisce a un target non-Preview di completare il build, ma non impedisce al provider di creare inizialmente un deployment record. Il futuro bootstrap resta diagnostico one-shot con selector CLI `--target=preview`, `--no-wait`, inspect immediato, rimozione per deployment ID esatto e auto-deploy Git spento; `--skip-domain` è escluso perché richiede `--prod`, mentre `--prod`, `--prebuilt` e promote restano vietati.
+- Integrato il guard tramite PR #14/merge `ee5f129` con CI PR `29335696502` e post-merge `29335856323` 5/5 verdi e zero deployment. Il primo bootstrap successivo è terminato sul limite file prima di creare una delivery, perché `.turbo` portava il payload a 773,1 MiB e conteneva un file oltre il limite Hobby di 100 MB.
+- Il retry Preview ora richiede prima un dry-run ufficiale dalla root del monorepo e il suo passaggio nel checker: Next.js/root/input obbligatori regolari con hash valido, mode file/directory zero-byte, massimo 10 MiB complessivi, 5 MiB per file, 15.000 entry e nessun symlink o discendente cache/output/env. `--cwd apps/web`, `--archive` come workaround, override project-level, `--prebuilt`, Production e promote sono vietati.
 
 ### Verification
 
@@ -100,6 +108,8 @@ supersedes: null
 - Contenimento pubblicato nella [PR #13](https://github.com/Emacore17/dnd-ai/pull/13): run PR `29332953627` e post-merge `29333105276` con 5/5 job `SUCCESS`; merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; readback successivo con zero deployment e nessun nuovo smoke dispatch.
 - Guard Preview-only mirato: unit 4/4, security subprocess 3/3 e deployment contract 5/5 `PASS`; `deploy:check`, task graph, ESLint e Prettier mirati `PASS`. La simulazione Production, anche con `--allow-local`, termina con exit `1`/`target-not-preview` prima di Next; la simulazione Preview completa il build Next.js `16.2.10` e genera `/health`. Le review indipendenti finali non rilevano P0/P1/P2 residui.
 - Full gate del guard: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 60,2 s sul diff e in 57,1 s sul commit pulito `519052649c88d84c45da92c3b35131819291a73a`; unit 33 pass/1 skip host, integration 9/9, contract 18/18, security 14 pass/3 skip host, policy/scan/artifact verdi.
+- Policy payload mirata: TDD rosso su moduli mancanti; 14/14 test unit/security/contract verdi, `deploy:check` ed ESLint mirati PASS. Il dry-run Vercel `55.0.0` passa il checker con 158 entry, 1.093.267 byte, file massimo 263.569 byte e deployment list ancora vuota.
+- Full gate della policy payload: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 69,1 s senza cache; unit 39 pass/1 skip host, integration 9/9, contract 18/18, security 17 pass/3 skip host, policy/scan/artifact verdi. Le review indipendenti finali non rilevano P0/P1/P2 residui.
 
 ## 2026-07-13
 
