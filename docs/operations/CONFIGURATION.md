@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-14
-last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
+last_verified_commit: 13032743552654f9f68d87050eb11cabbdd92325
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura

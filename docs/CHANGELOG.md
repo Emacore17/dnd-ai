@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
+last_verified_commit: 13032743552654f9f68d87050eb11cabbdd92325
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -108,8 +108,8 @@ supersedes: null
 - Contenimento pubblicato nella [PR #13](https://github.com/Emacore17/dnd-ai/pull/13): run PR `29332953627` e post-merge `29333105276` con 5/5 job `SUCCESS`; merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; readback successivo con zero deployment e nessun nuovo smoke dispatch.
 - Guard Preview-only mirato: unit 4/4, security subprocess 3/3 e deployment contract 5/5 `PASS`; `deploy:check`, task graph, ESLint e Prettier mirati `PASS`. La simulazione Production, anche con `--allow-local`, termina con exit `1`/`target-not-preview` prima di Next; la simulazione Preview completa il build Next.js `16.2.10` e genera `/health`. Le review indipendenti finali non rilevano P0/P1/P2 residui.
 - Full gate del guard: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 60,2 s sul diff e in 57,1 s sul commit pulito `519052649c88d84c45da92c3b35131819291a73a`; unit 33 pass/1 skip host, integration 9/9, contract 18/18, security 14 pass/3 skip host, policy/scan/artifact verdi.
-- Policy payload mirata: TDD rosso su moduli mancanti; 14/14 test unit/security/contract verdi, `deploy:check` ed ESLint mirati PASS. Il dry-run Vercel `55.0.0` passa il checker con 158 entry, 1.093.267 byte, file massimo 263.569 byte e deployment list ancora vuota.
-- Full gate della policy payload: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 69,1 s senza cache; unit 39 pass/1 skip host, integration 9/9, contract 18/18, security 17 pass/3 skip host, policy/scan/artifact verdi. Le review indipendenti finali non rilevano P0/P1/P2 residui.
+- Policy payload mirata: TDD rosso su moduli mancanti; 14/14 test unit/security/contract verdi, `deploy:check` ed ESLint mirati PASS. Il dry-run Vercel `55.0.0` passa il checker con 158 entry, 1.093.594 byte, file massimo 263.569 byte e deployment list ancora vuota.
+- Full gate della policy payload: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 69,1 s sul diff e in 56,2 s sul commit pulito `13032743552654f9f68d87050eb11cabbdd92325`, sempre senza cache; unit 39 pass/1 skip host, integration 9/9, contract 18/18, security 17 pass/3 skip host, policy/scan/artifact verdi. Le review indipendenti finali non rilevano P0/P1/P2 residui.
 
 ## 2026-07-13
 

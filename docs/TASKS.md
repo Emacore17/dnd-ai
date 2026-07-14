@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
+last_verified_commit: 13032743552654f9f68d87050eb11cabbdd92325
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -2499,11 +2499,11 @@ updated_at: 2026-07-14
 agent: Codex development agent
 git_branch: codex/bl-080-cli-payload
 base_commit: ee5f12916998cce6847fcc509d8f5e1fa05b1b9f
-current_commit: ee5f12916998cce6847fcc509d8f5e1fa05b1b9f
+current_commit: 13032743552654f9f68d87050eb11cabbdd92325
 spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
 context_verified: true
 test_status: FAILING
-working_tree_dirty: true
+working_tree_dirty: false
 ```
 
 ## Contesto letto
@@ -2566,11 +2566,11 @@ working_tree_dirty: true
 | 2026-07-14 | 50% | Pubblicata e integrata l'attivazione branch-closed senza bypass; PR e CI non hanno prodotto deployment. | Commit `7335053`; PR #12; run `29331343752` 5/5 `SUCCESS`; merge `c64d095`; readback pre-merge Production Branch=`release/production` e zero deployment. | Osservare il primo deploy di `main` e fermarsi su qualunque target Production. |
 | 2026-07-14 | 50% | Il primo deploy post-merge è risultato `target=production`: stop immediato, rimozione del deployment e hotfix fail-closed. | Deployment `dpl_Cag…`; activity `production` con alias assegnati; smoke run `29331534774` `skipped`; deployment e alias del progetto poi vuoti. Hotfix full verify PASS in 61,0 s; causa provider ancora sconosciuta. | Integrare il hotfix con zero nuovi deploy; investigare il target prima di ogni riattivazione. |
 | 2026-07-14 | 50% | Integrato il contenimento e implementato il guard build Preview-only: il percorso Vercel richiede metadata `preview` concordanti, mentre Git auto-deploy resta spento. Il guard limita il completamento di un target errato, non la creazione iniziale del relativo record provider. Le review indipendenti finali non rilevano P0/P1/P2 residui. | Commit `519052649c88d84c45da92c3b35131819291a73a`; clean `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 57,1 s, senza cache: unit 33 pass/1 skip host, integration 9/9, contract 18/18, security 14 pass/3 skip host, policy/scan/artifact verdi. Unit guard 4/4, security subprocess 3/3 e contract deployment 5/5; la regressione `--allow-local` + Production è coperta. PR #13/merge `61e5cbd` restano l'evidenza del contenimento remoto con zero deployment. | Aprire la PR del guard senza deploy; dopo merge/CI/readback eseguire il bootstrap CLI diagnostico esplicito. |
-| 2026-07-14 | 50% | Il guard è stato integrato tramite PR #14 e merge `ee5f129`; CI PR/post-merge 5/5 verde e zero deployment. Il primo bootstrap CLI Preview è terminato sul limite file prima di creare una delivery: la root conteneva 773,1 MiB e una cache `.turbo` oltre il limite Hobby di 100 MB. La slice fail-closed `codex/bl-080-cli-payload` versiona denylist root-only e dry-run JSON obbligatorio. | PR #14; run PR `29335696502` e post-merge `29335856323`; readback `autoExposeSystemEnvs=true`, Production Branch=`release/production`, deployment list vuota. CLI `55.0.0` exit `1` su `File size limit exceeded (100 MB)`; zero deployment. TDD rosso, poi 14/14 mirati PASS; dry-run reale PASS con 158 entry/1.093.267 byte e nessun upload. Full `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 69,1 s senza cache: unit 39/1 skip host, integration 9/9, contract 18/18, security 17/3 skip host. | Integrare la policy con CI e soltanto dopo ritentare una Preview. |
+| 2026-07-14 | 50% | Il guard è stato integrato tramite PR #14 e merge `ee5f129`; CI PR/post-merge 5/5 verde e zero deployment. Il primo bootstrap CLI Preview è terminato sul limite file prima di creare una delivery: la root conteneva 773,1 MiB e una cache `.turbo` oltre il limite Hobby di 100 MB. La slice fail-closed `codex/bl-080-cli-payload` versiona denylist root-only e dry-run JSON obbligatorio. | PR #14; run PR `29335696502` e post-merge `29335856323`; readback `autoExposeSystemEnvs=true`, Production Branch=`release/production`, deployment list vuota. CLI `55.0.0` exit `1` su `File size limit exceeded (100 MB)`; zero deployment. TDD rosso, poi 14/14 mirati PASS; dry-run reale PASS con 158 entry/1.093.594 byte e nessun upload. Full `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 69,1 s sul diff e 56,2 s sul commit pulito `13032743552654f9f68d87050eb11cabbdd92325`, senza cache: unit 39/1 skip host, integration 9/9, contract 18/18, security 17/3 skip host. | Integrare la policy con CI e soltanto dopo ritentare una Preview. |
 
 ## Chiusura
 
-- **Commit/PR:** foundation PR #7; hardening PR #10; attivazione commit `7335053`, PR #12 e merge `c64d095`; contenimento commit `4d3d4ba`, PR #13 e merge `61e5cbd`; guard commit `5190526`, PR #14 e merge `ee5f129`; policy CLI in corso su `codex/bl-080-cli-payload`
+- **Commit/PR:** foundation PR #7; hardening PR #10; attivazione commit `7335053`, PR #12 e merge `c64d095`; contenimento commit `4d3d4ba`, PR #13 e merge `61e5cbd`; guard commit `5190526`, PR #14 e merge `ee5f129`; policy CLI commit `13032743552654f9f68d87050eb11cabbdd92325`, PR/CI pending
 - **Comandi eseguiti:** preflight Git/GitHub/Vercel; web lint/typecheck/build; unit/integration/contract/security; full `pnpm verify`; build guard local/Preview/Production; deployment e CI policy; dry-run Vercel JSON e parser bounded; API GitHub environment/branch/Ruleset; Vercel CLI/API per identity/plan/project/link/settings/env/deployment/Trusted Sources/Git namespace e repository grant readback
 - **Exit code:** `0` per CI PR #12/#13/#14, rimozione deployment, readback vuoto, full verify hotfix/guard/policy payload e dry-run bounded; expected `1` per simulazione Production fermata prima di Next e CLI oversize fermato prima della delivery. Il gate remoto Preview resta `FAILING` perché nessuno staging esiste ancora
 - **Report/CI URL o path:** `docs/testing/BL-080_VERIFICATION.md`; [attivazione PR #12 / run `29331343752`](https://github.com/Emacore17/dnd-ai/actions/runs/29331343752); [smoke rifiutato `29331534774`](https://github.com/Emacore17/dnd-ai/actions/runs/29331534774); deploy rimosso

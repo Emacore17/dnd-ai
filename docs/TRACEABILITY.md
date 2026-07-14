@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
+last_verified_commit: 13032743552654f9f68d87050eb11cabbdd92325
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -93,7 +93,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner fail-closed; web con zero secret/variabili applicative; Git Integration reale senza token Vercel persistente; emissione OIDC e Trusted Source exact-match abilitate | config/security suite; environment GitHub e progetto Vercel con zero secret applicativi; token mancante/malformato fail-before-fetch | BL-003 PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
 | Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | foundation, `/health`, progetto collegato, protezioni, Git auto-deploy spento e guard Preview-only | PR #12/Production/rimozione; contenimento PR #13; guard PR #14/run `29335696502`, merge `ee5f129`/run `29335856323`; zero deployment; bootstrap upload oversize fermato prima della delivery | BL-080 FAILING; nessuno staging; prova Preview ancora aperta; BL-079 BACKLOG |
 | Build provider limitato a Preview senza leakage | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `apps/web/vercel.json`, build script dedicato, policy pura e target metadata nella cache Turbo | unit policy, security subprocess e contract deployment versionati; build Vercel richiede `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`; locale ammesso solo con tutti assenti | guard integrato tramite PR #14; prova provider pending |
-| Payload CLI minimo e verificato prima di creare deployment | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `.vercelignore`, dry-run parser e deployment foundation contract | test unit/security/contract; dry-run `nextjs` dalla root con 158 entry e 1.093.267 byte; mode/hash/symlink, cache/output/env/path non relativi e budget oltre soglia falliscono chiusi | implementato localmente; merge/CI e retry Preview pending |
+| Payload CLI minimo e verificato prima di creare deployment | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `.vercelignore`, dry-run parser e deployment foundation contract | test unit/security/contract; dry-run `nextjs` dalla root con 158 entry e 1.093.594 byte; mode/hash/symlink, cache/output/env/path non relativi e budget oltre soglia falliscono chiusi | implementato localmente; merge/CI e retry Preview pending |
 | Deploy web riconducibile a project/deployment/SHA/ref/repository/regione | spec §29.4; ADR-0005 proposed | BL-080 | `web-health-v1`, smoke fail-closed, manifest unlinked dopo PR #13 | dispatch Production rifiutato; run `29331534774` skipped; URL/alias dopo rimozione `404`; selector CLI Preview ancora non eseguito | controllo di rifiuto PASS; requisito Preview FAILING |
 
 ## UX/UI P0

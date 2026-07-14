@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: 519052649c88d84c45da92c3b35131819291a73a
+last_verified_commit: 13032743552654f9f68d87050eb11cabbdd92325
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -59,7 +59,7 @@ supersedes: null
 | Hardening corrente | commit `1766406b9bd701a9880705b371fdc0b05a73abe1`; PR #10; run `29326093430` 5/5 `SUCCESS`; merge `ef803add249d16ded6f94936c59531047c8a92fa` |
 | Contenimento corrente | commit `4d3d4baad1a57b5340c0092209cc640499aa4da8`; PR #13; CI PR `29332953627` e post-merge `29333105276` 5/5 `SUCCESS`; merge `61e5cbd2c3c1c258769fef6b3ad89853d7b7ca61`; zero deployment successivi |
 | Guard Preview-only | commit `519052649c88d84c45da92c3b35131819291a73a`; PR #14; merge `ee5f12916998cce6847fcc509d8f5e1fa05b1b9f`; CI PR/post-merge 5/5; zero deployment |
-| Contratto payload CLI | `.vercelignore` root-only; dry-run parser bounded; merge/CI pending |
+| Contratto payload CLI | commit `13032743552654f9f68d87050eb11cabbdd92325`; `.vercelignore` root-only; dry-run parser bounded; merge/CI pending |
 | Spec SHA-256 | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Deploy contract | `staging-foundation-v1`; provider remoto ancora collegato, mentre il repository mantiene binding versionati `null`, `source.autoDeploy=false`, `git.deploymentEnabled=false` e build guard Preview-only |
 | Health contract | `web-health-v1` |
@@ -138,7 +138,7 @@ La rimozione è stata richiesta quando il CLI mostrava ancora `BUILDING`, ma l'a
 | Risultato comando | exit `1`, `File size limit exceeded (100 MB)` prima della creazione del deployment |
 | Readback immediato | deployment list vuota; nessun dispatch smoke |
 | Policy corrente | `.vercelignore` root-only; nessun `apps/web/.vercelignore`; contract anti-drift e parser dry-run versionati |
-| Dry-run dopo policy | `nextjs`, root esatta, 158 entry, 1.093.267 byte, file massimo 263.569 byte; checker `PASS`; zero upload/deployment |
+| Dry-run dopo policy | `nextjs`, root esatta, 158 entry, 1.093.594 byte, file massimo 263.569 byte; checker `PASS`; zero upload/deployment |
 
 Il dry-run iniziale con exit `0` non era sufficiente: descriveva correttamente anche il payload sovradimensionato. Per questo la policy non si limita al comando provider ma valida semanticamente JSON, budget e path. Non sono stati eliminati cache o artifact locali per ottenere il verde e non è stato usato `--archive`: il confine deve restare riproducibile da un checkout pulito con normali output di sviluppo presenti.
 
@@ -162,8 +162,8 @@ Il dry-run iniziale con exit `0` non era sufficiente: descriveva correttamente a
 | `tests/unit/vercel-deploy-dry-run.test.mjs` | 6/6 PASS: schema/root/framework, budget, path vietati, placeholder directory ignorate, mode/hash/symlink, input/duplicati/totali |
 | `tests/security/vercel-deploy-dry-run.test.mjs` | 3/3 PASS: manifest valido, JSON/path non affidabili redatti, argomenti e stdin oltre 8 MiB fail-closed |
 | payload + deployment contract mirati | 14/14 PASS; `deploy:check`, task graph, secret scan ed ESLint mirati PASS |
-| dry-run Vercel reale | PASS: 158 entry, 1.093.267 byte, max 263.569 byte; framework/root/input esatti; zero deployment |
-| `TURBO_FORCE=true corepack pnpm@10.34.5 verify` sulla policy payload | PASS in 69,1 s; zero cache Turbo; unit 39 pass/1 skip host, integration 9/9, contract 18/18, security 17 pass/3 skip host, policy/scan/artifact verdi |
+| dry-run Vercel reale | PASS: 158 entry, 1.093.594 byte, max 263.569 byte; framework/root/input esatti; zero deployment |
+| `TURBO_FORCE=true corepack pnpm@10.34.5 verify` sulla policy payload | PASS in 69,1 s sul diff e 56,2 s sul commit pulito `13032743552654f9f68d87050eb11cabbdd92325`; zero cache Turbo; unit 39 pass/1 skip host, integration 9/9, contract 18/18, security 17 pass/3 skip host, policy/scan/artifact verdi |
 | guard + deployment contract mirati | 5/5 contract PASS; `deploy:check` e task graph PASS; ESLint/Prettier mirati PASS |
 | Review indipendenti finali | zero P0/P1/P2; incluso il caso regressione Production con `--allow-local`, che termina ancora su `target-not-preview` |
 | Build Command simulato con Production | expected FAIL exit `1` su `target-not-preview` prima dell'avvio di Next |
