@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
+last_verified_commit: 52bf58d9f9cb9cab6ad0cc1b1602d7556067b578
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -60,7 +60,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | branch attivo `codex/bl-080-staging-foundation` a `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af`; `origin/main` resta a `0065c012ae359450b4cd38da41b001f9e922eeb8` dopo merge della PR #6; CI post-merge `29315052002` 5/5 job `SUCCESS` |
+| Delivery/commit | `origin/main` a `52bf58d9f9cb9cab6ad0cc1b1602d7556067b578` dopo merge della PR #7; CI post-merge `29321531038` 5/5 job `SUCCESS` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c` |
 | Milestone | `M0 — Fondamenta` |
@@ -71,7 +71,7 @@ supersedes: null
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. `BL-003` implementa `runtime-config-v1` ed è integrato in `main`. Il web Next è l'unico runtime oggi deployabile; API e worker non hanno container/daemon. `BL-080` ha ora desired state Vercel, health contract e workflow smoke fail-closed: Standard Protection resta attiva e GitHub ottiene solo un OIDC breve, mai un token Vercel persistente. Project ID, scope slug, branch origin e installation ID restano `null`; l'auto-deploy è disabilitato finché la Production Branch non viene riservata. GitHub environment `staging` esiste, accetta solo `main`, disabilita il bypass amministratore e contiene zero secret/variabili. Nessun account/project/deploy Vercel è stato creato: piano/termini e permessi GitHub App richiedono conferma esplicita. `BL-079` resta fuori scope e bloccato fino allo staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; il repository contiene otto package condivisi dopo l'aggiunta di `config`. `BL-002` ha verificato pipeline, artifact, failure path e Ruleset. `BL-003` implementa `runtime-config-v1` ed è integrato in `main`. Il web Next è l'unico runtime oggi deployabile; API e worker non hanno container/daemon. La foundation disabilitata di `BL-080` è integrata in `main` tramite PR #7 e CI post-merge verde: desired state Vercel, health contract e workflow smoke sono quindi presenti sulla default branch. Standard Protection resta richiesta e GitHub ottiene solo un OIDC breve, mai un token Vercel persistente. Project ID, scope slug, branch origin e installation ID restano `null`; l'auto-deploy è disabilitato finché la Production Branch non viene riservata. GitHub environment `staging` esiste, accetta solo `main`, disabilita il bypass amministratore e contiene zero secret/variabili. Nessun account/project/deploy Vercel è stato creato: piano/termini e permessi GitHub App richiedono conferma esplicita. `BL-079` resta fuori scope e bloccato fino allo staging reale.
 
 ## Decisioni operative vigenti
 

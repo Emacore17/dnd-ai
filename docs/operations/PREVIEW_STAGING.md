@@ -2,7 +2,7 @@
 status: draft
 owner: engineering-and-operations
 last_reviewed: 2026-07-14
-last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
+last_verified_commit: 52bf58d9f9cb9cab6ad0cc1b1602d7556067b578
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -60,6 +60,8 @@ Prima del link, `deploy:check` deve passare e `deploy:check:linked` deve fallire
 Questa sezione richiede autorizzazione esplicita del Product Owner per piano/termini e permessi GitHub App. Se compare una richiesta di upgrade, pagamento, uso commerciale incompatibile o accettazione contrattuale nuova, fermarsi.
 
 La foundation, incluso questo runbook e `git.deploymentEnabled=false`, deve essere prima integrata nella default branch. Il workflow `repository_dispatch` viene infatti caricato da `main` e la configurazione statica disabilita ogni auto-deploy durante il collegamento.
+
+Questo prerequisito è soddisfatto dalla [PR #7](https://github.com/Emacore17/dnd-ai/pull/7), merge commit `52bf58d9f9cb9cab6ad0cc1b1602d7556067b578`; la [CI post-merge `29321531038`](https://github.com/Emacore17/dnd-ai/actions/runs/29321531038) ha chiuso 5/5 job con `SUCCESS`. Il provider resta non collegato e l'auto-deploy resta spento.
 
 1. Eseguire il login interattivo soltanto nell'account dedicato al progetto.
 2. Verificare scope e piano con `vercel whoami`, `vercel teams list` e `vercel project list`; non registrare email, token o dati personali.
