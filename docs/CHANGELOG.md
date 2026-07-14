@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: e5dff7bf371bd91321587fecadbd8f51264cc263
+last_verified_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -11,6 +11,7 @@ related_tasks:
   - BL-001
   - BL-002
   - BL-003
+  - BL-004
   - BL-079
   - BL-080
 code_refs:
@@ -74,13 +75,14 @@ supersedes: null
 - Creati ADR-0005 proposed, `docs/operations/PREVIEW_STAGING.md` e `docs/testing/BL-080_VERIFICATION.md`.
 - Aggiunti `.vercelignore` root-only e un checker JSON del dry-run Vercel con output statico, budget sorgente e allowlist degli input obbligatori.
 - Aggiunto l'interlock procedurale `source.manualDeployment.enabled=false` con `deploy:bootstrap:check`, unit test, subprocess security e contratto anti-drift.
+- Integrato il freeze tramite PR #16/merge `aa9342d`, con CI PR `29343319207` e post-merge `29343526054` 5/5 verdi e zero deployment Vercel.
 
 ### Changed
 
 - Il Quality gate verifica anche il desired state deploy; `verify` include la deployment policy.
 - Documentati Vercel/`fra1` come proposta reversibile, Git Integration nativa, `main` come Preview staging e `release/production` come Production Branch riservata.
 - Chiarito che il web ha zero variabili applicative e che i soli metadata Vercel del health endpoint non sono secret né config di dominio.
-- `BL-080` passa a `IN_PROGRESS/50%/PARTIAL`; `BL-079` resta `BACKLOG` finché project, deploy, smoke e redeploy remoti non sono provati.
+- `BL-080` passa a `BLOCKED/50%/PARTIAL` dopo l'audit del target mismatch Vercel e l'assenza di un percorso first-deployment Preview-only supportato; `BL-004` diventa `READY`, mentre `BL-079` resta `BACKLOG` fino a uno staging reale.
 - La review indipendente ha distinto action Preview `vercel.deployment.ready` da `state.type=success`, vincolato ref/repository ai metadata runtime e l'evento all'installation ID, ignorato l'URL del payload, imposto origin esatta + Standard Protection/OIDC, vietato step/job/permission drift, limitato lo streaming body e reso il Git connect a due fasi con policy di attivazione branch-closed ricorsiva `{"**": false, "main": true, "release/production": false}`; `**` evita che branch con `/` sfuggano alla deny-all.
 - Un readback provider intermedio ha confermato Root Directory `apps/web`, Next.js, `fra1`, Fork Protection, system environment variables ed emissione OIDC abilitate, zero variabili applicative e Standard Protection con SSO predefinito `all_except_custom_domains`. In quel checkpoint la Trusted Source GitHub Actions era configurata con claim exact-match e installation ID `41079282` acquisito, mentre Production Branch Vercel ancora `main` e alias branch non registrato mantenevano `BL-080` parziale.
 - Allineata la sequenza di attivazione: l'alias branch documentato viene versionato atomicamente prima del merge, poi il primo deployment deve materializzare e confermare la stessa origin; l'URL del dispatch resta ignorato.
@@ -90,13 +92,15 @@ supersedes: null
 - Resi adattivi i negative test di drift attivazione e binding all-or-none, così restano efficaci sia nella foundation disabilitata sia nello stato linked.
 - Integrata l'attivazione tramite PR #12 dopo CI 5/5 verde e zero deployment sulla PR; il primo deploy del merge `c64d095` è stato però classificato Production da Vercel nonostante Production Branch=`release/production`.
 - Il deployment ha raggiunto `success` e ricevuto alias prima della rimozione; il dispatch `ready` è stato rifiutato dal job smoke. Deployment e alias project-scoped sono poi tornati a zero e gli URL a `404`.
-- Integrato il contenimento `codex/bl-080-fail-closed-hotfix` tramite commit `4d3d4ba`, PR #13 e merge `61e5cbd`: binding versionati `null`, `source.autoDeploy=false`, `git.deploymentEnabled=false`, Quality gate `deploy:check` e negative test pre-attivazione sono nuovamente la baseline sicura. CI PR e post-merge sono 5/5 verdi; nessun nuovo dispatch o deployment è stato osservato. `BL-080` resta `IN_PROGRESS/50%/FAILING`; ADR-0005 resta proposed e `BL-079` BACKLOG.
+- Integrato il contenimento `codex/bl-080-fail-closed-hotfix` tramite commit `4d3d4ba`, PR #13 e merge `61e5cbd`: binding versionati `null`, `source.autoDeploy=false`, `git.deploymentEnabled=false`, Quality gate `deploy:check` e negative test pre-attivazione sono nuovamente la baseline sicura. CI PR e post-merge sono 5/5 verdi; nessun nuovo dispatch o deployment è stato osservato. In quel checkpoint `BL-080` era `IN_PROGRESS/50%/FAILING`; lo stato corrente superseding è `BLOCKED/50%/PARTIAL`.
 - Aggiunto un guard build Preview-only dentro `apps/web`: il percorso Vercel strict richiede `VERCEL=1`, `VERCEL_ENV=preview` e `VERCEL_TARGET_ENV=preview`, mentre il normale build locale accetta soltanto l'assenza completa dei tre metadata. `vercel.json` impone il guard prima di `pnpm run build`; Turbo include i tre metadata nella cache key e il deployment contract rifiuta qualunque drift del comando.
 - Chiarito che il guard impedisce a un target non-Preview di completare il build, ma non impedisce al provider di creare inizialmente un deployment record.
 - Integrato il guard tramite PR #14/merge `ee5f129` con CI PR `29335696502` e post-merge `29335856323` 5/5 verdi e zero deployment. Il primo bootstrap successivo è terminato sul limite file prima di creare una delivery, perché `.turbo` portava il payload a 773,1 MiB e conteneva un file oltre il limite Hobby di 100 MB.
 - Integrata la policy payload tramite PR #15/merge `10602288621210a075414e0fff6c437123022ed6`; le run PR `29339984834` e post-merge `29340214947` sono 5/5 verdi. Il dry-run ufficiale da `main` pulita ha accettato 158 entry e 1.093.594 byte.
 - Il singolo retry con `--target=preview` ha creato un secondo record `target=production`, osservato `ERROR` e rimosso per ID esatto. L'activity log Vercel attribuisce il deploy Production alla CLI sul commit `1060228`; deployment/alias project-scoped per `dnd-ai-web` sono tornati a zero e l'origin rimossa risponde `404`. Nessun nuovo smoke è partito e i log build post-rimozione non consentono di attribuire `ERROR` al guard.
 - Ritirata la diagnostica one-shot e congelato il percorso operativo approvato: `manualDeployment.enabled=false`, Git auto-deploy spento e nessun altro deploy reale/redeploy finché una PR separata non documenta causa o mitigazione provider verificabile. L'interlock è procedurale e non impedisce tecnicamente il bypass diretto da parte di un owner.
+- Auditato il tag `vercel@55.0.0`, risolto al commit immutabile `11f0cebacce81dfb713b3cb2d4622e49da0fb475`: parser e `CreateOptions` conservano `preview`, ma `@vercel/client 17.6.4` lo omette prima della POST. La regola Vercel del primo deployment e l'issue aperta `vercel/vercel#17069` formano l'ipotesi più forte per i record Production; manca ancora conferma/fix/workaround maintainer.
+- Corretto un incidente di readback: `gh api -f ref=...` senza `--method GET` ha creato il metadata GitHub Deployment vuoto `5442987675`. Il solo record accidentale, privo di status e controparte Vercel, è stato eliminato per ID esatto; GET `404` e lista SHA vuota hanno confermato il ripristino.
 
 ### Verification
 
@@ -120,6 +124,8 @@ supersedes: null
 - Secondo incidente provider: CLI pinned con selector Preview sul commit `1060228`, activity log `to production (via Vercel CLI)`, record `dpl_4yG…` osservato `target=production`/`ERROR`, rimozione per ID esatto, zero deployment/alias project-scoped per `dnd-ai-web` e origin `404`; nessun workflow smoke aggiuntivo.
 - Kill switch mirato: 10/10 test unit/contract/security `PASS`, `deploy:check` `PASS` e `deploy:bootstrap:check` expected exit `1` con output statico `disabled`.
 - Full gate del freeze: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 61,9 s sul working tree e 57,2 s sul commit pulito `e5dff7bf371bd91321587fecadbd8f51264cc263`, sempre senza cache; lint/build 11/11, typecheck 12/12, unit 42 pass/1 skip host, integration 9/9, contract 18/18, security 19 pass/3 skip host, policy/secret scan e artifact 3.205 file tutti verdi.
+- PR #16: run PR `29343319207` e post-merge `29343526054` con Quality, Tests, Security, Build artifact e `CI / Merge gate` tutti `SUCCESS`; merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; readback project-scoped Vercel con zero deployment/alias.
+- Provider evidence commit `b84f4eb79000ab78b524d463582eb28013c9da2c`: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` da working tree pulito exit `0` in 58,1 s senza cache; lint/build 11/11, typecheck 12/12, unit 42 pass/1 skip host, integration 9/9, contract 18/18, security 19 pass/3 skip host, policy/secret scan e artifact 3.205 file tutti verdi.
 
 ## 2026-07-13
 
