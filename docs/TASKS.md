@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 0065c012ae359450b4cd38da41b001f9e922eeb8
+last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -2484,11 +2484,11 @@ updated_at: 2026-07-14
 agent: Codex development agent
 git_branch: codex/bl-080-staging-foundation
 base_commit: 0065c012ae359450b4cd38da41b001f9e922eeb8
-current_commit: 4a9754b61a3693145ebe5f42a0eef43e47b4c364
+current_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
 spec_sha256: 0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c
 context_verified: true
 test_status: PARTIAL
-working_tree_dirty: true
+working_tree_dirty: false
 ```
 
 ## Contesto letto
@@ -2539,10 +2539,11 @@ working_tree_dirty: true
 | 2026-07-13 | 100% | Verificati fix, checkout pulito e CI; BL-003 chiuso senza introdurre staging o secret reali. | Worktree pulito head `f571413`: install frozen forzata exit `0`, full verify exit `0` in `61,0 s`, artifact `3.554` file; run `29285998646` 5/5 job `SUCCESS`, security `12/12`, artifact Ubuntu `3.233` file; PR #6 `MERGEABLE/CLEAN`. | Eseguire `BL-080`; mantenere `BL-079` in backlog fino allo staging. |
 | 2026-07-14 | 25% | Integrata PR #6 e selezionato `BL-080` da `main`; limitato il primo ambiente al web deployabile e alle sole risorse non-production, senza anticipare container API/worker o secret applicativi. | Base `0065c012`; spec SHA invariato; run CI post-merge `29315052002` completato con 5/5 job `SUCCESS`; test BL-080 `NOT_RUN`. | Verificare provider/account, formalizzare ADR e testare il contratto prima del provisioning. |
 | 2026-07-14 | 50% | Proposta Vercel/`fra1` senza token persistenti; implementati desired state, `/health`, workflow dispatch trusted e smoke redatto. La review ha corretto action Preview `ready`/state `success`, identità Git/runtime/App, origin esatta, OIDC Trusted Sources, permission/step drift, body bounded e sequenza connect; auto-deploy resta disabilitato e la futura attivazione usa `{"*": false, "main": true}`. Creato GitHub environment `staging` limitato a `main`, senza bypass, secret o variabili. | Full `TURBO_FORCE=true pnpm verify` finale PASS in 58,0 s: unit 29+1 skip host; integration 9/9; contract 16/16; security 11+3 skip host; artifact 3.205 file. Targeted deployment 17/17 PASS; `deploy:check:linked` fallisce atteso sui binding provider `null`. | Pubblicare e integrare la foundation disabilitata; dopo autorizzazione collegare il project, riservare Production Branch, configurare protezione/OIDC, abilitare Preview e provare deploy, failure e redeploy. |
+| 2026-07-14 | 50% | Congelata la foundation disabilitata nel commit di implementazione; audit finale senza finding P0/P1/P2. | Commit `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af`; verifica completa e failure path già registrati nel report BL-080. | Pubblicare e integrare la foundation; mantenere chiuso il collegamento provider fino all'autorizzazione esplicita. |
 
 ## Chiusura
 
-- **Commit/PR:** `—` — task in corso sul branch `codex/bl-080-staging-foundation`
+- **Commit/PR:** implementazione `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af`; PR `pending` sul branch `codex/bl-080-staging-foundation`
 - **Comandi eseguiti:** preflight Git/GitHub/Vercel; web lint/typecheck/build; unit/integration/contract/security; full `pnpm verify`; deployment e CI policy; API GitHub environment
 - **Exit code:** `0` per gate locali finali; un primo full verify post-review è scaduto con `124`/processi host residui, poi typecheck isolato e full verify forzato sono passati; `deploy:check:linked` exit `1` atteso per project ID/scope/origin/installation ID non ancora disponibili; Vercel `whoami` exit `1` atteso senza credenziali
 - **Report/CI URL o path:** `docs/testing/BL-080_VERIFICATION.md`; [CI post-merge BL-003 `29315052002`](https://github.com/Emacore17/dnd-ai/actions/runs/29315052002); deploy/smoke URL `—`
@@ -2575,6 +2576,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-13 | `1090a2a` | BL-003 | Config/runtime, secret boundary e documentazione | Aggiunti `runtime-config-v1`, startup fail-fast, template/scanner `.env`, TLS/auth managed e ADR-0004; corretto il private-hoist artifact fail-closed; `BL-004` ora dipende dal profilo migration e `BL-080` non dipende semanticamente dalla shell BL-079. Spec SHA `7441fdb71426deb22e3106e5e03fe0b364a711bcc3f5ff776fb74f3ad544f43f`. | BL-004, BL-005, BL-008, BL-010, BL-079, BL-080, GATE-M0 |
 | 2026-07-13 | `f571413` | BL-003 closure | Secret scanner, clean verification e CI | Aggiunta discovery ignore-aware dei file speciali untracked dopo il failure path FIFO Ubuntu; clean verify e run `29285998646` chiudono BL-003. BL-080 passa a READY; BL-079 resta BACKLOG. Spec SHA `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c`. | BL-004, BL-005, BL-008, BL-010, BL-079, BL-080, GATE-M0 |
 | 2026-07-14 | `0065c01` | BL-080 start | Preview/staging scope e contesto | PR #6 integrata e post-merge CI `29315052002` PASS; selezionato BL-080 sul branch isolato con scope esterno limitato a web e risorse non-production. Nessun secret o provider resource creato. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
+| 2026-07-14 | `50efcbe` | BL-080 foundation | Desired state staging, health e smoke OIDC | Congelata la foundation disabilitata: manifest Vercel branch-closed, GitHub environment `staging`, workflow a sequenza chiusa con OIDC breve e verifiche locali complete. Il task resta al 50% finché binding, deploy, smoke e redeploy remoti non sono provati. | BL-079, GATE-M0, BL-070, DOC-OPS-001 |
 | — | — | — | — | — | — |
 
 

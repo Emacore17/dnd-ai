@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: 0065c012ae359450b4cd38da41b001f9e922eeb8
+last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -60,7 +60,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `origin/main` a `0065c012ae359450b4cd38da41b001f9e922eeb8` dopo merge della PR #6; branch attivo `codex/bl-080-staging-foundation` dalla stessa base; CI post-merge `29315052002` 5/5 job `SUCCESS` |
+| Delivery/commit | branch attivo `codex/bl-080-staging-foundation` a `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af`; `origin/main` resta a `0065c012ae359450b4cd38da41b001f9e922eeb8` dopo merge della PR #6; CI post-merge `29315052002` 5/5 job `SUCCESS` |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c` |
 | Milestone | `M0 — Fondamenta` |

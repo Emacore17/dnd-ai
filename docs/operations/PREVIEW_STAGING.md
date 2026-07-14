@@ -2,7 +2,7 @@
 status: draft
 owner: engineering-and-operations
 last_reviewed: 2026-07-14
-last_verified_commit: 4a9754b61a3693145ebe5f42a0eef43e47b4c364
+last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd

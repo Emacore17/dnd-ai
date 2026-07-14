@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: 4a9754b61a3693145ebe5f42a0eef43e47b4c364
+last_verified_commit: 50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -39,6 +39,7 @@ supersedes: null
 | Branch | `codex/bl-080-staging-foundation` |
 | Base verificata | `0065c012ae359450b4cd38da41b001f9e922eeb8`; CI post-merge `29315052002` 5/5 `SUCCESS` |
 | Commit task iniziale | `4a9754b61a3693145ebe5f42a0eef43e47b4c364` |
+| Commit implementazione | `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af` |
 | Spec SHA-256 | `0b7ce963316cb601c7178340876de1b8932bc63b7c672adb1b37554d3b139f0c` |
 | Deploy contract | `staging-foundation-v1`; project ID/scope/origin/App installation `pending` |
 | Health contract | `web-health-v1` |
