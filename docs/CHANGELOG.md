@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d
+last_verified_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -125,6 +125,7 @@ supersedes: null
 - Kill switch mirato: 10/10 test unit/contract/security `PASS`, `deploy:check` `PASS` e `deploy:bootstrap:check` expected exit `1` con output statico `disabled`.
 - Full gate del freeze: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 61,9 s sul working tree e 57,2 s sul commit pulito `e5dff7bf371bd91321587fecadbd8f51264cc263`, sempre senza cache; lint/build 11/11, typecheck 12/12, unit 42 pass/1 skip host, integration 9/9, contract 18/18, security 19 pass/3 skip host, policy/secret scan e artifact 3.205 file tutti verdi.
 - PR #16: run PR `29343319207` e post-merge `29343526054` con Quality, Tests, Security, Build artifact e `CI / Merge gate` tutti `SUCCESS`; merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; readback project-scoped Vercel con zero deployment/alias.
+- Provider evidence commit `b84f4eb79000ab78b524d463582eb28013c9da2c`: `TURBO_FORCE=true corepack pnpm@10.34.5 verify` da working tree pulito exit `0` in 58,1 s senza cache; lint/build 11/11, typecheck 12/12, unit 42 pass/1 skip host, integration 9/9, contract 18/18, security 19 pass/3 skip host, policy/secret scan e artifact 3.205 file tutti verdi.
 
 ## 2026-07-13
 

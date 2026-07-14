@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-14
-last_verified_commit: aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d
+last_verified_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -49,7 +49,7 @@ supersedes: null
 
 ## Stato corrente
 
-`BL-080` è `BLOCKED/50%/PARTIAL`. [PR #13](https://github.com/Emacore17/dnd-ai/pull/13) ha integrato il contenimento, [PR #14](https://github.com/Emacore17/dnd-ai/pull/14) il guard Preview-only, [PR #15](https://github.com/Emacore17/dnd-ai/pull/15) la policy payload e [PR #16](https://github.com/Emacore17/dnd-ai/pull/16) il freeze manuale. PR #16 è entrata nel merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; CI PR `29343319207` e post-merge `29343526054` sono 5/5 verdi, senza deployment Vercel. Il progetto resta a zero deployment/alias. L'audit sorgente prova che CLI `55.0.0` conserva `preview` fino a `CreateOptions`, poi `@vercel/client 17.6.4` lo omette prima della POST. La regola Vercel sul primo deployment e l'issue aperta `vercel/vercel#17069` spiegano fortemente il target Production osservato, ma nessun maintainer ha ancora confermato fix o workaround Preview-only. Il freeze resta attivo e ADR-0005 `proposed`.
+`BL-080` è `BLOCKED/50%/PARTIAL`. [PR #13](https://github.com/Emacore17/dnd-ai/pull/13) ha integrato il contenimento, [PR #14](https://github.com/Emacore17/dnd-ai/pull/14) il guard Preview-only, [PR #15](https://github.com/Emacore17/dnd-ai/pull/15) la policy payload e [PR #16](https://github.com/Emacore17/dnd-ai/pull/16) il freeze manuale. PR #16 è entrata nel merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; CI PR `29343319207` e post-merge `29343526054` sono 5/5 verdi, senza deployment Vercel. Il progetto resta a zero deployment/alias. L'audit sorgente prova che CLI `55.0.0` conserva `preview` fino a `CreateOptions`, poi `@vercel/client 17.6.4` lo omette prima della POST. La regola Vercel sul primo deployment e l'issue aperta `vercel/vercel#17069` sostengono l'ipotesi server più forte, ma nessun maintainer ha ancora confermato causa, fix o workaround Preview-only. Il freeze resta attivo e ADR-0005 `proposed`.
 
 | Campo | Valore |
 |---|---|
@@ -65,6 +65,7 @@ supersedes: null
 | Guard Preview-only | commit `519052649c88d84c45da92c3b35131819291a73a`; PR #14; merge `ee5f12916998cce6847fcc509d8f5e1fa05b1b9f`; CI PR/post-merge 5/5; zero deployment |
 | Contratto payload CLI | commit `13032743552654f9f68d87050eb11cabbdd92325`; PR #15; merge `10602288621210a075414e0fff6c437123022ed6`; CI PR/post-merge 5/5 `SUCCESS` |
 | Freeze bootstrap manuale | commit `1cb655abee8a55b6974d90ae20b4244b12ba1192`; evidence sync `e5dff7bf371bd91321587fecadbd8f51264cc263`; PR #16; merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; CI PR `29343319207` e post-merge `29343526054` 5/5 `SUCCESS`; zero deployment Vercel |
+| Provider evidence | commit `b84f4eb79000ab78b524d463582eb28013c9da2c`; audit sorgente e allineamento documentale verificati da working tree pulito |
 | Spec SHA-256 | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Deploy contract | `staging-foundation-v1`; provider remoto ancora collegato, mentre il repository mantiene binding versionati `null`, `source.autoDeploy=false`, `source.manualDeployment.enabled=false`, `git.deploymentEnabled=false` e build guard Preview-only |
 | Health contract | `web-health-v1` |
@@ -206,6 +207,7 @@ Alle `2026-07-14T15:10:49Z` il comando di audit `gh api repos/Emacore17/dnd-ai/d
 | kill switch + deployment contract mirati | 10/10 PASS; `deploy:check` PASS; `deploy:bootstrap:check` expected exit `1` |
 | full gate freeze | `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 61,9 s sul working tree e 57,2 s sul commit pulito `e5dff7bf371bd91321587fecadbd8f51264cc263`, sempre senza cache; lint/build 11/11, typecheck 12/12, unit 42 pass/1 skip host, integration 9/9, contract 18/18, security 19 pass/3 skip host, policy/scan/artifact 3.205 file PASS |
 | PR #16 freeze | run PR `29343319207` e post-merge `29343526054` 5/5 `SUCCESS`; merge `aa9342d`; readback Vercel project-scoped zero deployment/alias |
+| full gate provider evidence | `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 58,1 s sul commit pulito `b84f4eb79000ab78b524d463582eb28013c9da2c`, senza cache; lint/build 11/11, typecheck 12/12, unit 42 pass/1 skip host, integration 9/9, contract 18/18, security 19 pass/3 skip host, policy/scan/artifact 3.205 file PASS |
 | payload + deployment contract mirati | 14/14 PASS; `deploy:check`, task graph, secret scan ed ESLint mirati PASS |
 | dry-run Vercel reale | PASS: 158 entry, 1.093.594 byte, max 263.569 byte; framework/root/input esatti; zero deployment |
 | `TURBO_FORCE=true corepack pnpm@10.34.5 verify` sulla policy payload | PASS in 69,1 s sul diff e 56,2 s sul commit pulito `13032743552654f9f68d87050eb11cabbdd92325`; zero cache Turbo; unit 39 pass/1 skip host, integration 9/9, contract 18/18, security 17 pass/3 skip host, policy/scan/artifact verdi |

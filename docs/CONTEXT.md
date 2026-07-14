@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-14
-last_verified_commit: aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d
+last_verified_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -78,7 +78,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-14 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | contenimento [PR #13](https://github.com/Emacore17/dnd-ai/pull/13), guard [PR #14](https://github.com/Emacore17/dnd-ai/pull/14), payload [PR #15](https://github.com/Emacore17/dnd-ai/pull/15) e freeze [PR #16](https://github.com/Emacore17/dnd-ai/pull/16) integrati. PR #16: commit verificato `e5dff7bf371bd91321587fecadbd8f51264cc263`, CI PR `29343319207`, merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d` e CI post-merge `29343526054`, tutti 5/5 `SUCCESS`; nessun deployment Vercel creato e readback project-scoped `dnd-ai-web` con zero deployment/alias. L'audit sorgente della CLI `55.0.0` prova l'omissione client del target Preview prima della POST; la regola server del primo deployment resta l'ipotesi più forte, senza conferma/fix del maintainer |
+| Delivery/commit | contenimento [PR #13](https://github.com/Emacore17/dnd-ai/pull/13), guard [PR #14](https://github.com/Emacore17/dnd-ai/pull/14), payload [PR #15](https://github.com/Emacore17/dnd-ai/pull/15) e freeze [PR #16](https://github.com/Emacore17/dnd-ai/pull/16) integrati. PR #16: commit verificato `e5dff7bf371bd91321587fecadbd8f51264cc263`, CI PR `29343319207`, merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d` e CI post-merge `29343526054`, tutti 5/5 `SUCCESS`; nessun deployment Vercel creato e readback project-scoped `dnd-ai-web` con zero deployment/alias. L'audit sorgente della CLI `55.0.0` prova l'omissione client del target Preview prima della POST; la regola server del primo deployment resta l'ipotesi più forte, senza conferma/fix del maintainer. Provider evidence commit `b84f4eb79000ab78b524d463582eb28013c9da2c` verificato da working tree pulito in 58,1 s |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Milestone | `M0 — Fondamenta` |
