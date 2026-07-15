@@ -109,6 +109,52 @@ test("createNodeObservability propagates W3C context and emits correlated safe l
   assert.equal(await web.shutdown(100), true);
 });
 
+test("invalid incoming correlation creates a fresh trace and safe rejection warnings", async (context) => {
+  const exporter = new InMemorySpanExporter();
+  const lines = [];
+  const invalidCarrier = "raw player@example.test prompt Bearer secret-token";
+  const runtime = createNodeObservability({
+    environment: "local",
+    logDestination: memoryDestination(lines),
+    service: "api",
+    spanExporter: exporter,
+  });
+  context.after(() => runtime.shutdown(100));
+  const operation = runtime.startOperation({
+    carrier: {
+      requestId: invalidCarrier,
+      traceparent: invalidCarrier,
+      tracestate: invalidCarrier,
+    },
+    kind: "server",
+    name: "api.request",
+  });
+
+  operation.end();
+
+  assert.match(
+    operation.context.requestId,
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u,
+  );
+  assert.notEqual(operation.context.requestId, invalidCarrier);
+
+  const span = exporter.getFinishedSpans()[0];
+  assert.ok(span);
+  assert.equal(span.parentSpanContext, undefined);
+
+  const logs = lines.map((line) => JSON.parse(line));
+  assert.deepEqual(logs.map((log) => log.event).sort(), [
+    "request_id.rejected",
+    "trace_context.rejected",
+  ]);
+  for (const log of logs) {
+    assert.equal(log.level, "warn");
+    assert.equal(log.requestId, operation.context.requestId);
+    assert.equal(log.traceId, operation.context.traceId);
+  }
+  assert.doesNotMatch(JSON.stringify(logs), new RegExp(invalidCarrier, "u"));
+});
+
 test("operation context remains isolated across concurrent async callbacks", async () => {
   const runtime = createNodeObservability({
     environment: "local",
@@ -153,6 +199,38 @@ test("operation context remains isolated across concurrent async callbacks", asy
   assert.equal(await runtime.shutdown(100), true);
 });
 
+test("direct Node setup rejects malformed Sentry DSNs instead of silently disabling reports", async () => {
+  const invalidDsns = [
+    "https://public@errors.example.test/not-a-project-id",
+    "https://public@errors.example.test/101/",
+    "https://public@bad_host/101",
+  ];
+
+  for (const sentryDsn of invalidDsns) {
+    let unexpectedRuntime;
+
+    try {
+      assert.throws(
+        () => {
+          unexpectedRuntime = createNodeObservability({
+            environment: "local",
+            sentryDsn,
+            service: "worker",
+          });
+        },
+        (error) => {
+          assert.ok(error instanceof ObservabilityConfigurationError);
+          assert.equal(error.code, "OBSERVABILITY_CONFIG_INVALID");
+          assert.equal(error.message.includes(sentryDsn), false);
+          return true;
+        },
+      );
+    } finally {
+      await unexpectedRuntime?.shutdown(100);
+    }
+  }
+});
+
 test("initialization is idempotent for equal config and rejects incompatible config safely", async () => {
   const options = {
     environment: "production",
@@ -186,6 +264,7 @@ test("initialization is idempotent for equal config and rejects incompatible con
 
 test("Sentry uses an injected transport and sends only the sanitized error envelope", async () => {
   const envelopes = [];
+  const exporter = new InMemorySpanExporter();
   const runtime = createNodeObservability({
     environment: "production",
     release: "api-2026.07.15",
@@ -198,6 +277,7 @@ test("Sentry uses an injected transport and sends only the sanitized error envel
       },
     }),
     service: "api",
+    spanExporter: exporter,
   });
   const operation = runtime.startOperation({
     kind: "server",
@@ -211,8 +291,14 @@ test("Sentry uses an injected transport and sends only the sanitized error envel
     });
   });
   operation.end({ errorCode: "TURN_PROCESSING_FAILED" });
+  operation.end({ errorCode: "MUST_NOT_DUPLICATE" });
+  assert.equal(exporter.getFinishedSpans().length, 1);
 
-  assert.equal(await runtime.shutdown(250), true);
+  const firstShutdown = runtime.shutdown(250);
+  const duplicateShutdown = runtime.shutdown(250);
+
+  assert.equal(duplicateShutdown, firstShutdown);
+  assert.equal(await firstShutdown, true);
   assert.equal(envelopes.length, 1);
 
   const sentryEvent = envelopes[0][1][0][1];

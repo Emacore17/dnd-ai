@@ -212,18 +212,18 @@ function getOwnDataValue(input: unknown, key: string): unknown {
   }
 }
 
-function isValidSentryDsn(input: unknown): input is string {
+export function isValidSentryDsn(input: unknown): input is string {
   if (typeof input !== "string" || input.length === 0 || input.length > 2_048) {
     return false;
   }
 
   try {
     const parsed = new URL(input);
-    const projectId = parsed.pathname.split("/").filter(Boolean).at(-1);
+    const projectId = parsed.pathname.split("/").at(-1);
 
     return (
       parsed.protocol === "https:" &&
-      parsed.hostname.length > 0 &&
+      isValidSentryHostname(parsed.hostname) &&
       parsed.username.length > 0 &&
       parsed.password.length === 0 &&
       parsed.search.length === 0 &&
@@ -234,6 +234,50 @@ function isValidSentryDsn(input: unknown): input is string {
   } catch {
     return false;
   }
+}
+
+function isValidSentryHostname(hostname: string): boolean {
+  if (hostname === "localhost") {
+    return true;
+  }
+
+  if (hostname.startsWith("[") && hostname.endsWith("]")) {
+    return true;
+  }
+
+  return (
+    hostname.length > 0 &&
+    hostname.length <= 253 &&
+    hostname.split(".").every(isValidHostnameLabel)
+  );
+}
+
+function isValidHostnameLabel(label: string): boolean {
+  if (
+    label.length === 0 ||
+    label.length > 63 ||
+    !isAsciiAlphaNumeric(label[0]) ||
+    !isAsciiAlphaNumeric(label.at(-1))
+  ) {
+    return false;
+  }
+
+  return [...label].every(
+    (character) => character === "-" || isAsciiAlphaNumeric(character),
+  );
+}
+
+function isAsciiAlphaNumeric(character: string | undefined): boolean {
+  if (character === undefined) {
+    return false;
+  }
+
+  const code = character.charCodeAt(0);
+  return (
+    (code >= 48 && code <= 57) ||
+    (code >= 65 && code <= 90) ||
+    (code >= 97 && code <= 122)
+  );
 }
 
 function isSafeRelease(input: unknown): input is string {

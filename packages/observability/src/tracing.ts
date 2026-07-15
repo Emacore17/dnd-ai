@@ -33,6 +33,7 @@ import {
   type SafeStructuredLogger,
 } from "./logger.js";
 import { createRequestId } from "./request-id.js";
+import { isValidSentryDsn } from "./sentry-options.js";
 import {
   createSentryErrorReporter,
   type SentryTransportFactory,
@@ -241,20 +242,25 @@ function startObservedOperation(
 
   const carrierRequestId = readCarrierValue(input.options.carrier, "requestId");
   const inheritedContext = input.contextManager.active();
-  const parentContext =
+  const extractedTrace =
     input.options.carrier === undefined
-      ? inheritedContext
+      ? { context: inheritedContext, rejected: false }
       : extractTraceContext(input.options.carrier);
+  const parentContext = extractedTrace.context;
   const inheritedRequestId = parentContext.getValue(REQUEST_ID_CONTEXT_KEY);
-  const requestIdCandidate =
-    typeof input.options.requestId === "string"
+  const rawRequestIdCandidate =
+    input.options.requestId !== undefined
       ? input.options.requestId
-      : typeof carrierRequestId === "string"
+      : carrierRequestId !== undefined
         ? carrierRequestId
-        : typeof inheritedRequestId === "string"
-          ? inheritedRequestId
-          : undefined;
+        : inheritedRequestId;
+  const requestIdCandidate =
+    typeof rawRequestIdCandidate === "string"
+      ? rawRequestIdCandidate
+      : undefined;
   const requestId = createRequestId(requestIdCandidate);
+  const requestIdRejected =
+    rawRequestIdCandidate !== undefined && rawRequestIdCandidate !== requestId;
   const parentContextWithRequestId = parentContext.setValue(
     REQUEST_ID_CONTEXT_KEY,
     requestId,
@@ -274,6 +280,16 @@ function startObservedOperation(
     input.environment,
   );
   let ended = false;
+
+  input.contextManager.with(activeContext, () => {
+    if (extractedTrace.rejected) {
+      input.logger.log("warn", { event: "trace_context.rejected" });
+    }
+
+    if (requestIdRejected) {
+      input.logger.log("warn", { event: "request_id.rejected" });
+    }
+  });
 
   return Object.freeze({
     context: operationContext,
@@ -368,23 +384,35 @@ function makeObservabilityContext(
   });
 }
 
+interface ExtractedTraceContext {
+  readonly context: Context;
+  readonly rejected: boolean;
+}
+
 function extractTraceContext(
   carrier: Partial<TraceCarrier> | undefined,
-): Context {
+): ExtractedTraceContext {
   const headers = new Map<string, string>();
   const traceparent = readCarrierValue(carrier, "traceparent");
   const tracestate = readCarrierValue(carrier, "tracestate");
+  const hasTraceMetadata =
+    traceparent !== undefined || tracestate !== undefined;
+  let rejected = false;
 
   if (typeof traceparent === "string" && traceparent.length <= 128) {
     headers.set("traceparent", traceparent);
+  } else if (traceparent !== undefined) {
+    rejected = true;
   }
 
   if (typeof tracestate === "string" && tracestate.length <= 512) {
     headers.set("tracestate", tracestate);
+  } else if (tracestate !== undefined) {
+    rejected = true;
   }
 
   try {
-    return TRACE_CONTEXT_PROPAGATOR.extract(ROOT_CONTEXT, headers, {
+    const extracted = TRACE_CONTEXT_PROPAGATOR.extract(ROOT_CONTEXT, headers, {
       get(currentHeaders, key) {
         return currentHeaders.get(key);
       },
@@ -392,8 +420,17 @@ function extractTraceContext(
         return [...currentHeaders.keys()];
       },
     });
+    const spanContext = trace.getSpanContext(extracted);
+
+    return {
+      context: extracted,
+      rejected:
+        rejected ||
+        (hasTraceMetadata &&
+          (spanContext === undefined || !isSpanContextValid(spanContext))),
+    };
   } catch {
-    return ROOT_CONTEXT;
+    return { context: ROOT_CONTEXT, rejected: hasTraceMetadata || rejected };
   }
 }
 
@@ -505,28 +542,6 @@ function isSafeRelease(input: unknown): input is string {
   }
 
   return true;
-}
-
-function isValidSentryDsn(input: unknown): input is string {
-  if (typeof input !== "string" || input.length > 2_048) {
-    return false;
-  }
-
-  try {
-    const parsed = new URL(input);
-    const projectSegments = parsed.pathname.split("/").filter(Boolean);
-    return (
-      parsed.protocol === "https:" &&
-      parsed.hostname.length > 0 &&
-      parsed.username.length > 0 &&
-      parsed.password.length === 0 &&
-      parsed.search.length === 0 &&
-      parsed.hash.length === 0 &&
-      projectSegments.length > 0
-    );
-  } catch {
-    return false;
-  }
 }
 
 function sameOptions(

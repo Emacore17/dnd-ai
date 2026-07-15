@@ -7,6 +7,7 @@ import { fileURLToPath, URL } from "node:url";
 
 import { createConfiguredApiApp, startApi } from "../../apps/api/dist/index.js";
 import { initializeWorkerRuntime } from "../../apps/worker/dist/index.js";
+import { ObservabilityConfigurationError } from "../../packages/observability/dist/node.js";
 
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const configCliPath = path.join(
@@ -141,6 +142,57 @@ test("worker validation runs before the injected initializer", async () => {
     },
   });
   assert.equal(result, "staging");
+});
+
+test("incompatible observability setup fails before API listen or worker initialization", async () => {
+  const error = new ObservabilityConfigurationError(
+    "OBSERVABILITY_ALREADY_INITIALIZED",
+    "Observability is already initialized with incompatible configuration.",
+  );
+  let apiClosed = false;
+  let apiListenCalled = false;
+  let workerInitializerCalled = false;
+  const fakeApp = {
+    close() {
+      apiClosed = true;
+      return Promise.resolve();
+    },
+    listen() {
+      apiListenCalled = true;
+      return Promise.resolve("must-not-listen");
+    },
+  };
+
+  await assert.rejects(
+    startApi({
+      createApp: () => fakeApp,
+      createObservability: () => {
+        throw error;
+      },
+      environment: apiEnvironment(3001),
+    }),
+    (failure) => failure === error,
+  );
+  assert.equal(apiListenCalled, false);
+  assert.equal(apiClosed, true);
+
+  await assert.rejects(
+    initializeWorkerRuntime({
+      createObservability: () => {
+        throw error;
+      },
+      environment: {
+        APP_ENV: "local",
+        WORKER_DATABASE_URL: "postgresql://worker@127.0.0.1:5432/dnd_ai",
+        WORKER_REDIS_URL: "redis://127.0.0.1:6379/0",
+      },
+      initialize: async () => {
+        workerInitializerCalled = true;
+      },
+    }),
+    (failure) => failure === error,
+  );
+  assert.equal(workerInitializerCalled, false);
 });
 
 test("malformed Sentry DSNs fail before API construction and worker initialization", async () => {

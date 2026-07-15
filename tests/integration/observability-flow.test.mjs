@@ -156,3 +156,95 @@ test("trace and request ID cross web, Fastify, queue metadata and worker without
     );
   }
 });
+
+test("telemetry failures do not change API responses or worker results", async (context) => {
+  const telemetryCanary = "telemetry player@example.test Bearer secret-token";
+  const failingDestination = {
+    write() {
+      throw new Error(telemetryCanary);
+    },
+  };
+  const failingExporter = {
+    export() {
+      throw new Error(telemetryCanary);
+    },
+    shutdown() {
+      return Promise.resolve();
+    },
+  };
+  const failingTransport = () => ({
+    flush: () => Promise.reject(new Error(telemetryCanary)),
+    send: () => {
+      throw new Error(telemetryCanary);
+    },
+  });
+  const api = createNodeObservability({
+    environment: "local",
+    logDestination: failingDestination,
+    sentryDsn: "https://public@errors.example.test/101",
+    sentryTransport: failingTransport,
+    service: "api",
+    spanExporter: failingExporter,
+  });
+  const worker = createNodeObservability({
+    environment: "local",
+    logDestination: failingDestination,
+    sentryDsn: "https://public@errors.example.test/101",
+    sentryTransport: failingTransport,
+    service: "worker",
+    spanExporter: failingExporter,
+  });
+  const configuredApi = createConfiguredApiApp({
+    createObservability: () => api,
+    environment: apiEnvironment,
+  });
+  const successfulProcessor = createObservedWorkerProcessor(
+    worker,
+    async (payload) => ({ accepted: payload.kind }),
+  );
+  const businessError = new Error("synthetic business failure");
+  const failingProcessor = createObservedWorkerProcessor(worker, async () => {
+    throw businessError;
+  });
+
+  context.after(async () => {
+    await configuredApi.app.close();
+    await worker.shutdown(100);
+  });
+
+  configuredApi.app.get("/telemetry-success", async () => ({ ok: true }));
+  configuredApi.app.get("/telemetry-error", async () => {
+    throw businessError;
+  });
+
+  const successResponse = await configuredApi.app.inject({
+    method: "GET",
+    url: "/telemetry-success",
+  });
+  assert.equal(successResponse.statusCode, 200);
+  assert.deepEqual(successResponse.json(), { ok: true });
+
+  const errorResponse = await configuredApi.app.inject({
+    method: "GET",
+    url: "/telemetry-error",
+  });
+  assert.equal(errorResponse.statusCode, 500);
+
+  const operation = api.startOperation({
+    kind: "producer",
+    name: "queue.enqueue",
+  });
+  const envelope = {
+    observability: operation.inject(),
+    payload: { kind: "synthetic" },
+  };
+  operation.end();
+
+  assert.deepEqual(await successfulProcessor(envelope), {
+    accepted: "synthetic",
+  });
+  await assert.rejects(failingProcessor(envelope), (error) => {
+    assert.equal(error, businessError);
+    return true;
+  });
+});

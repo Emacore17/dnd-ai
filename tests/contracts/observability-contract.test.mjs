@@ -132,6 +132,7 @@ test("Next instrumentation keeps Node telemetry out of the browser entry", async
     sentryEdge,
     serverObservability,
     sharedSentryOptions,
+    tracing,
   ] = await Promise.all([
     readSource("apps/web/instrumentation-client.ts"),
     readSource("apps/web/instrumentation.ts"),
@@ -141,6 +142,7 @@ test("Next instrumentation keeps Node telemetry out of the browser entry", async
     readSource("apps/web/sentry.edge.config.ts"),
     readSource("apps/web/lib/server-observability.ts"),
     readSource("packages/observability/src/sentry-options.ts"),
+    readSource("packages/observability/src/tracing.ts"),
   ]);
 
   assert.match(client, /await import\(["']@sentry\/nextjs["']\)/u);
@@ -166,6 +168,10 @@ test("Next instrumentation keeps Node telemetry out of the browser entry", async
   );
   assert.match(instrumentation, /import\(["']\.\/sentry\.edge\.config["']\)/u);
   assert.match(instrumentation, /getServerObservability/u);
+  assert.match(
+    instrumentation,
+    /createWebSentryOptions\(getServerSentryConfiguration\(\)\)[\s\S]{0,160}import\(["']\.\/sentry\.server\.config["']\)/u,
+  );
 
   assert.match(sharedSentryOptions, /sendDefaultPii:\s*false/u);
   assert.match(sharedSentryOptions, /tracesSampleRate:\s*0/u);
@@ -175,6 +181,7 @@ test("Next instrumentation keeps Node telemetry out of the browser entry", async
     assert.match(runtimeSource, /initializeWebSentry/u);
   }
   assert.match(sentryServer, /skipOpenTelemetrySetup:\s*true/u);
+  assert.doesNotMatch(`${client}\n${sentryEdge}`, /skipOpenTelemetrySetup/u);
 
   const forbiddenSource = [
     client,
@@ -189,7 +196,11 @@ test("Next instrumentation keeps Node telemetry out of the browser entry", async
 
   assert.doesNotMatch(
     forbiddenSource,
-    /withSentryConfig|SENTRY_AUTH_TOKEN|replayIntegration|replaysSessionSampleRate|replaysOnErrorSampleRate|sourceMap|upload.*map|consoleLoggingIntegration/iu,
+    /withSentryConfig|SENTRY_AUTH_TOKEN|replayIntegration|replaysSessionSampleRate|replaysOnErrorSampleRate|profilesSampleRate|profilingIntegration|sourceMap|upload.*map|consoleLoggingIntegration|tunnelRoute|captureRouterTransitionStart|onRouterTransitionStart/iu,
   );
   assert.doesNotMatch(nextConfig, /sentry|source.?map/iu);
+  assert.doesNotMatch(forbiddenSource, /\bsetInterval\b|\bfetch\s*\(/u);
+  assert.match(tracing, /Promise\.race/u);
+  assert.match(tracing, /clearTimeout/u);
+  assert.doesNotMatch(tracing, /\bsetInterval\b|\bsleep\b/u);
 });
