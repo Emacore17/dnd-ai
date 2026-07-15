@@ -8,5 +8,6 @@ export type {
   TraceCarrier,
 } from "./contracts.js";
 export { createNoopErrorReporter } from "./error-reporting.js";
-export { sanitizeTelemetryValue } from "./redaction.js";
+export type { SanitizedSentryEvent } from "./redaction.js";
+export { sanitizeSentryEvent, sanitizeTelemetryValue } from "./redaction.js";
 export { createRequestId } from "./request-id.js";
