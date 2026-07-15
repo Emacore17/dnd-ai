@@ -9,6 +9,7 @@ import {
   DATABASE_CONTRACT_VERSION,
   DATABASE_MIGRATION_HEAD,
   DATABASE_MIGRATION_LOCK_VALUE,
+  DATABASE_MIGRATION_MANIFEST,
   DatabaseMigrationError,
   getDatabaseMigrationStatus,
   runDatabaseMigrations,
@@ -18,7 +19,7 @@ import { withPostgresTestContainer } from "../../scripts/lib/postgres-test-conta
 const { Client } = pg;
 const unknownMigrationPath = fileURLToPath(
   new URL(
-    "../../packages/persistence/dist/migrations/000002_unknown_migration.js",
+    "../../packages/persistence/dist/migrations/000003_unknown_migration.js",
     import.meta.url,
   ),
 );
@@ -67,6 +68,13 @@ test(
   { timeout: 180_000 },
   async (context) => {
     await withPostgresTestContainer(async ({ databaseUrl, host, port }) => {
+      const expectedMigrationNames = DATABASE_MIGRATION_MANIFEST.map(
+        ({ migrationName }) => migrationName,
+      );
+      const baselineMigrationName =
+        DATABASE_MIGRATION_MANIFEST.at(0)?.migrationName;
+      assert.equal(typeof baselineMigrationName, "string");
+
       assert.equal(host, "127.0.0.1");
       assert.ok(Number.isInteger(port));
 
@@ -74,7 +82,7 @@ test(
         applied: [],
         contractVersion: null,
         current: null,
-        pending: [DATABASE_MIGRATION_HEAD],
+        pending: expectedMigrationNames,
       });
 
       await context.test(
@@ -121,7 +129,7 @@ test(
           });
 
           assert.deepEqual(result, {
-            applied: [DATABASE_MIGRATION_HEAD],
+            applied: expectedMigrationNames,
             current: DATABASE_MIGRATION_HEAD,
             direction: "up",
           });
@@ -156,7 +164,10 @@ test(
             const ledger = await client.query(
               "SELECT name FROM infra.schema_migrations ORDER BY id",
             );
-            assert.deepEqual(ledger.rows, [{ name: DATABASE_MIGRATION_HEAD }]);
+            assert.deepEqual(
+              ledger.rows,
+              expectedMigrationNames.map((name) => ({ name })),
+            );
 
             const contract = await client.query(
               `SELECT migration_id,
@@ -168,20 +179,64 @@ test(
                       superseded_at
                  FROM infra.migration_contracts`,
             );
-            assert.equal(contract.rowCount, 1);
-            assert.equal(contract.rows[0].migration_id, 1);
+            assert.equal(contract.rowCount, 2);
+            assert.equal(contract.rows[1].migration_id, 2);
             assert.equal(
-              contract.rows[0].migration_name,
+              contract.rows[1].migration_name,
               DATABASE_MIGRATION_HEAD,
             );
             assert.equal(
-              contract.rows[0].contract_version,
+              contract.rows[1].contract_version,
               DATABASE_CONTRACT_VERSION,
             );
-            assert.match(contract.rows[0].checksum, /^[a-f0-9]{64}$/u);
-            assert.equal(contract.rows[0].minimum_compatible_migration_id, 1);
-            assert.equal(contract.rows[0].applied_at instanceof Date, true);
-            assert.equal(contract.rows[0].superseded_at, null);
+            assert.match(contract.rows[1].checksum, /^[a-f0-9]{64}$/u);
+            assert.equal(contract.rows[1].minimum_compatible_migration_id, 1);
+            assert.equal(contract.rows[1].applied_at instanceof Date, true);
+            assert.equal(contract.rows[0].superseded_at instanceof Date, true);
+            assert.equal(contract.rows[1].superseded_at, null);
+          },
+        );
+
+        await context.test(
+          "installs the feature flag tables with disabled safe defaults",
+          async () => {
+            assert.equal(
+              await tableExists(client, "app", "feature_flags"),
+              true,
+            );
+            assert.equal(
+              await tableExists(client, "app", "feature_flag_events"),
+              true,
+            );
+
+            const flags = await client.query(
+              `SELECT flag_key, enabled, default_enabled, version, owner
+                 FROM app.feature_flags
+                ORDER BY flag_key`,
+            );
+            assert.deepEqual(flags.rows, [
+              {
+                default_enabled: false,
+                enabled: false,
+                flag_key: "campaign.start",
+                owner: "platform",
+                version: "0",
+              },
+              {
+                default_enabled: false,
+                enabled: false,
+                flag_key: "model.route.premium",
+                owner: "ai-platform",
+                version: "0",
+              },
+              {
+                default_enabled: false,
+                enabled: false,
+                flag_key: "turn.new",
+                owner: "platform",
+                version: "0",
+              },
+            ]);
           },
         );
 
@@ -225,8 +280,8 @@ test(
                    minimum_compatible_migration_id
                  ) VALUES ($1, $2, $3, $4, $5)`,
                 [
-                  2,
-                  "000002_future_contract",
+                  3,
+                  "000003_future_contract",
                   "future-contract-v1",
                   "a".repeat(64),
                   1,
@@ -257,7 +312,7 @@ test(
           assertFrozenStatus(
             await getDatabaseMigrationStatus({ databaseUrl }),
             {
-              applied: [DATABASE_MIGRATION_HEAD],
+              applied: expectedMigrationNames,
               contractVersion: DATABASE_CONTRACT_VERSION,
               current: DATABASE_MIGRATION_HEAD,
               pending: [],
@@ -298,7 +353,7 @@ test(
             assertFrozenStatus(
               await getDatabaseMigrationStatus({ databaseUrl }),
               {
-                applied: [DATABASE_MIGRATION_HEAD],
+                applied: expectedMigrationNames,
                 contractVersion: DATABASE_CONTRACT_VERSION,
                 current: DATABASE_MIGRATION_HEAD,
                 pending: [],
@@ -339,9 +394,14 @@ test(
         await context.test(
           "a failed product rollback preserves the contract, ledger and schema",
           async () => {
-            await client.query(
-              "CREATE TABLE app.rollback_blocker (id integer PRIMARY KEY)",
-            );
+            await client.query(`
+              CREATE TABLE app.rollback_blocker (
+                flag_key text PRIMARY KEY
+                  REFERENCES app.feature_flags (flag_key)
+              );
+              INSERT INTO app.rollback_blocker (flag_key)
+              VALUES ('campaign.start');
+            `);
 
             try {
               await assert.rejects(
@@ -370,13 +430,14 @@ test(
               const ledger = await client.query(
                 "SELECT name FROM infra.schema_migrations ORDER BY id",
               );
-              assert.deepEqual(ledger.rows, [
-                { name: DATABASE_MIGRATION_HEAD },
-              ]);
+              assert.deepEqual(
+                ledger.rows,
+                expectedMigrationNames.map((name) => ({ name })),
+              );
               assertFrozenStatus(
                 await getDatabaseMigrationStatus({ databaseUrl }),
                 {
-                  applied: [DATABASE_MIGRATION_HEAD],
+                  applied: expectedMigrationNames,
                   contractVersion: DATABASE_CONTRACT_VERSION,
                   current: DATABASE_MIGRATION_HEAD,
                   pending: [],
@@ -398,7 +459,7 @@ test(
         );
 
         await context.test(
-          "explicit local rollback removes only the reversible baseline and can re-apply",
+          "explicit local rollback removes the feature flag head and can re-apply",
           async () => {
             const rolledBack = await runDatabaseMigrations({
               allowDestructiveRollback: true,
@@ -408,11 +469,11 @@ test(
             });
             assert.deepEqual(rolledBack, {
               applied: [DATABASE_MIGRATION_HEAD],
-              current: null,
+              current: baselineMigrationName,
               direction: "down",
             });
 
-            assert.equal(await schemaExists(client, "app"), false);
+            assert.equal(await schemaExists(client, "app"), true);
             assert.equal(await schemaExists(client, "infra"), true);
             assert.equal(
               await tableExists(client, "infra", "schema_migrations"),
@@ -420,20 +481,24 @@ test(
             );
             assert.equal(
               await tableExists(client, "infra", "migration_contracts"),
+              true,
+            );
+            assert.equal(
+              await tableExists(client, "app", "feature_flags"),
               false,
             );
 
             const extension = await client.query(
               "SELECT 1 FROM pg_extension WHERE extname = 'vector'",
             );
-            assert.equal(extension.rowCount, 0);
+            assert.equal(extension.rowCount, 1);
 
             assertFrozenStatus(
               await getDatabaseMigrationStatus({ databaseUrl }),
               {
-                applied: [],
-                contractVersion: null,
-                current: null,
+                applied: [baselineMigrationName],
+                contractVersion: "database-baseline-v1",
+                current: baselineMigrationName,
                 pending: [DATABASE_MIGRATION_HEAD],
               },
             );
@@ -447,6 +512,33 @@ test(
               current: DATABASE_MIGRATION_HEAD,
               direction: "up",
             });
+
+            const rolledBackAll = await runDatabaseMigrations({
+              allowDestructiveRollback: true,
+              count: 2,
+              databaseUrl,
+              direction: "down",
+            });
+            assert.deepEqual(rolledBackAll, {
+              applied: expectedMigrationNames.toReversed(),
+              current: null,
+              direction: "down",
+            });
+
+            assert.equal(await schemaExists(client, "app"), false);
+            assert.equal(
+              await tableExists(client, "infra", "migration_contracts"),
+              false,
+            );
+            assertFrozenStatus(
+              await getDatabaseMigrationStatus({ databaseUrl }),
+              {
+                applied: [],
+                contractVersion: null,
+                current: null,
+                pending: expectedMigrationNames,
+              },
+            );
           },
         );
       } finally {

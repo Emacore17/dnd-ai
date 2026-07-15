@@ -2,17 +2,19 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-15
-last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
+last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
   - docs/MVP_SPEC.md#293-ambienti
+  - docs/MVP_SPEC.md#298-operativita
   - docs/adr/0004-runtime-configuration-and-secret-injection.md
   - docs/adr/0007-observability-context-and-error-reporting.md
 related_tasks:
   - BL-003
   - BL-004
   - BL-008
+  - BL-010
   - BL-080
 code_refs:
   - .vercelignore
@@ -31,7 +33,10 @@ code_refs:
   - apps/worker/.env.example
   - packages/persistence/.env.example
   - packages/persistence/src/migration-runner.ts
+  - packages/persistence/src/feature-flags.ts
+  - packages/persistence/src/migrations/000002_feature_flags.ts
   - scripts/run-database-migrations.mjs
+  - scripts/manage-feature-flag.mjs
   - scripts/lib/database-migration-policy.mjs
   - infra/local/postgres.compose.yml
   - infra/deployment/vercel-staging.json
@@ -63,7 +68,9 @@ test_refs:
   - tests/unit/database-migration-policy.test.mjs
   - tests/contracts/database-migration-contract.test.mjs
   - tests/database/database-migration-cli.test.mjs
+  - tests/database/feature-flags.test.mjs
   - tests/security/database-migration-security.test.mjs
+  - tests/security/feature-flags-security.test.mjs
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
   - tests/integration/observability-flow.test.mjs
@@ -106,6 +113,19 @@ Una preview non introduce il valore `preview`: usa lo schema `staging`, ma non n
 | web | `APP_ENV`, `VERCEL_ENV`, `NEXT_PUBLIC_VERCEL_ENV` | system metadata | risoluzione dell'environment telemetry; non sono config di dominio né secret |
 
 Non aggiungere chiavi AI, auth, storage o flag finché il task proprietario non introduce un consumer e i relativi test. Il web non dipende da `@dnd-ai/config`: il proprio composition root legge soltanto metadata ambientali e la DSN pubblica opzionale. Nessuna DSN è una credenziale, ma viene comunque redatta da log, errori e documenti operativi.
+
+## Feature flag e kill switch server-side
+
+`BL-010` introduce uno store PostgreSQL condiviso e auditato, non una variabile client. I flag catalogati sono `campaign.start`, `turn.new` e `model.route.premium`; il default sicuro e `enabled=false` per tutti. Un flag sconosciuto, store non raggiungibile o riga malformata fallisce chiuso.
+
+Il comando operatore usa la stessa configurazione `APP_ENV` + `MIGRATION_DATABASE_URL` del composition root migration, perche non esiste ancora un endpoint admin autenticato. Non stampa URL, password, SQL o payload arbitrari.
+
+```powershell
+corepack pnpm@11.13.0 flags:status -- turn.new
+corepack pnpm@11.13.0 flags:set -- turn.new --enable --actor operator:alice --reason maintenance --idempotency-key idem-feature-cli-0001 --correlation-id corr-feature-cli-0001 --expected-version 0
+```
+
+Il cambio e atomico: aggiorna `app.feature_flags` e inserisce `app.feature_flag_events` nella stessa transazione. Se l'audit non viene scritto, lo stato viene annullato. Una retry con la stessa idempotency key e lo stesso payload restituisce lo stesso evento; la stessa key con payload diverso fallisce come conflitto.
 
 ## Setup locale
 

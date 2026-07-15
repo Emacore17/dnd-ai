@@ -1,0 +1,29 @@
+import type { MigrationBuilder } from "node-pg-migrate";
+
+import {
+  DATABASE_FEATURE_FLAG_EVENTS_LOOKUP_INDEX_SQL,
+  DATABASE_FEATURE_FLAG_EVENTS_TABLE_SQL,
+  DATABASE_FEATURE_FLAGS_CONTRACT_INSERT_SQL,
+  DATABASE_FEATURE_FLAGS_RESTORE_BASELINE_CONTRACT_SQL,
+  DATABASE_FEATURE_FLAGS_SEED_SQL,
+  DATABASE_FEATURE_FLAGS_SUPERSEDE_BASELINE_CONTRACT_SQL,
+  DATABASE_FEATURE_FLAGS_TABLE_SQL,
+} from "../migration-manifest.js";
+
+export const shorthands = undefined;
+
+export function up(pgm: MigrationBuilder): void {
+  pgm.sql(DATABASE_FEATURE_FLAGS_TABLE_SQL);
+  pgm.sql(DATABASE_FEATURE_FLAG_EVENTS_TABLE_SQL);
+  pgm.sql(DATABASE_FEATURE_FLAG_EVENTS_LOOKUP_INDEX_SQL);
+  pgm.sql(DATABASE_FEATURE_FLAGS_SEED_SQL);
+  pgm.sql(DATABASE_FEATURE_FLAGS_SUPERSEDE_BASELINE_CONTRACT_SQL);
+  pgm.sql(DATABASE_FEATURE_FLAGS_CONTRACT_INSERT_SQL);
+}
+
+export function down(pgm: MigrationBuilder): void {
+  pgm.sql("DELETE FROM infra.migration_contracts WHERE migration_id = 2;");
+  pgm.sql("DROP TABLE app.feature_flag_events RESTRICT;");
+  pgm.sql("DROP TABLE app.feature_flags RESTRICT;");
+  pgm.sql(DATABASE_FEATURE_FLAGS_RESTORE_BASELINE_CONTRACT_SQL);
+}

@@ -7,6 +7,7 @@ import { fileURLToPath, URL } from "node:url";
 import {
   DATABASE_CONTRACT_VERSION,
   DATABASE_MIGRATION_HEAD,
+  DATABASE_MIGRATION_MANIFEST,
 } from "../../packages/persistence/dist/index.js";
 import { withPostgresTestContainer } from "../../scripts/lib/postgres-test-container.mjs";
 
@@ -47,27 +48,31 @@ test(
   { timeout: 180_000 },
   async () => {
     await withPostgresTestContainer(async ({ databaseUrl }) => {
+      const previousMigration =
+        DATABASE_MIGRATION_MANIFEST.at(-2)?.migrationName;
+      assert.equal(typeof previousMigration, "string");
+
       assertSuccessfulCommand(
         runMigrationCli(["status"], databaseUrl),
-        "Database migration status: current=empty; contract=none; applied=0; pending=1\n",
+        "Database migration status: current=empty; contract=none; applied=0; pending=2\n",
         databaseUrl,
       );
 
       assertSuccessfulCommand(
         runMigrationCli(["up"], databaseUrl),
-        `Database migration up complete: current=${DATABASE_MIGRATION_HEAD}; changed=1\n`,
+        `Database migration up complete: current=${DATABASE_MIGRATION_HEAD}; changed=2\n`,
         databaseUrl,
       );
 
       assertSuccessfulCommand(
         runMigrationCli(["status"], databaseUrl),
-        `Database migration status: current=${DATABASE_MIGRATION_HEAD}; contract=${DATABASE_CONTRACT_VERSION}; applied=1; pending=0\n`,
+        `Database migration status: current=${DATABASE_MIGRATION_HEAD}; contract=${DATABASE_CONTRACT_VERSION}; applied=2; pending=0\n`,
         databaseUrl,
       );
 
       assertSuccessfulCommand(
         runMigrationCli(["down", "--confirm-local-rollback"], databaseUrl),
-        "Database migration down complete: current=empty; changed=1\n",
+        `Database migration down complete: current=${previousMigration}; changed=1\n`,
         databaseUrl,
       );
     });

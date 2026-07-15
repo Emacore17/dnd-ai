@@ -2,13 +2,14 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-15
-last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
+last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
   - docs/product/UX_UI_DESIGN.md
   - docs/adr/0007-observability-context-and-error-reporting.md
   - docs/adr/0008-zod-first-contract-generation.md
+  - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -18,6 +19,7 @@ related_tasks:
   - BL-004
   - BL-008
   - BL-009
+  - BL-010
   - BL-040
   - BL-079
   - BL-080
@@ -59,6 +61,9 @@ code_refs:
   - scripts/lib/vercel-deploy-dry-run.mjs
   - scripts/lib/deployment-smoke.mjs
   - packages/persistence
+  - packages/persistence/src/feature-flags.ts
+  - packages/persistence/src/migrations/000002_feature_flags.ts
+  - scripts/manage-feature-flag.mjs
   - scripts/run-database-migrations.mjs
   - scripts/lib/database-migration-policy.mjs
   - scripts/lib/postgres-test-container.mjs
@@ -94,6 +99,9 @@ test_refs:
   - tests/unit/database-migration-policy.test.mjs
   - tests/contracts/database-migration-contract.test.mjs
   - tests/security/database-migration-security.test.mjs
+  - tests/unit/feature-flags.test.mjs
+  - tests/database/feature-flags.test.mjs
+  - tests/security/feature-flags-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
@@ -114,7 +122,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. La provider evidence di `BL-080` è integrata tramite PR #17/merge `c72c78b`, con CI PR `29346630165` e post-merge `29346792492` 5/5 verdi; il freeze non cambia. `BL-004` e `BL-008` sono `DONE/100%/PASSING`; BL-008 è integrato tramite PR #20/merge `ccecd683` e run post-merge `29415397361` 5/5 `SUCCESS`. `BL-009` propone `DONE/100%/PASSING` sulla branch: contratti runtime, compatibility/owned-path, review indipendente e full gate passano; checkout pulito e delivery protetta restano pendenti. `BL-079` resta `BACKLOG` fino allo staging reale.
+Il repository pubblico e versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008` e `BL-009` sono `DONE/100%/PASSING` e integrati su `main`; BL-009 e verificato tramite PR #21/merge `8e6e0d3d46daa057ba80999c58c83ad1c92471b1` e run post-merge `29420929180` 5/5 `SUCCESS`. `BL-010` propone `DONE/100%/PASSING` sulla branch `codex/bl-010-feature-flags`: migration `000002_feature_flags`, store server-side, audit, CLI, CAS e replay idempotente stabile hanno test mirati e full gate verdi; delivery protetta resta pendente finche la PR non passa su `main`. `BL-080` resta congelato e `BL-079` resta `BACKLOG` fino allo staging reale.
 
 ## Governance e baseline
 
@@ -136,8 +144,9 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; full verify locale/clean; CI `29285998646`; report BL-003 | DONE; PASS locale/clean/CI |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
 | Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner fail-closed; web con zero secret/variabili applicative; Git Integration reale senza token Vercel persistente; emissione OIDC e Trusted Source exact-match abilitate | config/security suite; environment GitHub e progetto Vercel con zero secret applicativi; token mancante/malformato fail-before-fetch | BL-003 PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
-| Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | suite DB 13/13, full gate, clean verify `b103050` e CI PR `29351291907` 5/5 PASS |
+| Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004, BL-010 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head `000002_feature_flags`, previous→head da `000001`, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | suite DB 15/15 PASS su branch BL-010; full gate locale PASS; CI pending |
 | Rollback database fail-closed e forward-only gestito | spec §§19.5, 29.5; ADR-0006 | BL-004 | policy CLI e runbook `DATABASE_MIGRATIONS.md` | DDL invalido annullato con ledger 0; `down` solo loopback disposable senza query routing e con conferma; staging/production rifiutati | PASS mirato/full/clean/CI |
+| Feature flag e kill switch server-side sono condivisi, auditati e fail-closed | spec §§22.16, 27.5, 28.6, 29.8, 31 `BL-010`; ADR-0004, ADR-0006, ADR-0007 | BL-010 | `packages/persistence/src/feature-flags.ts`, `packages/persistence/src/migrations/000002_feature_flags.ts`, `scripts/manage-feature-flag.mjs` | catalogo chiuso `campaign.start`/`turn.new`/`model.route.premium`; store unavailable/unknown/malformed disabled; cambio CLI senza deploy; audit atomico; CAS; idempotency replay/conflict; output redatto | unit feature flags 4/4, database feature flags 2/2 con replay post-toggle, security feature flags 4/4 e full gate locale PASS; PR/CI pending |
 | W3C Trace Context e request ID attraversano web→API→queue→worker senza context bleed | spec §§24.1, 24.5; ADR-0007 | BL-008 | `packages/observability`, plugin Fastify e wrapper worker | `tests/integration/observability-flow.test.mjs`: parent chain `web.request`→`api.request`→`queue.enqueue`→`worker.process`, due flussi concorrenti disgiunti; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Log JSON e metadata telemetry non espongono PII, secret, prompt o output AI | spec §§22.10, 24.2; ADR-0007 | BL-008 | sanitizer bounded, logger Pino allowlisted e reporter safe | `tests/unit/observability-core.test.mjs`, `tests/unit/observability-node.test.mjs`, `tests/security/observability-security.test.mjs`; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Sentry resta error-only, off-by-default e non altera il risultato applicativo | spec §§24.4, 24.5; ADR-0007 | BL-008 | adapter Node/Next, transport fake, failure containment idempotente e bounded | unit/integration/security: exporter, destination e transport failure; zero rete; nessun Replay/profiling/log forwarding/tunnel/source map; PR #20/run `29415397361` | PASS mirato/full/clean/CI |

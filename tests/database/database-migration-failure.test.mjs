@@ -12,6 +12,7 @@ import pg from "pg";
 import {
   DATABASE_MIGRATION_HEAD,
   DATABASE_MIGRATION_LOCK_VALUE,
+  DATABASE_MIGRATION_MANIFEST,
   DatabaseMigrationError,
   runDatabaseMigrations,
 } from "../../packages/persistence/dist/index.js";
@@ -120,7 +121,9 @@ test(
         barrierHeld = false;
 
         assert.deepEqual(await firstRun, {
-          applied: [DATABASE_MIGRATION_HEAD],
+          applied: DATABASE_MIGRATION_MANIFEST.map(
+            ({ migrationName }) => migrationName,
+          ),
           current: DATABASE_MIGRATION_HEAD,
           direction: "up",
         });

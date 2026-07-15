@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
+last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -10,6 +10,7 @@ source_refs:
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md
   - docs/superpowers/specs/2026-07-15-bl-009-contract-generation-design.md
+  - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -20,6 +21,7 @@ related_tasks:
   - BL-004
   - BL-008
   - BL-009
+  - BL-010
   - BL-079
   - BL-080
 code_refs:
@@ -43,9 +45,12 @@ code_refs:
   - packages/config
   - packages/persistence/src/migration-runner.ts
   - packages/persistence/src/migration-manifest.ts
+  - packages/persistence/src/feature-flags.ts
   - packages/persistence/src/migrations/000001_postgresql_foundation.ts
+  - packages/persistence/src/migrations/000002_feature_flags.ts
   - infra/local/postgres.compose.yml
   - scripts/run-database-migrations.mjs
+  - scripts/manage-feature-flag.mjs
   - scripts/lib/database-migration-policy.mjs
   - scripts/lib/postgres-test-container.mjs
   - apps/api/src/runtime.ts
@@ -107,7 +112,10 @@ test_refs:
   - tests/database/database-migration-cli.test.mjs
   - tests/database/database-migration-failure.test.mjs
   - tests/database/database-migrations.test.mjs
+  - tests/database/feature-flags.test.mjs
   - tests/security/database-migration-security.test.mjs
+  - tests/unit/feature-flags.test.mjs
+  - tests/security/feature-flags-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
@@ -135,18 +143,18 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-15 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-008` è integrato su `main` tramite [PR #20](https://github.com/Emacore17/dnd-ai/pull/20), merge `ccecd683c12ebfe29f4cc6be78c950ebb01ca288`; la run post-merge [`29415397361`](https://github.com/Emacore17/dnd-ai/actions/runs/29415397361) ha concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. `BL-009` è in sviluppo sulla branch dedicata. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `BL-009` e integrato su `main` tramite [PR #21](https://github.com/Emacore17/dnd-ai/pull/21), merge `8e6e0d3d46daa057ba80999c58c83ad1c92471b1`; la run post-merge `29420929180` ha concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. `BL-010` e candidato branch-local su `codex/bl-010-feature-flags`; PR/CI sono delivery derivata e non ancora integrate su `main`. `BL-080` resta bloccato/congelato e nessun deploy Production e autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
-| SHA-256 specifica | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
+| SHA-256 specifica | `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-009 — DONE/100%/PASSING` proposto sulla branch; runtime, generated drift/compatibility, review indipendente e full gate HIGH_RISK verdi, clean checkout/delivery pendenti |
-| Ultimo task completato | `BL-008 — DONE/100%/PASSING`, delivery verificata su `main` |
-| Prossimo task READY | `—`; `BL-010` è il successivo ordinato eleggibile dopo BL-009, mentre `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale |
+| Task attivo | `BL-010 — DONE/100%/PASSING` proposto sul branch `codex/bl-010-feature-flags`; store PostgreSQL, migration, CLI redatta, CAS/idempotenza e test mirati completati |
+| Ultimo task completato | `BL-009 — DONE/100%/PASSING`, delivery verificata su `main` |
+| Prossimo task READY | `—`; dipende dalla chiusura di `BL-010`. `BL-079` resta `BACKLOG` finche `BL-080` non fornisce staging reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003` e `BL-008` sono integrati e verificati su `main`. `BL-009` implementa `api-contract-v1`: schemi Zod strict, UUIDv7 canonici, version gate eventi v1, tipi inferiti, JSON Schema Draft 2020-12, OpenAPI 3.1.1 components-only, manifest, drift e compatibility check CI deterministici. I major pubblicati vengono confrontati con la base Git protetta e la catena generated rifiuta symlink/junction. I contratti non anticipano route Fastify, Campaign Bible completa o mutazioni canoniche. TDD mirato, Ajv parity, compatibilità offline, policy CI, re-check indipendente e full HIGH_RISK sono verdi; checkout pulito e delivery protetta restano i soli gate esterni. Non sono stati creati account, exporter remoti o risorse provider. `BL-079` resta `BACKLOG` fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003`, `BL-008` e `BL-009` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`: schemi Zod strict, JSON Schema Draft 2020-12 e OpenAPI 3.1.1 components-only. `BL-010` aggiunge il candidato `database-feature-flags-v1`: migration `000002_feature_flags`, catalogo kill switch server-side, store PostgreSQL con audit atomico, CAS, idempotenza, replay stabile del risultato auditato e CLI operatore redatta. I consumer API/worker reali restano fuori scope finche i task proprietari non implementano start campaign, turn enqueue e model route. Non sono stati creati account, exporter remoti, risorse provider o deploy. `BL-079` resta `BACKLOG` fino a uno staging reale.
 
 ## Decisioni operative vigenti
 
@@ -169,8 +177,8 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 
 | Elemento | Versione/head | Stato |
 |---|---|---|
-| Migration head | `000001_postgresql_foundation` | baseline infrastrutturale implementata e testata su PostgreSQL reale; contract `database-baseline-v1`, source SHA `e8543d84…45fc7`, checksum `46a2bb9c…dc449` |
-| Contract/API/event schema | `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1` | Zod strict come fonte, UUIDv7 canonici, sei JSON Schema 2020-12, OpenAPI 3.1.1 components-only e manifest; drift, Git compatibility, review e full gate PASS, clean/delivery pendenti |
+| Migration head | `000002_feature_flags` | baseline PostgreSQL piu store kill switch implementati e testati su PostgreSQL reale; contract `database-feature-flags-v1`, source SHA `6fa16b66…d5ec8`, checksum `024081e7…7d443` |
+| Contract/API/event schema | `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1` | Zod strict come fonte, UUIDv7 canonici, sei JSON Schema 2020-12, OpenAPI 3.1.1 components-only e manifest; delivery protetta su `main` verificata |
 | Rules version | `N/A` | package rules presente come scaffold; cataloghi/formule non implementati |
 | Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
 | Eval suite version | `N/A` | harness non creato |
@@ -184,14 +192,14 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
 | Agent workflow policy | `agent-workflow-v1` / task schema `1.1.0` | corsie di rischio, delivery derivata, budget e gate rapidi fail-closed verificati |
-| CI policy | `ci-policy-v1` | gate base + `deploy:check`; il candidato BL-009 aggiunge `contracts:check` read-only a Quality e al full verify, con contract test che ne impedisce la rimozione |
+| CI policy | `ci-policy-v1` | gate base + `deploy:check` + `contracts:check` read-only; `db:migrate:test` ora copre `000002_feature_flags` e store flag |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
 | Release Ruleset | `release-production-required-ci` / `18926413` | branch `release/production` creato da `ef803add249d16ded6f94936c59531047c8a92fa`; active, `CI / Merge gate` strict, `current_user_can_bypass=never`; Ruleset main invariata |
 | Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file; checkout pulito BL-003 `3.554` file e CI Ubuntu `3.233` file, secret/checksum verification PASS |
 
 ## Comandi disponibili
 
-Sono disponibili i comandi locali del perimetro `BL-001`/`BL-002`/`BL-003`/`BL-004`/`BL-008`/`BL-009`/`BL-080`:
+Sono disponibili i comandi locali del perimetro `BL-001`/`BL-002`/`BL-003`/`BL-004`/`BL-008`/`BL-009`/`BL-010`/`BL-080`:
 
 ```powershell
 corepack pnpm@11.13.0 lint
@@ -219,6 +227,8 @@ corepack pnpm@11.13.0 db:local:up
 corepack pnpm@11.13.0 db:migrate:status:local
 corepack pnpm@11.13.0 db:migrate:local
 corepack pnpm@11.13.0 db:rollback:local
+corepack pnpm@11.13.0 flags:status -- turn.new
+corepack pnpm@11.13.0 flags:set -- turn.new --enable --actor operator:alice --reason maintenance --idempotency-key idem-feature-cli-0001 --correlation-id corr-feature-cli-0001 --expected-version 0
 corepack pnpm@11.13.0 db:local:down
 corepack pnpm@11.13.0 db:migrate:test
 corepack pnpm@11.13.0 verify:docs
@@ -265,7 +275,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Completare il gate `HIGH_RISK`, la review indipendente e la delivery protetta di `BL-009`, quindi rendere eseguibile il successivo task ordinato senza riaprire il freeze Vercel. `BL-079` resta `BACKLOG` finché non esiste staging reale.
+Pubblicare `BL-010` tramite PR protetta, attendere `CI / Merge gate` e integrare senza riaprire il freeze Vercel. `BL-079` resta `BACKLOG` finche non esiste staging reale.
 
 ## Rischi chiusi
 
