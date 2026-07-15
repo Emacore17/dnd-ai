@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
+last_verified_commit: 15382d547638333e33992be96479a6f0cbff1a29
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -143,18 +143,18 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-15 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-009` e integrato su `main` tramite [PR #21](https://github.com/Emacore17/dnd-ai/pull/21), merge `8e6e0d3d46daa057ba80999c58c83ad1c92471b1`; la run post-merge `29420929180` ha concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. `BL-010` e candidato branch-local su `codex/bl-010-feature-flags`; PR/CI sono delivery derivata e non ancora integrate su `main`. `BL-080` resta bloccato/congelato e nessun deploy Production e autorizzato. |
+| Delivery/commit | `BL-010` è integrato su `main` tramite [PR #22](https://github.com/Emacore17/dnd-ai/pull/22), merge `15382d547638333e33992be96479a6f0cbff1a29`; CI PR `29426133056` e post-merge `29426357415` hanno concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-010 — DONE/100%/PASSING` proposto sul branch `codex/bl-010-feature-flags`; store PostgreSQL, migration, CLI redatta, CAS/idempotenza e test mirati completati |
-| Ultimo task completato | `BL-009 — DONE/100%/PASSING`, delivery verificata su `main` |
-| Prossimo task READY | `—`; dipende dalla chiusura di `BL-010`. `BL-079` resta `BACKLOG` finche `BL-080` non fornisce staging reale |
+| Task attivo | `GOV-002 — IN_PROGRESS/25%/PARTIAL` sul branch `codex/gov-002-document-integrity`; design approvato per anchor/section refs, registro ADR, Mermaid parse-only e gate documentale composto |
+| Ultimo task completato | `BL-010 — DONE/100%/PASSING`, delivery verificata su `main` |
+| Prossimo task READY | `—`; `GOV-002` è in corso. `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003`, `BL-008` e `BL-009` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`: schemi Zod strict, JSON Schema Draft 2020-12 e OpenAPI 3.1.1 components-only. `BL-010` aggiunge il candidato `database-feature-flags-v1`: migration `000002_feature_flags`, catalogo kill switch server-side, store PostgreSQL con audit atomico, CAS, idempotenza, replay stabile del risultato auditato e CLI operatore redatta. I consumer API/worker reali restano fuori scope finche i task proprietari non implementano start campaign, turn enqueue e model route. Non sono stati creati account, exporter remoti, risorse provider o deploy. `BL-079` resta `BACKLOG` fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003`, `BL-008`, `BL-009` e `BL-010` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`; `BL-010` fornisce `database-feature-flags-v1` con migration `000002_feature_flags`, catalogo kill switch server-side, store PostgreSQL con audit atomico, CAS, idempotenza, replay stabile e CLI redatta. `GOV-002` completa i controlli documentali residui componendo checker esistenti senza duplicarne la logica. I consumer API/worker reali restano fuori scope finché i task proprietari non implementano start campaign, turn enqueue e model route. Non sono stati creati account, exporter remoti, risorse provider o deploy. `BL-079` resta `BACKLOG` fino a uno staging reale.
 
 ## Decisioni operative vigenti
 
@@ -275,7 +275,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Pubblicare `BL-010` tramite PR protetta, attendere `CI / Merge gate` e integrare senza riaprire il freeze Vercel. `BL-079` resta `BACKLOG` finche non esiste staging reale.
+Concludere il gate di design `GOV-002`, creare il piano TDD e implementare la policy documentale modulare senza riaprire il freeze Vercel. `BL-079` resta `BACKLOG` finché non esiste staging reale.
 
 ## Rischi chiusi
 
