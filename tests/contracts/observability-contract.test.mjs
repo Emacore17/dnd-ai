@@ -4,6 +4,8 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath, URL } from "node:url";
 
+import { parse } from "yaml";
+
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 
 async function readManifest(relativePath) {
@@ -103,6 +105,12 @@ test("manifests exclude automatic instrumentation and remote telemetry add-ons",
       /auto-instrument|replay|profil|exporter.*otlp|otlp.*exporter/iu,
     );
   }
+});
+
+test("the Sentry CLI install script stays explicitly blocked", async () => {
+  const workspace = parse(await readSource("pnpm-workspace.yaml"));
+
+  assert.equal(workspace.allowBuilds?.["@sentry/cli"], false);
 });
 
 test("standalone unit and security scripts build observability before tests", async () => {

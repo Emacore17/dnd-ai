@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-15
-last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
@@ -123,18 +123,18 @@ Sostituire i placeholder dei template API e worker senza committare il risultato
 Verificare i tre profili dopo il build del parser:
 
 ```powershell
-corepack pnpm@10.34.5 config:check:api
-corepack pnpm@10.34.5 config:check:worker
-corepack pnpm@10.34.5 config:check:migration
+corepack pnpm@11.13.0 config:check:api
+corepack pnpm@11.13.0 config:check:worker
+corepack pnpm@11.13.0 config:check:migration
 ```
 
-Oppure eseguire `corepack pnpm@10.34.5 config:check`. Il comando stampa soltanto servizio e ambiente; non stampa URL o altri valori.
+Oppure eseguire `corepack pnpm@11.13.0 config:check`. Il comando stampa soltanto servizio e ambiente; non stampa URL o altri valori.
 
 Per avviare l'API locale dopo il build:
 
 ```powershell
-corepack pnpm@10.34.5 build
-corepack pnpm@10.34.5 --filter @dnd-ai/api start:local
+corepack pnpm@11.13.0 build
+corepack pnpm@11.13.0 --filter @dnd-ai/api start:local
 ```
 
 La configurazione API è validata prima della creazione dell'app Fastify e del bind; API e worker non aprono ancora database/Redis. Il composition root migration, invece, usa già `MIGRATION_DATABASE_URL` per status e DDL dopo la validazione, senza stamparla o passarla come argomento CLI.
@@ -142,12 +142,12 @@ La configurazione API è validata prima della creazione dell'app Fastify e del b
 Per il database locale e le migration:
 
 ```powershell
-corepack pnpm@10.34.5 db:local:up
-corepack pnpm@10.34.5 db:migrate:status:local
-corepack pnpm@10.34.5 db:migrate:local
-corepack pnpm@10.34.5 db:rollback:local
-corepack pnpm@10.34.5 db:local:down
-corepack pnpm@10.34.5 db:migrate:test
+corepack pnpm@11.13.0 db:local:up
+corepack pnpm@11.13.0 db:migrate:status:local
+corepack pnpm@11.13.0 db:migrate:local
+corepack pnpm@11.13.0 db:rollback:local
+corepack pnpm@11.13.0 db:local:down
+corepack pnpm@11.13.0 db:migrate:test
 ```
 
 Il percorso completo, inclusi lock, checksum, rollback e failure path, è in [`DATABASE_MIGRATIONS.md`](DATABASE_MIGRATIONS.md). In staging/production la URL migration è sempre secret-bearing, service-scoped e iniettata; il valore sintetico locale non costituisce un fallback.

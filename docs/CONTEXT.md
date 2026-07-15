@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -119,18 +119,18 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-15 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `GOV-003` è integrato su `main` nel merge `99a4f3f5441fd5a64657d2ad54fd7342e3fefef2`. `BL-008` è un candidato branch-local sul branch `codex/bl-008-observability-baseline`: implementazione e gate mirati verdi, delivery ancora `PENDING`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `GOV-003` è integrato su `main` nel merge `99a4f3f5441fd5a64657d2ad54fd7342e3fefef2`. `BL-008` è nella [PR #20](https://github.com/Emacore17/dnd-ai/pull/20): il primo run ha esposto il solo endpoint audit legacy di pnpm 10 ritirato dal registry; la correzione pnpm 11 mantiene il gate high fail-closed e ha full gate/re-review locali verdi. Clean commit e nuova CI sono pending. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-008 — DONE/100%/PASSING` branch-local; delivery `PENDING` |
+| Task attivo | `BL-008 — DONE/100%/PASSING` branch-local; clean commit e CI correttiva seguono, delivery `PENDING` |
 | Ultimo task completato | `GOV-003 — DONE/100%/PASSING` |
 | Prossimo task READY | `—`; `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003` è `DONE` e integrato. `BL-008` è una proposta branch-local `DONE/100%/PASSING`: kernel browser-safe, runtime OTel Node, logger Pino redatto, plugin Fastify, wrapper worker fake e wiring Next/Sentry error-only sono implementati. Suite mirate, review senza P0/P1 e full gate passano; checkout pulito e PR sono i gate immediati prima della delivery. Non sono stati creati account, exporter remoti o risorse provider. `BL-079` resta `BACKLOG` fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003` è `DONE` e integrato. `BL-008` è una proposta branch-local `DONE/100%/PASSING` nella PR #20: kernel browser-safe, runtime OTel Node, logger Pino redatto, plugin Fastify, wrapper worker fake e wiring Next/Sentry error-only sono implementati. Suite mirate, review, full gate e checkout pulito del candidato precedente passano. Il primo run remoto ha fallito soltanto perché pnpm 10 chiamava endpoint audit ritirati; la correzione pinna pnpm 11, migra le policy progetto nel manifest workspace, rifiuta dipendenze stale senza install impliciti e mantiene audit high e install script fail-closed. Il re-check del P1 non rileva finding residui e il full finale è verde; clean commit e nuova CI sono i soli gate immediati. Non sono stati creati account, exporter remoti o risorse provider. `BL-079` resta `BACKLOG` fino a uno staging reale.
 
 ## Decisioni operative vigenti
 
@@ -158,11 +158,11 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
 | Eval suite version | `N/A` | harness non creato |
 | Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
-| Observability contract | `observability-baseline-v1` | implementato; gate mirati, review e full gate PASS; provider remoti assenti; clean checkout/delivery pendenti |
+| Observability contract | `observability-baseline-v1` | implementato; gate mirati, review e full gate PASS; provider remoti assenti; clean commit e delivery pendenti |
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
 | Design contract | `ux-ui-2026-07-13` | documentato, non implementato |
 | ADR UI | `ADR-0001 accepted` | vigente |
-| Toolchain | Node `24.11.0` (engine `>=22.12.0`); pnpm `10.34.5`; Turbo `2.10.4`; TypeScript `6.0.3`; OTel API `1.9.1`/SDK `2.9.0`; Pino `10.3.1`; Sentry `10.65.0`; PostgreSQL `17`; pgvector `0.8.2`; node-pg-migrate `8.0.4`; pg `8.22.0`; Docker `29.2.1` | pinning e lockfile presenti; immagine DB pin a digest |
+| Toolchain | Node `24.11.0` (engine `>=22.13.0`); pnpm `11.13.0`; Turbo `2.10.4`; TypeScript `6.0.3`; OTel API `1.9.1`/SDK `2.9.0`; Pino `10.3.1`; Sentry `10.65.0`; PostgreSQL `17`; pgvector `0.8.2`; node-pg-migrate `8.0.4`; pg `8.22.0`; Docker `29.2.1` | pinning e lockfile presenti; policy pnpm nel manifest workspace; immagine DB pin a digest |
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web scaffold; API senza route ma con startup validate-before-bind |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
@@ -177,34 +177,34 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 Sono disponibili i comandi locali del perimetro `BL-001`/`BL-002`/`BL-003`/`BL-004`/`BL-008`/`BL-080`:
 
 ```powershell
-corepack pnpm@10.34.5 lint
-corepack pnpm@10.34.5 typecheck
-corepack pnpm@10.34.5 build
-corepack pnpm@10.34.5 format:check
-corepack pnpm@10.34.5 test:unit
-corepack pnpm@10.34.5 test:integration
-corepack pnpm@10.34.5 test:contract
-corepack pnpm@10.34.5 test:security
-corepack pnpm@10.34.5 boundaries:check
-corepack pnpm@10.34.5 tasks:check
-corepack pnpm@10.34.5 ci:workflow:check
-corepack pnpm@10.34.5 deploy:check
-corepack pnpm@10.34.5 deploy:check:linked
-corepack pnpm@10.34.5 deploy:smoke
-corepack pnpm@10.34.5 scan:sast
-corepack pnpm@10.34.5 scan:secrets
-corepack pnpm@10.34.5 artifact:prepare
-corepack pnpm@10.34.5 artifact:verify
-corepack pnpm@10.34.5 config:check
-corepack pnpm@10.34.5 db:local:up
-corepack pnpm@10.34.5 db:migrate:status:local
-corepack pnpm@10.34.5 db:migrate:local
-corepack pnpm@10.34.5 db:rollback:local
-corepack pnpm@10.34.5 db:local:down
-corepack pnpm@10.34.5 db:migrate:test
-corepack pnpm@10.34.5 verify:docs
-corepack pnpm@10.34.5 verify:affected
-corepack pnpm@10.34.5 verify
+corepack pnpm@11.13.0 lint
+corepack pnpm@11.13.0 typecheck
+corepack pnpm@11.13.0 build
+corepack pnpm@11.13.0 format:check
+corepack pnpm@11.13.0 test:unit
+corepack pnpm@11.13.0 test:integration
+corepack pnpm@11.13.0 test:contract
+corepack pnpm@11.13.0 test:security
+corepack pnpm@11.13.0 boundaries:check
+corepack pnpm@11.13.0 tasks:check
+corepack pnpm@11.13.0 ci:workflow:check
+corepack pnpm@11.13.0 deploy:check
+corepack pnpm@11.13.0 deploy:check:linked
+corepack pnpm@11.13.0 deploy:smoke
+corepack pnpm@11.13.0 scan:sast
+corepack pnpm@11.13.0 scan:secrets
+corepack pnpm@11.13.0 artifact:prepare
+corepack pnpm@11.13.0 artifact:verify
+corepack pnpm@11.13.0 config:check
+corepack pnpm@11.13.0 db:local:up
+corepack pnpm@11.13.0 db:migrate:status:local
+corepack pnpm@11.13.0 db:migrate:local
+corepack pnpm@11.13.0 db:rollback:local
+corepack pnpm@11.13.0 db:local:down
+corepack pnpm@11.13.0 db:migrate:test
+corepack pnpm@11.13.0 verify:docs
+corepack pnpm@11.13.0 verify:affected
+corepack pnpm@11.13.0 verify
 ```
 
 E2E, eval, bot, load e il test harness container/browser generale restano pianificati nei task proprietari, soprattutto `QA-001`; non vanno sostituiti da no-op. La suite migration è reale e fa parte di `verify`/CI; il harness condiviso futuro potrà consolidarne il lifecycle senza cambiare il contratto.

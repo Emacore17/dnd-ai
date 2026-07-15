@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -104,10 +104,11 @@ supersedes: null
 
 ### Changed
 
-- Portato `BL-008` alla proposta branch-local `DONE/100%/PASSING` in corsia `HIGH_RISK`: implementazione, gate mirati, review indipendente e full gate verdi; checkout pulito e PR seguono sul commit congelato.
+- Portato `BL-008` alla proposta branch-local `DONE/100%/PASSING` nella PR #20 in corsia `HIGH_RISK`: implementazione, gate mirati, review indipendente, full gate e checkout pulito del candidato osservabilità sono verdi; clean commit e merge gate corretto seguono senza modificare Vercel.
 - Esteso `runtime-config-v1` con DSN Sentry opzionali service-scoped per API/worker e template web pubblico; valori assenti disabilitano l'adapter, valori server malformati falliscono prima degli effetti senza leakage.
 - Bloccato il boundary root browser-safe vs `/node`; l'SDK Sentry non entra nell'entry client iniziale quando la DSN manca e gli artifact client restano privi di marker Node.
 - Confermati fuori scope account/progetti Sentry, backend OTLP, source-map upload e qualunque configurazione o deploy Vercel.
+- Corretto senza indebolire il gate l'endpoint audit ritirato emerso nella prima run PR: pin pnpm `11.13.0` coerente tra manifest e setup action, policy progetto migrate in `pnpm-workspace.yaml`, `@sentry/cli` negato esplicitamente e contract test fail-closed sul pin bulk-capable. `verifyDepsBeforeRun: error` sostituisce l'install implicito pre-script e il global virtual store è disabilitato per mantenere locale/CI coerenti. La review mirata ha chiuso un P1 imponendo il comando audit esatto e rifiutando `--ignore-registry-errors`.
 
 ### Verification
 
@@ -116,6 +117,7 @@ supersedes: null
 - `verify:docs`: 27 documenti/11 modificati, task graph e repository secret scan `PASS`.
 - Review indipendente senza P0/P1. Full `TURBO_FORCE=true pnpm verify` exit `0` in 86,2 s: lint 11, typecheck 13, build 11, unit 77/1 host skip, integration 13, database 13, contract 32, security 26/3 host skip e artifact 3.906 file.
 - Un primo full exit `1` ha rilevato soltanto Docker Desktop spento; dopo l'avvio, database 13/13 e full rerun passano sul repository invariato. Checkout pulito e CI PR seguono lo snapshot committato.
+- La prima run PR [`29413088682`](https://github.com/Emacore17/dnd-ai/actions/runs/29413088682) ha fallito nel solo job Security con HTTP `410` dagli endpoint audit legacy usati da pnpm 10; `corepack pnpm@11.13.0 audit --audit-level=high` usa il percorso bulk e termina con `No known vulnerabilities found`. Re-review del P1 senza finding residui; full finale pnpm 11 exit `0` in 85,1 s con lint/build 11, typecheck 13, unit 77/1 skip, integration 13, database 13, contract 36, security 26/3 skip e artifact 3.906 file.
 
 ## 2026-07-14
 

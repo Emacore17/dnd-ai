@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
@@ -124,8 +124,8 @@ App→app, package→app, import relativi che escono dal package e cicli workspa
 
 | Elemento | Versione pin |
 |---|---|
-| Node.js | `24.11.0` per il workspace; engine minimo supportato `22.12.0` |
-| pnpm | `10.34.5` |
+| Node.js | `24.11.0` per il workspace; engine minimo supportato `22.13.0` |
+| pnpm | `11.13.0` |
 | Turborepo | `2.10.4` |
 | TypeScript | `6.0.3` |
 | Next.js / React | `16.2.10` / `19.2.7` |
@@ -137,7 +137,7 @@ App→app, package→app, import relativi che escono dal package e cicli workspa
 
 TypeScript 7 non è stato selezionato perché `typescript-eslint@8.63.0` dichiara compatibilità `<6.1.0`. ESLint resta sulla linea `9.39.2`, compatibile con i plugin transitivi di Next 16.
 
-La supply-chain policy pnpm permette install script soltanto a `sharp` (runtime immagini di Next) e `unrs-resolver` (resolver nativo usato dal lint); ogni nuovo script transitive resta bloccato finché non viene revisionato e aggiunto esplicitamente ad [`allowBuilds`](https://pnpm.io/settings#allowbuilds).
+La supply-chain policy pnpm permette install script soltanto a `sharp` (runtime immagini di Next) e `unrs-resolver` (resolver nativo usato dal lint); `@sentry/cli` è negato esplicitamente perché BL-008 non carica source map. Ogni nuovo script transitivo resta bloccato finché non viene revisionato e aggiunto esplicitamente ad [`allowBuilds`](https://pnpm.io/settings#allowbuilds). Con pnpm 11 le policy progetto vivono nel manifest workspace, non in `.npmrc`: peer auto-install e global virtual store sono disabilitati, engine/exact pin sono obbligatori e `verifyDepsBeforeRun: error` rifiuta dipendenze incoerenti senza install impliciti.
 
 ## Configurazione runtime
 
@@ -158,24 +158,24 @@ Exporter, transport e destination sono best-effort e non modificano risultato HT
 ## Comandi disponibili in BL-001/BL-002/BL-003/BL-004/BL-008/BL-080
 
 ```bash
-corepack pnpm@10.34.5 install --frozen-lockfile
-corepack pnpm@10.34.5 lint
-corepack pnpm@10.34.5 typecheck
-corepack pnpm@10.34.5 build
-corepack pnpm@10.34.5 test:contract
-corepack pnpm@10.34.5 test:security
-corepack pnpm@10.34.5 config:check
-corepack pnpm@10.34.5 scan:sast
-corepack pnpm@10.34.5 boundaries:check
-corepack pnpm@10.34.5 tasks:check
-corepack pnpm@10.34.5 db:local:up
-corepack pnpm@10.34.5 db:migrate:status:local
-corepack pnpm@10.34.5 db:migrate:local
-corepack pnpm@10.34.5 db:rollback:local
-corepack pnpm@10.34.5 db:local:down
-corepack pnpm@10.34.5 db:migrate:test
-corepack pnpm@10.34.5 deploy:check
-corepack pnpm@10.34.5 verify
+corepack pnpm@11.13.0 install --frozen-lockfile
+corepack pnpm@11.13.0 lint
+corepack pnpm@11.13.0 typecheck
+corepack pnpm@11.13.0 build
+corepack pnpm@11.13.0 test:contract
+corepack pnpm@11.13.0 test:security
+corepack pnpm@11.13.0 config:check
+corepack pnpm@11.13.0 scan:sast
+corepack pnpm@11.13.0 boundaries:check
+corepack pnpm@11.13.0 tasks:check
+corepack pnpm@11.13.0 db:local:up
+corepack pnpm@11.13.0 db:migrate:status:local
+corepack pnpm@11.13.0 db:migrate:local
+corepack pnpm@11.13.0 db:rollback:local
+corepack pnpm@11.13.0 db:local:down
+corepack pnpm@11.13.0 db:migrate:test
+corepack pnpm@11.13.0 deploy:check
+corepack pnpm@11.13.0 verify
 ```
 
 `verify` copre format, lint, typecheck, build, unit, integration, database migration, contract, security, package/task/CI/deployment policy e artifact verification. I comandi preparano autonomamente i dist richiesti da un checkout pulito; la suite database usa PostgreSQL reale pin a digest, porta loopback effimera, `tmpfs`, polling bounded e cleanup fail-closed. Il dry-run provider non appartiene a `verify`: usa la sequenza PowerShell fail-closed documentata in [`PREVIEW_STAGING.md`](../operations/PREVIEW_STAGING.md#deploy-e-smoke--gate-chiuso). `deploy:bootstrap:check` deve fallire con exit `1` nello stato vigente. Browser/E2E, eval, bot, load e harness condiviso restano responsabilità dei task proprietari; nessun comando futuro è simulato da un no-op.

@@ -1,8 +1,8 @@
 ---
 status: accepted
 owner: engineering
-last_reviewed: 2026-07-13
-last_verified_commit: f57141341efe5df0707c77ff8ccef4f6fa15f675
+last_reviewed: 2026-07-15
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md#112-forma-del-sistema
   - docs/MVP_SPEC.md#113-moduli-applicativi
@@ -33,7 +33,7 @@ L’MVP richiede un modular monolith TypeScript con tre runtime, moduli di domin
 
 ## Decisione
 
-1. Il workspace usa `pnpm@10.34.5` e Turborepo `2.10.4`, entrambi pinning nel repository.
+1. Il workspace usa `pnpm@11.13.0` e Turborepo `2.10.4`, entrambi pinning nel repository. Le policy pnpm specifiche del progetto vivono in `pnpm-workspace.yaml`; `.npmrc` è riservato da pnpm 11 a registry e autenticazione e non è necessario in questa baseline.
 2. I runtime sono `apps/web`, `apps/api` e `apps/worker`; i moduli condivisi sono `config`, `contracts`, `domain`, `rules`, `ai`, `persistence`, `observability` e `testing`.
 3. Il package `ai` resta unico fino a quando porte e adapter reali rendono utile una separazione; nessun SDK provider può entrare in `domain` o `rules`.
 4. La policy allowlist è codice versionato. Un checker analizza manifest, import statici/dinamici, import relativi cross-package e cicli.

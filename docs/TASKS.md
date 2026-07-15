@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -536,7 +536,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Stato:** `DONE`
 - **Progresso:** `100%`
 - **Esito test:** `PASSING`
-- **Contesto verificato:** `YES` — implementation head `3d278655bf3ccec5d7dd3b142aea209cab307dca`; spec SHA `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c`; data: `2026-07-15`
+- **Contesto verificato:** `YES` — candidate head precedente `b9b707f3ee6bb812114b206cda03530c33e48edb`; spec SHA `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c`; data: `2026-07-15`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-001, BL-003
 - **Dipendenze operative aggiuntive:** BL-001, BL-003
@@ -549,8 +549,8 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Integration test web→API→worker fake con propagazione correlation/trace ID.
   - [x] Test di redazione PII/secret nei log e cattura errori Sentry senza payload sensibili.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0007-observability-context-and-error-reporting.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/CI_CD.md`
-- **Evidenze di chiusura:** implementation head `3d278655bf3ccec5d7dd3b142aea209cab307dca`; review indipendente senza P0/P1; `test:unit` exit `0` (77 pass/1 host skip), `test:integration` exit `0` (13 pass), `test:contract` exit `0` (32 pass), `test:security` exit `0` (26 pass/3 host skip), `verify:affected` exit `0` (33/33), `verify:docs` exit `0` (27 documenti/11 modificati); full `TURBO_FORCE=true pnpm verify` exit `0` in `86,2 s`, inclusi database 13/13 e artifact 3.906 file. Il primo tentativo full ha registrato exit `1` in `67,8 s` esclusivamente perché Docker Desktop era spento; dopo l'avvio, la suite DB isolata è passata 13/13 senza modifica al repository e il full rerun è verde. Trace fake `web.request → api.request → queue.enqueue → worker.process`, due flussi concorrenti disgiunti; migration head `000001_postgresql_foundation`; eval `N/A`; trace ID `N/A — fixture runtime non persistita`; delivery `PENDING` finché il commit non supera checkout pulito e PR protetta.
-- **Note, rischi o bloccanti:** proposta branch-local terminale in corsia `HIGH_RISK`; il checkout pulito è il gate immediatamente successivo sul commit congelato e riapre il task se fallisce. Sentry resta off-by-default senza provisioning; nessuna azione Vercel.
+- **Evidenze di chiusura:** candidate precedente `b9b707f3ee6bb812114b206cda03530c33e48edb`; review indipendente osservabilità senza P0/P1; suite mirate, full gate e checkout pulito verdi. [PR #20](https://github.com/Emacore17/dnd-ai/pull/20), prima run [`29413088682`](https://github.com/Emacore17/dnd-ai/actions/runs/29413088682): Quality e Tests verdi, Security fallita esclusivamente con HTTP `410` dagli endpoint audit legacy pnpm 10, Build saltato e merge gate rosso. Correzione TDD: pin pnpm `11.13.0`, policy progetto migrate nel manifest workspace, deny `@sentry/cli`, global store disabilitato e dipendenze stale rifiutate senza install impliciti; audit high senza vulnerabilità, `verify:docs` 27 documenti/15 modificati e `verify:affected` 33/33 passano. La review della correzione ha trovato un P1 sul possibile `--ignore-registry-errors`, chiuso con comando audit esatto e re-check senza P0/P1. Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in `85,1 s`: lint/build 11, typecheck 13, unit 77/1 host skip, integration 13, database 13, contract 36, security 26/3 host skip e artifact 3.906 file. Clean verify del commit e rerun PR seguono; delivery `PENDING`. Trace fake `web.request → api.request → queue.enqueue → worker.process`, due flussi concorrenti disgiunti; migration head `000001_postgresql_foundation`; eval `N/A`; trace ID `N/A — fixture runtime non persistita`.
+- **Note, rischi o bloccanti:** proposta branch-local terminale in corsia `HIGH_RISK`, senza downgrade del gate o modifica del dependency graph; il lockfile è invariato. Il clean checkout riapre il task se fallisce. Sentry resta off-by-default senza provisioning; nessuna azione Vercel.
 
 ### BL-009 — Zod, JSON Schema, OpenAPI generation
 
@@ -2572,7 +2572,7 @@ updated_at: 2026-07-15
 agent: Codex development agent
 git_branch: codex/bl-008-observability-baseline
 base_commit: 99a4f3f5441fd5a64657d2ad54fd7342e3fefef2
-candidate_head: 3d278655bf3ccec5d7dd3b142aea209cab307dca
+candidate_head: b9b707f3ee6bb812114b206cda03530c33e48edb
 spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
 context_verified: true
 test_status: PASSING
@@ -2602,6 +2602,9 @@ test_status: PASSING
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-15 14:21 +02:00 | 100% | Re-check del P1 senza finding residui e candidato corretto branch-local terminale; audit resta high/fail-closed, lockfile e dependency graph invariati. | Full `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 85,1 s: lint/build 11, typecheck 13, unit 77/1 skip, integration 13, DB 13, contract 36, security 26/3 skip, artifact 3.906. | Committare, verificare install frozen + full gate da clean worktree, push e attendere una sola nuova CI PR. |
+| 2026-07-15 14:18 +02:00 | 90% | La review del solo P1 ha provato che una ricerca per sottostringa accettava `--ignore-registry-errors`. Il validator ora richiede un unico step con comando audit esatto, senza flag o shell suffix aggiuntivi. | Regressione inizialmente rossa, poi `tests/contracts/ci-workflow.test.mjs` 5/5 e `ci-workflow-policy` PASS. | Re-check del solo finding, full gate finale, commit e clean checkout. |
+| 2026-07-15 14:05 +02:00 | 90% | La prima CI della PR #20 ha isolato un'incompatibilità dell'audit, non una vulnerabilità: pnpm 10 usa endpoint legacy ora `410`. Pin aggiornato a pnpm 11 bulk-capable senza ignore; policy progetto migrate in YAML, script `@sentry/cli` negato e install impliciti pre-script sostituiti da errore fail-closed. Lockfile invariato. | Run `29413088682`: Quality/Tests verdi, solo Security rosso; TDD rosso→verde su pin e workspace config, 11/11 contract PASS; audit high pulito; `verify:docs` PASS; `verify:affected` 33/33 PASS. | Eseguire full/clean gate con pnpm 11, re-review del solo P1, push e attendere la nuova CI. |
 | 2026-07-15 13:44 +02:00 | 100% | Review indipendente senza P0/P1 e candidato branch-local terminale. Il primo full ha esposto soltanto Docker Desktop spento; nessun file è cambiato, la suite DB isolata è tornata verde e il rerun completo ha chiuso il gate. | Primo full exit `1` in 67,8 s su start container; DB isolato 13/13 exit `0`; full `TURBO_FORCE=true pnpm verify` exit `0` in 86,2 s: lint 11, typecheck 13, build 11, unit 77/1 skip, integration 13, DB 13, contract 32, security 26/3 skip, artifact 3.906. | Congelare il commit, eseguire install frozen + full verify da worktree pulito, poi una sola PR protetta. |
 | 2026-07-15 13:25 +02:00 | 90% | Implementata la baseline completa e chiusi i failure path di privacy, concorrenza, startup e bundle. Il target HIGH_RISK di 120 minuti è stato superato perché la stessa slice ha richiesto hardening condiviso del sanitizer/DSN e wiring verificato su tre runtime; nessuna espansione a provider o deploy. | Head `3d278655`; unit 77/1 skip, integration 13, contract 32, security 26/3 skip e `verify:affected` 33/33, tutti exit `0`; `verify:docs` 27 documenti/11 modificati; artifact client senza marker Node/Sentry server. | Eseguire una review indipendente, l'unico full gate e il checkout pulito. |
 | 2026-07-15 10:10 +02:00 | 25% | Selezionato `BL-008` da `main` pulita; approvato kernel condiviso con OTel unica autorità trace, Pino redatto e Sentry error-only off-by-default. | Base `99a4f3f5441fd5a64657d2ad54fd7342e3fefef2`; spec SHA invariato; `verify:docs` PASS su 25 documenti/5 modificati; test implementativi `NOT_RUN`. | Review del design versionato, poi piano TDD dettagliato prima del codice. |
@@ -2708,6 +2711,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-15 | `99a4f3f` + design branch | BL-008 design | Osservabilità e privacy boundary | Approvato e versionato `observability-baseline-v1`: OTel unica autorità trace, Pino redatto, Sentry error-only off-by-default, test senza rete e nessuna azione Vercel; implementazione subordinata a review della spec scritta e piano TDD. | BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
 | 2026-07-15 | `3d27865` | BL-008 implementation | Runtime osservabilità e privacy boundary | Implementati kernel browser-safe, runtime OTel Node, Pino redatto, Sentry error-only lazy, plugin API e wrapper worker; gate mirati verdi e ADR-0007 accepted. Stato branch-local `IN_REVIEW/90%/PASSING`; full/clean/PR pendenti. | BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
 | 2026-07-15 | `3d27865` + candidate docs | BL-008 candidate | Full gate e stato branch-local | Review senza P0/P1; full gate verde dopo l'avvio del daemon Docker richiesto, senza modifiche al repository. Proposta `DONE/100%/PASSING`; clean checkout e delivery protetta restano gate esterni immediati. | BL-009, BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
+| 2026-07-15 | `b9b707f` + CI correction | BL-008 PR correction | Audit bulk e pnpm 11 | PR #20/run `29413088682` ha isolato HTTP `410` nel solo audit pnpm 10. Upgrade coerente a pnpm 11, policy progetto migrate in YAML e deny esplicito Sentry CLI; lockfile invariato, audit high e contratti mirati verdi. | BL-009, BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
 
 
 ## 22. Checklist di fine sessione dell’agente

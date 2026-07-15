@@ -1,13 +1,14 @@
 ---
 status: accepted
 owner: engineering-and-security
-last_reviewed: 2026-07-13
-last_verified_commit: f1be878b291a535ea6c8e0d995ee5e3c80ef164c
+last_reviewed: 2026-07-15
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#294-cicd
 related_tasks:
   - BL-002
+  - BL-008
 code_refs:
   - .github/workflows/ci.yml
   - .github/actions/setup-workspace/action.yml
@@ -40,7 +41,7 @@ La CI esegue codice proveniente da pull request e dipendenze esterne. Deve blocc
 4. Quality, tests, security e build sono job separati. `CI / Merge gate` usa `always()` e fallisce se una dipendenza è failed, cancelled, skipped o missing. La Ruleset di `main` richiede soltanto questo nome stabile.
 5. La cache contiene esclusivamente lo store pnpm lockfile-scoped. Non vengono memorizzati `.turbo`, `.next`, `node_modules`, env, log, report o artifact.
 6. Il build precede l’artifact. Lo staging copia una allowlist di Next standalone/static e `dist`, rifiuta path sensibili e symlink esterni, scansiona credenziali e genera un manifest SHA-256. I junction pnpm di Next sono dereferenziati soltanto verso la copia traced interna.
-7. SAST locale con `eslint-plugin-security@4.0.1`, secret scan versionato e `pnpm audit` compongono il gate security. Ogni warning SAST, finding high/critical o scan fallito blocca; i finding inferiori dell'audit sono comunque esaminati e mitigati o tracciati.
+7. SAST locale con `eslint-plugin-security@4.0.1`, secret scan versionato e `pnpm audit --audit-level=high` compongono il gate security. Il client pnpm è pin bulk-capable e coerente tra manifest e setup action; errori registry non vengono ignorati. Ogni warning SAST, finding high/critical o scan fallito blocca; i finding inferiori dell'audit sono comunque esaminati e mitigati o tracciati.
 8. Nessun deploy è incluso in questa baseline. Quando arriverà il deploy cloud userà OIDC e environment protection, non chiavi cloud long-lived.
 
 ## Alternative considerate

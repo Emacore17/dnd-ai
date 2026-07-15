@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-15
-last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md
   - docs/adr/0007-observability-context-and-error-reporting.md
@@ -34,13 +34,13 @@ supersedes: null
 
 **Architettura:** `@dnd-ai/observability` espone un kernel platform-neutral e un subpath `/node`. Il kernel Node usa provider OTel espliciti e `AsyncLocalStorage`; API e worker possiedono il wiring dei rispettivi runtime, mentre Next inizializza OTel server-side e Sentry client/server senza performance tracing. Config e telemetry failure falliscono in modo sicuro senza alterare il percorso applicativo.
 
-**Stack:** TypeScript strict, Node 24, OpenTelemetry API/SDK minimi, Pino, Sentry Node/Next, Fastify 5, Next 16 App Router, `node:test`, pnpm 10/Turborepo.
+**Stack:** TypeScript strict, Node 24, OpenTelemetry API/SDK minimi, Pino, Sentry Node/Next, Fastify 5, Next 16 App Router, `node:test`, pnpm 11/Turborepo.
 
 **Corsia:** `HIGH_RISK`; un solo full gate sul candidato, seguito da checkout pulito, una review indipendente e una sola PR. Nessuna azione Vercel, creazione account Sentry, exporter OTLP o chiamata provider reale.
 
 ## Stato di esecuzione
 
-I Task 1–8 e i gate locali pre-commit del Task 9 sono completati: unit `77 PASS/1 host skip`, integration `13 PASS`, database `13 PASS`, contract `32 PASS`, security `26 PASS/3 host skip`, `verify:affected` `33/33`, `verify:docs` su 27 documenti, review senza P0/P1 e full `verify` verde in `86,2 s`. Restano checkout pulito e delivery protetta sul commit candidato.
+I Task 1–8 e i gate locali del Task 9 sono completati: unit `77 PASS/1 host skip`, integration `13 PASS`, database `13 PASS`, contract `36 PASS`, security `26 PASS/3 host skip`, `verify:affected` `33/33`, `verify:docs` su 27 documenti, review senza P0/P1, full `verify` verde e checkout pulito del candidato osservabilità. La PR #20 è aperta; la correzione audit pnpm 11 ha superato audit high, re-review e full gate finale in `85,1 s`. Restano clean verify del commit e nuovo merge gate remoto.
 
 Il wiring Next carica Sentry client/server/edge soltanto dopo una DSN valida. Questa ottimizzazione mantiene l'SDK fuori dall'entry client iniziale quando disabilitato e accetta una breve finestra asincrona per gli errori di hydration più precoci.
 
@@ -99,14 +99,14 @@ Usare le versioni exact-pinned verificate nel registry e compatibili fra loro:
 Il root export deve restare browser-safe; `./node` punta a `dist/node.js`. Aggiornare i filtri di build di `test:unit` e `test:security`, poi rigenerare installazione e lockfile:
 
 ```powershell
-corepack pnpm@10.34.5 install --no-frozen-lockfile
+corepack pnpm@11.13.0 install --no-frozen-lockfile
 ```
 
 ### Passo 3: verificare il contratto e le boundary
 
 ```powershell
 node --test tests/contracts/observability-contract.test.mjs
-corepack pnpm@10.34.5 boundaries:check
+corepack pnpm@11.13.0 boundaries:check
 ```
 
 Atteso: entrambi `PASS`; nessun package di dominio/config acquisisce una dipendenza infrastrutturale.
@@ -137,7 +137,7 @@ Aggiungere casi che provano:
 Eseguire:
 
 ```powershell
-corepack pnpm@10.34.5 --filter @dnd-ai/config build
+corepack pnpm@11.13.0 --filter @dnd-ai/config build
 node --test tests/unit/runtime-config.test.mjs tests/contracts/runtime-config-contract.test.mjs
 ```
 
@@ -150,7 +150,7 @@ Estendere `ApiRuntimeConfig`/`WorkerRuntimeConfig` con `sentryDsn?`, usando `exa
 ### Passo 3: verificare config e startup failure path
 
 ```powershell
-corepack pnpm@10.34.5 --filter @dnd-ai/config build
+corepack pnpm@11.13.0 --filter @dnd-ai/config build
 node --test tests/unit/runtime-config.test.mjs tests/contracts/runtime-config-contract.test.mjs tests/integration/runtime-startup.test.mjs
 ```
 
@@ -185,7 +185,7 @@ I test coprono UUID v4 lowercase canonico, rigenerazione di valori assenti/non c
 Eseguire:
 
 ```powershell
-corepack pnpm@10.34.5 --filter @dnd-ai/observability build
+corepack pnpm@11.13.0 --filter @dnd-ai/observability build
 node --test tests/unit/observability-core.test.mjs tests/security/observability-security.test.mjs
 ```
 
@@ -198,7 +198,7 @@ Il sanitizer deve produrre un nuovo valore, non mutare l'input e non attraversar
 ### Passo 3: verificare kernel e leakage
 
 ```powershell
-corepack pnpm@10.34.5 --filter @dnd-ai/observability build
+corepack pnpm@11.13.0 --filter @dnd-ai/observability build
 node --test tests/unit/observability-core.test.mjs tests/security/observability-security.test.mjs
 ```
 
@@ -228,7 +228,7 @@ Definire `createNodeObservability` e `ObservedOperation` con:
 Usare `InMemorySpanExporter` e una destination Pino in-memory. Eseguire:
 
 ```powershell
-corepack pnpm@10.34.5 --filter @dnd-ai/observability build
+corepack pnpm@11.13.0 --filter @dnd-ai/observability build
 node --test tests/unit/observability-node.test.mjs
 ```
 
@@ -243,7 +243,7 @@ Il logger Pino deve omettere `pid`, `hostname` e oggetti raw; il messaggio coinc
 ### Passo 3: verificare tracing, logging e shutdown
 
 ```powershell
-corepack pnpm@10.34.5 --filter @dnd-ai/observability build
+corepack pnpm@11.13.0 --filter @dnd-ai/observability build
 node --test tests/unit/observability-node.test.mjs tests/security/observability-security.test.mjs
 ```
 
@@ -277,7 +277,7 @@ Il test deve costruire tre runtime in-memory (`web`, `api`, `worker`) e verifica
 Eseguire:
 
 ```powershell
-corepack pnpm@10.34.5 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/worker --filter=@dnd-ai/observability
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/worker --filter=@dnd-ai/observability
 node --test tests/integration/observability-flow.test.mjs
 ```
 
@@ -292,7 +292,7 @@ I composition root accettano factory iniettabili per i test, inizializzano telem
 ### Passo 3: verificare E2E, startup e concorrenza
 
 ```powershell
-corepack pnpm@10.34.5 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/worker --filter=@dnd-ai/observability
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/worker --filter=@dnd-ai/observability
 node --test tests/integration/observability-flow.test.mjs tests/integration/runtime-startup.test.mjs
 ```
 
@@ -338,8 +338,8 @@ Inizializzare il tracer server web una volta nel runtime Node; edge e browser us
 ### Passo 3: verificare build e bundle
 
 ```powershell
-corepack pnpm@10.34.5 --filter @dnd-ai/web typecheck
-corepack pnpm@10.34.5 --filter @dnd-ai/web build
+corepack pnpm@11.13.0 --filter @dnd-ai/web typecheck
+corepack pnpm@11.13.0 --filter @dnd-ai/web build
 node --test tests/contracts/observability-contract.test.mjs tests/security/observability-security.test.mjs
 ```
 
@@ -373,11 +373,11 @@ Non introdurre retry automatici. Correggere il confine che lascia propagare l'er
 ### Passo 3: eseguire il gate mirato del batch
 
 ```powershell
-corepack pnpm@10.34.5 test:unit
-corepack pnpm@10.34.5 test:integration
-corepack pnpm@10.34.5 test:contract
-corepack pnpm@10.34.5 test:security
-corepack pnpm@10.34.5 verify:affected
+corepack pnpm@11.13.0 test:unit
+corepack pnpm@11.13.0 test:integration
+corepack pnpm@11.13.0 test:contract
+corepack pnpm@11.13.0 test:security
+corepack pnpm@11.13.0 verify:affected
 ```
 
 Atteso: tutti `PASS`; non eseguire ancora il full gate.
@@ -407,7 +407,7 @@ Rimuovere i claim correnti `BL-008 READY/in review` dai soli documenti living; c
 ### Passo 2: verificare document policy e task graph
 
 ```powershell
-corepack pnpm@10.34.5 verify:docs
+corepack pnpm@11.13.0 verify:docs
 ```
 
 Atteso: `PASS` con front matter datato 2026-07-15, link/path validi e nessun secret.
@@ -424,7 +424,7 @@ Usare `superpowers:requesting-code-review`. Correggere finding P0/P1; i P2 non b
 
 ```powershell
 $env:TURBO_FORCE = "true"
-corepack pnpm@10.34.5 verify
+corepack pnpm@11.13.0 verify
 ```
 
 Atteso: exit `0` per format, lint, typecheck, build, unit, integration, database, contract, security, boundary, docs, CI/deploy policy, secret scan e artifact.
@@ -434,9 +434,9 @@ Atteso: exit `0` per format, lint, typecheck, build, unit, integration, database
 Registrare in `TASKS`/`CONTEXT` il full gate appena osservato, portare `BL-008` alla proposta branch-local `DONE/100%/PASSING`, rieseguire `verify:docs` e creare il commit candidato funzionale. Poi usare `superpowers:using-git-worktrees` per un worktree detached temporaneo del commit:
 
 ```powershell
-corepack pnpm@10.34.5 install --frozen-lockfile
+corepack pnpm@11.13.0 install --frozen-lockfile
 $env:TURBO_FORCE = "true"
-corepack pnpm@10.34.5 verify
+corepack pnpm@11.13.0 verify
 ```
 
 Atteso: exit `0`; nessun file generato o diff nel checkout pulito. Se il checkout pulito fallisce, correggere il candidato e ripetere soltanto questo gate; non dichiarare `DONE`. Rimuovere il worktree con il workflow sicuro dopo la verifica.

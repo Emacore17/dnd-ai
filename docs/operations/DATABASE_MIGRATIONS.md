@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering-and-data
-last_reviewed: 2026-07-14
-last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+last_reviewed: 2026-07-15
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilita
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -76,7 +76,7 @@ La URL del template usa esclusivamente credenziali sintetiche note e il database
 ### 1. Avvio del database
 
 ```powershell
-corepack pnpm@10.34.5 db:local:up
+corepack pnpm@11.13.0 db:local:up
 ```
 
 Il comando usa l'immagine pin a digest, attende con polling bounded il readiness del database e fallisce se il container non raggiunge lo stato healthy. Non deve selezionare un'immagine alternativa o un tag mobile.
@@ -84,7 +84,7 @@ Il comando usa l'immagine pin a digest, attende con polling bounded il readiness
 ### 2. Controllo della configurazione
 
 ```powershell
-corepack pnpm@10.34.5 config:check:migration
+corepack pnpm@11.13.0 config:check:migration
 ```
 
 L'output ammesso contiene soltanto servizio e ambiente. URL, username, password e dettagli del driver non devono essere stampati.
@@ -94,10 +94,10 @@ L'output ammesso contiene soltanto servizio e ambiente. URL, username, password 
 Per il percorso locale, che carica `packages/persistence/.env.local`:
 
 ```powershell
-corepack pnpm@10.34.5 db:migrate:status:local
+corepack pnpm@11.13.0 db:migrate:status:local
 ```
 
-In CI o in un ambiente gestito, dopo l'iniezione delle variabili nel processo, usare invece `corepack pnpm@10.34.5 db:migrate:status` senza file ambientali.
+In CI o in un ambiente gestito, dopo l'iniezione delle variabili nel processo, usare invece `corepack pnpm@11.13.0 db:migrate:status` senza file ambientali.
 
 Su un database vuoto lo stato atteso indica head non applicato e contract non inizializzato. Un errore di ordine, checksum o compatibilità interrompe il comando con exit non-zero.
 
@@ -106,10 +106,10 @@ Su un database vuoto lo stato atteso indica head non applicato e contract non in
 Per il percorso locale:
 
 ```powershell
-corepack pnpm@10.34.5 db:migrate:local
+corepack pnpm@11.13.0 db:migrate:local
 ```
 
-In CI o in un ambiente gestito, dopo l'iniezione delle variabili nel processo, usare `corepack pnpm@10.34.5 db:migrate`.
+In CI o in un ambiente gestito, dopo l'iniezione delle variabili nel processo, usare `corepack pnpm@11.13.0 db:migrate`.
 
 Il composition root e il runner:
 
@@ -125,7 +125,7 @@ Ripetere lo stesso comando su un database già all'head deve produrre un no-op e
 ### 5. Verifica dello stato finale
 
 ```powershell
-corepack pnpm@10.34.5 db:migrate:status:local
+corepack pnpm@11.13.0 db:migrate:status:local
 ```
 
 Lo stato valido riporta `000001_postgresql_foundation`, `database-baseline-v1` e nessuna migration pendente. Il report può contenere nomi e checksum delle migration, mai la URL di connessione.
@@ -133,7 +133,7 @@ Lo stato valido riporta `000001_postgresql_foundation`, `database-baseline-v1` e
 ### 6. Chiusura del database locale
 
 ```powershell
-corepack pnpm@10.34.5 db:local:down
+corepack pnpm@11.13.0 db:local:down
 ```
 
 Il comando rimuove soltanto le risorse Compose del progetto locale identificato. Non deve accettare target remoti o cancellare directory del workspace.
@@ -143,7 +143,7 @@ Il comando rimuove soltanto le risorse Compose del progetto locale identificato.
 Le down migration non sono un meccanismo di rollback per ambienti gestiti. Sono disponibili unicamente per provare il failure path su un database locale e disposable:
 
 ```powershell
-corepack pnpm@10.34.5 db:rollback:local
+corepack pnpm@11.13.0 db:rollback:local
 ```
 
 Lo script dedicato trasmette internamente al composition root la conferma `--confirm-local-rollback`; invocare il comando distinto è quindi una conferma operativa esplicita, non un default del runner generale.
@@ -161,7 +161,7 @@ Dopo il rollback locale, rieseguire `db:migrate:local` e verificare che checksum
 ## Test riproducibile
 
 ```powershell
-corepack pnpm@10.34.5 db:migrate:test
+corepack pnpm@11.13.0 db:migrate:test
 ```
 
 Il comando possiede il lifecycle di un database isolato e deve verificare almeno:

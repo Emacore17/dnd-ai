@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-15
-last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -135,6 +135,8 @@ Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Pr
 
 L'artifact può includere `packages/observability/dist` come output compilato allowlisted, ma non file ambientali, telemetry output o log. Il check sul bundle Next rifiuta marker Node/Sentry server negli artifact client; Replay, profiling, tunnel, source map upload e auto-instrumentation restano vietati.
 
+La prima run della PR #20 ha fallito nel solo job Security perché pnpm 10 chiamava gli endpoint audit legacy rimossi dal registry con HTTP `410`; non era un finding di vulnerabilità. La correzione pinna pnpm `11.13.0`, che usa l'endpoint bulk, conserva il comando esatto `pnpm audit --audit-level=high` senza ignore e impone lo stesso pin in manifest e setup action tramite contract test. Il validator rifiuta flag aggiuntivi, inclusa la variante `--ignore-registry-errors`, che trasformerebbe un errore registry in successo. Le policy progetto sono migrate in `pnpm-workspace.yaml`; `@sentry/cli` resta esplicitamente negato in `allowBuilds`, global virtual store e peer auto-install sono disabilitati e `verifyDepsBeforeRun: error` impedisce install impliciti prima degli script. L'upgrade non abilita source-map upload o nuovi install script.
+
 ## Cache e artifact
 
 La setup action installa Node/pnpm pin e usa soltanto `setup-node` con cache `pnpm` e `pnpm-lock.yaml`. Non aggiungere env, home, workspace, `.turbo`, `.next`, `node_modules` o report al path cache.
@@ -144,13 +146,13 @@ L’artifact caricato è soltanto `artifacts/bl002`, directory ignorata da Git e
 Comandi locali:
 
 ```powershell
-corepack pnpm@10.34.5 verify
-corepack pnpm@10.34.5 db:migrate:test
-corepack pnpm@10.34.5 scan:sast
-corepack pnpm@10.34.5 audit --audit-level=high
-corepack pnpm@10.34.5 artifact:prepare
-corepack pnpm@10.34.5 artifact:verify
-corepack pnpm@10.34.5 deploy:check
+corepack pnpm@11.13.0 verify
+corepack pnpm@11.13.0 db:migrate:test
+corepack pnpm@11.13.0 scan:sast
+corepack pnpm@11.13.0 audit --audit-level=high
+corepack pnpm@11.13.0 artifact:prepare
+corepack pnpm@11.13.0 artifact:verify
+corepack pnpm@11.13.0 deploy:check
 $dryRun = corepack pnpm dlx vercel@55.0.0 deploy . --project dnd-ai-web --scope emacore17s-projects --target=preview --dry --format=json --yes
 if ($LASTEXITCODE -ne 0) { throw "preview-dry-run: Vercel command failed" }
 $dryRun | node scripts/check-vercel-deploy-dry-run.mjs
