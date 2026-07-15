@@ -10,6 +10,29 @@ const REQUIRED_JOBS = Object.freeze([
   "ci-required",
 ]);
 const REQUIRED_PNPM_VERSION = "11.13.0";
+const FORBIDDEN_QUALITY_COMMANDS = Object.freeze([
+  {
+    label: "pnpm contracts:check",
+    script: "contracts:check",
+  },
+  {
+    label: "pnpm tasks:check",
+    script: "tasks:check",
+  },
+]);
+const SHELL_TOKEN_SEPARATORS = new Set([
+  " ",
+  "\t",
+  "\r",
+  "\n",
+  "\v",
+  "\f",
+  ";",
+  "&",
+  "|",
+  "(",
+  ")",
+]);
 
 function hasKey(value, key) {
   return value && Object.prototype.hasOwnProperty.call(value, key);
@@ -43,6 +66,46 @@ function runText(job) {
   return asArray(job?.steps)
     .map((step) => step.run ?? "")
     .join("\n");
+}
+
+function shellWords(source) {
+  const words = [];
+  let current = "";
+
+  for (const character of source) {
+    if (character === '"' || character === "'") {
+      continue;
+    }
+
+    if (SHELL_TOKEN_SEPARATORS.has(character)) {
+      if (current) {
+        words.push(current);
+        current = "";
+      }
+      continue;
+    }
+
+    current += character;
+  }
+
+  if (current) {
+    words.push(current);
+  }
+
+  return words;
+}
+
+function hasPnpmScriptInvocation(source, script) {
+  const words = shellWords(source);
+
+  return words.some((word, index) => {
+    if (word !== "pnpm") {
+      return false;
+    }
+
+    const scriptIndex = words[index + 1] === "run" ? index + 2 : index + 1;
+    return words[scriptIndex] === script;
+  });
 }
 
 function requireCommands(errors, jobName, job, commands) {
@@ -235,6 +298,17 @@ function validateJobs(errors, workflow) {
     errors.push(
       "quality documentation check must use CONTRACT_BASE_REF=HEAD^1",
     );
+  }
+  for (const command of FORBIDDEN_QUALITY_COMMANDS) {
+    if (
+      asArray(jobs.quality?.steps).some((step) =>
+        hasPnpmScriptInvocation(String(step.run ?? ""), command.script),
+      )
+    ) {
+      errors.push(
+        `quality must not duplicate legacy command: ${command.label}`,
+      );
+    }
   }
   requireCommands(errors, "tests", jobs.tests, [
     "pnpm test:unit",

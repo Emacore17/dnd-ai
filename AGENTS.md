@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-14
-last_verified_commit: 6e87034824abeafa76c1da19cba5db81111195f2
+last_reviewed: 2026-07-15
+last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -23,6 +23,10 @@ code_refs:
   - package.json
   - scripts/check-docs.mjs
   - scripts/lib/document-policy.mjs
+  - scripts/lib/document-integrity-policy.mjs
+  - scripts/lib/markdown-document.mjs
+  - scripts/lib/mermaid-policy.mjs
+  - scripts/validate-mermaid-worker.mjs
   - scripts/verify-affected.mjs
   - scripts/lib/affected-verification.mjs
 test_refs:
@@ -31,6 +35,7 @@ test_refs:
   - tests/contracts/runtime-config-contract.test.mjs
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
+  - tests/contracts/document-integrity.test.mjs
   - tests/unit/affected-verification.test.mjs
 supersedes: null
 ---
@@ -46,7 +51,7 @@ supersedes: null
 - **Contesto operativo corrente:** [`docs/CONTEXT.md`](docs/CONTEXT.md).
 - **Indice della documentazione:** [`docs/README.md`](docs/README.md).
 - **Studio e contratto UX/UI:** [`docs/product/UX_UI_DESIGN.md`](docs/product/UX_UI_DESIGN.md).
-- **Decisioni architetturali:** [`docs/adr/`](docs/adr/) — il registro automatico completo è pianificato in `GOV-002`.
+- **Decisioni architetturali:** [`docs/adr/README.md`](docs/adr/README.md) — registro completo validato automaticamente.
 - **Tracciabilità requisito → task → test → evidenza:** [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md).
 
 `AGENTS.md` definisce **come lavorare**. Non deve duplicare lo stato volatile del programma: milestone, task attivo, versioni di schema/prompt, migration head, rischi correnti e commit verificato appartengono a `docs/CONTEXT.md` e `docs/TASKS.md`.
@@ -214,7 +219,7 @@ Classificare il task una sola volta nel preflight e registrare la corsia nel tas
 
 | Corsia | Quando usarla | Verifica locale prima della delivery |
 |---|---|---|
-| `FAST` | Solo documentazione, stato task o metadata; nessun runtime, workflow, dipendenza, contratto o configurazione cambia | `pnpm verify:docs`, che include metadata, freshness, riferimenti, link/path, whitespace, task graph e secret scan |
+| `FAST` | Solo documentazione, stato task o metadata; nessun runtime, workflow, dipendenza, contratto o configurazione cambia | `pnpm verify:docs`, che include generated drift, metadata/freshness, link/path/anchor, section refs, registro ADR, Mermaid, task graph e secret scan |
 | `STANDARD` | Codice applicativo reversibile senza auth, dati, migration, CI, dependency graph o side effect esterni | test mirati durante lo sviluppo; `pnpm verify:affected` sul candidato finale per workspace interessati e guardrail root; la CI PR esegue il gate completo |
 | `HIGH_RISK` | Security/auth/privacy, migration/schema, CI/artifact, dipendenze/lockfile, config/segreti, deploy/provider o mutazioni AI | test mirati e failure path; una sola `pnpm verify` sul candidato finale; clean checkout solo se cambiano installazione, packaging, symlink, workflow o comportamento cross-platform |
 
@@ -557,7 +562,7 @@ Prima di chiudere un task:
 - verificare che i path esistano o siano `planned`;
 - confrontare schema/API/eventi generati con le sorgenti;
 - aggiornare `docs/CONTEXT.md` e Context Sync Log;
-- eseguire `pnpm verify:docs`, che include `pnpm docs:check`, task graph e secret scan;
+- eseguire `pnpm verify:docs`, che include `pnpm docs:check` composto e secret scan;
 - conservare PR, head e run CI come evidenza esterna; un report dedicato è obbligatorio solo per gate, incidenti o task `HIGH_RISK` che richiedono una matrice non rappresentabile nella card.
 
 Se una modifica rende obsoleto `AGENTS.md`, aggiornarlo nello stesso change set. Se cambia soltanto lo stato corrente, aggiornare `CONTEXT`/`TASKS`, non gonfiare questo file.

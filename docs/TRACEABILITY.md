@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-15
-last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
+last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -10,6 +10,8 @@ source_refs:
   - docs/adr/0007-observability-context-and-error-reporting.md
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
+  - docs/superpowers/specs/2026-07-15-gov-002-document-integrity-design.md
+  - docs/adr/README.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -42,6 +44,11 @@ code_refs:
   - apps/worker/src/runtime.ts
   - scripts/lib/workspace-boundaries.mjs
   - scripts/lib/task-graph.mjs
+  - scripts/lib/document-policy.mjs
+  - scripts/lib/document-integrity-policy.mjs
+  - scripts/lib/markdown-document.mjs
+  - scripts/lib/mermaid-policy.mjs
+  - scripts/validate-mermaid-worker.mjs
   - .github/workflows/ci.yml
   - scripts/lib/ci-workflow-policy.mjs
   - scripts/lib/build-artifact.mjs
@@ -74,6 +81,8 @@ test_refs:
   - tests/contracts/task-graph.test.mjs
   - docs/testing/BL-001_VERIFICATION.md
   - tests/contracts/ci-workflow.test.mjs
+  - tests/contracts/document-policy.test.mjs
+  - tests/contracts/document-integrity.test.mjs
   - tests/integration/ci-gate.test.mjs
   - docs/testing/BL-002_VERIFICATION.md
   - tests/unit/build-artifact.test.mjs
@@ -122,7 +131,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico e versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008` e `BL-009` sono `DONE/100%/PASSING` e integrati su `main`; BL-009 e verificato tramite PR #21/merge `8e6e0d3d46daa057ba80999c58c83ad1c92471b1` e run post-merge `29420929180` 5/5 `SUCCESS`. `BL-010` propone `DONE/100%/PASSING` sulla branch `codex/bl-010-feature-flags`: migration `000002_feature_flags`, store server-side, audit, CLI, CAS e replay idempotente stabile hanno test mirati e full gate verdi; delivery protetta resta pendente finche la PR non passa su `main`. `BL-080` resta congelato e `BL-079` resta `BACKLOG` fino allo staging reale.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008`, `BL-009` e `BL-010` sono `DONE/100%/PASSING` e integrati su `main`; BL-009 è verificato tramite PR #21/merge `8e6e0d3d46daa057ba80999c58c83ad1c92471b1` e run post-merge `29420929180`, BL-010 tramite PR #22/merge `15382d547638333e33992be96479a6f0cbff1a29` e run post-merge `29426357415`, entrambe 5/5 `SUCCESS`. `GOV-002` è candidato `IN_REVIEW` locale; `BL-080` resta congelato e `BL-079` resta `BACKLOG` fino allo staging reale.
 
 ## Governance e baseline
 
@@ -130,11 +139,11 @@ Il repository pubblico e versionato e collegato a `Emacore17/dnd-ai`. `BL-001` h
 |---|---|---|---|---|---|
 | Cold start riproducibile | `AGENTS.md` §2; `docs/TASKS.md` §§3, 6 | GOV-001 | `AGENTS.md`, `docs/README.md`, `docs/CONTEXT.md`, `docs/TASKS.md` | `AGENTS_VALIDATION.txt` | implemented |
 | Contesto con hash/data/versioni | `docs/TASKS.md` §6.3 | GOV-001 | `docs/CONTEXT.md` | cold-start review in `AGENTS_VALIDATION.txt` | implemented |
-| Link e path validi | `AGENTS.md` §12.3 | GOV-001, GOV-002, GOV-003 | documenti attivi | `pnpm verify:docs`: metadata/freshness, path/ref/link, whitespace, task graph e secret scan | implemented, PASS |
-| Requisito→task→test→evidenza | `docs/TASKS.md` §6 | GOV-001, GOV-002 | questo documento | mapping governance, osservabilità e UX | active |
+| Link, anchor e riferimenti documentali validi | `AGENTS.md` §12.3; spec §§26.12, 32.3, 35.1 | GOV-001, GOV-002, GOV-003 | documenti attivi, `scripts/lib/document-integrity-policy.mjs`, registro ADR e worker Mermaid | `tests/contracts/document-policy.test.mjs`, `tests/contracts/document-integrity.test.mjs`; `pnpm docs:check` verifica generated drift, metadata/freshness, path/ref/link/anchor, section refs, ADR, Mermaid e task graph | implemented locally, targeted PASS; full/clean/CI pending |
+| Requisito→task→test→evidenza | `docs/TASKS.md` §6 | GOV-001, GOV-002 | questo documento | mapping GOV-002 verso policy Markdown/Mermaid/ADR, contract test e comandi riproducibili | implemented locally, targeted PASS |
 | Monorepo buildabile con tre runtime e package puri | spec §§11.2–11.3; `AGENTS.md` §9 | BL-001 | `apps/*`, `packages/*`, `turbo.json` | lint/typecheck/build su 10 workspace; report BL-001 | implemented, clean worktree PASS |
 | Import e dipendenze rispettano la allowlist | `AGENTS.md` §§4.6, 9 | BL-001 | `scripts/lib/workspace-boundaries.mjs` | `tests/contracts/workspace-boundaries.test.mjs`, inclusa fixture vietata; report BL-001 | implemented, PASS |
-| Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check`; report BL-001 | implemented (scope task graph), PASS |
+| Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check` e gate composto `pnpm docs:check`; report BL-001 | implemented, PASS |
 | DTO API/evento/output AI hanno validazione runtime e artefatti interoperabili versionati | spec §§11.5, 12.6, 12.8, 19.1, 20.1, 20.4, 20.6, 29.4; ADR-0008 | BL-009 | `packages/contracts/src`, `packages/contracts/generated/v1`, generator e policy drift/compatibility/owned path | runtime strict con UUIDv7 e version gate; Ajv 2020 parity; OpenAPI 3.1.1 components-only; breaking v1, base Git assente, missing/stale/unexpected, root junction e CI depth/base test | implemented; mirati 55 contract + 7 unit e full contract 56/56 PASS; review senza P0/P1; clean/CI pending |
 | PR CI fail-closed con check stabile | spec §§26.12, 29.4; ADR-0003 | BL-002 | `.github/workflows/ci.yml`, `scripts/lib/ci-gate.mjs` | clean verify head `7c6c707`; PR run `29257544214`; post-merge run `29257721274`; run negativa `29256736728`; Ruleset `18877721`; report BL-002 | PASS |
 | Dependency audit high usa un client bulk-capable senza downgrade | spec §§22.10, 26.12, 29.4; ADR-0003 | BL-002, BL-008 | pin pnpm `11.13.0`, setup action e policy progetto in `pnpm-workspace.yaml`; stale deps falliscono senza install implicito; comando audit esatto senza ignore | `tests/contracts/ci-workflow.test.mjs`, inclusa regressione `--ignore-registry-errors`; `tests/contracts/observability-contract.test.mjs`; PR #20 e run post-merge `29415397361` | PASS locale/CI |

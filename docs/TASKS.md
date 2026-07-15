@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 15382d547638333e33992be96479a6f0cbff1a29
+last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -73,6 +73,10 @@ code_refs:
   - package.json
   - scripts/check-docs.mjs
   - scripts/lib/document-policy.mjs
+  - scripts/lib/document-integrity-policy.mjs
+  - scripts/lib/markdown-document.mjs
+  - scripts/lib/mermaid-policy.mjs
+  - scripts/validate-mermaid-worker.mjs
   - scripts/verify-affected.mjs
   - scripts/lib/affected-verification.mjs
 test_refs:
@@ -109,6 +113,7 @@ test_refs:
   - docs/testing/BL-004_VERIFICATION.md
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
+  - tests/contracts/document-integrity.test.mjs
   - tests/unit/affected-verification.test.mjs
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
@@ -665,9 +670,9 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
 
-- **Stato:** `IN_PROGRESS`
-- **Progresso:** `75%`
-- **Esito test:** `PARTIAL`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
 - **Contesto verificato:** `YES` — base `15382d547638333e33992be96479a6f0cbff1a29`; spec SHA-256 `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329`; data: `2026-07-15`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** GOV-001, BL-001, BL-002, BL-009
@@ -676,12 +681,12 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Deliverable:** Consolidamento di `docs/TRACEABILITY.md` e `docs/CHANGELOG.md`; `docs/adr/README.md`; comando `pnpm docs:check` per front matter, link, task ID, section refs, Mermaid e generated-doc drift.
 - **Criterio di accettazione:** La CI blocca link rotti, task ID duplicati, documento senza metadata obbligatori, riferimento a test inesistente e diff non rigenerato di OpenAPI/JSON Schema.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Fixture con link rotto, duplicate task ID e front matter mancante deve far fallire `docs:check`.
+  - [x] Fixture con link rotto, duplicate task ID e front matter mancante deve far fallire `docs:check`.
   - [ ] Fixture valida deve passare in locale e CI con output deterministico.
-  - [ ] Verificare almeno un mapping requisito→task→test→evidenza in `docs/TRACEABILITY.md`.
+  - [x] Verificare almeno un mapping requisito→task→test→evidenza in `docs/TRACEABILITY.md`.
 - **Documentazione e contesto:** `docs/TRACEABILITY.md`, `docs/CHANGELOG.md`, `docs/adr/README.md`, `docs/README.md`, CI docs
-- **Evidenze di chiusura:** commit locali `c430826`, `e47f153`, `0b82dc9`; test document integrity/policy 11/11 e workflow/generated 9/9 `PASS`; `docs:check` e `ci:workflow:check` exit `0`; budget consecutivo `docs:check` 3,136 s / 3,130 s; audit high senza vulnerabilità note. PR/CI remota, full gate, review e clean checkout ancora aperti; migration/eval/trace ID `N/A`.
-- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` per dependency graph/lockfile e workflow CI. Implementati policy modulare per anchor e riferimenti `§`, registro ADR completo, Mermaid `11.16.0` parse-only in worker bounded con adapter testuale DOMPurify `3.4.12`, e composizione dei checker contratti/task esistenti in `docs:check`. `GOV-003` continua a possedere front matter, freshness, path/ref/link base, whitespace e task graph; `BL-009` continua a possedere il generator/drift dei contratti. Fuori scope Vercel, deploy, provider, rendering SVG e modifica dei contratti applicativi.
+- **Evidenze di chiusura:** commit locali `c430826`, `e47f153`, `0b82dc9`, `f9fbb24`; suite mirata finale 22/22 `PASS`; `docs:check` e `ci:workflow:check` exit `0`; budget consecutivo `docs:check` 3,136 s / 3,130 s; audit high senza vulnerabilità note. La review indipendente ha chiuso con test RED/GREEN i duplicati ADR e la ricomposizione dei check CI, incluso l'aggiramento whitespace/quoting; re-check finale `PASS` senza P0/P1. Full gate finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 101,4 s: lint/build 11/11, typecheck 13/13, unit 88 pass/1 skip host, integration 13/13, database 16/16, contract 66/66, security 30 pass/3 skip host, documentazione 36/19 changed e artifact 3.950 file `PASS`. Stato branch-local proposto; PR/CI remota e clean checkout ancora aperti; migration/eval/trace ID `N/A`.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` per dependency graph/lockfile e workflow CI. Implementati policy modulare per anchor e riferimenti `§`, registro ADR completo con duplicate ID fail-closed, Mermaid `11.16.0` parse-only in worker bounded con adapter testuale DOMPurify `3.4.12`, e composizione unica dei checker contratti/task esistenti in `docs:check`. `GOV-003` continua a possedere front matter, freshness, path/ref/link base, whitespace e task graph; `BL-009` continua a possedere il generator/drift dei contratti. Fuori scope Vercel, deploy, provider, rendering SVG e modifica dei contratti applicativi.
 
 ### GOV-003 — Ottimizzazione del ciclo di sviluppo degli agenti
 
@@ -2583,8 +2588,8 @@ Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il t
 active_task: GOV-002
 last_completed_task: BL-010
 next_ready_task: null
-status: IN_PROGRESS
-progress: 75
+status: IN_REVIEW
+progress: 90
 started_at: 2026-07-15T18:15:00+02:00
 candidate_at: null
 cycle_target_minutes: 120

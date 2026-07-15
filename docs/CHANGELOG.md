@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
+last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -52,6 +52,10 @@ code_refs:
   - package.json
   - scripts/check-docs.mjs
   - scripts/lib/document-policy.mjs
+  - scripts/lib/document-integrity-policy.mjs
+  - scripts/lib/markdown-document.mjs
+  - scripts/lib/mermaid-policy.mjs
+  - scripts/validate-mermaid-worker.mjs
   - scripts/verify-affected.mjs
   - scripts/lib/affected-verification.mjs
   - packages/observability
@@ -97,6 +101,7 @@ test_refs:
   - docs/testing/BL-004_VERIFICATION.md
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
+  - tests/contracts/document-integrity.test.mjs
   - tests/unit/affected-verification.test.mjs
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
@@ -126,10 +131,14 @@ supersedes: null
 - Generati manifest, sei JSON Schema Draft 2020-12 e OpenAPI 3.1.1 components-only sotto `packages/contracts/generated/v1`; aggiunti writer esplicito e checker read-only deterministico.
 - Accettato [`ADR-0008`](adr/0008-zod-first-contract-generation.md) e creato il catalogo operativo [`docs/api/README.md`](api/README.md).
 - Completato il candidato branch-local `BL-010`: aggiunti `database-feature-flags-v1`, migration `000002_feature_flags`, catalogo chiuso `campaign.start`/`turn.new`/`model.route.premium`, store PostgreSQL con safe default disabled, audit atomico, CAS/idempotenza e CLI server-side redatta.
+- Implementato il candidato `GOV-002`: parser Markdown condiviso, validazione di anchor e section refs, registro ADR completo, Mermaid parse-only in worker bounded e failure path per timeout/limiti.
+- Aggiunto [`docs/adr/README.md`](adr/README.md) con completezza, unicità, target e stato verificati automaticamente.
 
 ### Changed
 
 - Integrato `BL-008` tramite PR #20/merge `ccecd683`; la run post-merge `29415397361` ha concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`, senza modificare Vercel.
+- Integrato `BL-010` tramite PR #22/merge `15382d547638333e33992be96479a6f0cbff1a29`; CI PR `29426133056` e post-merge `29426357415` hanno concluso 5/5 job con `SUCCESS`.
+- Il job Quality usa un solo `pnpm docs:check` con `CONTRACT_BASE_REF=HEAD^1`; il comando compone generated drift, document integrity e task graph senza pnpm annidato.
 - Avviato `BL-009` in corsia `HIGH_RISK`; Quality e full verify ora richiedono `contracts:check`, mentre il relativo contract test impedisce di rimuovere silenziosamente il gate.
 - La review BL-009 ha rilevato quattro P1: UUID canonici trattati come slug, versioni `GameEvent` indipendenti, assenza di una baseline compatibilità esterna e root generated collegabile. Sono stati chiusi con UUIDv7, literal v1, confronto offline col tree Git protetto e guard symlink/junction rieseguito prima delle mutazioni.
 - `BL-010` corregge la sottostima iniziale della card: la dipendenza `BL-004` e ora esplicita e la corsia e `HIGH_RISK`, perche il criterio "senza deploy" richiede uno store condiviso e durabile.
@@ -149,8 +158,9 @@ supersedes: null
 - Un primo full exit `1` ha rilevato soltanto Docker Desktop spento; dopo l'avvio, database 13/13 e full rerun passano sul repository invariato. Checkout pulito e CI PR seguono lo snapshot committato.
 - La prima run PR [`29413088682`](https://github.com/Emacore17/dnd-ai/actions/runs/29413088682) ha fallito nel solo job Security con HTTP `410` dagli endpoint audit legacy usati da pnpm 10; `corepack pnpm@11.13.0 audit --audit-level=high` usa il percorso bulk e termina con `No known vulnerabilities found`. Re-review del P1 senza finding residui; full finale pnpm 11 exit `0` in 85,1 s con lint/build 11, typecheck 13, unit 77/1 skip, integration 13, database 13, contract 36, security 26/3 skip e artifact 3.906 file.
 - BL-008: PR #20 integrata; run post-merge [`29415397361`](https://github.com/Emacore17/dnd-ai/actions/runs/29415397361) 5/5 `SUCCESS`.
-- BL-009 mirato: `test:contract` 55/55, artifact/compatibility/owned-path unit 7/7, `contracts:check`, package lint/typecheck, Prettier ed ESLint mirati tutti `PASS`; JSON Schema compilati con Ajv 2020 e validazione parity con Zod. Re-check indipendente senza P0/P1 residui. I primi due full hanno rilevato ownership del formato generated e risoluzione del pnpm globale nello script annidato; regressioni fail-closed applicate. Full finale exit `0` in 86,8 s: lint/build 11, typecheck 13, unit 84/1 skip host, integration 13, database 13, contract 56, security 26/3 skip host, docs 31/11 e artifact 3.942. Clean checkout e CI restano pendenti.
-- BL-010 mirato: `corepack pnpm@11.13.0 test:unit` exit `0` con 88 pass/1 host skip; `node --test tests/database/feature-flags.test.mjs` exit `0` con 2/2, inclusa regressione replay post-toggle; `corepack pnpm@11.13.0 db:migrate:test` exit `0` con 15/15, inclusi zero->head, previous->head, rollback e feature flag store; `node --test tests/security/feature-flags-security.test.mjs` exit `0` con 4/4. Full gate locale finale `PASS`; PR/CI restano delivery derivata.
+- BL-009 mirato: `test:contract` 55/55, artifact/compatibility/owned-path unit 7/7, `contracts:check`, package lint/typecheck, Prettier ed ESLint mirati tutti `PASS`; JSON Schema compilati con Ajv 2020 e validazione parity con Zod. Re-check indipendente senza P0/P1 residui. I primi due full hanno rilevato ownership del formato generated e risoluzione del pnpm globale nello script annidato; regressioni fail-closed applicate. Full finale exit `0` in 86,8 s: lint/build 11, typecheck 13, unit 84/1 skip host, integration 13, database 13, contract 56, security 26/3 skip host, docs 31/11 e artifact 3.942. Delivery verificata tramite PR #21/merge `8e6e0d3` e run post-merge `29420929180` 5/5 `SUCCESS`.
+- BL-010 mirato: `corepack pnpm@11.13.0 test:unit` exit `0` con 88 pass/1 host skip; `node --test tests/database/feature-flags.test.mjs` exit `0` con 2/2, inclusa regressione replay post-toggle; `corepack pnpm@11.13.0 db:migrate:test` exit `0` con 15/15, inclusi zero->head, previous->head, rollback e feature flag store; `node --test tests/security/feature-flags-security.test.mjs` exit `0` con 4/4. Full gate locale finale `PASS`; delivery verificata tramite PR #22/merge `15382d5` e run post-merge `29426357415` 5/5 `SUCCESS`.
+- GOV-002 mirato: suite finale 22/22 `PASS`; `docs:check` e `ci:workflow:check` exit `0`; due run consecutive 3,136 s / 3,130 s; audit high senza vulnerabilità note. La review ha corretto duplicate ADR ID e ricomposizione CI aggirabile con whitespace/quoting; re-check finale senza P0/P1. Full gate finale exit `0` in 101,4 s: lint/build 11/11, typecheck 13/13, unit 88 pass/1 skip host, integration 13/13, database 16/16, contract 66/66, security 30 pass/3 skip host, docs 36/19 changed e artifact 3.950 file. Clean checkout e CI restano gate aperti.
 
 ## 2026-07-14
 

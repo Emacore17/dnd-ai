@@ -113,7 +113,21 @@ function validateAdrRegistry({ errors, metadataByPath, sources }) {
     return;
   }
 
-  const actualById = new Map(actual.map((entry) => [entry.id, entry]));
+  const actualByIdGroups = Map.groupBy(actual, (entry) => entry.id);
+  const duplicateActualIds = new Set();
+
+  for (const [id, entries] of actualByIdGroups) {
+    if (entries.length > 1) {
+      duplicateActualIds.add(id);
+      errors.push(`${registryPath}: duplicate-adr-document-id ${id}`);
+    }
+  }
+
+  const actualById = new Map(
+    [...actualByIdGroups]
+      .filter(([, entries]) => entries.length === 1)
+      .map(([id, [entry]]) => [id, entry]),
+  );
   const registrations = visibleMarkdownLines(registrySource)
     .map(({ line }) => adrRegistrationFromLine(line))
     .filter(Boolean);
@@ -138,7 +152,7 @@ function validateAdrRegistry({ errors, metadataByPath, sources }) {
     }
   }
 
-  for (const entry of actual) {
+  for (const entry of actualById.values()) {
     const registrationsForId = registrationsById.get(entry.id) ?? [];
     if (registrationsForId.length === 0) {
       errors.push(`${registryPath}: missing-adr-registration ${entry.id}`);
@@ -146,6 +160,10 @@ function validateAdrRegistry({ errors, metadataByPath, sources }) {
   }
 
   for (const registration of registrations) {
+    if (duplicateActualIds.has(registration.id)) {
+      continue;
+    }
+
     const actualEntry = actualById.get(registration.id);
     if (!actualEntry || actualEntry.target !== registration.target) {
       errors.push(

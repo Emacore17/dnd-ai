@@ -148,6 +148,37 @@ test("rejects unknown ADR rows and status drift", async () => {
   ]);
 });
 
+test("rejects duplicate ADR document IDs independently of source order", async () => {
+  const registry = [
+    "# ADR",
+    "",
+    "| ADR | Titolo | Stato |",
+    "|---|---|---|",
+    "| [ADR-0001](0001-second.md) | Second | `accepted` |",
+  ].join("\n");
+  const documents = [
+    ["docs/adr/0001-first.md", "# ADR-0001 — First\n"],
+    ["docs/adr/0001-second.md", "# ADR-0001 — Second\n"],
+  ];
+  const metadataByPath = new Map([
+    ["docs/adr/README.md", { status: "active" }],
+    ["docs/adr/0001-first.md", { status: "accepted" }],
+    ["docs/adr/0001-second.md", { status: "accepted" }],
+  ]);
+
+  for (const orderedDocuments of [documents, [...documents].reverse()]) {
+    const result = await validateDocumentIntegrity({
+      metadataByPath,
+      sources: new Map([["docs/adr/README.md", registry], ...orderedDocuments]),
+      validateMermaid: async () => [],
+    });
+
+    assert.deepEqual(result.errors, [
+      "docs/adr/README.md: duplicate-adr-document-id ADR-0001",
+    ]);
+  }
+});
+
 test("parses the Mermaid families used by project documentation", async () => {
   const sources = new Map([
     ["docs/flow.md", "```mermaid\nflowchart TD\nA --> B\n```\n"],

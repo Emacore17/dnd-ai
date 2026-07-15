@@ -1,8 +1,8 @@
 ---
-status: draft
+status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 15382d547638333e33992be96479a6f0cbff1a29
+last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#323-traceability-p0
@@ -17,14 +17,15 @@ code_refs:
   - scripts/check-docs.mjs
   - scripts/generate-contracts.mjs
   - scripts/lib/document-policy.mjs
-  - scripts/lib/document-integrity-policy.mjs (planned)
-  - scripts/lib/mermaid-policy.mjs (planned)
-  - scripts/validate-mermaid-worker.mjs (planned)
+  - scripts/lib/document-integrity-policy.mjs
+  - scripts/lib/markdown-document.mjs
+  - scripts/lib/mermaid-policy.mjs
+  - scripts/validate-mermaid-worker.mjs
   - scripts/lib/task-graph.mjs
   - scripts/lib/ci-workflow-policy.mjs
 test_refs:
   - tests/contracts/document-policy.test.mjs
-  - tests/contracts/document-integrity.test.mjs (planned)
+  - tests/contracts/document-integrity.test.mjs
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/ci-workflow.test.mjs
   - tests/contracts/contracts-generated.test.mjs

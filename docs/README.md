@@ -2,11 +2,12 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
+last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
   - docs/adr/0008-zod-first-contract-generation.md
+  - docs/adr/README.md
 related_tasks:
   - GOV-001
   - BL-001

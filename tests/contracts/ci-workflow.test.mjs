@@ -183,3 +183,45 @@ test("the quality gate composes documentation and generated contract checks", as
   assert.ok(errors.some((error) => error.includes("fetch-depth: 2")));
   assert.ok(errors.some((error) => error.includes("CONTRACT_BASE_REF")));
 });
+
+test("the quality gate rejects legacy duplicate document checks", async () => {
+  const [workflowSource, setupActionSource, packageSource] = await Promise.all([
+    readFile(
+      path.join(repositoryRoot, ".github", "workflows", "ci.yml"),
+      "utf8",
+    ),
+    readFile(
+      path.join(
+        repositoryRoot,
+        ".github",
+        "actions",
+        "setup-workspace",
+        "action.yml",
+      ),
+      "utf8",
+    ),
+    readFile(path.join(repositoryRoot, "package.json"), "utf8"),
+  ]);
+  const workflow = parse(workflowSource);
+  workflow.jobs.quality.steps.push(
+    { run: "pnpm  contracts:check" },
+    { run: 'pnpm "tasks:check"' },
+  );
+
+  const errors = validateCiDocuments(
+    workflow,
+    parse(setupActionSource),
+    JSON.parse(packageSource),
+  );
+
+  assert.ok(
+    errors.includes(
+      "quality must not duplicate legacy command: pnpm contracts:check",
+    ),
+  );
+  assert.ok(
+    errors.includes(
+      "quality must not duplicate legacy command: pnpm tasks:check",
+    ),
+  );
+});

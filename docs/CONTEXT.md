@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 15382d547638333e33992be96479a6f0cbff1a29
+last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -79,6 +79,10 @@ code_refs:
   - package.json
   - scripts/check-docs.mjs
   - scripts/lib/document-policy.mjs
+  - scripts/lib/document-integrity-policy.mjs
+  - scripts/lib/markdown-document.mjs
+  - scripts/lib/mermaid-policy.mjs
+  - scripts/validate-mermaid-worker.mjs
   - scripts/verify-affected.mjs
   - scripts/lib/affected-verification.mjs
 test_refs:
@@ -119,6 +123,7 @@ test_refs:
   - docs/testing/BL-004_VERIFICATION.md
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
+  - tests/contracts/document-integrity.test.mjs
   - tests/unit/affected-verification.test.mjs
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
@@ -147,14 +152,14 @@ supersedes: null
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `GOV-002 — IN_PROGRESS/25%/PARTIAL` sul branch `codex/gov-002-document-integrity`; design approvato per anchor/section refs, registro ADR, Mermaid parse-only e gate documentale composto |
+| Task attivo | candidato branch-local `GOV-002 — DONE/100%/PASSING` su `codex/gov-002-document-integrity`; suite mirata 22/22, review senza P0/P1 e full gate finale verde in 101,4 s; restano clean checkout e delivery protetta per rendere canonico lo stato su `main` |
 | Ultimo task completato | `BL-010 — DONE/100%/PASSING`, delivery verificata su `main` |
 | Prossimo task READY | `—`; `GOV-002` è in corso. `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003`, `BL-008`, `BL-009` e `BL-010` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`; `BL-010` fornisce `database-feature-flags-v1` con migration `000002_feature_flags`, catalogo kill switch server-side, store PostgreSQL con audit atomico, CAS, idempotenza, replay stabile e CLI redatta. `GOV-002` completa i controlli documentali residui componendo checker esistenti senza duplicarne la logica. I consumer API/worker reali restano fuori scope finché i task proprietari non implementano start campaign, turn enqueue e model route. Non sono stati creati account, exporter remoti, risorse provider o deploy. `BL-079` resta `BACKLOG` fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003`, `BL-008`, `BL-009` e `BL-010` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`; `BL-010` fornisce `database-feature-flags-v1` con migration `000002_feature_flags`, catalogo kill switch server-side, store PostgreSQL con audit atomico, CAS, idempotenza, replay stabile e CLI redatta. Il candidato `GOV-002` compone generated drift, metadata/link/anchor/section refs, registro ADR, Mermaid bounded e task graph in `docs:check`; i tempi consecutivi osservati sono 3,136 s e 3,130 s. I consumer API/worker reali restano fuori scope finché i task proprietari non implementano start campaign, turn enqueue e model route. Non sono stati creati account, exporter remoti, risorse provider o deploy. `BL-079` resta `BACKLOG` fino a uno staging reale.
 
 ## Decisioni operative vigenti
 
@@ -187,12 +192,12 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
 | Design contract | `ux-ui-2026-07-13` | documentato, non implementato |
 | ADR UI | `ADR-0001 accepted` | vigente |
-| Toolchain | Node `24.11.0` (engine `>=22.13.0`); pnpm `11.13.0`; Turbo `2.10.4`; TypeScript `6.0.3`; Zod `4.4.3`; Ajv `8.20.0`/formats `3.0.1` test-only; OTel API `1.9.1`/SDK `2.9.0`; Pino `10.3.1`; Sentry `10.65.0`; PostgreSQL `17`; pgvector `0.8.2`; node-pg-migrate `8.0.4`; pg `8.22.0`; Docker `29.2.1` | pinning e lockfile presenti; policy pnpm nel manifest workspace; immagine DB pin a digest |
+| Toolchain | Node `24.11.0` (engine `>=22.13.0`); pnpm `11.13.0`; Turbo `2.10.4`; TypeScript `6.0.3`; Zod `4.4.3`; Ajv `8.20.0`/formats `3.0.1` test-only; github-slugger `2.0.0`; Mermaid `11.16.0`/DOMPurify `3.4.12` docs-only; OTel API `1.9.1`/SDK `2.9.0`; Pino `10.3.1`; Sentry `10.65.0`; PostgreSQL `17`; pgvector `0.8.2`; node-pg-migrate `8.0.4`; pg `8.22.0`; Docker `29.2.1` | pinning e lockfile presenti; dipendenze documentali dev-only; policy pnpm nel manifest workspace; immagine DB pin a digest |
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web scaffold; API senza route ma con startup validate-before-bind |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
 | Agent workflow policy | `agent-workflow-v1` / task schema `1.1.0` | corsie di rischio, delivery derivata, budget e gate rapidi fail-closed verificati |
-| CI policy | `ci-policy-v1` | gate base + `deploy:check` + `contracts:check` read-only; `db:migrate:test` ora copre `000002_feature_flags` e store flag |
+| CI policy | `ci-policy-v1` | Quality usa un solo `docs:check` con `CONTRACT_BASE_REF=HEAD^1`, più confini/deploy policy; `db:migrate:test` copre `000002_feature_flags` e store flag |
 | Main Ruleset | `main-required-ci` / `18877721` | active, strict, PR richiesta, nessun bypass; check GitHub Actions `integration_id=15368` |
 | Release Ruleset | `release-production-required-ci` / `18926413` | branch `release/production` creato da `ef803add249d16ded6f94936c59531047c8a92fa`; active, `CI / Merge gate` strict, `current_user_can_bypass=never`; Ruleset main invariata |
 | Artifact schema | `build-artifact-v1` | baseline remota BL-002 `3.205` file; checkout pulito BL-003 `3.554` file e CI Ubuntu `3.233` file, secret/checksum verification PASS |
@@ -212,6 +217,7 @@ corepack pnpm@11.13.0 test:contract
 corepack pnpm@11.13.0 test:security
 corepack pnpm@11.13.0 contracts:generate
 corepack pnpm@11.13.0 contracts:check
+corepack pnpm@11.13.0 docs:check
 corepack pnpm@11.13.0 boundaries:check
 corepack pnpm@11.13.0 tasks:check
 corepack pnpm@11.13.0 ci:workflow:check
@@ -261,7 +267,6 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 | ID | Rischio | Mitigazione/owner |
 |---|---|---|
-| CTX-R02 | `GOV-003` copre front matter, freshness changed-doc, path/ref/link, whitespace e task graph; `BL-009` copre il generated drift dei contratti, ma restano section refs, Mermaid e altre classi documentali | `GOV-002` completa i controlli documentali residui riusando il checker contratti senza duplicarlo |
 | CTX-R03 | App e package di dominio restano scaffold; il web non contiene ancora la foundation UX/UI | task M0 proprietari; non inferire comportamento applicativo dalle entry point minime |
 | CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` resta in M0 e dipende dalla foundation operativa `BL-080` |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive gated o rimosso nel task `BL-079` |
@@ -275,7 +280,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Concludere il gate di design `GOV-002`, creare il piano TDD e implementare la policy documentale modulare senza riaprire il freeze Vercel. `BL-079` resta `BACKLOG` finché non esiste staging reale.
+Concludere review, full gate e clean checkout del candidato `GOV-002`, quindi pubblicare una sola PR protetta senza riaprire il freeze Vercel. `BL-079` resta `BACKLOG` finché non esiste staging reale.
 
 ## Rischi chiusi
 
@@ -288,3 +293,4 @@ Concludere il gate di design `GOV-002`, creare il piano TDD e implementare la po
 | CTX-R12 | Configurazione runtime BL-003 verificata localmente, da checkout pulito e su Linux | head `f571413`; clean verify `61,0 s`; run `29285998646` 5/5 job PASS; failure path FIFO `29285442650` registrato e corretto |
 | CTX-R15 | Production Branch Vercel separata da `main` prima dell'attivazione | CLI Vercel `55.0.0`: `Production → release/production`; lista deployment vuota; branch GitHub protetta da Ruleset `18926413` |
 | CTX-R19 | Duplicazione del ciclo agente contenuta con corsie, budget, candidato unico, delivery derivata e gate fail-closed | Audit 60,7% docs-only; candidate `GOV-003` in 43 minuti; `verify:docs` 2,65 s, `verify:affected` 6,96 s, full gate unico 72,70 s; review senza P0/P1 |
+| CTX-R02 | Drift documentale residuo coperto senza duplicare i checker canonici | `docs:check` compone 8 artifact contrattuali, document integrity e task graph; 11 test policy/document integrity e 9 workflow/generated verdi; budget 3,136 s / 3,130 s |

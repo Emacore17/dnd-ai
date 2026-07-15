@@ -1,8 +1,8 @@
 ---
-status: draft
+status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: a573dff60877ef53f9be7a8b294860b6007bc55b
+last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/superpowers/specs/2026-07-15-gov-002-document-integrity-design.md
   - docs/MVP_SPEC.md#2612-ci-quality-gates
@@ -17,16 +17,16 @@ code_refs:
   - scripts/check-docs.mjs
   - scripts/generate-contracts.mjs
   - scripts/lib/document-policy.mjs
-  - scripts/lib/document-integrity-policy.mjs (planned)
-  - scripts/lib/markdown-document.mjs (planned)
-  - scripts/lib/mermaid-policy.mjs (planned)
-  - scripts/validate-mermaid-worker.mjs (planned)
+  - scripts/lib/document-integrity-policy.mjs
+  - scripts/lib/markdown-document.mjs
+  - scripts/lib/mermaid-policy.mjs
+  - scripts/validate-mermaid-worker.mjs
   - scripts/lib/ci-workflow-policy.mjs
   - .github/workflows/ci.yml
   - package.json
 test_refs:
   - tests/contracts/document-policy.test.mjs
-  - tests/contracts/document-integrity.test.mjs (planned)
+  - tests/contracts/document-integrity.test.mjs
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/ci-workflow.test.mjs
 supersedes: null
@@ -685,7 +685,7 @@ git commit -m "ci: compose document integrity gate"
 - Consumes: comportamento e risultati verificati dei Task 1-4.
 - Produces: snapshot terminale branch-local `DONE/100%/PASSING`, mapping requisito→task→test→evidenza e istruzioni operative aggiornate.
 
-- [ ] **Step 1: Aggiornare i documenti semanticamente interessati**
+- [x] **Step 1: Aggiornare i documenti semanticamente interessati**
 
 Applicare queste modifiche precise:
 
@@ -697,7 +697,7 @@ Applicare queste modifiche precise:
 - `docs/CONTEXT.md`: comando/versioni, rischio CTX-R02 chiuso, GOV-002 candidato e freeze Vercel invariato.
 - `docs/TASKS.md`: checklist GOV-002 allineata ai test già eseguiti, evidenze locali, diario sintetico e stato `IN_REVIEW/90%/PARTIAL`; il passaggio terminale avviene soltanto dopo il full gate.
 
-- [ ] **Step 2: Eseguire i test mirati finali**
+- [x] **Step 2: Eseguire i test mirati finali**
 
 Run:
 
@@ -710,7 +710,7 @@ corepack pnpm@11.13.0 audit --audit-level=high
 
 Expected: tutti exit `0`; audit senza vulnerability high; output deterministico e senza stack/source Mermaid.
 
-- [ ] **Step 3: Verificare che Mermaid non entri nell'artifact runtime**
+- [x] **Step 3: Verificare che Mermaid non entri nell'artifact runtime**
 
 Run:
 
@@ -722,11 +722,11 @@ rg -n -i "(^|[/\\])mermaid([/\\]|$)|github-slugger|dompurify" artifacts\bl002
 
 Expected: prepare/verify exit `0`; `rg` exit `1` senza match.
 
-- [ ] **Step 4: Invocare la review indipendente prevista**
+- [x] **Step 4: Invocare la review indipendente prevista**
 
 Usare `superpowers:requesting-code-review` sul diff `15382d5..HEAD`. Correggere soltanto finding P0/P1 con test RED dedicato; un secondo pass controlla esclusivamente quei finding.
 
-- [ ] **Step 5: Eseguire l'unico full gate finale**
+- [x] **Step 5: Eseguire l'unico full gate finale**
 
 Run:
 
@@ -737,7 +737,7 @@ corepack pnpm@11.13.0 verify
 
 Expected: exit `0`; lint, typecheck, build, unit, integration, database, contract, security, policy, docs, secret scan e artifact tutti verdi.
 
-- [ ] **Step 6: Finalizzare stato ed evidenze dopo il full gate**
+- [x] **Step 6: Finalizzare stato ed evidenze dopo il full gate**
 
 Aggiornare `docs/TASKS.md` e `docs/CONTEXT.md` a `DONE/100%/PASSING` proposto, inserendo soltanto comandi e conteggi realmente osservati. Aggiornare design/piano a `active`, rimuovere ogni `(planned)` ormai implementato e registrare i due tempi `docs:check`.
 
