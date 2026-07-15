@@ -240,25 +240,32 @@ function startObservedOperation(
   }
 
   const carrierRequestId = readCarrierValue(input.options.carrier, "requestId");
+  const inheritedContext = input.contextManager.active();
+  const parentContext =
+    input.options.carrier === undefined
+      ? inheritedContext
+      : extractTraceContext(input.options.carrier);
+  const inheritedRequestId = parentContext.getValue(REQUEST_ID_CONTEXT_KEY);
   const requestIdCandidate =
     typeof input.options.requestId === "string"
       ? input.options.requestId
       : typeof carrierRequestId === "string"
         ? carrierRequestId
-        : undefined;
+        : typeof inheritedRequestId === "string"
+          ? inheritedRequestId
+          : undefined;
   const requestId = createRequestId(requestIdCandidate);
-  const extractedContext = extractTraceContext(input.options.carrier);
-  const parentContext = extractedContext.setValue(
+  const parentContextWithRequestId = parentContext.setValue(
     REQUEST_ID_CONTEXT_KEY,
     requestId,
   );
   const span = input.tracer.startSpan(
     input.options.name,
     { kind: toSpanKind(input.options.kind) },
-    parentContext,
+    parentContextWithRequestId,
   );
   const activeContext = trace
-    .setSpan(parentContext, span)
+    .setSpan(parentContextWithRequestId, span)
     .setValue(REQUEST_ID_CONTEXT_KEY, requestId);
   const operationContext = makeObservabilityContext(
     span,

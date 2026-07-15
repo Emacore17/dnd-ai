@@ -73,10 +73,15 @@ function apiEnvironment(port) {
 
 test("API validation runs before application construction or socket binding", () => {
   let appFactoryCalled = false;
+  let observabilityFactoryCalled = false;
 
   assert.throws(() =>
     createConfiguredApiApp({
       environment: {},
+      createObservability: () => {
+        observabilityFactoryCalled = true;
+        throw new Error("must not be reached");
+      },
       createApp: () => {
         appFactoryCalled = true;
         throw new Error("must not be reached");
@@ -84,6 +89,7 @@ test("API validation runs before application construction or socket binding", ()
     }),
   );
   assert.equal(appFactoryCalled, false);
+  assert.equal(observabilityFactoryCalled, false);
 });
 
 test("a valid API profile binds and can be closed cleanly", async (context) => {
@@ -97,16 +103,24 @@ test("a valid API profile binds and can be closed cleanly", async (context) => {
 
 test("worker validation runs before the injected initializer", async () => {
   let initializerCalled = false;
+  let observabilityFactoryCalled = false;
 
   await assert.rejects(
     initializeWorkerRuntime({
       environment: { APP_ENV: "staging" },
+      createObservability: () => {
+        observabilityFactoryCalled = true;
+        throw new Error("must not be reached");
+      },
       initialize: async () => {
         initializerCalled = true;
       },
     }),
   );
   assert.equal(initializerCalled, false);
+  assert.equal(observabilityFactoryCalled, false);
+
+  const fakeObservability = Object.freeze({ name: "worker-observability" });
 
   const result = await initializeWorkerRuntime({
     environment: {
@@ -116,7 +130,15 @@ test("worker validation runs before the injected initializer", async () => {
       WORKER_REDIS_URL:
         "rediss://worker:redis_password@staging-cache.internal:6380/1",
     },
-    initialize: async (config) => config.environment,
+    createObservability: (options) => {
+      assert.equal(options.environment, "staging");
+      assert.equal(options.service, "worker");
+      return fakeObservability;
+    },
+    initialize: async (config, observability) => {
+      assert.equal(observability, fakeObservability);
+      return config.environment;
+    },
   });
   assert.equal(result, "staging");
 });
