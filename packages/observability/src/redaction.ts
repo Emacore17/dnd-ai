@@ -118,6 +118,7 @@ export interface SanitizedSentryEvent {
     };
   };
   readonly environment?: "local" | "staging" | "production";
+  readonly event_id?: string;
   readonly exception?: {
     readonly values: readonly SanitizedSentryException[];
   };
@@ -148,12 +149,17 @@ export function sanitizeSentryEvent(
   const breadcrumbs = sanitizeBreadcrumbs(
     getOwnDataValue(event, "breadcrumbs"),
   );
-  const traceContext = sanitizeTraceContext(
-    getOwnDataValue(getOwnDataValue(event, "contexts"), "trace"),
-  );
+  const contexts = getOwnDataValue(event, "contexts");
+  const traceContext =
+    sanitizeTraceContext(getOwnDataValue(contexts, "trace")) ??
+    sanitizeTraceContext(getOwnDataValue(contexts, "correlation"));
   const environment = sanitizeEnvironment(
     getOwnDataValue(event, "environment"),
   );
+  const eventIdCandidate = getOwnDataValue(event, "event_id");
+  const eventId = isCanonicalTraceId(eventIdCandidate)
+    ? eventIdCandidate
+    : undefined;
   const exceptionValues = sanitizeExceptionValues(
     getOwnDataValue(getOwnDataValue(event, "exception"), "values"),
     errorCode,
@@ -166,6 +172,7 @@ export function sanitizeSentryEvent(
       ? {}
       : { contexts: { trace: traceContext } }),
     ...(environment === undefined ? {} : { environment }),
+    ...(eventId === undefined ? {} : { event_id: eventId }),
     ...(exceptionValues.length > 0
       ? { exception: { values: exceptionValues } }
       : {}),
