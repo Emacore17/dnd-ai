@@ -1,10 +1,10 @@
 ---
 status: active
 owner: engineering-and-qa
-last_reviewed: 2026-07-14
+last_reviewed: 2026-07-15
 last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
 source_refs:
-  - docs/MVP_SPEC.md#195-migrazioni-e-compatibilita
+  - docs/MVP_SPEC.md#195-migrazioni-e-compatibilità
   - docs/MVP_SPEC.md#264-integration-test-database
   - docs/MVP_SPEC.md#295-migrazioni-zero-downtime
   - docs/adr/0006-postgresql-migration-foundation.md

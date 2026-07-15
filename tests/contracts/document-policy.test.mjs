@@ -111,7 +111,7 @@ test("validates living metadata, repository refs, task IDs and relative links", 
       "docs/README.md",
       livingDocument({
         verified: "deadbee",
-        sourceRefs: ["docs/TASKS.md#fixture"],
+        sourceRefs: ["docs/TASKS.md#tasks"],
         codeRefs: ["src"],
         testRefs: ["tests/runtime.test.mjs", "tests/future.test.mjs (planned)"],
         body: [

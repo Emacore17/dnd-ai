@@ -3,7 +3,12 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { parse } from "yaml";
+import { validateDocumentIntegrity } from "./document-integrity-policy.mjs";
+import {
+  markdownLinkTargets,
+  parseFrontMatter,
+  referenceTarget,
+} from "./markdown-document.mjs";
 
 const execFileAsync = promisify(execFile);
 const REQUIRED_FIELDS = [
@@ -19,7 +24,6 @@ const REQUIRED_FIELDS = [
 ];
 const LIVING_STATUSES = new Set(["active", "draft", "superseded"]);
 const ADR_STATUSES = new Set(["accepted", "draft", "proposed", "superseded"]);
-const PLANNED_SUFFIX = " (planned)";
 
 function normalizeRepositoryPath(filePath) {
   return filePath.replaceAll("\\", "/").replace(/^\.\/+/, "");
@@ -82,20 +86,6 @@ async function runGit(repositoryRoot, args, { allowFailure = false } = {}) {
   }
 }
 
-function parseFrontMatter(source) {
-  const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/u);
-  if (!match) {
-    return null;
-  }
-
-  try {
-    const metadata = parse(match[1]);
-    return metadata && typeof metadata === "object" ? metadata : null;
-  } catch {
-    return null;
-  }
-}
-
 function taskIdsFromSource(source) {
   const taskIds = new Set();
 
@@ -133,56 +123,6 @@ function isIsoDate(value) {
 
   const date = new Date(`${value}T00:00:00.000Z`);
   return !Number.isNaN(date.valueOf()) && date.toISOString().startsWith(value);
-}
-
-function referenceTarget(reference) {
-  if (typeof reference !== "string") {
-    return null;
-  }
-
-  const planned = reference.endsWith(PLANNED_SUFFIX);
-  const value = planned
-    ? reference.slice(0, -PLANNED_SUFFIX.length)
-    : reference;
-  const target = value.split("#", 1)[0].trim();
-  return target ? { planned, target } : null;
-}
-
-function markdownLinkTargets(source) {
-  const visibleLines = [];
-  let openFence = null;
-
-  for (const line of source.split(/\r?\n/u)) {
-    const trimmedLine = line.trimStart();
-    if (openFence) {
-      if (trimmedLine.startsWith(openFence)) {
-        openFence = null;
-      }
-      continue;
-    }
-    if (trimmedLine.startsWith("```") || trimmedLine.startsWith("~~~")) {
-      openFence = trimmedLine.slice(0, 3);
-      continue;
-    }
-    visibleLines.push(line);
-  }
-
-  const targets = [];
-  const linkPattern = /\]\(([^)\r\n]+)\)/gu;
-
-  for (const match of visibleLines.join("\n").matchAll(linkPattern)) {
-    const contents = match[1].trim();
-    if (contents.startsWith("<")) {
-      const closingBracket = contents.indexOf(">");
-      targets.push(
-        closingBracket === -1 ? contents : contents.slice(1, closingBracket),
-      );
-      continue;
-    }
-    targets.push(contents.split(/\s/u, 1)[0]);
-  }
-
-  return targets;
 }
 
 function isExternalLink(target) {
@@ -292,6 +232,7 @@ export async function validateDocumentPolicy({
     ...new Set(documentPaths.map(normalizeRepositoryPath)),
   ].sort();
   const sources = new Map();
+  const metadataByPath = new Map();
   const errors = [];
   const warnings = [];
 
@@ -309,6 +250,7 @@ export async function validateDocumentPolicy({
 
   for (const [documentPath, source] of sources) {
     const metadata = parseFrontMatter(source);
+    metadataByPath.set(documentPath, metadata);
     const isChanged = changed.has(documentPath);
 
     if (isChanged) {
@@ -425,6 +367,12 @@ export async function validateDocumentPolicy({
       }
     }
   }
+
+  const integrity = await validateDocumentIntegrity({
+    metadataByPath,
+    sources,
+  });
+  errors.push(...integrity.errors);
 
   return { errors: errors.sort(), warnings: warnings.sort() };
 }

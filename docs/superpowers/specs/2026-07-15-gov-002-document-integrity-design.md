@@ -7,7 +7,7 @@ source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#323-traceability-p0
   - docs/MVP_SPEC.md#351-definition-of-done-per-user-story
-  - docs/TASKS.md#gov-002--validazione-automatica-della-documentazione-e-tracciabilita
+  - docs/TASKS.md#gov-002--validazione-automatica-della-documentazione-e-tracciabilità
 related_tasks:
   - GOV-002
   - GOV-003

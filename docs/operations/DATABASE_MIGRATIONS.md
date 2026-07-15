@@ -4,7 +4,7 @@ owner: engineering-and-data
 last_reviewed: 2026-07-15
 last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
-  - docs/MVP_SPEC.md#195-migrazioni-e-compatibilita
+  - docs/MVP_SPEC.md#195-migrazioni-e-compatibilità
   - docs/MVP_SPEC.md#264-integration-test-database
   - docs/MVP_SPEC.md#295-migrazioni-zero-downtime
   - docs/adr/0006-postgresql-migration-foundation.md

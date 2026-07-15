@@ -7,7 +7,7 @@ source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
   - docs/MVP_SPEC.md#293-ambienti
-  - docs/MVP_SPEC.md#298-operativita
+  - docs/MVP_SPEC.md#298-disaster-recovery-e-operazioni
   - docs/adr/0004-runtime-configuration-and-secret-injection.md
   - docs/adr/0007-observability-context-and-error-reporting.md
 related_tasks:

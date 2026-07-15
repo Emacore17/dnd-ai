@@ -58,6 +58,7 @@
     "eslint": "9.39.2",
     "eslint-config-next": "16.2.10",
     "eslint-plugin-security": "4.0.1",
+    "github-slugger": "2.0.0",
     "pg": "8.22.0",
     "prettier": "3.9.5",
     "turbo": "2.10.4",
