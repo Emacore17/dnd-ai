@@ -4,10 +4,13 @@ export {
   parseMigrationRuntimeConfig,
   parseWorkerRuntimeConfig,
   runtimeEnvironments,
-  type ApiRuntimeConfig,
-  type ConfigurationService,
-  type EnvironmentSource,
-  type MigrationRuntimeConfig,
-  type RuntimeEnvironment,
-  type WorkerRuntimeConfig,
+} from "./runtime-config.js";
+
+export type {
+  ApiRuntimeConfig,
+  ConfigurationService,
+  EnvironmentSource,
+  MigrationRuntimeConfig,
+  RuntimeEnvironment,
+  WorkerRuntimeConfig,
 } from "./runtime-config.js";

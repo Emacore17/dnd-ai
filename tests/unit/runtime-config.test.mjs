@@ -24,6 +24,89 @@ const workerStagingEnvironment = Object.freeze({
     "rediss://worker:redis_password@staging-cache.internal:6380/1",
 });
 
+const apiSentryDsn = "https://api-public-key@errors.example.test/101";
+const workerSentryDsn = "https://worker-public-key@errors.example.test/202";
+
+test("optional Sentry DSNs are omitted when absent or blank", () => {
+  for (const API_SENTRY_DSN of [undefined, "", "   "]) {
+    const config = parseApiRuntimeConfig({
+      ...apiLocalEnvironment,
+      ...(API_SENTRY_DSN === undefined ? {} : { API_SENTRY_DSN }),
+    });
+
+    assert.equal("sentryDsn" in config, false);
+    assert.equal(Object.isFrozen(config), true);
+  }
+
+  for (const WORKER_SENTRY_DSN of [undefined, "", "   "]) {
+    const config = parseWorkerRuntimeConfig({
+      ...workerStagingEnvironment,
+      ...(WORKER_SENTRY_DSN === undefined ? {} : { WORKER_SENTRY_DSN }),
+    });
+
+    assert.equal("sentryDsn" in config, false);
+    assert.equal(Object.isFrozen(config), true);
+  }
+});
+
+test("valid Sentry DSNs remain scoped to their owning service", () => {
+  assert.deepEqual(
+    parseApiRuntimeConfig({
+      ...apiLocalEnvironment,
+      API_SENTRY_DSN: apiSentryDsn,
+      WORKER_SENTRY_DSN: workerSentryDsn,
+    }),
+    {
+      environment: "local",
+      host: "127.0.0.1",
+      port: 3001,
+      databaseUrl: "postgresql://dnd_api_local@127.0.0.1:5432/dnd_ai_local",
+      redisUrl: "redis://127.0.0.1:6379/0",
+      sentryDsn: apiSentryDsn,
+    },
+  );
+
+  assert.deepEqual(
+    parseWorkerRuntimeConfig({
+      ...workerStagingEnvironment,
+      API_SENTRY_DSN: apiSentryDsn,
+      WORKER_SENTRY_DSN: workerSentryDsn,
+    }),
+    {
+      environment: "staging",
+      databaseUrl:
+        "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
+      redisUrl: "rediss://worker:redis_password@staging-cache.internal:6380/1",
+      sentryDsn: workerSentryDsn,
+    },
+  );
+});
+
+test("Sentry DSNs reject unsafe schemes, hosts and project paths without reflection", () => {
+  const invalidDsns = [
+    "http://public-key@errors.example.test/101",
+    "https://public-key@bad_host/101",
+    "https://public-key@errors.example.test/",
+  ];
+
+  for (const invalidDsn of invalidDsns) {
+    assert.throws(
+      () =>
+        parseApiRuntimeConfig({
+          ...apiLocalEnvironment,
+          API_SENTRY_DSN: invalidDsn,
+        }),
+      (error) => {
+        assert.equal(error instanceof RuntimeConfigurationError, true);
+        assert.deepEqual(error.invalidKeys, ["API_SENTRY_DSN"]);
+        assert.doesNotMatch(error.message, new RegExp(invalidDsn));
+        assert.equal("cause" in error, false);
+        return true;
+      },
+    );
+  }
+});
+
 test("API configuration parses, normalizes and strips unrelated environment values", () => {
   const config = parseApiRuntimeConfig({
     ...apiLocalEnvironment,

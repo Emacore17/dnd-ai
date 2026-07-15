@@ -30,6 +30,7 @@ function parseExample(text) {
 test("service-specific local templates expose only their own configuration surface", async () => {
   const api = parseExample(await read("apps/api/.env.example"));
   const worker = parseExample(await read("apps/worker/.env.example"));
+  const web = parseExample(await read("apps/web/.env.example"));
   const migration = parseExample(
     await read("packages/persistence/.env.example"),
   );
@@ -39,13 +40,16 @@ test("service-specific local templates expose only their own configuration surfa
     "API_HOST",
     "API_PORT",
     "API_REDIS_URL",
+    "API_SENTRY_DSN",
     "APP_ENV",
   ]);
   assert.deepEqual(Object.keys(worker).sort(), [
     "APP_ENV",
     "WORKER_DATABASE_URL",
     "WORKER_REDIS_URL",
+    "WORKER_SENTRY_DSN",
   ]);
+  assert.deepEqual(Object.keys(web), ["NEXT_PUBLIC_SENTRY_DSN"]);
   assert.deepEqual(Object.keys(migration).sort(), [
     "APP_ENV",
     "MIGRATION_DATABASE_URL",
@@ -59,6 +63,12 @@ test("service-specific local templates expose only their own configuration surfa
     );
   }
 
+  assert.equal("API_SENTRY_DSN" in worker, false);
+  assert.equal("WORKER_SENTRY_DSN" in api, false);
+  assert.equal("NEXT_PUBLIC_SENTRY_DSN" in api, false);
+  assert.equal("NEXT_PUBLIC_SENTRY_DSN" in worker, false);
+  assert.equal(web.NEXT_PUBLIC_SENTRY_DSN, "");
+
   assert.equal(api.API_HOST, "127.0.0.1");
   assert.equal(api.API_PORT, "3001");
   assert.deepEqual(
@@ -70,6 +80,8 @@ test("service-specific local templates expose only their own configuration surfa
     ],
     Array.from({ length: 4 }, () => "<set-in-local-env-file>"),
   );
+  assert.equal(api.API_SENTRY_DSN, "");
+  assert.equal(worker.WORKER_SENTRY_DSN, "");
   assert.equal(
     migration.MIGRATION_DATABASE_URL,
     "postgresql://dnd_migration_local:dnd_migration_local@127.0.0.1:55432/dnd_ai_local",
@@ -124,6 +136,9 @@ test("pure config parsing does not read ambient process state", async () => {
 
   const webManifest = JSON.parse(await read("apps/web/package.json"));
   assert.equal("@dnd-ai/config" in webManifest.dependencies, false);
+
+  const webTemplate = parseExample(await read("apps/web/.env.example"));
+  assert.deepEqual(Object.keys(webTemplate), ["NEXT_PUBLIC_SENTRY_DSN"]);
 });
 
 test("workspace typecheck builds dependency declarations on a clean checkout", async () => {
