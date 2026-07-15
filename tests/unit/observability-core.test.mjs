@@ -200,6 +200,41 @@ test("sanitizeTelemetryValue redacts sensitive keys and sensitive string values"
   });
 });
 
+test("sanitizeTelemetryValue redacts normalized sensitive key variants without hiding correlation IDs", () => {
+  assert.deepEqual(
+    sanitizeTelemetryValue({
+      accessToken: "secret",
+      "api-key": "secret",
+      aiOutput: "secret",
+      chain_of_thought: "secret",
+      rawPrompt: "secret",
+      refresh_token: "secret",
+      requestBody: "secret",
+      requestId: validRequestId,
+      response_body: "secret",
+      sentryDsn: "secret",
+      setCookie: "secret",
+      toolPayload: "secret",
+      traceId: "c4b7f268f713f241fd4b92c8461e3991",
+    }),
+    {
+      "api-key": "[REDACTED]",
+      accessToken: "[REDACTED]",
+      aiOutput: "[REDACTED]",
+      chain_of_thought: "[REDACTED]",
+      rawPrompt: "[REDACTED]",
+      refresh_token: "[REDACTED]",
+      requestBody: "[REDACTED]",
+      requestId: validRequestId,
+      response_body: "[REDACTED]",
+      sentryDsn: "[REDACTED]",
+      setCookie: "[REDACTED]",
+      toolPayload: "[REDACTED]",
+      traceId: "c4b7f268f713f241fd4b92c8461e3991",
+    },
+  );
+});
+
 test("sanitizeTelemetryValue enforces depth and collection limits without invoking getters", () => {
   let getterCalls = 0;
   const input = {};
@@ -293,4 +328,18 @@ test("sanitizeTelemetryValue safely redacts cycles and unsupported runtime value
     set: "[REDACTED]",
     symbol: "[REDACTED]",
   });
+});
+
+test("sanitizeTelemetryValue fails closed for revoked proxies and embedded credential URLs", () => {
+  const revocable = Proxy.revocable({}, {});
+  revocable.revoke();
+
+  assert.doesNotThrow(() => sanitizeTelemetryValue(revocable.proxy));
+  assert.equal(sanitizeTelemetryValue(revocable.proxy), "[REDACTED]");
+  assert.equal(
+    sanitizeTelemetryValue(
+      "safe prefix https://safe.example.test then http://user:pass@localhost",
+    ),
+    "[REDACTED]",
+  );
 });

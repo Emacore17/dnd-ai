@@ -7,20 +7,29 @@ const MAX_STRING_LENGTH = 512;
 const SENSITIVE_KEYS = new Set([
   "authorization",
   "cookie",
-  "set-cookie",
+  "setcookie",
   "password",
   "passwd",
   "token",
+  "accesstoken",
+  "refreshtoken",
   "apikey",
-  "api_key",
   "dsn",
+  "sentrydsn",
   "body",
   "request",
+  "requestbody",
   "response",
+  "responsebody",
   "prompt",
+  "rawprompt",
   "narration",
   "output",
+  "aioutput",
+  "rawoutput",
   "tool",
+  "toolpayload",
+  "toolrawpayload",
   "chainofthought",
   "user",
   "headers",
@@ -68,8 +77,14 @@ function sanitizeValue(
     return REDACTED_VALUE;
   }
 
-  if (Array.isArray(input)) {
-    return sanitizeArray(input, depth, ancestors);
+  const arrayInput = isArray(input);
+
+  if (arrayInput === undefined) {
+    return REDACTED_VALUE;
+  }
+
+  if (arrayInput) {
+    return sanitizeArray(input as unknown[], depth, ancestors);
   }
 
   if (!isPlainObject(input)) {
@@ -140,7 +155,7 @@ function sanitizeObject(
 
   try {
     for (const [key, descriptor] of entries) {
-      const value = SENSITIVE_KEYS.has(key.toLowerCase())
+      const value = SENSITIVE_KEYS.has(normalizeKey(key))
         ? REDACTED_VALUE
         : sanitizeValue(descriptor.value, depth + 1, ancestors);
 
@@ -177,28 +192,62 @@ function isPlainObject(input: object): boolean {
   }
 }
 
-function hasUrlUserInfo(input: string): boolean {
-  const schemeSeparatorIndex = input.indexOf("://");
-  const authorityStart =
-    schemeSeparatorIndex > 0
-      ? schemeSeparatorIndex + 3
-      : input.startsWith("//")
-        ? 2
-        : -1;
+function isArray(input: object): boolean | undefined {
+  try {
+    return Array.isArray(input);
+  } catch {
+    return undefined;
+  }
+}
 
-  if (authorityStart < 0) {
-    return false;
+function normalizeKey(key: string): string {
+  let normalized = "";
+
+  for (const character of key.toLowerCase()) {
+    const code = character.charCodeAt(0);
+    const isAsciiLetter = code >= 97 && code <= 122;
+    const isDigit = code >= 48 && code <= 57;
+
+    if (isAsciiLetter || isDigit) {
+      normalized += character;
+    }
   }
 
-  const authorityEndCandidates = ["/", "?", "#"]
-    .map((separator) => input.indexOf(separator, authorityStart))
-    .filter((index) => index >= 0);
-  const authorityEnd =
-    authorityEndCandidates.length > 0
-      ? Math.min(...authorityEndCandidates)
-      : input.length;
+  return normalized;
+}
 
-  return input.slice(authorityStart, authorityEnd).includes("@");
+function hasUrlUserInfo(input: string): boolean {
+  let searchFrom = 0;
+
+  while (searchFrom < input.length) {
+    const schemeSeparatorIndex = input.indexOf("://", searchFrom);
+    const authorityStart =
+      schemeSeparatorIndex >= 0
+        ? schemeSeparatorIndex + 3
+        : searchFrom === 0 && input.startsWith("//")
+          ? 2
+          : -1;
+
+    if (authorityStart < 0) {
+      return false;
+    }
+
+    const authorityEndCandidates = ["/", "?", "#", " ", "\t", "\r", "\n"]
+      .map((separator) => input.indexOf(separator, authorityStart))
+      .filter((index) => index >= 0);
+    const authorityEnd =
+      authorityEndCandidates.length > 0
+        ? Math.min(...authorityEndCandidates)
+        : input.length;
+
+    if (input.slice(authorityStart, authorityEnd).includes("@")) {
+      return true;
+    }
+
+    searchFrom = Math.max(authorityStart, authorityEnd);
+  }
+
+  return false;
 }
 
 function hasEmailAddress(input: string): boolean {
