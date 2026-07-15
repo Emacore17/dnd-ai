@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 99a4f3f5441fd5a64657d2ad54fd7342e3fefef2
+last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -50,6 +50,10 @@ code_refs:
   - scripts/verify-affected.mjs
   - scripts/lib/affected-verification.mjs
   - packages/observability
+  - apps/api/src/observability.ts
+  - apps/worker/src/observability.ts
+  - apps/web/instrumentation.ts
+  - apps/web/instrumentation-client.ts
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/ci-workflow.test.mjs
@@ -80,6 +84,11 @@ test_refs:
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
   - tests/unit/affected-verification.test.mjs
+  - tests/unit/observability-core.test.mjs
+  - tests/unit/observability-node.test.mjs
+  - tests/integration/observability-flow.test.mjs
+  - tests/contracts/observability-contract.test.mjs
+  - tests/security/observability-security.test.mjs
 supersedes: null
 ---
 
@@ -89,12 +98,24 @@ supersedes: null
 
 ### Added
 
-- Versionato il design `observability-baseline-v1` di `BL-008`: OpenTelemetry è l'unica autorità trace, Pino applica logging JSON redatto e Sentry resta un adapter error-only opzionale senza provisioning o rete nei test.
+- Implementato `observability-baseline-v1`: kernel browser-safe e runtime Node separato, tracing OpenTelemetry W3C, request ID server-owned, logger Pino allowlisted e adapter Sentry error-only opzionale.
+- Integrati plugin Fastify, wrapper worker e entrypoint Next client/server/edge con caricamento Sentry lazy; aggiunti test unit, integration, contract e security senza rete.
+- Accettato [`ADR-0007`](adr/0007-observability-context-and-error-reporting.md) e allineati design, piano e living docs al comportamento reale.
 
 ### Changed
 
-- Selezionato `BL-008` come task `IN_PROGRESS/25%/NOT_RUN` in corsia `HIGH_RISK`; allineati contesto e indice prima della review della specifica scritta e del successivo piano TDD.
+- Portato `BL-008` alla proposta branch-local `DONE/100%/PASSING` in corsia `HIGH_RISK`: implementazione, gate mirati, review indipendente e full gate verdi; checkout pulito e PR seguono sul commit congelato.
+- Esteso `runtime-config-v1` con DSN Sentry opzionali service-scoped per API/worker e template web pubblico; valori assenti disabilitano l'adapter, valori server malformati falliscono prima degli effetti senza leakage.
+- Bloccato il boundary root browser-safe vs `/node`; l'SDK Sentry non entra nell'entry client iniziale quando la DSN manca e gli artifact client restano privi di marker Node.
 - Confermati fuori scope account/progetti Sentry, backend OTLP, source-map upload e qualunque configurazione o deploy Vercel.
+
+### Verification
+
+- `test:unit`: 77 pass, 1 host skip; `test:integration`: 13 pass; `test:contract`: 32 pass; `test:security`: 26 pass, 3 host skip; tutti exit `0`.
+- `verify:affected`: 33/33 task selezionati verdi, boundary/task graph/secret scan inclusi; ricerca artifact client senza `node:async_hooks`, `@sentry/node`, context manager Node, trace SDK Node o integrazione Pino.
+- `verify:docs`: 27 documenti/11 modificati, task graph e repository secret scan `PASS`.
+- Review indipendente senza P0/P1. Full `TURBO_FORCE=true pnpm verify` exit `0` in 86,2 s: lint 11, typecheck 13, build 11, unit 77/1 host skip, integration 13, database 13, contract 32, security 26/3 host skip e artifact 3.906 file.
+- Un primo full exit `1` ha rilevato soltanto Docker Desktop spento; dopo l'avvio, database 13/13 e full rerun passano sul repository invariato. Checkout pulito e CI PR seguono lo snapshot committato.
 
 ## 2026-07-14
 

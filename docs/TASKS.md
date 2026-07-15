@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 99a4f3f5441fd5a64657d2ad54fd7342e3fefef2
+last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -21,6 +21,14 @@ code_refs:
   - apps
   - packages
   - packages/config
+  - packages/observability/src/node.ts
+  - packages/observability/src/tracing.ts
+  - packages/observability/src/logger.ts
+  - packages/observability/src/redaction.ts
+  - apps/api/src/observability.ts
+  - apps/worker/src/observability.ts
+  - apps/web/instrumentation.ts
+  - apps/web/instrumentation-client.ts
   - packages/persistence/src/migration-runner.ts
   - packages/persistence/src/migration-manifest.ts
   - packages/persistence/src/migrations/000001_postgresql_foundation.ts
@@ -88,6 +96,11 @@ test_refs:
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
   - tests/unit/affected-verification.test.mjs
+  - tests/unit/observability-core.test.mjs
+  - tests/unit/observability-node.test.mjs
+  - tests/integration/observability-flow.test.mjs
+  - tests/contracts/observability-contract.test.mjs
+  - tests/security/observability-security.test.mjs
 supersedes: null
 ---
 
@@ -335,7 +348,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | 36% | 18 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta | `IN_PROGRESS` | 42% | 18 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -520,24 +533,24 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-008 — OTel/log/Sentry baseline
 
-- **Stato:** `IN_PROGRESS`
-- **Progresso:** `25%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `YES` — commit/SHA: `99a4f3f5441fd5a64657d2ad54fd7342e3fefef2`; spec SHA `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c`; data: `2026-07-15`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — implementation head `3d278655bf3ccec5d7dd3b142aea209cab307dca`; spec SHA `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c`; data: `2026-07-15`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-001, BL-003
 - **Dipendenze operative aggiuntive:** BL-001, BL-003
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §24 Osservabilità; `docs/MVP_SPEC.md` §29.1 Topologia MVP; `docs/MVP_SPEC.md` §35.1 Definition of Done; `docs/MVP_SPEC.md` §31 `BL-008`; `docs/MVP_SPEC.md` §35.1
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §24 Osservabilità; `docs/MVP_SPEC.md` §29.1 Topologia MVP; `docs/MVP_SPEC.md` §31 `BL-008`; `docs/MVP_SPEC.md` §35.1 Definition of Done; `docs/adr/0002-monorepo-package-boundaries.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/adr/0007-observability-context-and-error-reporting.md`; [`design observability-baseline-v1`](superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md); [`piano TDD`](superpowers/plans/2026-07-15-bl-008-observability-baseline.md)
 - **Obiettivo:** Come operatore voglio request e trace ID end-to-end.
 - **Deliverable:** OTel/log/Sentry baseline.
 - **Criterio di accettazione:** Trace web→API→worker fake; log redaction test pass.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Test di accettazione automatizzato: Trace web→API→worker fake; log redaction test pass.
-  - [ ] Integration test web→API→worker fake con propagazione correlation/trace ID.
-  - [ ] Test di redazione PII/secret nei log e cattura errori Sentry senza payload sensibili.
-- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** design approvato dal Product Owner e versionato in [`docs/superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md`](superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md); corsia `HIGH_RISK` per dependency graph, config e privacy boundary. Sentry resta off-by-default senza provisioning; nessuna azione Vercel.
+  - [x] Test di accettazione automatizzato: Trace web→API→worker fake; log redaction test pass.
+  - [x] Integration test web→API→worker fake con propagazione correlation/trace ID.
+  - [x] Test di redazione PII/secret nei log e cattura errori Sentry senza payload sensibili.
+- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0007-observability-context-and-error-reporting.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/CI_CD.md`
+- **Evidenze di chiusura:** implementation head `3d278655bf3ccec5d7dd3b142aea209cab307dca`; review indipendente senza P0/P1; `test:unit` exit `0` (77 pass/1 host skip), `test:integration` exit `0` (13 pass), `test:contract` exit `0` (32 pass), `test:security` exit `0` (26 pass/3 host skip), `verify:affected` exit `0` (33/33), `verify:docs` exit `0` (27 documenti/11 modificati); full `TURBO_FORCE=true pnpm verify` exit `0` in `86,2 s`, inclusi database 13/13 e artifact 3.906 file. Il primo tentativo full ha registrato exit `1` in `67,8 s` esclusivamente perché Docker Desktop era spento; dopo l'avvio, la suite DB isolata è passata 13/13 senza modifica al repository e il full rerun è verde. Trace fake `web.request → api.request → queue.enqueue → worker.process`, due flussi concorrenti disgiunti; migration head `000001_postgresql_foundation`; eval `N/A`; trace ID `N/A — fixture runtime non persistita`; delivery `PENDING` finché il commit non supera checkout pulito e PR protetta.
+- **Note, rischi o bloccanti:** proposta branch-local terminale in corsia `HIGH_RISK`; il checkout pulito è il gate immediatamente successivo sul commit congelato e riapre il task se fallisce. Sentry resta off-by-default senza provisioning; nessuna azione Vercel.
 
 ### BL-009 — Zod, JSON Schema, OpenAPI generation
 
@@ -2549,20 +2562,20 @@ Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il t
 active_task: BL-008
 last_completed_task: GOV-003
 next_ready_task: null
-status: IN_PROGRESS
-progress: 25
+status: DONE
+progress: 100
 started_at: 2026-07-15T10:10:55+02:00
-candidate_at: null
+candidate_at: 2026-07-15T13:44:32+02:00
 cycle_target_minutes: 120
-cycle_actual_minutes: null
+cycle_actual_minutes: 214
 updated_at: 2026-07-15
 agent: Codex development agent
 git_branch: codex/bl-008-observability-baseline
 base_commit: 99a4f3f5441fd5a64657d2ad54fd7342e3fefef2
-candidate_head: null
+candidate_head: 3d278655bf3ccec5d7dd3b142aea209cab307dca
 spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
 context_verified: true
-test_status: NOT_RUN
+test_status: PASSING
 ```
 
 ## Contesto letto
@@ -2571,7 +2584,7 @@ test_status: NOT_RUN
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti BL-008 — `docs/MVP_SPEC.md` §§24, 29.1, 31 e 35.1; ADR-0002 e ADR-0004
+- [x] riferimenti BL-008 — `docs/MVP_SPEC.md` §§24, 29.1, 31 e 35.1; ADR-0002, ADR-0004, ADR-0007, design e piano TDD
 - [x] documentazione corrente — `docs/architecture/SYSTEM_OVERVIEW.md` e `docs/operations/CONFIGURATION.md`
 - [x] codice/test interessati — `packages/observability`, `packages/config`, `apps/web`, `apps/api`, `apps/worker`, manifest e suite unit/integration/contract/security
 
@@ -2589,6 +2602,8 @@ test_status: NOT_RUN
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-15 13:44 +02:00 | 100% | Review indipendente senza P0/P1 e candidato branch-local terminale. Il primo full ha esposto soltanto Docker Desktop spento; nessun file è cambiato, la suite DB isolata è tornata verde e il rerun completo ha chiuso il gate. | Primo full exit `1` in 67,8 s su start container; DB isolato 13/13 exit `0`; full `TURBO_FORCE=true pnpm verify` exit `0` in 86,2 s: lint 11, typecheck 13, build 11, unit 77/1 skip, integration 13, DB 13, contract 32, security 26/3 skip, artifact 3.906. | Congelare il commit, eseguire install frozen + full verify da worktree pulito, poi una sola PR protetta. |
+| 2026-07-15 13:25 +02:00 | 90% | Implementata la baseline completa e chiusi i failure path di privacy, concorrenza, startup e bundle. Il target HIGH_RISK di 120 minuti è stato superato perché la stessa slice ha richiesto hardening condiviso del sanitizer/DSN e wiring verificato su tre runtime; nessuna espansione a provider o deploy. | Head `3d278655`; unit 77/1 skip, integration 13, contract 32, security 26/3 skip e `verify:affected` 33/33, tutti exit `0`; `verify:docs` 27 documenti/11 modificati; artifact client senza marker Node/Sentry server. | Eseguire una review indipendente, l'unico full gate e il checkout pulito. |
 | 2026-07-15 10:10 +02:00 | 25% | Selezionato `BL-008` da `main` pulita; approvato kernel condiviso con OTel unica autorità trace, Pino redatto e Sentry error-only off-by-default. | Base `99a4f3f5441fd5a64657d2ad54fd7342e3fefef2`; spec SHA invariato; `verify:docs` PASS su 25 documenti/5 modificati; test implementativi `NOT_RUN`. | Review del design versionato, poi piano TDD dettagliato prima del codice. |
 | 2026-07-14 19:55 +02:00 | 100% | Chiuso il candidato in 43 minuti con delivery derivata, una sola review più re-check dei P1 e nessun commit di sola evidenza. | Unico full `verify` exit `0` in 72,70 s; 11 lint/build, 12 typecheck, 55/1 unit, 9 integration, 13 database, 26 contract, 23/3 security; `verify:affected` finale 6,96 s; nessun P0/P1. | Pubblicare una sola PR protetta; dopo il merge selezionare `BL-008`. |
 | 2026-07-14 19:46 +02:00 | 90% | Auditato il ciclo agente e implementati corsie/budget, stato delivery derivato, docs gate tracked+untracked e selezione workspace fail-closed. La prima review ha rilevato tre P1 reali, corretti senza indebolire CI/Ruleset. | Baseline: 17/28 commit docs; BL-080 11 PR/23 pipeline/115 job. Targeted 11/11 `PASS`; `verify:docs` exit `0` in 2,65 s; `verify:affected` exit `0` in 7,22 s. | Chiudere la re-review dei P1 ed eseguire l’unico full `verify` finale. |
@@ -2639,16 +2654,16 @@ test_status: NOT_RUN
 
 ## Chiusura
 
-- **Commit/PR:** design commit in preparazione sul branch `codex/bl-008-observability-baseline`; implementazione e PR non ancora avviate.
-- **Comandi eseguiti:** preflight Git/spec, audit card/spec/ADR/codice, documentazione ufficiale OTel/Pino/Sentry, design review incrementale con il Product Owner e `corepack pnpm@10.34.5 verify:docs`.
-- **Exit code:** `verify:docs` `0` — policy documentale 25/25, task graph e secret scan `PASS`; test implementativi `NOT_RUN` perché il workflow richiede prima la review della spec scritta.
-- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md`; CI `N/A` in questa fase.
+- **Commit/PR:** implementation head `3d278655bf3ccec5d7dd3b142aea209cab307dca` sul branch `codex/bl-008-observability-baseline`; commit documentale/candidato, clean verify e PR seguono questo snapshot; delivery `PENDING`.
+- **Comandi eseguiti:** build/test TDD mirati; `test:unit`; `test:integration`; `test:contract`; `test:security`; `verify:affected`; `verify:docs`; ricerca marker negli artifact client; review indipendente; full `TURBO_FORCE=true pnpm verify`; suite DB isolata dopo avvio Docker.
+- **Exit code:** unit `0` (77 pass/1 host skip); integration `0` (13 pass); database `0` (13 pass); contract `0` (32 pass); security `0` (26 pass/3 host skip); `verify:affected` `0` (33/33); `verify:docs` `0` (27 documenti/11 modificati); full finale `0` in 86,2 s. Primo full `1` in 67,8 s su daemon Docker spento, seguito da recovery senza modifiche al repository.
+- **Report/CI URL o path:** design, piano, ADR-0007 e card corrente; CI `N/A — PR non ancora aperta`.
 - **Migration head:** `000001_postgresql_foundation` invariato.
-- **Contract/schema/event version:** `observability-baseline-v1` definito nel design; API/event schema `N/A`.
+- **Contract/schema/event version:** `observability-baseline-v1` implementato; API/event schema `N/A`.
 - **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
-- **Documenti aggiornati:** design spec, `docs/TASKS.md`, `docs/CONTEXT.md`, `docs/README.md`, `docs/CHANGELOG.md`.
-- **Rischi residui/TODO tracciati:** implementare e verificare context isolation, redaction, bundle boundary e collisione OTel/Sentry; freeze Vercel invariato.
-- **Task successivo reso READY:** nessuno finché `BL-008` è `IN_PROGRESS`; `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale.
+- **Documenti aggiornati:** ADR-0007, design/piano, `docs/TASKS.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, overview, configuration, CI/CD, README e changelog.
+- **Rischi residui/TODO tracciati:** checkout pulito e delivery protetta; provider telemetry e freeze Vercel invariati.
+- **Task successivo reso READY:** nessuno sul branch; lo stato canonico resta su `main` fino al merge. `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale.
 
 
 ## 21. Context Sync Log
@@ -2691,6 +2706,8 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-14 | `aaa17b2` | BL-004 closure | PR protetta, CI e stato backlog | [PR #18](https://github.com/Emacore17/dnd-ai/pull/18) e run `29351291907` 5/5 chiudono la baseline PostgreSQL; `BL-008` passa `READY`, `BL-079` resta `BACKLOG` e il freeze Vercel non cambia. | BL-005, BL-007, BL-008, BL-015, BL-036, BL-079, QA-001, DOC-ARCH-001 |
 | 2026-07-14 | candidate head derivato da Git | GOV-003 throughput | Workflow agente e gate locali | Baseline 60,7% docs-only; introdotti corsie/budget, delivery derivata, docs check tracked+untracked e affected selection fail-closed. Candidate in 43 minuti, full gate unico e review senza P0/P1; CI/Ruleset/Vercel invariati. | BL-008, GOV-002 |
 | 2026-07-15 | `99a4f3f` + design branch | BL-008 design | Osservabilità e privacy boundary | Approvato e versionato `observability-baseline-v1`: OTel unica autorità trace, Pino redatto, Sentry error-only off-by-default, test senza rete e nessuna azione Vercel; implementazione subordinata a review della spec scritta e piano TDD. | BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
+| 2026-07-15 | `3d27865` | BL-008 implementation | Runtime osservabilità e privacy boundary | Implementati kernel browser-safe, runtime OTel Node, Pino redatto, Sentry error-only lazy, plugin API e wrapper worker; gate mirati verdi e ADR-0007 accepted. Stato branch-local `IN_REVIEW/90%/PASSING`; full/clean/PR pendenti. | BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
+| 2026-07-15 | `3d27865` + candidate docs | BL-008 candidate | Full gate e stato branch-local | Review senza P0/P1; full gate verde dopo l'avvio del daemon Docker richiesto, senza modifiche al repository. Proposta `DONE/100%/PASSING`; clean checkout e delivery protetta restano gate esterni immediati. | BL-009, BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
 
 
 ## 22. Checklist di fine sessione dell’agente

@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering-and-security
-last_reviewed: 2026-07-14
-last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+last_reviewed: 2026-07-15
+last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -11,6 +11,7 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-008
   - BL-080
   - QA-001
   - BL-070
@@ -19,6 +20,8 @@ code_refs:
   - .github/workflows/ci.yml
   - .github/actions/setup-workspace/action.yml
   - packages/config
+  - packages/observability
+  - packages/observability/dist
   - packages/persistence/src/migration-runner.ts
   - packages/persistence/src/migrations/000001_postgresql_foundation.ts
   - scripts/lib/postgres-test-container.mjs
@@ -60,6 +63,11 @@ test_refs:
   - tests/database/database-migration-failure.test.mjs
   - tests/database/database-migrations.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
+  - tests/unit/observability-core.test.mjs
+  - tests/unit/observability-node.test.mjs
+  - tests/integration/observability-flow.test.mjs
+  - tests/contracts/observability-contract.test.mjs
+  - tests/security/observability-security.test.mjs
 supersedes: null
 ---
 
@@ -119,7 +127,13 @@ Il job `Staging / Smoke`:
 
 Il progetto applica Standard Protection con policy SSO predefinita `all_except_custom_domains`; la Trusted Source limita già l'OIDC a issuer GitHub, audience account, repository + repository ID immutabile/ref/environment esatti e target `preview`. Il workflow non pubblica un URL non validato nell'environment GitHub. Non introdurre `VERCEL_TOKEN`, automation bypass secret, Deploy Hook, `pull_request_target`, `vercel deploy --prod`, `--prebuilt`, `promote` o checkout del commit indicato dall'evento. La Git Integration ricostruisce il commit anziché caricare `artifacts/bl002`; l'identità immutabile del deploy è quindi project ID + deployment ID + SHA + health contract.
 
-Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma né policy linked né selector CLI hanno impedito i record Production nello stato iniziale senza deployment. PR #13 ha riportato Quality a `pnpm deploy:check`, binding `null` e Git spento; PR #16 ha integrato il freeze. Project/link/Trusted Source remoti e grant condiviso restano invariati. Dry-run e contenimento sono verificati, ma ogni nuova creazione è congelata; Preview, smoke, failure e redeploy restano aperti. `BL-080` è `BLOCKED/50%/PARTIAL`, `BL-004` `DONE/100%/PASSING`, `BL-008` `READY` e `BL-079` `BACKLOG`.
+Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Production Branch Vercel continua a essere riletta `release/production`, ma né policy linked né selector CLI hanno impedito i record Production nello stato iniziale senza deployment. PR #13 ha riportato Quality a `pnpm deploy:check`, binding `null` e Git spento; PR #16 ha integrato il freeze. Project/link/Trusted Source remoti e grant condiviso restano invariati. Dry-run e contenimento sono verificati, ma ogni nuova creazione è congelata; Preview, smoke, failure e redeploy restano aperti. `BL-080` è `BLOCKED/50%/PARTIAL`, `BL-004` `DONE/100%/PASSING` e `BL-079` `BACKLOG`.
+
+## Osservabilità nel gate
+
+`BL-008` usa i job esistenti senza modificare workflow, permessi, cache, Ruleset o provider. Unit e integration provano tracing, concorrenza e failure containment con exporter in-memory; contract e security provano dipendenze, startup, redazione, assenza di rete e confine bundle browser/Node. Sentry usa transport fake e nessuna suite richiede account, DSN reale, token o backend OTLP.
+
+L'artifact può includere `packages/observability/dist` come output compilato allowlisted, ma non file ambientali, telemetry output o log. Il check sul bundle Next rifiuta marker Node/Sentry server negli artifact client; Replay, profiling, tunnel, source map upload e auto-instrumentation restano vietati.
 
 ## Cache e artifact
 

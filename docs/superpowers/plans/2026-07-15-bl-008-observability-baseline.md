@@ -2,9 +2,10 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-15
-last_verified_commit: 5e1f392c5e34c78fc321e8d70c3f6232bfe5067c
+last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
 source_refs:
   - docs/superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md
+  - docs/adr/0007-observability-context-and-error-reporting.md
   - docs/MVP_SPEC.md#24-osservabilita
   - docs/MVP_SPEC.md#291-topologia-mvp
   - docs/MVP_SPEC.md#351-definition-of-done-per-user-story
@@ -36,6 +37,12 @@ supersedes: null
 **Stack:** TypeScript strict, Node 24, OpenTelemetry API/SDK minimi, Pino, Sentry Node/Next, Fastify 5, Next 16 App Router, `node:test`, pnpm 10/Turborepo.
 
 **Corsia:** `HIGH_RISK`; un solo full gate sul candidato, seguito da checkout pulito, una review indipendente e una sola PR. Nessuna azione Vercel, creazione account Sentry, exporter OTLP o chiamata provider reale.
+
+## Stato di esecuzione
+
+I Task 1–8 e i gate locali pre-commit del Task 9 sono completati: unit `77 PASS/1 host skip`, integration `13 PASS`, database `13 PASS`, contract `32 PASS`, security `26 PASS/3 host skip`, `verify:affected` `33/33`, `verify:docs` su 27 documenti, review senza P0/P1 e full `verify` verde in `86,2 s`. Restano checkout pulito e delivery protetta sul commit candidato.
+
+Il wiring Next carica Sentry client/server/edge soltanto dopo una DSN valida. Questa ottimizzazione mantiene l'SDK fuori dall'entry client iniziale quando disabilitato e accetta una breve finestra asincrona per gli errori di hydration più precoci.
 
 ## Vincoli di esecuzione
 
@@ -297,6 +304,7 @@ Atteso: `PASS`; nessun context bleed o regressione startup.
 
 - Creare: `apps/web/lib/server-observability.ts`
 - Creare: `apps/web/lib/sentry-options.ts`
+- Creare: `packages/observability/src/sentry-options.ts`
 - Creare: `apps/web/instrumentation.ts`
 - Creare: `apps/web/instrumentation-client.ts`
 - Creare: `apps/web/sentry.server.config.ts`

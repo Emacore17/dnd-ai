@@ -1,26 +1,34 @@
 ---
-status: draft
+status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-15
-last_verified_commit: 99a4f3f5441fd5a64657d2ad54fd7342e3fefef2
+last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
 source_refs:
   - docs/MVP_SPEC.md#24-osservabilita
   - docs/MVP_SPEC.md#291-topologia-mvp
   - docs/MVP_SPEC.md#351-definition-of-done-per-user-story
   - docs/TASKS.md#bl-008--otellogsentry-baseline
+  - docs/adr/0007-observability-context-and-error-reporting.md
 related_tasks:
   - BL-008
 code_refs:
-  - packages/observability
-  - packages/config
-  - apps/web
-  - apps/api
-  - apps/worker
+  - packages/observability/src/index.ts
+  - packages/observability/src/node.ts
+  - packages/observability/src/tracing.ts
+  - packages/observability/src/logger.ts
+  - packages/observability/src/redaction.ts
+  - packages/observability/src/sentry-options.ts
+  - packages/config/src/runtime-config.ts
+  - apps/api/src/observability.ts
+  - apps/worker/src/observability.ts
+  - apps/web/instrumentation.ts
+  - apps/web/instrumentation-client.ts
 test_refs:
-  - tests/unit
-  - tests/integration
-  - tests/contracts
-  - tests/security
+  - tests/unit/observability-core.test.mjs
+  - tests/unit/observability-node.test.mjs
+  - tests/integration/observability-flow.test.mjs
+  - tests/contracts/observability-contract.test.mjs
+  - tests/security/observability-security.test.mjs
 supersedes: null
 ---
 
@@ -28,7 +36,7 @@ supersedes: null
 
 ## Stato e decisione
 
-Il Product Owner ha approvato il design il 2026-07-15. Il documento resta `draft` fino alla review del testo versionato richiesta prima del piano di implementazione.
+Il Product Owner ha approvato il design il 2026-07-15. Il contratto è implementato sul branch `codex/bl-008-observability-baseline`: suite mirate, review indipendente e full gate sono verdi; checkout pulito e delivery protetta seguono il commit candidato.
 
 La baseline adotta un kernel condiviso e provider-agnostic in `@dnd-ai/observability`, OpenTelemetry come unica autorità del tracing, Pino per i log strutturati server-side e Sentry come adapter error-only opzionale. In assenza di DSN o exporter esterno il sistema resta operativo, non effettua chiamate di rete e mantiene comunque propagazione e test deterministici.
 
@@ -72,13 +80,15 @@ Una soluzione basata soltanto su `crypto.randomUUID()` e JSON manuale sarebbe pi
 - `@dnd-ai/observability`: tipi, carrier, sanitizzazione ed error-reporting port compatibili con server e browser;
 - `@dnd-ai/observability/node`: context manager Node, tracer provider, logger Pino e adapter Sentry Node.
 
-I moduli previsti nel package, marcati `planned` fino all’implementazione, hanno responsabilità singole:
+I moduli implementati nel package hanno responsabilità singole:
 
-- `src/trace-context.ts`: validazione del `requestId`, estrazione/iniezione W3C e accesso al contesto corrente;
+- `src/contracts.ts`: tipi di contesto, carrier, log ed error reporting;
+- `src/request-id.ts`: validazione e rigenerazione bounded del `requestId`;
 - `src/tracing.ts`: lifecycle del tracer provider e wrapper per operazioni osservate;
 - `src/redaction.ts`: sanitizzazione ricorsiva e bounded dei valori non affidabili;
 - `src/logger.ts`: eventi JSON tipizzati e correlazione automatica;
 - `src/error-reporting.ts`: porta `ErrorReporter`, no-op e contesto sicuro;
+- `src/sentry-options.ts`: validazione DSN e opzioni error-only condivise senza dipendenze Node;
 - `src/sentry.ts`: configurazione error-only e filtro finale degli eventi;
 - `src/node.ts`: export Node espliciti;
 - `src/index.ts`: export platform-neutral.
@@ -87,7 +97,7 @@ La parte Next-specific resta in `apps/web`; `@dnd-ai/observability` non importa 
 
 ### Runtime web
 
-Il web crea la root span per le operazioni server-side dirette all’API e inietta il carrier nelle richieste interne. L’inizializzazione Sentry client/server usa `@sentry/nextjs` in modalità error-only:
+Il composition root web inizializza il runtime OTel server-side che potrà creare la root span per le future operazioni BFF dirette all’API; il client interno non appartiene ancora allo scaffold. L’inizializzazione Sentry client/server/edge usa `@sentry/nextjs` in modalità error-only:
 
 - `tracesSampleRate` pari a `0`;
 - Replay e log forwarding non configurati;
@@ -95,15 +105,15 @@ Il web crea la root span per le operazioni server-side dirette all’API e iniet
 - nessun source-map upload o token di release in questa slice;
 - assenza di DSN uguale a SDK disabilitato.
 
-Il browser non avvia un provider OTel completo. Gli errori JS, hydration e navigation appartengono a Sentry; la trace applicativa nasce nel server web/BFF.
+Gli entrypoint caricano Sentry dinamicamente soltanto dopo una DSN valida: in assenza di DSN il chunk SDK non entra nell'entry iniziale. Il browser non avvia un provider OTel completo. Gli errori JS, hydration e navigation appartengono a Sentry; la trace applicativa nasce nel server web/BFF. Il caricamento lazy accetta una breve finestra asincrona per gli errori di hydration più precoci, evitando costo client quando l'adapter è disabilitato.
 
 ### Runtime API
 
-Un plugin Fastify, pianificato in `apps/api`, avvolge gli handler registrati, estrae il carrier, crea la server span, imposta `x-request-id` nella risposta e registra lifecycle/error event senza payload applicativi. Il plugin non autorizza richieste e non usa il trace context come identità.
+Il plugin Fastify in `apps/api` avvolge gli handler registrati, estrae il carrier, crea la server span, imposta `x-request-id` nella risposta e registra lifecycle/error event senza payload applicativi. Il plugin non autorizza richieste e non usa il trace context come identità.
 
 ### Runtime worker
 
-Un wrapper pianificato in `apps/worker` riceve il metadata del job, estrae il carrier e crea una consumer span prima di invocare il processor. BullMQ e il contratto di job reale restano fuori scope; il test usa un envelope fake che contiene soltanto metadata di osservabilità e payload sintetico non sensibile.
+Il wrapper in `apps/worker` riceve il metadata del job, estrae il carrier e crea una consumer span prima di invocare il processor. BullMQ e il contratto di job reale restano fuori scope; il test usa un envelope fake che contiene soltanto metadata di osservabilità e payload sintetico non sensibile.
 
 ## Contratti logici
 
@@ -214,7 +224,7 @@ Il filtro finale:
 - conserva breadcrumb solo per codici fase/evento noti, senza testo libero;
 - non include attachment, Replay, log o session content.
 
-Una DSN assente produce `NoopErrorReporter`. Una DSN presente ma malformata fallisce nella configurazione del composition root senza riflettere il valore. I test usano un transport in-memory/fake e impediscono qualunque rete.
+Una DSN server API/worker assente produce `NoopErrorReporter`; se presente ma malformata fallisce nella configurazione del composition root senza riflettere il valore. Una DSN pubblica web assente o malformata disabilita invece l'adapter senza interrompere UI o richieste. I test usano un transport in-memory/fake e impediscono qualunque rete.
 
 ## Configurazione
 
@@ -266,16 +276,16 @@ Poiché cambiano dependency graph, config e privacy boundary, `BL-008` usa la co
 - export Node/browser, manifest, dependency direction e config runtime verificati;
 - build web senza dipendenze Node nel client artifact.
 
-I test vengono scritti e osservati rossi prima del codice corrispondente. Sul candidato finale si esegue un solo full `verify`, seguito da install/verify in checkout pulito e una review indipendente; la CI della PR resta il merge gate remoto.
+I test sono stati scritti e osservati rossi prima del codice corrispondente. Le suite mirate e `verify:affected` passano; sul candidato finale si eseguono review indipendente, un solo full `verify` e install/verify in checkout pulito. La CI della PR resta il merge gate remoto.
 
 ## Documentazione e tracciabilità
 
-L’implementazione aggiornerà:
+L’implementazione aggiorna nello stesso change set:
 
 - `docs/TASKS.md`, `docs/CONTEXT.md` e `docs/TRACEABILITY.md`;
 - `docs/architecture/SYSTEM_OVERVIEW.md`;
 - `docs/operations/CONFIGURATION.md`;
-- un ADR accepted dedicato alla baseline osservabilità;
+- `docs/adr/0007-observability-context-and-error-reporting.md` accepted;
 - `docs/README.md` e `docs/CHANGELOG.md` per il nuovo documento/contratto.
 
 `docs/MVP_SPEC.md` non cambia: il design implementa decisioni già normative.

@@ -1,16 +1,18 @@
 ---
 status: active
 owner: engineering-and-security
-last_reviewed: 2026-07-14
-last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+last_reviewed: 2026-07-15
+last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
   - docs/MVP_SPEC.md#293-ambienti
   - docs/adr/0004-runtime-configuration-and-secret-injection.md
+  - docs/adr/0007-observability-context-and-error-reporting.md
 related_tasks:
   - BL-003
   - BL-004
+  - BL-008
   - BL-080
 code_refs:
   - .vercelignore
@@ -19,6 +21,12 @@ code_refs:
   - apps/api/src/runtime.ts
   - apps/api/src/start.ts
   - apps/worker/src/runtime.ts
+  - apps/api/src/observability.ts
+  - apps/worker/src/observability.ts
+  - apps/web/.env.example
+  - apps/web/lib/sentry-options.ts
+  - apps/web/lib/server-observability.ts
+  - apps/web/instrumentation-client.ts
   - apps/api/.env.example
   - apps/worker/.env.example
   - packages/persistence/.env.example
@@ -56,6 +64,11 @@ test_refs:
   - tests/contracts/database-migration-contract.test.mjs
   - tests/database/database-migration-cli.test.mjs
   - tests/security/database-migration-security.test.mjs
+  - tests/unit/observability-core.test.mjs
+  - tests/unit/observability-node.test.mjs
+  - tests/integration/observability-flow.test.mjs
+  - tests/contracts/observability-contract.test.mjs
+  - tests/security/observability-security.test.mjs
 supersedes: null
 ---
 
@@ -82,14 +95,17 @@ Una preview non introduce il valore `preview`: usa lo schema `staging`, ma non n
 | API | `API_PORT` | non secret | intero `1..65535` |
 | API | `API_DATABASE_URL` | secret-bearing | URL PostgreSQL con credenziale API; nei profili gestiti `sslmode=require|verify-ca|verify-full` |
 | API | `API_REDIS_URL` | secret-bearing | URL Redis con credenziale API; nei profili gestiti protocollo `rediss:` |
+| API | `API_SENTRY_DSN` | identificatore provider pubblico, redatto | opzionale; DSN HTTPS con host strutturale e project ID numerico |
 | worker | `APP_ENV` | non secret | stesso discriminatore canonico |
 | worker | `WORKER_DATABASE_URL` | secret-bearing | URL PostgreSQL con credenziale worker distinta e TLS nei profili gestiti |
 | worker | `WORKER_REDIS_URL` | secret-bearing | URL Redis con credenziale worker distinta e `rediss:` nei profili gestiti |
+| worker | `WORKER_SENTRY_DSN` | identificatore provider pubblico, redatto | opzionale; stesso vincolo DSN, service-scoped |
 | migration | `APP_ENV` | non secret | stesso discriminatore canonico |
 | migration | `MIGRATION_DATABASE_URL` | secret-bearing | URL PostgreSQL con credenziale migration distinta e TLS nei profili gestiti |
-| web | nessuna applicativa | `N/A` | la shell corrente non consuma config prodotto; il build guard e `/health` leggono soltanto system metadata Vercel server-side |
+| web | `NEXT_PUBLIC_SENTRY_DSN` | identificatore provider pubblico, redatto | opzionale; DSN HTTPS valida, incorporata nel build client quando configurata |
+| web | `APP_ENV`, `VERCEL_ENV`, `NEXT_PUBLIC_VERCEL_ENV` | system metadata | risoluzione dell'environment telemetry; non sono config di dominio né secret |
 
-Non aggiungere chiavi AI, auth, telemetry, storage o flag finché il task proprietario non introduce un consumer e i relativi test. Il web non dipende da `@dnd-ai/config`; nessun valore di questa matrice usa il prefisso `NEXT_PUBLIC_`.
+Non aggiungere chiavi AI, auth, storage o flag finché il task proprietario non introduce un consumer e i relativi test. Il web non dipende da `@dnd-ai/config`: il proprio composition root legge soltanto metadata ambientali e la DSN pubblica opzionale. Nessuna DSN è una credenziale, ma viene comunque redatta da log, errori e documenti operativi.
 
 ## Setup locale
 
@@ -98,10 +114,11 @@ Creare file ignorati partendo dai template:
 ```powershell
 Copy-Item apps/api/.env.example apps/api/.env.local
 Copy-Item apps/worker/.env.example apps/worker/.env.local
+Copy-Item apps/web/.env.example apps/web/.env.local
 Copy-Item packages/persistence/.env.example packages/persistence/.env.local
 ```
 
-Sostituire i placeholder dei template API e worker senza committare il risultato. Il template persistence è un'eccezione deliberata: contiene soltanto la URL funzionante del Compose locale, con credenziali sintetiche note `dnd_migration_local` e database `dnd_ai_local` su `127.0.0.1:55432`. Non è un secret e non deve essere riutilizzata o resa raggiungibile fuori dall'host locale.
+Sostituire i placeholder dei template API e worker senza committare il risultato. Le tre chiavi Sentry possono restare vuote: in tal caso l'adapter remoto è disabilitato. Il template persistence è un'eccezione deliberata: contiene soltanto la URL funzionante del Compose locale, con credenziali sintetiche note `dnd_migration_local` e database `dnd_ai_local` su `127.0.0.1:55432`. Non è un secret e non deve essere riutilizzata o resa raggiungibile fuori dall'host locale.
 
 Verificare i tre profili dopo il build del parser:
 
@@ -139,7 +156,7 @@ Il percorso completo, inclusi lock, checksum, rollback e failure path, è in [`D
 
 Il secret manager della piattaforma inietta soltanto le chiavi del servizio avviato. Non usare file `.env` nell'artifact, variabili condivise fra tutti i runtime o secret di production in preview/staging. Staging e production richiedono password service-scoped e trasporto cifrato; il provider deve inoltre garantire TLS 1.2+ secondo la specifica. Il processo usa la stessa CLI senza `--env-file` come preflight dopo l'iniezione.
 
-Il desired state di `BL-080` seleziona Vercel Environment Variables come confine futuro, ma dichiara correttamente `variables: []` e `secrets: []`: il web non ha un consumer applicativo. Il progetto reale `dnd-ai-web` conferma zero variabili applicative e system environment variables abilitate. `VERCEL_PROJECT_ID`, `VERCEL_DEPLOYMENT_ID`, `VERCEL_GIT_COMMIT_SHA`, `VERCEL_GIT_COMMIT_REF`, `VERCEL_GIT_REPO_OWNER`, `VERCEL_GIT_REPO_SLUG`, `VERCEL_GIT_REPO_ID` e `VERCEL_REGION` sono metadata di identità usati da `/health`; `VERCEL`, `VERCEL_ENV` e `VERCEL_TARGET_ENV` sono anche il confine build-time del guard Preview-only. Non sono configurazione di dominio e non vengono prefissati `NEXT_PUBLIC_`.
+Il desired state di `BL-080` seleziona Vercel Environment Variables come confine futuro, ma mantiene intenzionalmente `variables: []` e `secrets: []`: `BL-008` introduce un consumer opzionale, non autorizza account, progetto o provisioning Sentry. Il progetto reale `dnd-ai-web` resta quindi senza variabili applicative. `VERCEL_PROJECT_ID`, `VERCEL_DEPLOYMENT_ID`, `VERCEL_GIT_COMMIT_SHA`, `VERCEL_GIT_COMMIT_REF`, `VERCEL_GIT_REPO_OWNER`, `VERCEL_GIT_REPO_SLUG`, `VERCEL_GIT_REPO_ID` e `VERCEL_REGION` sono metadata di identità usati da `/health`; `VERCEL`, `VERCEL_ENV` e `VERCEL_TARGET_ENV` sono anche il confine build-time del guard Preview-only. Non sono configurazione di dominio. `NEXT_PUBLIC_VERCEL_ENV` è letto soltanto se fornito dal runtime per classificare gli eventi client.
 
 `apps/web/vercel.json` impone `node scripts/assert-vercel-preview-build.mjs && pnpm run build`: il controllo provider strict prosegue soltanto con `VERCEL=1`, `VERCEL_ENV=preview` e `VERCEL_TARGET_ENV=preview`. Il normale build locale usa l'entrypoint con `--allow-local` ed è ammesso esclusivamente quando tutti e tre i metadata sono assenti; metadata parziali, incoerenti o diversi da Preview falliscono senza stampare i valori. `turbo.json` include la tripla nella chiave cache. Il guard è integrato su `main` tramite PR #14/merge `ee5f12916998cce6847fcc509d8f5e1fa05b1b9f`, con CI PR `29335696502` e post-merge `29335856323` 5/5 verdi e zero deployment al readback. `APP_ENV=staging` resta il discriminatore applicativo futuro e non va confuso con questi metadata di piattaforma.
 
@@ -149,18 +166,20 @@ La Git Integration effettiva collega esattamente il progetto al repository autor
 
 Il flag CLI `--target=preview` non è una mitigazione: in Vercel CLI `55.0.0`, `@vercel/client 17.6.4` lo rimuove prima di serializzare la POST, dopodiché il provider ha restituito Production sul progetto senza deployment. L'applicazione server del comportamento first-deployment, coerente con la fonte storica e con l'issue aperta `vercel/vercel#17069`, è l'ipotesi più forte ma non è confermata; manca un fix/workaround supportato. La root `.vercelignore` resta il solo contratto di esclusione. Il dry-run `vercel@55.0.0 deploy . --target=preview --dry --format=json` può ancora essere validato perché non carica sorgenti né crea deployment. Il runbook invoca `deploy:bootstrap:check`, che fallisce intenzionalmente; l'interlock non impedisce a un owner di bypassare il runbook. Non usare `--cwd apps/web`, `--prebuilt`, archivi, `--prod`, `promote`, `redeploy`, `--skip-domain`, custom target o override manuali `VERCEL*`.
 
-Per Next.js, le variabili `NEXT_PUBLIC_*` vengono incorporate nel bundle al build e restano congelate per quella build. Qualunque futura variabile pubblica richiede quindi review esplicita e non può contenere credenziali. Riferimento: [Next.js Environment Variables](https://nextjs.org/docs/app/guides/environment-variables).
+Per Next.js, le variabili `NEXT_PUBLIC_*` vengono incorporate nel bundle al build e restano congelate per quella build. `NEXT_PUBLIC_SENTRY_DSN` e `NEXT_PUBLIC_VERCEL_ENV` sono quindi esclusivamente metadata pubblici e non possono contenere credenziali. Nessun `SENTRY_AUTH_TOKEN`, organization/project slug, endpoint/header OTLP o source-map upload è previsto. Riferimento: [Next.js Environment Variables](https://nextjs.org/docs/app/guides/environment-variables).
 
 ## Failure e redazione
 
 Su input mancante o malformato, `RuntimeConfigurationError` contiene soltanto il servizio e i nomi delle chiavi invalide. Non include valore, `ZodError`, input o cause. Errori inattesi allo startup API diventano il messaggio sicuro `API startup failed`.
+
+Una `API_SENTRY_DSN` o `WORKER_SENTRY_DSN` presente ma malformata blocca il composition root prima del listener o dell'initializer, senza riflettere il valore. Una `NEXT_PUBLIC_SENTRY_DSN` assente o malformata disabilita invece Sentry client/server/edge e non interrompe UI o richieste. Errori di exporter, destination o transport vengono contenuti dal runtime osservabilità e non cambiano l'esito applicativo.
 
 Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo scanner rifiuta comunque un file privato forzato in Git per pathname, classifica credential file prima della lettura e integra l'indice Git con un traversal filesystem Git-ignore-aware per scoprire file untracked e speciali. Il traversal esclude `.git` e path ignorati, non segue symlink/junction e il controllo non apre file non regolari. Questo controllo è difesa in profondità: non sostituisce rotazione, scope minimo e audit del secret manager.
 
 ## Ownership successiva
 
 - `BL-004`: migration executable, Compose e credenziali esclusivamente sintetiche locali implementati; le credenziali reali/gestite restano al provisioning dell'ambiente proprietario;
-- `BL-008`: log/redaction/telemetry e nuovi endpoint osservabili;
+- `BL-008`: baseline OTel/Pino/Sentry, redazione e propagazione implementate sul branch; nessun endpoint pubblico, account o backend remoto introdotto;
 - `BL-010`: configurazione dinamica auditata per flag e kill switch;
 - `BL-080`: project/provider web, Production Branch e Trusted Source configurati senza secret applicativi; freeze integrato; task bloccato finché il provider non offre un first-deployment Preview-only supportato;
 - `BL-070`: hardening, load/chaos, backup restore e go/no-go.

@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-14
-last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+last_reviewed: 2026-07-15
+last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
@@ -12,6 +12,7 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-008
   - BL-079
   - BL-080
   - DOC-ARCH-001
@@ -20,6 +21,14 @@ code_refs:
   - apps/web
   - apps/api
   - apps/worker
+  - packages/observability/src/node.ts
+  - packages/observability/src/tracing.ts
+  - packages/observability/src/logger.ts
+  - packages/observability/src/redaction.ts
+  - apps/api/src/observability.ts
+  - apps/worker/src/observability.ts
+  - apps/web/instrumentation.ts
+  - apps/web/instrumentation-client.ts
   - packages/config
   - packages/persistence/src/migration-manifest.ts
   - packages/persistence/src/migration-runner.ts
@@ -62,6 +71,11 @@ test_refs:
   - tests/database/database-migration-failure.test.mjs
   - tests/database/database-migrations.test.mjs
   - tests/security/database-migration-security.test.mjs
+  - tests/unit/observability-core.test.mjs
+  - tests/unit/observability-node.test.mjs
+  - tests/integration/observability-flow.test.mjs
+  - tests/contracts/observability-contract.test.mjs
+  - tests/security/observability-security.test.mjs
 supersedes: null
 ---
 
@@ -69,13 +83,13 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` completa la fondazione PostgreSQL/pgvector: migration head e contract versionati, composition root esterno a persistence, rollback local-only e suite container reale in CI. `BL-080` resta bloccato: i due record Production creati dal provider sono stati contenuti e rimossi; freeze, Git auto-deploy spento e gate manuale fail-closed restano invariati. Non esiste ancora uno staging, quindi `BL-079` resta backlog; `BL-008` è il solo task pronto. Nessuna operazione Vercel è stata eseguita da `BL-004`.
+`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` completa la fondazione PostgreSQL/pgvector. `BL-008` implementa `observability-baseline-v1` ed è una proposta branch-local `DONE/100%/PASSING`: OTel è l'unica autorità trace, Pino produce log redatti e Sentry resta error-only opzionale; review e full gate sono verdi, mentre clean checkout e delivery seguono sul commit. `BL-080` resta bloccato e il freeze Vercel invariato. Non esiste staging, quindi `BL-079` resta backlog; nessuna operazione Vercel appartiene a `BL-008`.
 
 ```text
 apps/
-  web/             Next.js App Router; scaffold, build guard Preview-only + `/health`
-  api/             Fastify composition root; config prima del bind
-  worker/          config prima dell'initializer; BullMQ pianificato
+  web/             Next.js App Router; OTel server + Sentry error-only lazy, build guard + `/health`
+  api/             Fastify composition root; config e osservabilità prima del bind
+  worker/          config e osservabilità prima dell'initializer; BullMQ pianificato
 packages/
   config/          parser Zod, profili runtime e CLI redatta
   contracts/       DTO e schemi esterni futuri
@@ -83,7 +97,7 @@ packages/
   rules/           Rules Engine deterministico
   ai/              porte, prompt/context e adapter AI futuri
   persistence/     manifest, runner e baseline migration; repository di dominio futuri
-  observability/   logging, tracing e metriche condivise future
+  observability/   contratti safe, tracing OTel, logging Pino e Sentry error-only
   testing/         fixture/fake condivisi senza logica di produzione
 ```
 
@@ -118,6 +132,8 @@ App→app, package→app, import relativi che escono dal package e cicli workspa
 | Fastify | `5.10.0` |
 | PostgreSQL / pgvector | `17` / `0.8.2` |
 | node-pg-migrate / pg | `8.0.4` / `8.22.0` |
+| OpenTelemetry API / SDK | `1.9.1` / `2.9.0` |
+| Pino / Sentry | `10.3.1` / `10.65.0` |
 
 TypeScript 7 non è stato selezionato perché `typescript-eslint@8.63.0` dichiara compatibilità `<6.1.0`. ESLint resta sulla linea `9.39.2`, compatibile con i plugin transitivi di Next 16.
 
@@ -127,11 +143,19 @@ La supply-chain policy pnpm permette install script soltanto a `sharp` (runtime 
 
 Il contratto `runtime-config-v1` distingue API, worker e migration. `APP_ENV` accetta `local`, `staging` e `production`; preview usa lo schema staging con risorse isolate. URL database/Redis sono service-scoped, i profili gestiti richiedono credenziale e trasporto cifrato e gli errori riportano soltanto i nomi delle chiavi invalide.
 
-L'API valida prima di costruire Fastify e aprire il listener. Il worker valida prima dell'inizializzatore iniettato. Il composition root migration valida il profilo prima di passare la sola URL a `@dnd-ai/persistence`; il package persistence non importa config e non legge l'ambiente. Il web corrente non consuma config runtime e non importa `@dnd-ai/config`.
+L'API valida prima di costruire Fastify e aprire il listener. Il worker valida prima dell'inizializzatore iniettato. Il composition root migration valida il profilo prima di passare la sola URL a `@dnd-ai/persistence`; il package persistence non importa config e non legge l'ambiente. API e worker accettano una DSN Sentry service-scoped opzionale. Il web non importa `@dnd-ai/config`: risolve soltanto metadata ambientali e la DSN pubblica opzionale nel proprio composition root.
 
 Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, health contract `web-health-v1` e progetto Vercel collegato al repository corretto con Root Directory `apps/web`, Next.js e `fra1`. Fork Protection, OIDC e Trusted Source sono configurati; zero variabili applicative. Production Branch Vercel=`release/production`, branch release e Ruleset restano invariati. La policy linked e il comando CLI con `--target=preview` hanno prodotto due record Production poi rimossi. PR #13/#14/#15/#16 hanno riportato il contratto a stato unlinked/fail-closed, aggiunto guard, payload bounded e freeze. Il client Vercel omette l'esplicito target Preview prima della POST, quindi non esiste oggi un percorso first-deployment Preview-only verificato. Git auto-deploy resta spento. `.vercelignore` e `scripts/check-vercel-deploy-dry-run.mjs` consentono soltanto un dry-run bounded dalla root. `source.manualDeployment.enabled=false` e `deploy:bootstrap:check` rendono fail-closed il percorso operativo approvato, ma non sono enforcement provider contro un owner. Lo staging non è disponibile.
 
-## Comandi disponibili in BL-001/BL-002/BL-003/BL-004/BL-080
+## Osservabilità implementata
+
+`@dnd-ai/observability` separa il kernel platform-neutral dal subpath `/node`. Il runtime Node usa `AsyncLocalStorage`, propagazione W3C senza baggage, provider OTel esplicito e request ID UUID v4 server-owned. API e worker inizializzano il runtime dopo la config valida e prima degli effetti; Fastify e il wrapper job estraggono/iniettano il carrier e terminano le operazioni una sola volta.
+
+Pino serializza soltanto eventi e metadata allowlisted. Sanitizzazione e filtro Sentry eliminano PII, credenziali, header/body raw, prompt, narrazione e output AI. Sentry usa sampling trace zero e non abilita Replay, profiling, log forwarding, tunnel o source-map upload. Il web importa gli adapter in modo lazy soltanto con DSN valida; l'assenza o malformazione della DSN pubblica disabilita l'adapter senza rompere la UI, mentre DSN server API/worker malformate falliscono lo startup in modo redatto.
+
+Exporter, transport e destination sono best-effort e non modificano risultato HTTP/job; init, end e shutdown sono idempotenti e bounded. La trace fake web→API→queue→worker e due flussi concorrenti sono verificati in-memory, senza rete o risorse provider. La decisione è in [`ADR-0007`](../adr/0007-observability-context-and-error-reporting.md).
+
+## Comandi disponibili in BL-001/BL-002/BL-003/BL-004/BL-008/BL-080
 
 ```bash
 corepack pnpm@10.34.5 install --frozen-lockfile
