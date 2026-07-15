@@ -1,0 +1,35 @@
+{
+  "$id": "urn:dnd-ai:contracts:v1:SubmitTurnAcceptedResponse",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "requestId": {
+      "description": "Server-owned canonical lowercase UUIDv4 request ID.",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "status": {
+      "const": "queued",
+      "type": "string"
+    },
+    "streamUrl": {
+      "pattern": "^\\/api\\/turns\\/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\/stream$",
+      "type": "string"
+    },
+    "turnId": {
+      "description": "Canonical lowercase UUIDv7.",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "turnId",
+    "status",
+    "streamUrl",
+    "requestId"
+  ],
+  "title": "SubmitTurnAcceptedResponse",
+  "type": "object",
+  "x-dnd-ai-contract-kind": "response",
+  "x-dnd-ai-contract-version": "1.0.0"
+}

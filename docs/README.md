@@ -2,10 +2,11 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
+last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
+  - docs/adr/0008-zod-first-contract-generation.md
 related_tasks:
   - GOV-001
   - BL-001
@@ -13,6 +14,7 @@ related_tasks:
   - BL-003
   - BL-004
   - BL-008
+  - BL-009
   - BL-079
   - BL-080
 code_refs:
@@ -22,6 +24,11 @@ code_refs:
   - apps/web/instrumentation.ts
   - apps/web/instrumentation-client.ts
   - packages/persistence
+  - packages/contracts/src
+  - packages/contracts/generated/v1
+  - scripts/generate-contracts.mjs
+  - scripts/lib/contract-compatibility-policy.mjs
+  - scripts/lib/owned-path-policy.mjs
   - scripts/run-database-migrations.mjs
   - infra/local/postgres.compose.yml
 test_refs:
@@ -37,6 +44,13 @@ test_refs:
   - tests/integration/observability-flow.test.mjs
   - tests/contracts/observability-contract.test.mjs
   - tests/security/observability-security.test.mjs
+  - tests/contracts/contracts-foundation.test.mjs
+  - tests/contracts/contracts-runtime.test.mjs
+  - tests/contracts/contracts-artifacts.test.mjs
+  - tests/contracts/contracts-generated.test.mjs
+  - tests/unit/contract-artifact-policy.test.mjs
+  - tests/contracts/contracts-compatibility.test.mjs
+  - tests/unit/owned-path-policy.test.mjs
 supersedes: null
 ---
 
@@ -79,6 +93,10 @@ supersedes: null
 | [`adr/0007-observability-context-and-error-reporting.md`](adr/0007-observability-context-and-error-reporting.md) | Decisione accepted su OTel, request context, logging redatto e Sentry error-only |
 | [`superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md`](superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md) | Design attivo del contratto `observability-baseline-v1` |
 | [`superpowers/plans/2026-07-15-bl-008-observability-baseline.md`](superpowers/plans/2026-07-15-bl-008-observability-baseline.md) | Piano TDD e gate HIGH_RISK di BL-008 |
+| [`adr/0008-zod-first-contract-generation.md`](adr/0008-zod-first-contract-generation.md) | Decisione accepted su fonte Zod, versioning, OpenAPI components-only e generated drift |
+| [`api/README.md`](api/README.md) | Catalogo `api-contract-v1`, uso runtime, artefatti e politica di versione |
+| [`superpowers/specs/2026-07-15-bl-009-contract-generation-design.md`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md) | Design della vertical slice contrattuale BL-009 |
+| [`superpowers/plans/2026-07-15-bl-009-contract-generation.md`](superpowers/plans/2026-07-15-bl-009-contract-generation.md) | Piano TDD e gate HIGH_RISK di BL-009 |
 
 ## Documenti pianificati
 
@@ -97,7 +115,7 @@ I path seguenti sono pianificati e non sono link finché non esistono:
 - `docs/features/PROGRESSION_ENDINGS.md` — `DOC-END-001`;
 - `docs/security/THREAT_MODEL.md` e `docs/security/MODERATION_POLICY.md` — `DOC-SEC-001`;
 - `docs/operations/RUNBOOK.md` — `DOC-OPS-001`;
-- `docs/api/` e `docs/events/EVENT_CATALOG.md` — task delle relative feature.
+- `docs/events/EVENT_CATALOG.md` — task delle relative feature.
 
 ## Regole di manutenzione
 

@@ -2,16 +2,18 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-15
-last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
+last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#264-integration-test-database
   - docs/MVP_SPEC.md#294-cicd
+  - docs/adr/0008-zod-first-contract-generation.md
 related_tasks:
   - BL-002
   - BL-003
   - BL-004
   - BL-008
+  - BL-009
   - BL-080
   - QA-001
   - BL-070
@@ -22,6 +24,12 @@ code_refs:
   - packages/config
   - packages/observability
   - packages/observability/dist
+  - packages/contracts/src
+  - packages/contracts/generated/v1
+  - scripts/generate-contracts.mjs
+  - scripts/lib/contract-artifact-policy.mjs
+  - scripts/lib/contract-compatibility-policy.mjs
+  - scripts/lib/owned-path-policy.mjs
   - packages/persistence/src/migration-runner.ts
   - packages/persistence/src/migrations/000001_postgresql_foundation.ts
   - scripts/lib/postgres-test-container.mjs
@@ -68,6 +76,13 @@ test_refs:
   - tests/integration/observability-flow.test.mjs
   - tests/contracts/observability-contract.test.mjs
   - tests/security/observability-security.test.mjs
+  - tests/contracts/contracts-foundation.test.mjs
+  - tests/contracts/contracts-runtime.test.mjs
+  - tests/contracts/contracts-artifacts.test.mjs
+  - tests/contracts/contracts-generated.test.mjs
+  - tests/unit/contract-artifact-policy.test.mjs
+  - tests/contracts/contracts-compatibility.test.mjs
+  - tests/unit/owned-path-policy.test.mjs
 supersedes: null
 ---
 
@@ -77,7 +92,7 @@ supersedes: null
 
 | Job | Responsabilità | Failure behavior |
 |---|---|---|
-| `Quality` | format, lint, typecheck con declaration dependency build, confini, task graph, policy CI e desired state deploy | blocca build e gate |
+| `Quality` | format, lint, typecheck con declaration dependency build, contratti generati, confini, task graph, policy CI e desired state deploy | blocca build e gate |
 | `Tests` | unit, integration, migration PostgreSQL reale e contract | fixture rossa o failure/cleanup database propagano exit non-zero |
 | `Security` | SAST locale, test/secret scan e dependency audit | warning SAST, high/critical o scan fallito bloccano |
 | `Build artifact` | build completo, staging allowlisted, manifest e upload | manca/secret/checksum/symlink non sicuro bloccano |
@@ -135,7 +150,13 @@ Desired state e procedura sono in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md). Pr
 
 L'artifact può includere `packages/observability/dist` come output compilato allowlisted, ma non file ambientali, telemetry output o log. Il check sul bundle Next rifiuta marker Node/Sentry server negli artifact client; Replay, profiling, tunnel, source map upload e auto-instrumentation restano vietati.
 
-La prima run della PR #20 ha fallito nel solo job Security perché pnpm 10 chiamava gli endpoint audit legacy rimossi dal registry con HTTP `410`; non era un finding di vulnerabilità. La correzione pinna pnpm `11.13.0`, che usa l'endpoint bulk, conserva il comando esatto `pnpm audit --audit-level=high` senza ignore e impone lo stesso pin in manifest e setup action tramite contract test. Il validator rifiuta flag aggiuntivi, inclusa la variante `--ignore-registry-errors`, che trasformerebbe un errore registry in successo. Le policy progetto sono migrate in `pnpm-workspace.yaml`; `@sentry/cli` resta esplicitamente negato in `allowBuilds`, global virtual store e peer auto-install sono disabilitati e `verifyDepsBeforeRun: error` impedisce install impliciti prima degli script. L'upgrade non abilita source-map upload o nuovi install script.
+La prima run della PR #20 ha fallito nel solo job Security perché pnpm 10 chiamava gli endpoint audit legacy rimossi dal registry con HTTP `410`; non era un finding di vulnerabilità. La correzione pinna pnpm `11.13.0`, che usa l'endpoint bulk, conserva il comando esatto `pnpm audit --audit-level=high` senza ignore e impone lo stesso pin in manifest e setup action tramite contract test. Il validator rifiuta flag aggiuntivi, inclusa la variante `--ignore-registry-errors`, che trasformerebbe un errore registry in successo. Le policy progetto sono migrate in `pnpm-workspace.yaml`; `@sentry/cli` resta esplicitamente negato in `allowBuilds`, global virtual store e peer auto-install sono disabilitati e `verifyDepsBeforeRun: error` impedisce install impliciti prima degli script. La correzione è integrata tramite PR #20/merge `ccecd683`; la run post-merge `29415397361` ha concluso tutti i cinque job con `SUCCESS`.
+
+## Contratti generati nel gate
+
+`BL-009` aggiunge `pnpm contracts:check` al job Quality e al full `verify`. Il comando costruisce `@dnd-ai/contracts`, rigenera in memoria il catalogo `api-contract-v1` e confronta byte per byte gli otto file versionati sotto `packages/contracts/generated/v1`; non scrive nel workspace e fallisce su artifact missing, stale, unexpected, root collegati o modifiche a major pubblicati.
+
+Il solo writer supportato è `pnpm contracts:generate`. La compatibility baseline è il tree Git protetto: `origin/main` in locale e `HEAD^1` in CI. Quality usa `fetch-depth: 2`; il checker non esegue fetch e fallisce se la base non è disponibile. Il bootstrap ammette il primo `v1`, poi ogni major pubblicato resta immutabile e un wire change richiede `v2` parallelo. Il workflow policy contract richiede step, base e depth, così rimuoverli rende rossa la suite. JSON Schema viene inoltre compilato con Ajv 2020 e confrontato con Zod su fixture valide/negative; test temporanei provano breaking regeneration e junction senza toccare gli artifact reali.
 
 ## Cache e artifact
 
@@ -150,6 +171,8 @@ corepack pnpm@11.13.0 verify
 corepack pnpm@11.13.0 db:migrate:test
 corepack pnpm@11.13.0 scan:sast
 corepack pnpm@11.13.0 audit --audit-level=high
+corepack pnpm@11.13.0 contracts:generate
+corepack pnpm@11.13.0 contracts:check
 corepack pnpm@11.13.0 artifact:prepare
 corepack pnpm@11.13.0 artifact:verify
 corepack pnpm@11.13.0 deploy:check
@@ -165,7 +188,7 @@ if ($LASTEXITCODE -ne 0) { throw "preview-dry-run: source manifest rejected" }
 |---|---|
 | migration PostgreSQL baseline, dry run e failure path | `BL-004` chiuso con CI PR `29351291907` 5/5 `SUCCESS` |
 | harness condiviso PostgreSQL/Redis e suite database funzionali successive | `QA-001` e task proprietari |
-| schema/OpenAPI/event compatibility | `BL-009` |
+| schema/OpenAPI/event compatibility | `BL-009`: implementata; review e full gate PASS, clean verify e CI PR pendenti |
 | coverage rules/domain ≥80% e report | `QA-001` |
 | browser, bundle e accessibility budget | `BL-079`, `QA-001` |
 | secret manager, preview/staging M0, deploy smoke e rollback minimo | `BL-080`; contratto di injection già in `BL-003` |

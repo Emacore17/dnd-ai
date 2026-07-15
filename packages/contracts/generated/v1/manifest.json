@@ -1,0 +1,44 @@
+{
+  "contractVersion": "1.0.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "openapi": "openapi.json",
+  "schemaVersion": "contract-artifact-manifest-v1",
+  "schemas": [
+    {
+      "file": "schemas/api-error-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v1:ApiErrorResponse",
+      "kind": "response",
+      "name": "ApiErrorResponse"
+    },
+    {
+      "file": "schemas/dungeon-master-turn-result.schema.json",
+      "id": "urn:dnd-ai:contracts:v1:DungeonMasterTurnResult",
+      "kind": "ai_output",
+      "name": "DungeonMasterTurnResult"
+    },
+    {
+      "file": "schemas/game-event.schema.json",
+      "id": "urn:dnd-ai:contracts:v1:GameEvent",
+      "kind": "event",
+      "name": "GameEvent"
+    },
+    {
+      "file": "schemas/submit-turn-accepted-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v1:SubmitTurnAcceptedResponse",
+      "kind": "response",
+      "name": "SubmitTurnAcceptedResponse"
+    },
+    {
+      "file": "schemas/submit-turn-request.schema.json",
+      "id": "urn:dnd-ai:contracts:v1:SubmitTurnRequest",
+      "kind": "request",
+      "name": "SubmitTurnRequest"
+    },
+    {
+      "file": "schemas/turn-stream-event.schema.json",
+      "id": "urn:dnd-ai:contracts:v1:TurnStreamEvent",
+      "kind": "event",
+      "name": "TurnStreamEvent"
+    }
+  ]
+}

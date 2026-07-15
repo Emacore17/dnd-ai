@@ -1,0 +1,148 @@
+{
+  "$defs": {
+    "__schema0": {
+      "maximum": 2147483647,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "__schema1": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+      "type": "string"
+    },
+    "__schema2": {
+      "description": "Canonical lowercase UUIDv7.",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    }
+  },
+  "$id": "urn:dnd-ai:contracts:v1:SubmitTurnRequest",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "clientStateVersion": {
+          "$ref": "#/$defs/__schema0"
+        },
+        "input": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "free_action",
+            "dialogue",
+            "relationship"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "input",
+        "clientStateVersion"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "choiceSetId": {
+          "$ref": "#/$defs/__schema1"
+        },
+        "clientStateVersion": {
+          "$ref": "#/$defs/__schema0"
+        },
+        "mode": {
+          "const": "closed_choice",
+          "type": "string"
+        },
+        "optionId": {
+          "$ref": "#/$defs/__schema1"
+        },
+        "optionalComment": {
+          "maxLength": 500,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "choiceSetId",
+        "optionId",
+        "clientStateVersion"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "clientStateVersion": {
+          "$ref": "#/$defs/__schema0"
+        },
+        "combatAction": {
+          "additionalProperties": false,
+          "properties": {
+            "actionDefinitionId": {
+              "$ref": "#/$defs/__schema1"
+            },
+            "destinationZoneId": {
+              "$ref": "#/$defs/__schema2"
+            },
+            "parameters": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[a-z][A-Za-z0-9_]*$",
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "targetEntityIds": {
+              "items": {
+                "$ref": "#/$defs/__schema2"
+              },
+              "maxItems": 16,
+              "type": "array"
+            }
+          },
+          "required": [
+            "actionDefinitionId",
+            "targetEntityIds"
+          ],
+          "type": "object"
+        },
+        "mode": {
+          "const": "combat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "combatAction",
+        "clientStateVersion"
+      ],
+      "type": "object"
+    }
+  ],
+  "title": "SubmitTurnRequest",
+  "x-dnd-ai-contract-kind": "request",
+  "x-dnd-ai-contract-version": "1.0.0"
+}

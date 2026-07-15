@@ -134,3 +134,45 @@ test("the dependency audit cannot ignore registry failures", async () => {
 
   assert.ok(errors.some((error) => error.includes("exact audit command")));
 });
+
+test("the quality gate cannot omit generated contract drift checks", async () => {
+  const [workflowSource, setupActionSource, packageSource] = await Promise.all([
+    readFile(
+      path.join(repositoryRoot, ".github", "workflows", "ci.yml"),
+      "utf8",
+    ),
+    readFile(
+      path.join(
+        repositoryRoot,
+        ".github",
+        "actions",
+        "setup-workspace",
+        "action.yml",
+      ),
+      "utf8",
+    ),
+    readFile(path.join(repositoryRoot, "package.json"), "utf8"),
+  ]);
+  const workflow = parse(workflowSource);
+  const contractSteps = workflow.jobs.quality.steps.filter(
+    (step) => step.run === "pnpm contracts:check",
+  );
+  const checkoutStep = workflow.jobs.quality.steps.find((step) =>
+    String(step.uses ?? "").startsWith("actions/checkout@"),
+  );
+
+  assert.equal(contractSteps.length, 1);
+  assert.equal(checkoutStep.with["fetch-depth"], 2);
+  assert.equal(contractSteps[0].env.CONTRACT_BASE_REF, "HEAD^1");
+
+  checkoutStep.with["fetch-depth"] = 1;
+  delete contractSteps[0].env;
+  const errors = validateCiDocuments(
+    workflow,
+    parse(setupActionSource),
+    JSON.parse(packageSource),
+  );
+
+  assert.ok(errors.some((error) => error.includes("fetch-depth: 2")));
+  assert.ok(errors.some((error) => error.includes("CONTRACT_BASE_REF")));
+});

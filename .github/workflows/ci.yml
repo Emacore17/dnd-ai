@@ -25,6 +25,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+          fetch-depth: 2
 
       - name: Setup workspace
         uses: ./.github/actions/setup-workspace
@@ -37,6 +38,11 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Check generated contracts
+        run: pnpm contracts:check
+        env:
+          CONTRACT_BASE_REF: HEAD^1
 
       - name: Check package boundaries
         run: pnpm boundaries:check
