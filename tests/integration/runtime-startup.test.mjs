@@ -7,6 +7,7 @@ import { fileURLToPath, URL } from "node:url";
 
 import { createConfiguredApiApp, startApi } from "../../apps/api/dist/index.js";
 import { initializeWorkerRuntime } from "../../apps/worker/dist/index.js";
+import { ObservabilityConfigurationError } from "../../packages/observability/dist/node.js";
 
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const configCliPath = path.join(
@@ -29,8 +30,10 @@ const managedKeys = [
   "API_PORT",
   "API_DATABASE_URL",
   "API_REDIS_URL",
+  "API_SENTRY_DSN",
   "WORKER_DATABASE_URL",
   "WORKER_REDIS_URL",
+  "WORKER_SENTRY_DSN",
   "MIGRATION_DATABASE_URL",
 ];
 
@@ -71,10 +74,15 @@ function apiEnvironment(port) {
 
 test("API validation runs before application construction or socket binding", () => {
   let appFactoryCalled = false;
+  let observabilityFactoryCalled = false;
 
   assert.throws(() =>
     createConfiguredApiApp({
       environment: {},
+      createObservability: () => {
+        observabilityFactoryCalled = true;
+        throw new Error("must not be reached");
+      },
       createApp: () => {
         appFactoryCalled = true;
         throw new Error("must not be reached");
@@ -82,6 +90,7 @@ test("API validation runs before application construction or socket binding", ()
     }),
   );
   assert.equal(appFactoryCalled, false);
+  assert.equal(observabilityFactoryCalled, false);
 });
 
 test("a valid API profile binds and can be closed cleanly", async (context) => {
@@ -95,16 +104,24 @@ test("a valid API profile binds and can be closed cleanly", async (context) => {
 
 test("worker validation runs before the injected initializer", async () => {
   let initializerCalled = false;
+  let observabilityFactoryCalled = false;
 
   await assert.rejects(
     initializeWorkerRuntime({
       environment: { APP_ENV: "staging" },
+      createObservability: () => {
+        observabilityFactoryCalled = true;
+        throw new Error("must not be reached");
+      },
       initialize: async () => {
         initializerCalled = true;
       },
     }),
   );
   assert.equal(initializerCalled, false);
+  assert.equal(observabilityFactoryCalled, false);
+
+  const fakeObservability = Object.freeze({ name: "worker-observability" });
 
   const result = await initializeWorkerRuntime({
     environment: {
@@ -114,9 +131,136 @@ test("worker validation runs before the injected initializer", async () => {
       WORKER_REDIS_URL:
         "rediss://worker:redis_password@staging-cache.internal:6380/1",
     },
-    initialize: async (config) => config.environment,
+    createObservability: (options) => {
+      assert.equal(options.environment, "staging");
+      assert.equal(options.service, "worker");
+      return fakeObservability;
+    },
+    initialize: async (config, observability) => {
+      assert.equal(observability, fakeObservability);
+      return config.environment;
+    },
   });
   assert.equal(result, "staging");
+});
+
+test("incompatible observability setup fails before API listen or worker initialization", async () => {
+  const error = new ObservabilityConfigurationError(
+    "OBSERVABILITY_ALREADY_INITIALIZED",
+    "Observability is already initialized with incompatible configuration.",
+  );
+  let apiClosed = false;
+  let apiListenCalled = false;
+  let workerInitializerCalled = false;
+  const fakeApp = {
+    close() {
+      apiClosed = true;
+      return Promise.resolve();
+    },
+    listen() {
+      apiListenCalled = true;
+      return Promise.resolve("must-not-listen");
+    },
+  };
+
+  await assert.rejects(
+    startApi({
+      createApp: () => fakeApp,
+      createObservability: () => {
+        throw error;
+      },
+      environment: apiEnvironment(3001),
+    }),
+    (failure) => failure === error,
+  );
+  assert.equal(apiListenCalled, false);
+  assert.equal(apiClosed, true);
+
+  await assert.rejects(
+    initializeWorkerRuntime({
+      createObservability: () => {
+        throw error;
+      },
+      environment: {
+        APP_ENV: "local",
+        WORKER_DATABASE_URL: "postgresql://worker@127.0.0.1:5432/dnd_ai",
+        WORKER_REDIS_URL: "redis://127.0.0.1:6379/0",
+      },
+      initialize: async () => {
+        workerInitializerCalled = true;
+      },
+    }),
+    (failure) => failure === error,
+  );
+  assert.equal(workerInitializerCalled, false);
+});
+
+test("malformed Sentry DSNs fail before API construction and worker initialization", async () => {
+  const apiSecretDsn = "http://api-canary@errors.example.test/101";
+  let appFactoryCalled = false;
+
+  assert.throws(
+    () =>
+      createConfiguredApiApp({
+        environment: {
+          ...apiEnvironment(3001),
+          API_SENTRY_DSN: apiSecretDsn,
+        },
+        createApp: () => {
+          appFactoryCalled = true;
+          throw new Error("must not be reached");
+        },
+      }),
+    (error) => {
+      assert.deepEqual(error.invalidKeys, ["API_SENTRY_DSN"]);
+      assert.doesNotMatch(error.message, new RegExp(apiSecretDsn));
+      return true;
+    },
+  );
+  assert.equal(appFactoryCalled, false);
+
+  const workerSecretDsn = "https://worker-canary@bad_host/202";
+  let initializerCalled = false;
+
+  await assert.rejects(
+    initializeWorkerRuntime({
+      environment: {
+        APP_ENV: "staging",
+        WORKER_DATABASE_URL:
+          "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
+        WORKER_REDIS_URL:
+          "rediss://worker:redis_password@staging-cache.internal:6380/1",
+        WORKER_SENTRY_DSN: workerSecretDsn,
+      },
+      initialize: async () => {
+        initializerCalled = true;
+      },
+    }),
+    (error) => {
+      assert.deepEqual(error.invalidKeys, ["WORKER_SENTRY_DSN"]);
+      assert.doesNotMatch(error.message, new RegExp(workerSecretDsn));
+      return true;
+    },
+  );
+  assert.equal(initializerCalled, false);
+
+  const cliResult = spawnSync(process.execPath, [configCliPath, "worker"], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: isolatedEnvironment({
+      APP_ENV: "staging",
+      WORKER_DATABASE_URL:
+        "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
+      WORKER_REDIS_URL:
+        "rediss://worker:redis_password@staging-cache.internal:6380/1",
+      WORKER_SENTRY_DSN: workerSecretDsn,
+    }),
+  });
+
+  assert.equal(cliResult.status, 1);
+  assert.match(cliResult.stderr, /WORKER_SENTRY_DSN/);
+  assert.doesNotMatch(cliResult.stderr, new RegExp(workerSecretDsn));
+  assert.equal(cliResult.stdout, "");
 });
 
 test("configuration CLI smoke passes local and staging fixtures without printing connection strings", () => {

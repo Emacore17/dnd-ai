@@ -16,12 +16,14 @@ export interface ApiRuntimeConfig {
   readonly port: number;
   readonly databaseUrl: string;
   readonly redisUrl: string;
+  readonly sentryDsn?: string;
 }
 
 export interface WorkerRuntimeConfig {
   readonly environment: RuntimeEnvironment;
   readonly databaseUrl: string;
   readonly redisUrl: string;
+  readonly sentryDsn?: string;
 }
 
 export interface MigrationRuntimeConfig {
@@ -126,6 +128,20 @@ function isRedisUrl(value: string): boolean {
   );
 }
 
+function isSentryDsn(value: string): boolean {
+  const url = parseUrl(value);
+  const projectId = url?.pathname.split("/").at(-1) ?? "";
+
+  return (
+    url !== null &&
+    url.protocol === "https:" &&
+    isValidUrlHost(url.hostname) &&
+    url.username.length > 0 &&
+    url.password.length === 0 &&
+    /^[1-9]\d*$/u.test(projectId)
+  );
+}
+
 function requestsPostgresTls(value: string): boolean {
   const sslModes = parseUrl(value)?.searchParams.getAll("sslmode") ?? [];
   const sslMode = sslModes[0];
@@ -147,6 +163,11 @@ function containsPasswordCredential(value: string): boolean {
 
 const postgresUrlSchema = requiredTextSchema.refine(isPostgresUrl);
 const redisUrlSchema = requiredTextSchema.refine(isRedisUrl);
+const optionalSentryDsnSchema = z.preprocess(
+  (value) =>
+    typeof value === "string" && value.trim().length === 0 ? undefined : value,
+  requiredTextSchema.refine(isSentryDsn).optional(),
+);
 
 const apiEnvironmentSchema = z
   .object({
@@ -155,6 +176,7 @@ const apiEnvironmentSchema = z
     API_PORT: portSchema,
     API_DATABASE_URL: postgresUrlSchema,
     API_REDIS_URL: redisUrlSchema,
+    API_SENTRY_DSN: optionalSentryDsnSchema,
   })
   .superRefine((environment, context) => {
     if (environment.APP_ENV === "local") {
@@ -190,6 +212,7 @@ const workerEnvironmentSchema = z
     APP_ENV: runtimeEnvironmentSchema,
     WORKER_DATABASE_URL: postgresUrlSchema,
     WORKER_REDIS_URL: redisUrlSchema,
+    WORKER_SENTRY_DSN: optionalSentryDsnSchema,
   })
   .superRefine((environment, context) => {
     if (environment.APP_ENV === "local") {
@@ -272,6 +295,9 @@ export function parseApiRuntimeConfig(
     port: parsed.API_PORT,
     databaseUrl: parsed.API_DATABASE_URL,
     redisUrl: parsed.API_REDIS_URL,
+    ...(parsed.API_SENTRY_DSN === undefined
+      ? {}
+      : { sentryDsn: parsed.API_SENTRY_DSN }),
   });
 }
 
@@ -288,6 +314,9 @@ export function parseWorkerRuntimeConfig(
     environment: parsed.APP_ENV,
     databaseUrl: parsed.WORKER_DATABASE_URL,
     redisUrl: parsed.WORKER_REDIS_URL,
+    ...(parsed.WORKER_SENTRY_DSN === undefined
+      ? {}
+      : { sentryDsn: parsed.WORKER_SENTRY_DSN }),
   });
 }
 

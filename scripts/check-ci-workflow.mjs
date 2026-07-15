@@ -7,7 +7,7 @@ import { parse } from "yaml";
 import { validateCiDocuments } from "./lib/ci-workflow-policy.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
-const [workflowSource, setupActionSource] = await Promise.all([
+const [workflowSource, setupActionSource, packageSource] = await Promise.all([
   readFile(path.join(repositoryRoot, ".github", "workflows", "ci.yml"), "utf8"),
   readFile(
     path.join(
@@ -19,10 +19,12 @@ const [workflowSource, setupActionSource] = await Promise.all([
     ),
     "utf8",
   ),
+  readFile(path.join(repositoryRoot, "package.json"), "utf8"),
 ]);
 const errors = validateCiDocuments(
   parse(workflowSource),
   parse(setupActionSource),
+  JSON.parse(packageSource),
 );
 
 if (errors.length > 0) {

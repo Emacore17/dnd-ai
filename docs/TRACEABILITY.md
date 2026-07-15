@@ -1,12 +1,13 @@
 ---
 status: active
 owner: engineering-and-qa
-last_reviewed: 2026-07-14
-last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+last_reviewed: 2026-07-15
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
   - docs/product/UX_UI_DESIGN.md
+  - docs/adr/0007-observability-context-and-error-reporting.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -14,6 +15,7 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-008
   - BL-040
   - BL-079
   - BL-080
@@ -21,6 +23,11 @@ code_refs:
   - apps
   - packages
   - packages/config
+  - packages/observability
+  - apps/api/src/observability.ts
+  - apps/worker/src/observability.ts
+  - apps/web/instrumentation.ts
+  - apps/web/instrumentation-client.ts
   - apps/api/src/runtime.ts
   - apps/worker/src/runtime.ts
   - scripts/lib/workspace-boundaries.mjs
@@ -80,6 +87,11 @@ test_refs:
   - tests/contracts/database-migration-contract.test.mjs
   - tests/security/database-migration-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
+  - tests/unit/observability-core.test.mjs
+  - tests/unit/observability-node.test.mjs
+  - tests/integration/observability-flow.test.mjs
+  - tests/contracts/observability-contract.test.mjs
+  - tests/security/observability-security.test.mjs
 supersedes: null
 ---
 
@@ -87,7 +99,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. La provider evidence di `BL-080` è integrata tramite PR #17/merge `c72c78b`, con CI PR `29346630165` e post-merge `29346792492` 5/5 verdi; il freeze non cambia. `BL-004` è `DONE/100%/PASSING`: migration head `000001_postgresql_foundation`, contract `database-baseline-v1`, PostgreSQL 17/pgvector 0.8.2 reale, suite mirata 13/13, full gate, clean verify e CI PR `29351291907` 5/5 verdi. `BL-008` è `READY`; `BL-079` resta `BACKLOG` fino allo staging reale.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. La provider evidence di `BL-080` è integrata tramite PR #17/merge `c72c78b`, con CI PR `29346630165` e post-merge `29346792492` 5/5 verdi; il freeze non cambia. `BL-004` è `DONE/100%/PASSING`. `BL-008` è una proposta branch-local `DONE/100%/PASSING` nella PR #20: osservabilità, audit high, review e full gate sono verdi; clean commit e rerun remoto restano pendenti. `BL-079` resta `BACKLOG` fino allo staging reale.
 
 ## Governance e baseline
 
@@ -95,12 +107,13 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 |---|---|---|---|---|---|
 | Cold start riproducibile | `AGENTS.md` §2; `docs/TASKS.md` §§3, 6 | GOV-001 | `AGENTS.md`, `docs/README.md`, `docs/CONTEXT.md`, `docs/TASKS.md` | `AGENTS_VALIDATION.txt` | implemented |
 | Contesto con hash/data/versioni | `docs/TASKS.md` §6.3 | GOV-001 | `docs/CONTEXT.md` | cold-start review in `AGENTS_VALIDATION.txt` | implemented |
-| Link e path validi | `AGENTS.md` §12.3 | GOV-001, GOV-002 | documenti attivi | controllo link locale; futuro `pnpm docs:check` (planned) | manual, automation planned |
-| Requisito→task→test→evidenza | `docs/TASKS.md` §6 | GOV-001, GOV-002 | questo documento | mapping UX e governance | initial |
+| Link e path validi | `AGENTS.md` §12.3 | GOV-001, GOV-002, GOV-003 | documenti attivi | `pnpm verify:docs`: metadata/freshness, path/ref/link, whitespace, task graph e secret scan | implemented, PASS |
+| Requisito→task→test→evidenza | `docs/TASKS.md` §6 | GOV-001, GOV-002 | questo documento | mapping governance, osservabilità e UX | active |
 | Monorepo buildabile con tre runtime e package puri | spec §§11.2–11.3; `AGENTS.md` §9 | BL-001 | `apps/*`, `packages/*`, `turbo.json` | lint/typecheck/build su 10 workspace; report BL-001 | implemented, clean worktree PASS |
 | Import e dipendenze rispettano la allowlist | `AGENTS.md` §§4.6, 9 | BL-001 | `scripts/lib/workspace-boundaries.mjs` | `tests/contracts/workspace-boundaries.test.mjs`, inclusa fixture vietata; report BL-001 | implemented, PASS |
 | Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check`; report BL-001 | implemented (scope task graph), PASS |
 | PR CI fail-closed con check stabile | spec §§26.12, 29.4; ADR-0003 | BL-002 | `.github/workflows/ci.yml`, `scripts/lib/ci-gate.mjs` | clean verify head `7c6c707`; PR run `29257544214`; post-merge run `29257721274`; run negativa `29256736728`; Ruleset `18877721`; report BL-002 | PASS |
+| Dependency audit high usa un client bulk-capable senza downgrade | spec §§22.10, 26.12, 29.4; ADR-0003 | BL-002, BL-008 | pin pnpm `11.13.0`, setup action e policy progetto in `pnpm-workspace.yaml`; stale deps falliscono senza install implicito; comando audit esatto senza ignore | `tests/contracts/ci-workflow.test.mjs`, inclusa regressione `--ignore-registry-errors`; `tests/contracts/observability-contract.test.mjs`; audit high locale senza vulnerabilità; rerun PR #20 pending | PASS locale; CI pending |
 | Cache e artifact non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | setup action pnpm-only, `scripts/lib/secret-scanner.mjs`, `scripts/lib/build-artifact.mjs` | remote manifest `build-artifact-v1`, 3.205 file e checksum/secret verification; report BL-002 | PASS |
 | Log CI non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | workflow senza secret applicativi; output scanner redatto | scan redatto dei 5 job della run `29254494868` | PASS |
 | Gate fallito rende la PR non mergeabile | spec §31 `BL-002`; card BL-002 | BL-002 | Ruleset `main-required-ci` `18877721` | PR negativa #3/run `29256736728`: gate FAIL e `mergeStateStatus=BLOCKED`; regole `main` verificate via API | PASS |
@@ -109,6 +122,10 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner fail-closed; web con zero secret/variabili applicative; Git Integration reale senza token Vercel persistente; emissione OIDC e Trusted Source exact-match abilitate | config/security suite; environment GitHub e progetto Vercel con zero secret applicativi; token mancante/malformato fail-before-fetch | BL-003 PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
 | Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | suite DB 13/13, full gate, clean verify `b103050` e CI PR `29351291907` 5/5 PASS |
 | Rollback database fail-closed e forward-only gestito | spec §§19.5, 29.5; ADR-0006 | BL-004 | policy CLI e runbook `DATABASE_MIGRATIONS.md` | DDL invalido annullato con ledger 0; `down` solo loopback disposable senza query routing e con conferma; staging/production rifiutati | PASS mirato/full/clean/CI |
+| W3C Trace Context e request ID attraversano web→API→queue→worker senza context bleed | spec §§24.1, 24.5; ADR-0007 | BL-008 | `packages/observability`, plugin Fastify e wrapper worker | `tests/integration/observability-flow.test.mjs`: parent chain `web.request`→`api.request`→`queue.enqueue`→`worker.process`, due flussi concorrenti disgiunti | PASS mirato/full/clean; delivery PR pending |
+| Log JSON e metadata telemetry non espongono PII, secret, prompt o output AI | spec §§22.10, 24.2; ADR-0007 | BL-008 | sanitizer bounded, logger Pino allowlisted e reporter safe | `tests/unit/observability-core.test.mjs`, `tests/unit/observability-node.test.mjs`, `tests/security/observability-security.test.mjs` | PASS mirato/full/clean; delivery PR pending |
+| Sentry resta error-only, off-by-default e non altera il risultato applicativo | spec §§24.4, 24.5; ADR-0007 | BL-008 | adapter Node/Next, transport fake, failure containment idempotente e bounded | unit/integration/security: exporter, destination e transport failure; zero rete; nessun Replay/profiling/log forwarding/tunnel/source map; `@sentry/cli` install script negato | PASS mirato/full/clean; delivery PR pending |
+| Boundary browser/Node e startup config osservabilità falliscono in modo sicuro | spec §§11.3, 24.4; ADR-0004, ADR-0007 | BL-008 | export root browser-safe e `/node`; config DSN service-scoped; entrypoint Next lazy | `tests/contracts/observability-contract.test.mjs`, runtime config/startup integration e ricerca marker negli artifact client | PASS mirato/full/clean; delivery PR pending |
 | Preview/staging M0 disponibile prima dei consumer deployabili | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | foundation, `/health`, progetto collegato, protezioni, Git auto-deploy spento e guard Preview-only | PR #12 e CLI su `1060228` entrambi Production/rimossi; freeze PR #16/merge `aa9342d`, CI `29343319207`/`29343526054` verdi e zero deploy; audit omissione client + ipotesi first-deployment + issue CLI `#17069` | BL-080 BLOCKED/PARTIAL; nessuno staging; serve fix/workaround provider; BL-079 BACKLOG |
 | Build provider limitato a Preview senza leakage | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `apps/web/vercel.json`, build script dedicato, policy pura e target metadata nella cache Turbo | unit policy, security subprocess e contract deployment versionati; build Vercel richiede `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`; locale ammesso solo con tutti assenti | guard integrato; secondo record Production `ERROR`, ma log post-rimozione insufficienti per attribuire l'errore al guard |
 | Payload CLI minimo e verificato prima di creare deployment | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `.vercelignore`, dry-run parser e deployment foundation contract | test unit/security/contract; dry-run `nextjs` dalla root con 158 entry e 1.093.594 byte; mode/hash/symlink, cache/output/env/path non relativi e budget oltre soglia falliscono chiusi | PR #15/merge `1060228`, CI PR/post-merge verdi; contratto payload PASS |

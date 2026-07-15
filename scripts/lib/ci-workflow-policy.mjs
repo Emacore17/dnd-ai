@@ -9,6 +9,7 @@ const REQUIRED_JOBS = Object.freeze([
   "build",
   "ci-required",
 ]);
+const REQUIRED_PNPM_VERSION = "11.13.0";
 
 function hasKey(value, key) {
   return value && Object.prototype.hasOwnProperty.call(value, key);
@@ -150,6 +151,30 @@ function validateSetupAction(errors, setupAction) {
   }
 }
 
+function validatePnpmToolchain(errors, setupAction, packageManifest) {
+  const setupStep = asArray(setupAction.runs?.steps).find((step) =>
+    step.uses?.startsWith("pnpm/action-setup@"),
+  );
+  const expectedPackageManager = `pnpm@${REQUIRED_PNPM_VERSION}`;
+  const expectedEngine = `>=${REQUIRED_PNPM_VERSION} <12`;
+
+  if (String(setupStep?.with?.version ?? "") !== REQUIRED_PNPM_VERSION) {
+    errors.push(
+      `setup-workspace must use bulk-capable pnpm ${REQUIRED_PNPM_VERSION}`,
+    );
+  }
+
+  if (packageManifest?.packageManager !== expectedPackageManager) {
+    errors.push(
+      `packageManager must pin bulk-capable ${expectedPackageManager}`,
+    );
+  }
+
+  if (packageManifest?.engines?.pnpm !== expectedEngine) {
+    errors.push(`pnpm engine must be ${expectedEngine}`);
+  }
+}
+
 function validateJobs(errors, workflow) {
   const jobs = workflow.jobs ?? {};
 
@@ -205,6 +230,21 @@ function validateJobs(errors, workflow) {
     "pnpm test:security",
     "pnpm audit --audit-level=high",
   ]);
+  const expectedAuditCommand = "pnpm audit --audit-level=high";
+  const auditSteps = asArray(jobs.security?.steps).filter((step) =>
+    String(step.run ?? "")
+      .trim()
+      .startsWith("pnpm audit"),
+  );
+
+  if (
+    auditSteps.length !== 1 ||
+    String(auditSteps[0].run ?? "").trim() !== expectedAuditCommand
+  ) {
+    errors.push(
+      `security must use exact audit command: ${expectedAuditCommand}`,
+    );
+  }
   requireCommands(errors, "build", jobs.build, [
     "pnpm build",
     "pnpm artifact:prepare",
@@ -260,12 +300,17 @@ function validateJobs(errors, workflow) {
   }
 }
 
-export function validateCiDocuments(workflow, setupAction) {
+export function validateCiDocuments(
+  workflow,
+  setupAction,
+  packageManifest = {},
+) {
   const errors = [];
   validateTriggers(errors, workflow);
   validatePermissions(errors, workflow);
   validateSteps(errors, workflow, setupAction);
   validateSetupAction(errors, setupAction);
+  validatePnpmToolchain(errors, setupAction, packageManifest);
   validateJobs(errors, workflow);
 
   if (workflow.concurrency?.["cancel-in-progress"] !== true) {

@@ -2,6 +2,12 @@ packages:
   - apps/*
   - packages/*
 
+autoInstallPeers: false
+enableGlobalVirtualStore: false
+engineStrict: true
+saveExact: true
+verifyDepsBeforeRun: error
+
 catalog:
   "@types/react": 19.2.17
   "@types/react-dom": 19.2.3
@@ -12,5 +18,6 @@ overrides:
   postcss: 8.5.10
 
 allowBuilds:
+  "@sentry/cli": false
   sharp: true
   unrs-resolver: true

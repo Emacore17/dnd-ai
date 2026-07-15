@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-14
-last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+last_reviewed: 2026-07-15
+last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -12,9 +12,15 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-008
   - BL-079
   - BL-080
 code_refs:
+  - packages/observability
+  - apps/api/src/observability.ts
+  - apps/worker/src/observability.ts
+  - apps/web/instrumentation.ts
+  - apps/web/instrumentation-client.ts
   - packages/persistence
   - scripts/run-database-migrations.mjs
   - infra/local/postgres.compose.yml
@@ -26,6 +32,11 @@ test_refs:
   - tests/database/database-migration-cli.test.mjs
   - tests/database/database-migration-failure.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
+  - tests/unit/observability-core.test.mjs
+  - tests/unit/observability-node.test.mjs
+  - tests/integration/observability-flow.test.mjs
+  - tests/contracts/observability-contract.test.mjs
+  - tests/security/observability-security.test.mjs
 supersedes: null
 ---
 
@@ -65,6 +76,9 @@ supersedes: null
 | [`adr/0006-postgresql-migration-foundation.md`](adr/0006-postgresql-migration-foundation.md) | Decisione accepted su tool, baseline, checksum, lock e rollback database |
 | [`operations/DATABASE_MIGRATIONS.md`](operations/DATABASE_MIGRATIONS.md) | Runbook locale/CI per PostgreSQL e migrazioni forward-only |
 | [`testing/BL-004_VERIFICATION.md`](testing/BL-004_VERIFICATION.md) | Evidenze riproducibili e gate di chiusura della fondazione migration BL-004 |
+| [`adr/0007-observability-context-and-error-reporting.md`](adr/0007-observability-context-and-error-reporting.md) | Decisione accepted su OTel, request context, logging redatto e Sentry error-only |
+| [`superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md`](superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md) | Design attivo del contratto `observability-baseline-v1` |
+| [`superpowers/plans/2026-07-15-bl-008-observability-baseline.md`](superpowers/plans/2026-07-15-bl-008-observability-baseline.md) | Piano TDD e gate HIGH_RISK di BL-008 |
 
 ## Documenti pianificati
 

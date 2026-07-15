@@ -1,8 +1,8 @@
 ---
 status: draft
 owner: engineering-and-operations
-last_reviewed: 2026-07-14
-last_verified_commit: b84f4eb79000ab78b524d463582eb28013c9da2c
+last_reviewed: 2026-07-15
+last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
   - docs/MVP_SPEC.md#294-cicd
@@ -65,8 +65,8 @@ Questo runbook copre soltanto la Preview/staging non-production di `apps/web`. A
 ```powershell
 git status --short --branch
 git rev-parse HEAD
-corepack pnpm@10.34.5 deploy:check
-corepack pnpm@10.34.5 deploy:check:linked
+corepack pnpm@11.13.0 deploy:check
+corepack pnpm@11.13.0 deploy:check:linked
 corepack pnpm dlx vercel@55.0.0 --version
 corepack pnpm dlx vercel@55.0.0 whoami
 ```
@@ -182,7 +182,7 @@ if ($LASTEXITCODE -ne 0) { throw "preview-bootstrap: Vercel dry-run failed" }
 $dryRun | node scripts/check-vercel-deploy-dry-run.mjs
 if ($LASTEXITCODE -ne 0) { throw "preview-bootstrap: source manifest rejected" }
 
-corepack pnpm@10.34.5 deploy:bootstrap:check
+corepack pnpm@11.13.0 deploy:bootstrap:check
 if ($LASTEXITCODE -eq 0) {
   throw "preview-bootstrap: gate unexpectedly enabled; use a reviewed future runbook"
 }

@@ -10,6 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@dnd-ai/observability": "workspace:*",
+    "@sentry/nextjs": "10.65.0",
     "next": "16.2.10",
     "react": "catalog:",
     "react-dom": "catalog:"
