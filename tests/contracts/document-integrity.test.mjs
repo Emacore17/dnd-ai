@@ -79,3 +79,69 @@ test("ignores section-reference examples wrapped in double backticks", async () 
 
   assert.deepEqual(result.errors, []);
 });
+
+test("requires each numbered ADR exactly once with matching status", async () => {
+  const sources = new Map([
+    [
+      "docs/adr/README.md",
+      [
+        "# ADR",
+        "",
+        "| ADR | Titolo | Stato |",
+        "|---|---|---|",
+        "| [ADR-0001](0001-one.md) | One | `accepted` |",
+        "| [ADR-0001](0001-one.md) | Duplicate | `accepted` |",
+      ].join("\n"),
+    ],
+    ["docs/adr/0001-one.md", "# ADR-0001 — One\n"],
+    ["docs/adr/0002-two.md", "# ADR-0002 — Two\n"],
+  ]);
+  const metadataByPath = new Map([
+    ["docs/adr/README.md", { status: "active" }],
+    ["docs/adr/0001-one.md", { status: "accepted" }],
+    ["docs/adr/0002-two.md", { status: "proposed" }],
+  ]);
+
+  const result = await validateDocumentIntegrity({
+    metadataByPath,
+    sources,
+    validateMermaid: async () => [],
+  });
+
+  assert.deepEqual(result.errors, [
+    "docs/adr/README.md: duplicate-adr-registration ADR-0001",
+    "docs/adr/README.md: missing-adr-registration ADR-0002",
+  ]);
+});
+
+test("rejects unknown ADR rows and status drift", async () => {
+  const sources = new Map([
+    [
+      "docs/adr/README.md",
+      [
+        "# ADR",
+        "",
+        "| ADR | Titolo | Stato |",
+        "|---|---|---|",
+        "| [ADR-0001](0001-one.md) | One | `proposed` |",
+        "| [ADR-0009](0009-unknown.md) | Unknown | `proposed` |",
+      ].join("\n"),
+    ],
+    ["docs/adr/0001-one.md", "# ADR-0001 — One\n"],
+  ]);
+  const metadataByPath = new Map([
+    ["docs/adr/README.md", { status: "active" }],
+    ["docs/adr/0001-one.md", { status: "accepted" }],
+  ]);
+
+  const result = await validateDocumentIntegrity({
+    metadataByPath,
+    sources,
+    validateMermaid: async () => [],
+  });
+
+  assert.deepEqual(result.errors, [
+    "docs/adr/README.md: adr-status-mismatch ADR-0001 expected accepted received proposed",
+    "docs/adr/README.md: unknown-adr-registration ADR-0009",
+  ]);
+});

@@ -274,9 +274,11 @@ export async function validateDocumentPolicy({
       }
     }
 
-    const allowedStatuses = documentPath.startsWith("docs/adr/")
-      ? ADR_STATUSES
-      : LIVING_STATUSES;
+    const allowedStatuses =
+      documentPath.startsWith("docs/adr/") &&
+      documentPath !== "docs/adr/README.md"
+        ? ADR_STATUSES
+        : LIVING_STATUSES;
     if (!allowedStatuses.has(metadata.status)) {
       errors.push(`${documentPath}: invalid-status ${String(metadata.status)}`);
     }

@@ -74,6 +74,7 @@ supersedes: null
 | [`TRACEABILITY.md`](TRACEABILITY.md) | Requisito → task → test → evidenza |
 | [`CHANGELOG.md`](CHANGELOG.md) | Modifiche documentali e contrattuali significative |
 | [`product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md) | Contratto UX/UI mobile-first, design system e motion |
+| [`adr/README.md`](adr/README.md) | Registro completo e validato delle decisioni architetturali |
 | [`adr/0001-mobile-first-conversational-ui.md`](adr/0001-mobile-first-conversational-ui.md) | Decisione accepted su shell, stack visuale e guardrail |
 | [`architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | Monorepo implementato, direzioni di dipendenza e toolchain |
 | [`adr/0002-monorepo-package-boundaries.md`](adr/0002-monorepo-package-boundaries.md) | Decisione accepted su workspace e boundary enforcement |
@@ -102,7 +103,6 @@ supersedes: null
 
 I path seguenti sono pianificati e non sono link finché non esistono:
 
-- `docs/adr/README.md` — `GOV-002`;
 - `docs/data/DATA_MODEL.md` — `DOC-ARCH-001`;
 - `docs/testing/TEST_STRATEGY.md` — `QA-001`;
 - `docs/testing/AI_EVALS.md` — `DOC-TEST-001`;

@@ -44,6 +44,126 @@ function maskDoubleBacktickSpans(line) {
   return masked;
 }
 
+function numberedAdrDocument(documentPath) {
+  const prefix = "docs/adr/";
+  if (!documentPath.startsWith(prefix) || !documentPath.endsWith(".md")) {
+    return null;
+  }
+
+  const target = documentPath.slice(prefix.length);
+  const number = target.slice(0, 4);
+  const numbered =
+    target.length > 8 &&
+    target[4] === "-" &&
+    [...number].every((character) => character >= "0" && character <= "9");
+
+  return numbered ? { id: `ADR-${number}`, target } : null;
+}
+
+function adrRegistrationFromLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) {
+    return null;
+  }
+
+  const columns = trimmed
+    .slice(1, -1)
+    .split("|")
+    .map((column) => column.trim());
+  if (columns.length !== 3) {
+    return null;
+  }
+
+  const link = columns[0];
+  const openingTarget = link.indexOf("](");
+  if (
+    !link.startsWith("[ADR-") ||
+    openingTarget === -1 ||
+    !link.endsWith(")")
+  ) {
+    return null;
+  }
+
+  const id = link.slice(1, openingTarget);
+  const target = link.slice(openingTarget + 2, -1);
+  const statusColumn = columns[2];
+  const status =
+    statusColumn.startsWith("`") && statusColumn.endsWith("`")
+      ? statusColumn.slice(1, -1)
+      : null;
+  const number = id.slice(4);
+  const validId =
+    id.length === 8 &&
+    [...number].every((character) => character >= "0" && character <= "9");
+
+  return validId && target && status ? { id, status, target } : null;
+}
+
+function validateAdrRegistry({ errors, metadataByPath, sources }) {
+  const registryPath = "docs/adr/README.md";
+  const actual = [...sources.keys()].map(numberedAdrDocument).filter(Boolean);
+  if (actual.length === 0) {
+    return;
+  }
+
+  const registrySource = sources.get(registryPath);
+  if (!registrySource) {
+    errors.push(`${registryPath}: missing-adr-registry`);
+    return;
+  }
+
+  const actualById = new Map(actual.map((entry) => [entry.id, entry]));
+  const registrations = visibleMarkdownLines(registrySource)
+    .map(({ line }) => adrRegistrationFromLine(line))
+    .filter(Boolean);
+  const registrationsById = Map.groupBy(
+    registrations,
+    (registration) => registration.id,
+  );
+  const idsByTarget = Map.groupBy(
+    registrations,
+    (registration) => registration.target,
+  );
+
+  for (const [id, entries] of registrationsById) {
+    if (entries.length > 1) {
+      errors.push(`${registryPath}: duplicate-adr-registration ${id}`);
+    }
+  }
+
+  for (const [target, entries] of idsByTarget) {
+    if (new Set(entries.map(({ id }) => id)).size > 1) {
+      errors.push(`${registryPath}: duplicate-adr-target ${target}`);
+    }
+  }
+
+  for (const entry of actual) {
+    const registrationsForId = registrationsById.get(entry.id) ?? [];
+    if (registrationsForId.length === 0) {
+      errors.push(`${registryPath}: missing-adr-registration ${entry.id}`);
+    }
+  }
+
+  for (const registration of registrations) {
+    const actualEntry = actualById.get(registration.id);
+    if (!actualEntry || actualEntry.target !== registration.target) {
+      errors.push(
+        `${registryPath}: unknown-adr-registration ${registration.id}`,
+      );
+      continue;
+    }
+
+    const actualStatus = metadataByPath.get(
+      `docs/adr/${actualEntry.target}`,
+    )?.status;
+    if (actualStatus !== registration.status) {
+      errors.push(
+        `${registryPath}: adr-status-mismatch ${registration.id} expected ${String(actualStatus)} received ${registration.status}`,
+      );
+    }
+  }
+}
+
 function normalizeDocumentPath(documentPath) {
   return path.posix.normalize(documentPath.replaceAll("\\", "/"));
 }
@@ -221,6 +341,7 @@ export async function validateDocumentIntegrity({
   validateRelativeFragments({ catalogs, errors, sources });
   validateMetadataFragments({ catalogs, errors, metadataByPath });
   validateSectionReferences({ catalogs, errors, sources });
+  validateAdrRegistry({ errors, metadataByPath, sources });
   errors.push(...(await validateMermaid(sources)));
 
   return { errors: errors.sort() };

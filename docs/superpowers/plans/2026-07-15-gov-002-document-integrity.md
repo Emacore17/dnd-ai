@@ -324,7 +324,7 @@ Expected: commit creato; working tree privo dei file del Task 1.
 - Consumes: documenti `docs/adr/0001-*.md` e front matter già parsati.
 - Produces: registro tabellare ADR e errori `missing-adr-registration`, `duplicate-adr-registration`, `unknown-adr-registration`, `adr-status-mismatch`.
 
-- [ ] **Step 1: Scrivere il test RED del registro ADR**
+- [x] **Step 1: Scrivere il test RED del registro ADR**
 
 Aggiungere a `tests/contracts/document-integrity.test.mjs`:
 
@@ -364,7 +364,7 @@ test("requires each numbered ADR exactly once with matching status", async () =>
 });
 ```
 
-- [ ] **Step 2: Eseguire RED**
+- [x] **Step 2: Eseguire RED**
 
 Run:
 
@@ -374,7 +374,7 @@ node --test tests/contracts/document-integrity.test.mjs
 
 Expected: il nuovo test fallisce perché completezza e duplicati non sono ancora applicati.
 
-- [ ] **Step 3: Implementare il parser tabellare bounded**
+- [x] **Step 3: Implementare il parser tabellare bounded**
 
 In `document-integrity-policy.mjs`, riconoscere soltanto righe con forma:
 
@@ -384,7 +384,7 @@ In `document-integrity-policy.mjs`, riconoscere soltanto righe con forma:
 
 Confrontare gli ID/target/stati con ogni file `docs/adr/NNNN-*.md` presente in `sources`. Rifiutare ID duplicato, target duplicato, file numerato mancante dal registro, target senza documento e stato diverso dal front matter.
 
-- [ ] **Step 4: Creare il registro reale**
+- [x] **Step 4: Creare il registro reale**
 
 Creare `docs/adr/README.md` con front matter completo e questa tabella:
 
@@ -403,7 +403,7 @@ Creare `docs/adr/README.md` con front matter completo e questa tabella:
 
 Aggiungere `adr/README.md` alla tabella Documenti attivi in `docs/README.md`.
 
-- [ ] **Step 5: Verificare GREEN**
+- [x] **Step 5: Verificare GREEN**
 
 Run:
 
@@ -414,7 +414,7 @@ node scripts/check-docs.mjs
 
 Expected: test e repository documentale passano.
 
-- [ ] **Step 6: Commit atomico del registro**
+- [x] **Step 6: Commit atomico del registro**
 
 ```powershell
 git add docs/adr/README.md docs/README.md scripts/lib/document-integrity-policy.mjs tests/contracts/document-integrity.test.mjs
