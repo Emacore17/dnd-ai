@@ -29,8 +29,10 @@ const managedKeys = [
   "API_PORT",
   "API_DATABASE_URL",
   "API_REDIS_URL",
+  "API_SENTRY_DSN",
   "WORKER_DATABASE_URL",
   "WORKER_REDIS_URL",
+  "WORKER_SENTRY_DSN",
   "MIGRATION_DATABASE_URL",
 ];
 
@@ -117,6 +119,74 @@ test("worker validation runs before the injected initializer", async () => {
     initialize: async (config) => config.environment,
   });
   assert.equal(result, "staging");
+});
+
+test("malformed Sentry DSNs fail before API construction and worker initialization", async () => {
+  const apiSecretDsn = "http://api-canary@errors.example.test/101";
+  let appFactoryCalled = false;
+
+  assert.throws(
+    () =>
+      createConfiguredApiApp({
+        environment: {
+          ...apiEnvironment(3001),
+          API_SENTRY_DSN: apiSecretDsn,
+        },
+        createApp: () => {
+          appFactoryCalled = true;
+          throw new Error("must not be reached");
+        },
+      }),
+    (error) => {
+      assert.deepEqual(error.invalidKeys, ["API_SENTRY_DSN"]);
+      assert.doesNotMatch(error.message, new RegExp(apiSecretDsn));
+      return true;
+    },
+  );
+  assert.equal(appFactoryCalled, false);
+
+  const workerSecretDsn = "https://worker-canary@bad_host/202";
+  let initializerCalled = false;
+
+  await assert.rejects(
+    initializeWorkerRuntime({
+      environment: {
+        APP_ENV: "staging",
+        WORKER_DATABASE_URL:
+          "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
+        WORKER_REDIS_URL:
+          "rediss://worker:redis_password@staging-cache.internal:6380/1",
+        WORKER_SENTRY_DSN: workerSecretDsn,
+      },
+      initialize: async () => {
+        initializerCalled = true;
+      },
+    }),
+    (error) => {
+      assert.deepEqual(error.invalidKeys, ["WORKER_SENTRY_DSN"]);
+      assert.doesNotMatch(error.message, new RegExp(workerSecretDsn));
+      return true;
+    },
+  );
+  assert.equal(initializerCalled, false);
+
+  const cliResult = spawnSync(process.execPath, [configCliPath, "worker"], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: isolatedEnvironment({
+      APP_ENV: "staging",
+      WORKER_DATABASE_URL:
+        "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
+      WORKER_REDIS_URL:
+        "rediss://worker:redis_password@staging-cache.internal:6380/1",
+      WORKER_SENTRY_DSN: workerSecretDsn,
+    }),
+  });
+
+  assert.equal(cliResult.status, 1);
+  assert.match(cliResult.stderr, /WORKER_SENTRY_DSN/);
+  assert.doesNotMatch(cliResult.stderr, new RegExp(workerSecretDsn));
+  assert.equal(cliResult.stdout, "");
 });
 
 test("configuration CLI smoke passes local and staging fixtures without printing connection strings", () => {
