@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
+last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -15,6 +15,7 @@ related_tasks:
   - BL-003
   - BL-004
   - BL-008
+  - BL-009
   - BL-079
   - BL-080
 code_refs:
@@ -50,6 +51,12 @@ code_refs:
   - scripts/verify-affected.mjs
   - scripts/lib/affected-verification.mjs
   - packages/observability
+  - packages/contracts/src
+  - packages/contracts/generated/v1
+  - scripts/generate-contracts.mjs
+  - scripts/lib/contract-artifact-policy.mjs
+  - scripts/lib/contract-compatibility-policy.mjs
+  - scripts/lib/owned-path-policy.mjs
   - apps/api/src/observability.ts
   - apps/worker/src/observability.ts
   - apps/web/instrumentation.ts
@@ -89,6 +96,13 @@ test_refs:
   - tests/integration/observability-flow.test.mjs
   - tests/contracts/observability-contract.test.mjs
   - tests/security/observability-security.test.mjs
+  - tests/contracts/contracts-foundation.test.mjs
+  - tests/contracts/contracts-runtime.test.mjs
+  - tests/contracts/contracts-artifacts.test.mjs
+  - tests/contracts/contracts-generated.test.mjs
+  - tests/unit/contract-artifact-policy.test.mjs
+  - tests/contracts/contracts-compatibility.test.mjs
+  - tests/unit/owned-path-policy.test.mjs
 supersedes: null
 ---
 
@@ -101,10 +115,15 @@ supersedes: null
 - Implementato `observability-baseline-v1`: kernel browser-safe e runtime Node separato, tracing OpenTelemetry W3C, request ID server-owned, logger Pino allowlisted e adapter Sentry error-only opzionale.
 - Integrati plugin Fastify, wrapper worker e entrypoint Next client/server/edge con caricamento Sentry lazy; aggiunti test unit, integration, contract e security senza rete.
 - Accettato [`ADR-0007`](adr/0007-observability-context-and-error-reporting.md) e allineati design, piano e living docs al comportamento reale.
+- Implementato il candidato `api-contract-v1`: Zod strict e tipi inferiti per request/response/error, lifecycle SSE, `GameEvent`, risultato turno AI e tool envelope parametrizzato da allowlist.
+- Generati manifest, sei JSON Schema Draft 2020-12 e OpenAPI 3.1.1 components-only sotto `packages/contracts/generated/v1`; aggiunti writer esplicito e checker read-only deterministico.
+- Accettato [`ADR-0008`](adr/0008-zod-first-contract-generation.md) e creato il catalogo operativo [`docs/api/README.md`](api/README.md).
 
 ### Changed
 
-- Portato `BL-008` alla proposta branch-local `DONE/100%/PASSING` nella PR #20 in corsia `HIGH_RISK`: implementazione, gate mirati, review indipendente, full gate e checkout pulito del candidato osservabilità sono verdi; clean commit e merge gate corretto seguono senza modificare Vercel.
+- Integrato `BL-008` tramite PR #20/merge `ccecd683`; la run post-merge `29415397361` ha concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`, senza modificare Vercel.
+- Avviato `BL-009` in corsia `HIGH_RISK`; Quality e full verify ora richiedono `contracts:check`, mentre il relativo contract test impedisce di rimuovere silenziosamente il gate.
+- La review BL-009 ha rilevato quattro P1: UUID canonici trattati come slug, versioni `GameEvent` indipendenti, assenza di una baseline compatibilità esterna e root generated collegabile. Sono stati chiusi con UUIDv7, literal v1, confronto offline col tree Git protetto e guard symlink/junction rieseguito prima delle mutazioni.
 - Esteso `runtime-config-v1` con DSN Sentry opzionali service-scoped per API/worker e template web pubblico; valori assenti disabilitano l'adapter, valori server malformati falliscono prima degli effetti senza leakage.
 - Bloccato il boundary root browser-safe vs `/node`; l'SDK Sentry non entra nell'entry client iniziale quando la DSN manca e gli artifact client restano privi di marker Node.
 - Confermati fuori scope account/progetti Sentry, backend OTLP, source-map upload e qualunque configurazione o deploy Vercel.
@@ -118,6 +137,8 @@ supersedes: null
 - Review indipendente senza P0/P1. Full `TURBO_FORCE=true pnpm verify` exit `0` in 86,2 s: lint 11, typecheck 13, build 11, unit 77/1 host skip, integration 13, database 13, contract 32, security 26/3 host skip e artifact 3.906 file.
 - Un primo full exit `1` ha rilevato soltanto Docker Desktop spento; dopo l'avvio, database 13/13 e full rerun passano sul repository invariato. Checkout pulito e CI PR seguono lo snapshot committato.
 - La prima run PR [`29413088682`](https://github.com/Emacore17/dnd-ai/actions/runs/29413088682) ha fallito nel solo job Security con HTTP `410` dagli endpoint audit legacy usati da pnpm 10; `corepack pnpm@11.13.0 audit --audit-level=high` usa il percorso bulk e termina con `No known vulnerabilities found`. Re-review del P1 senza finding residui; full finale pnpm 11 exit `0` in 85,1 s con lint/build 11, typecheck 13, unit 77/1 skip, integration 13, database 13, contract 36, security 26/3 skip e artifact 3.906 file.
+- BL-008: PR #20 integrata; run post-merge [`29415397361`](https://github.com/Emacore17/dnd-ai/actions/runs/29415397361) 5/5 `SUCCESS`.
+- BL-009 mirato: `test:contract` 55/55, artifact/compatibility/owned-path unit 7/7, `contracts:check`, package lint/typecheck, Prettier ed ESLint mirati tutti `PASS`; JSON Schema compilati con Ajv 2020 e validazione parity con Zod. Re-check indipendente senza P0/P1 residui. I primi due full hanno rilevato ownership del formato generated e risoluzione del pnpm globale nello script annidato; regressioni fail-closed applicate. Full finale exit `0` in 86,8 s: lint/build 11, typecheck 13, unit 84/1 skip host, integration 13, database 13, contract 56, security 26/3 skip host, docs 31/11 e artifact 3.942. Clean checkout e CI restano pendenti.
 
 ## 2026-07-14
 

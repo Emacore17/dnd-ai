@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
+last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -14,6 +14,7 @@ related_tasks:
   - BL-003
   - BL-004
   - BL-008
+  - BL-009
   - BL-079
   - BL-080
 code_refs:
@@ -25,6 +26,12 @@ code_refs:
   - packages/observability/src/tracing.ts
   - packages/observability/src/logger.ts
   - packages/observability/src/redaction.ts
+  - packages/contracts/src
+  - packages/contracts/generated/v1
+  - scripts/generate-contracts.mjs
+  - scripts/lib/contract-artifact-policy.mjs
+  - scripts/lib/contract-compatibility-policy.mjs
+  - scripts/lib/owned-path-policy.mjs
   - apps/api/src/observability.ts
   - apps/worker/src/observability.ts
   - apps/web/instrumentation.ts
@@ -101,6 +108,13 @@ test_refs:
   - tests/integration/observability-flow.test.mjs
   - tests/contracts/observability-contract.test.mjs
   - tests/security/observability-security.test.mjs
+  - tests/contracts/contracts-foundation.test.mjs
+  - tests/contracts/contracts-runtime.test.mjs
+  - tests/contracts/contracts-artifacts.test.mjs
+  - tests/contracts/contracts-generated.test.mjs
+  - tests/unit/contract-artifact-policy.test.mjs
+  - tests/contracts/contracts-compatibility.test.mjs
+  - tests/unit/owned-path-policy.test.mjs
 supersedes: null
 ---
 
@@ -115,8 +129,8 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-008 — OTel/log/Sentry baseline`
-> **Prossimo task READY:** `—`; `BL-079` resta `BACKLOG` finché lo staging non è disponibile
+> **Task attivo:** `BL-009 — Zod, JSON Schema, OpenAPI generation`
+> **Prossimo task READY:** `—`; `BL-010` è il successivo ordinato eleggibile dopo BL-009, mentre `BL-079` resta `BACKLOG` finché lo staging non è disponibile
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -285,7 +299,7 @@ Corsie: `FAST` usa `verify:docs`; `STANDARD` usa test mirati + `verify:affected`
 | `docs/features/RULES_ENGINE.md` | Planned (`DOC-RULES-001`) | Regole/tool | Ogni formula, evento o tool change. |
 | `docs/features/MEMORY_NPC.md` | Planned (`DOC-MEM-001`) | Knowledge/memory/context | Ogni visibility/retrieval/budget change. |
 | `docs/features/PROGRESSION_ENDINGS.md` | Planned (`DOC-END-001`) | Pacing/finali/epilogo | Ogni predicate/gate change. |
-| `docs/api/` | Planned | Contratti API generated + guide | Ogni endpoint/schema version. |
+| [`docs/api/README.md`](api/README.md) | Esistente, `active` | Contratti runtime/generated e version policy | Ogni endpoint/schema version. |
 | `docs/events/EVENT_CATALOG.md` | Planned | Eventi e payload | Ogni nuovo evento/versione. |
 | `docs/security/THREAT_MODEL.md` | Planned (`DOC-SEC-001`) | Threat/controls | Ogni trust boundary/dato/endpoint. |
 | `docs/security/MODERATION_POLICY.md` | Planned (`DOC-SEC-001`) | Policy safety | Ogni policy/provider/category change. |
@@ -549,29 +563,29 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Integration test web→API→worker fake con propagazione correlation/trace ID.
   - [x] Test di redazione PII/secret nei log e cattura errori Sentry senza payload sensibili.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0007-observability-context-and-error-reporting.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/CI_CD.md`
-- **Evidenze di chiusura:** candidate precedente `b9b707f3ee6bb812114b206cda03530c33e48edb`; review indipendente osservabilità senza P0/P1; suite mirate, full gate e checkout pulito verdi. [PR #20](https://github.com/Emacore17/dnd-ai/pull/20), prima run [`29413088682`](https://github.com/Emacore17/dnd-ai/actions/runs/29413088682): Quality e Tests verdi, Security fallita esclusivamente con HTTP `410` dagli endpoint audit legacy pnpm 10, Build saltato e merge gate rosso. Correzione TDD: pin pnpm `11.13.0`, policy progetto migrate nel manifest workspace, deny `@sentry/cli`, global store disabilitato e dipendenze stale rifiutate senza install impliciti; audit high senza vulnerabilità, `verify:docs` 27 documenti/15 modificati e `verify:affected` 33/33 passano. La review della correzione ha trovato un P1 sul possibile `--ignore-registry-errors`, chiuso con comando audit esatto e re-check senza P0/P1. Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in `85,1 s`: lint/build 11, typecheck 13, unit 77/1 host skip, integration 13, database 13, contract 36, security 26/3 host skip e artifact 3.906 file. Clean verify del commit e rerun PR seguono; delivery `PENDING`. Trace fake `web.request → api.request → queue.enqueue → worker.process`, due flussi concorrenti disgiunti; migration head `000001_postgresql_foundation`; eval `N/A`; trace ID `N/A — fixture runtime non persistita`.
+- **Evidenze di chiusura:** candidate `b9b707f3ee6bb812114b206cda03530c33e48edb`; review indipendente osservabilità senza P0/P1; suite mirate, full gate e checkout pulito verdi. [PR #20](https://github.com/Emacore17/dnd-ai/pull/20), prima run [`29413088682`](https://github.com/Emacore17/dnd-ai/actions/runs/29413088682) rossa sul solo endpoint audit legacy pnpm 10; correzione TDD con pin pnpm `11.13.0`, policy progetto e comando audit esatto. Full finale exit `0` in `85,1 s`; PR integrata nel merge `ccecd683c12ebfe29f4cc6be78c950ebb01ca288` e run post-merge [`29415397361`](https://github.com/Emacore17/dnd-ai/actions/runs/29415397361) con Quality, Tests, Security, Build artifact e `CI / Merge gate` 5/5 `SUCCESS`. Trace fake `web.request → api.request → queue.enqueue → worker.process`, due flussi concorrenti disgiunti; migration head `000001_postgresql_foundation`; eval `N/A`; trace ID `N/A — fixture runtime non persistita`.
 - **Note, rischi o bloccanti:** proposta branch-local terminale in corsia `HIGH_RISK`, senza downgrade del gate o modifica del dependency graph; il lockfile è invariato. Il clean checkout riapre il task se fallisce. Sentry resta off-by-default senza provisioning; nessuna azione Vercel.
 
 ### BL-009 — Zod, JSON Schema, OpenAPI generation
 
-- **Stato:** `BACKLOG`
-- **Progresso:** `0%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — baseline `ccecd683c12ebfe29f4cc6be78c950ebb01ca288`; spec SHA `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c`; data: `2026-07-15`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-001
 - **Dipendenze operative aggiuntive:** BL-001
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §12.6 Schema del turno; `docs/MVP_SPEC.md` §12.8 Schemi separati; `docs/MVP_SPEC.md` §20 API; `docs/MVP_SPEC.md` §29.4 CI/CD; `docs/MVP_SPEC.md` §31 `BL-009`; `docs/MVP_SPEC.md` §35.1
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §11.5 Event sourcing pragmatico; `docs/MVP_SPEC.md` §12.6 Schema del turno; `docs/MVP_SPEC.md` §12.8 Schemi separati; `docs/MVP_SPEC.md` §20.1 Convenzioni REST e §20.4 Payload di turno; `docs/MVP_SPEC.md` §29.4 CI/CD; `docs/MVP_SPEC.md` §31 `BL-009`; `docs/MVP_SPEC.md` §35.1; `docs/MVP_SPEC.md` Prime 10 attività di implementazione; `docs/adr/0002-monorepo-package-boundaries.md`; [`design api-contract-v1`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md); [`piano TDD`](superpowers/plans/2026-07-15-bl-009-contract-generation.md)
 - **Obiettivo:** Come client voglio DTO runtime-validati.
 - **Deliverable:** Zod, JSON Schema, OpenAPI generation.
 - **Criterio di accettazione:** Contract compile e response validation; schema versionato.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Test di accettazione automatizzato: Contract compile e response validation; schema versionato.
-  - [ ] Contract test di parse/serialize e validazione runtime per request/response/event schema.
-  - [ ] Test di compatibilità/versionamento e verifica OpenAPI/JSON Schema generati senza diff non committato.
-- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`; schema/OpenAPI/eventi generati, senza modifica manuale dei file generated
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+  - [x] Test di accettazione automatizzato: Contract compile e response validation; schema versionato.
+  - [x] Contract test di parse/serialize e validazione runtime per request/response/event schema.
+  - [x] Test di compatibilità/versionamento e verifica OpenAPI/JSON Schema generati senza diff non committato.
+- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0008-zod-first-contract-generation.md`; `docs/api/README.md`; `packages/contracts/generated/v1/`, senza modifica manuale dei file generated
+- **Evidenze di chiusura:** preflight su merge `ccecd683` e CI `main` run `29415397361` 5/5 `SUCCESS`; TDD mirato `test:contract` 55/55 e artifact/compatibility/owned-path unit 7/7. La review ha trovato quattro P1 reali, chiusi con UUIDv7, literal v1, baseline Git offline e guard symlink/junction; il re-check indipendente non ha trovato P0/P1 residui. Full `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 86,8 s: lint/build 11/11, typecheck 13/13, unit 84 pass/1 skip host, integration 13/13, database 13/13, contract 56/56, security 26 pass/3 skip host, document policy 31 documenti/11 modificati e artifact 3.942 file `PASS`. Migration/eval/trace ID `N/A — task di contratto senza DB, AI o runtime trace`.
+- **Note, rischi o bloccanti:** proposta branch-local terminale in corsia `HIGH_RISK` per dependency graph, contratto pubblico generato e workflow CI. Il primo full ha rilevato che Prettier tentava di ri-formattare artifact canonici; il secondo che lo script annidato risolveva pnpm globale `10.21` invece del pin `11.13.0`. Due regressioni contrattuali ora assegnano al generator l'ownership del formato e invocano direttamente il checker dopo la build; il terzo full passa. Scope: runtime DTO strict con UUIDv7/version gate per API, SSE lifecycle, GameEvent, risultato turno AI e tool envelope allowlisted; JSON Schema Draft 2020-12, OpenAPI 3.1.1 components-only, drift check, freeze offline dei major pubblicati e root guard symlink/junction. Clean checkout e CI protetta riaprono il task se falliscono; fuori scope route Fastify, auth/idempotenza applicativa, catalogo SSE/tool completo, Campaign Bible e cataloghi completi, UI, database, provider e Vercel.
 
 ### BL-010 — Flag store/config auditato
 
@@ -2559,20 +2573,20 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: BL-008
-last_completed_task: GOV-003
+active_task: BL-009
+last_completed_task: BL-008
 next_ready_task: null
 status: DONE
 progress: 100
-started_at: 2026-07-15T10:10:55+02:00
-candidate_at: 2026-07-15T13:44:32+02:00
+started_at: 2026-07-15T14:38:47+02:00
+candidate_at: 2026-07-15T15:39:51+02:00
 cycle_target_minutes: 120
-cycle_actual_minutes: 214
+cycle_actual_minutes: 61
 updated_at: 2026-07-15
 agent: Codex development agent
-git_branch: codex/bl-008-observability-baseline
-base_commit: 99a4f3f5441fd5a64657d2ad54fd7342e3fefef2
-candidate_head: b9b707f3ee6bb812114b206cda03530c33e48edb
+git_branch: codex/bl-009-contract-generation
+base_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
+candidate_head: null
 spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
 context_verified: true
 test_status: PASSING
@@ -2584,24 +2598,28 @@ test_status: PASSING
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti BL-008 — `docs/MVP_SPEC.md` §§24, 29.1, 31 e 35.1; ADR-0002, ADR-0004, ADR-0007, design e piano TDD
-- [x] documentazione corrente — `docs/architecture/SYSTEM_OVERVIEW.md` e `docs/operations/CONFIGURATION.md`
-- [x] codice/test interessati — `packages/observability`, `packages/config`, `apps/web`, `apps/api`, `apps/worker`, manifest e suite unit/integration/contract/security
+- [x] riferimenti BL-009 — `docs/MVP_SPEC.md` §§11.5, 12.6, 12.8, 19.1, 20.1, 20.4, 20.6, 29.4, 31 e 35.1; ADR-0002, design e piano TDD
+- [x] documentazione corrente — `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/operations/CI_CD.md` e `docs/api/README.md`
+- [x] codice/test interessati — `packages/contracts`, generator/policy, generated v1, workflow Quality e suite contract/unit
 
 ## Piano e scope
 
-- **Corsia:** `HIGH_RISK` perché cambiano dependency graph, lockfile, config e privacy boundary; un solo full gate sul candidato finale e clean-checkout verification.
-- **Obiettivo verificabile:** trace W3C web→API→worker fake con `requestId` coerente, log JSON redatti e Sentry error-only senza payload sensibili.
-- **File/moduli previsti:** `packages/observability`, composition root e wrapper in `apps/web`, `apps/api`, `apps/worker`, config service-scoped, manifest/lockfile, test e soli documenti semanticamente interessati.
-- **Azioni esterne:** nessun provisioning Sentry, backend OTLP, deploy o modifica Vercel; sola documentazione ufficiale corrente per le API delle dipendenze.
-- **Test previsti:** TDD unit, integration Fastify/worker fake con exporter in-memory, concorrenza, contract bundle/boundary, security redaction/Sentry fake; una sola `verify` finale, clean checkout e review indipendente.
-- **Rischi/failure path:** context bleed concorrente, trace carrier riflesso, PII/secret nei log o Sentry, collisione fra setup OTel e Sentry, dipendenze Node nel bundle client e telemetry failure che altera il percorso applicativo.
-- **Fuori scope:** account/provider reali, OTLP remoto, source-map upload, dashboard/alert/metriche complete, BullMQ e turn orchestrator reali, UI e Vercel.
+- **Corsia:** `HIGH_RISK` perché cambiano dependency graph/lockfile, contratto pubblico generato e workflow CI; un full gate sul candidato e clean-checkout verification obbligatoria.
+- **Obiettivo verificabile:** DTO request/response/event/output AI runtime-validati da Zod e artifact JSON Schema/OpenAPI deterministici, versionati e compatibili.
+- **File/moduli previsti:** `packages/contracts`, generator e policy drift/compatibility/owned path, generated v1, workflow Quality, test e soli documenti semanticamente interessati.
+- **Azioni esterne:** sola documentazione tecnica ufficiale; nessun provider, account, deploy o modifica Vercel.
+- **Test previsti:** TDD runtime/roundtrip strict, Ajv parity, canonicalizzazione/drift, compatibilità contro base Git offline, symlink/junction, CI policy; full gate, clean checkout e review indipendente.
+- **Rischi/failure path:** UUID canonici rifiutati, versioni evento incoerenti, breaking change rigenerata dentro v1, base Git assente, artifact stale/missing/unexpected, path escape/root collegato e rimozione del gate CI.
+- **Fuori scope:** route Fastify, auth/idempotenza, schema Bible completo, tool registry concreto, database, UI, provider e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-15 15:40 +02:00 | 100% | Re-check indipendente senza P0/P1 residui. I primi due full hanno esposto ownership di formattazione generated e risoluzione del pnpm globale nello script annidato; aggiunte regressioni fail-closed e mantenuto un unico checker diretto dopo la build. Candidato branch-local terminale in 61 minuti. | Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 86,8 s: lint/build 11, typecheck 13, unit 84/1 skip host, integration 13, DB 13, contract 56, security 26/3 skip host, docs 31/11 e artifact 3.942. | Committare il candidato, verificarlo da checkout pulito e pubblicare una sola PR protetta; nessuna azione Vercel. |
+| 2026-07-15 15:34 +02:00 | 90% | Living docs e riferimenti ora descrivono `api-contract-v1`, policy immutable-major e delivery BL-008 reale; restano solo gate HIGH_RISK e re-review mirata. | `verify:docs` exit `0`: 31 documenti/11 modificati, task graph e secret scan PASS. | Audit dipendenze, full verify e re-check dei quattro P1. |
+| 2026-07-15 15:30 +02:00 | 75% | La review indipendente ha trovato quattro P1 reali: UUID canonici trattati come slug, version gate `GameEvent` aperto, nessuna baseline compatibility esterna e root generated collegabile. TDD rosso→verde: UUIDv7 sui record, literal v1, freeze dei major contro tree Git protetto e guard symlink/junction prima delle mutazioni. | Runtime RED 3/7 e due moduli policy mancanti; GREEN `test:contract` 55/55, unit artifact/compatibility/owned path 7/7, `contracts:check`, Prettier ed ESLint mirati exit `0`; fixture Git/junction soltanto in temp. | Allineare living docs, eseguire audit e gate HIGH_RISK, poi re-review dei quattro P1. |
+| 2026-07-15 14:39 +02:00 | 25% | Selezionato BL-009 dal merge BL-008 verificato; approvata slice Zod-first components-only, senza anticipare route, Bible completa o tool concreti. | Base `ccecd683`; post-merge main `29415397361` 5/5; preflight/grafo/docs verdi; design e piano versionati nello stesso change set. | Implementare batch TDD runtime, artifact e CI. |
 | 2026-07-15 14:21 +02:00 | 100% | Re-check del P1 senza finding residui e candidato corretto branch-local terminale; audit resta high/fail-closed, lockfile e dependency graph invariati. | Full `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 85,1 s: lint/build 11, typecheck 13, unit 77/1 skip, integration 13, DB 13, contract 36, security 26/3 skip, artifact 3.906. | Committare, verificare install frozen + full gate da clean worktree, push e attendere una sola nuova CI PR. |
 | 2026-07-15 14:18 +02:00 | 90% | La review del solo P1 ha provato che una ricerca per sottostringa accettava `--ignore-registry-errors`. Il validator ora richiede un unico step con comando audit esatto, senza flag o shell suffix aggiuntivi. | Regressione inizialmente rossa, poi `tests/contracts/ci-workflow.test.mjs` 5/5 e `ci-workflow-policy` PASS. | Re-check del solo finding, full gate finale, commit e clean checkout. |
 | 2026-07-15 14:05 +02:00 | 90% | La prima CI della PR #20 ha isolato un'incompatibilità dell'audit, non una vulnerabilità: pnpm 10 usa endpoint legacy ora `410`. Pin aggiornato a pnpm 11 bulk-capable senza ignore; policy progetto migrate in YAML, script `@sentry/cli` negato e install impliciti pre-script sostituiti da errore fail-closed. Lockfile invariato. | Run `29413088682`: Quality/Tests verdi, solo Security rosso; TDD rosso→verde su pin e workspace config, 11/11 contract PASS; audit high pulito; `verify:docs` PASS; `verify:affected` 33/33 PASS. | Eseguire full/clean gate con pnpm 11, re-review del solo P1, push e attendere la nuova CI. |
@@ -2657,15 +2675,15 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** implementation head `3d278655bf3ccec5d7dd3b142aea209cab307dca` sul branch `codex/bl-008-observability-baseline`; commit documentale/candidato, clean verify e PR seguono questo snapshot; delivery `PENDING`.
-- **Comandi eseguiti:** build/test TDD mirati; `test:unit`; `test:integration`; `test:contract`; `test:security`; `verify:affected`; `verify:docs`; ricerca marker negli artifact client; review indipendente; full `TURBO_FORCE=true pnpm verify`; suite DB isolata dopo avvio Docker.
-- **Exit code:** unit `0` (77 pass/1 host skip); integration `0` (13 pass); database `0` (13 pass); contract `0` (32 pass); security `0` (26 pass/3 host skip); `verify:affected` `0` (33/33); `verify:docs` `0` (27 documenti/11 modificati); full finale `0` in 86,2 s. Primo full `1` in 67,8 s su daemon Docker spento, seguito da recovery senza modifiche al repository.
-- **Report/CI URL o path:** design, piano, ADR-0007 e card corrente; CI `N/A — PR non ancora aperta`.
+- **Commit/PR:** branch `codex/bl-009-contract-generation` su base `ccecd683`; candidate head derivato da Git al commit, PR `PENDING`.
+- **Comandi eseguiti:** RED/GREEN mirati, package build/lint/typecheck, `test:contract`, unit policy, `contracts:generate`, `contracts:check`, Prettier/ESLint mirati e full `TURBO_FORCE=true corepack pnpm@11.13.0 verify`.
+- **Exit code:** contract mirato `0` (55/55); artifact/compatibility/owned-path unit `0` (7/7); full `0` in 86,8 s con contract 56/56 e tutti i gate verdi; clean/CI `N/A — gate esterni immediati prima dell'integrazione`.
+- **Report/CI URL o path:** design, piano, ADR-0008, `docs/api/README.md` e card corrente; CI BL-009 `N/A — PR non ancora aperta`.
 - **Migration head:** `000001_postgresql_foundation` invariato.
-- **Contract/schema/event version:** `observability-baseline-v1` implementato; API/event schema `N/A`.
+- **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`; sei JSON Schema 2020-12, OpenAPI 3.1.1 e manifest.
 - **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
-- **Documenti aggiornati:** ADR-0007, design/piano, `docs/TASKS.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, overview, configuration, CI/CD, README e changelog.
-- **Rischi residui/TODO tracciati:** checkout pulito e delivery protetta; provider telemetry e freeze Vercel invariati.
+- **Documenti aggiornati:** ADR-0008, API guide, design/piano, task/context/traceability, overview, CI/CD, README e changelog.
+- **Rischi residui/TODO tracciati:** checkout pulito e delivery protetta; se uno fallisce il task riapre. Freeze Vercel invariato.
 - **Task successivo reso READY:** nessuno sul branch; lo stato canonico resta su `main` fino al merge. `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale.
 
 
@@ -2712,6 +2730,9 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-15 | `3d27865` | BL-008 implementation | Runtime osservabilità e privacy boundary | Implementati kernel browser-safe, runtime OTel Node, Pino redatto, Sentry error-only lazy, plugin API e wrapper worker; gate mirati verdi e ADR-0007 accepted. Stato branch-local `IN_REVIEW/90%/PASSING`; full/clean/PR pendenti. | BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
 | 2026-07-15 | `3d27865` + candidate docs | BL-008 candidate | Full gate e stato branch-local | Review senza P0/P1; full gate verde dopo l'avvio del daemon Docker richiesto, senza modifiche al repository. Proposta `DONE/100%/PASSING`; clean checkout e delivery protetta restano gate esterni immediati. | BL-009, BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
 | 2026-07-15 | `b9b707f` + CI correction | BL-008 PR correction | Audit bulk e pnpm 11 | PR #20/run `29413088682` ha isolato HTTP `410` nel solo audit pnpm 10. Upgrade coerente a pnpm 11, policy progetto migrate in YAML e deny esplicito Sentry CLI; lockfile invariato, audit high e contratti mirati verdi. | BL-009, BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
+| 2026-07-15 | `ccecd683` | BL-008 closure | PR protetta e CI main | PR #20 integrata senza bypass; run post-merge `29415397361` con Quality, Tests, Security, Build artifact e merge gate 5/5 `SUCCESS`. BL-009 selezionato; freeze Vercel invariato. | BL-009, BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
+| 2026-07-15 | `ccecd683` + working tree | BL-009 implementation | `api-contract-v1` e compatibility boundary | Aggiunti Zod strict, UUIDv7/version gate, JSON Schema/OpenAPI components-only, generator deterministic, freeze Git dei major pubblicati e root guard junction; TDD mirato verde, full/clean/CI pendenti. | GOV-002, BL-021, BL-022, BL-028, QA-001 |
+| 2026-07-15 | candidate head derivato da Git | BL-009 candidate | Full gate e review indipendente | Quattro P1 chiusi e re-check senza P0/P1; full finale exit `0` in 86,8 s dopo regressioni su ownership generated e pnpm annidato. Proposta `DONE/100%/PASSING`; clean checkout e delivery protetta restano gate esterni immediati. | GOV-002, BL-021, BL-022, BL-028, QA-001 |
 
 
 ## 22. Checklist di fine sessione dell’agente

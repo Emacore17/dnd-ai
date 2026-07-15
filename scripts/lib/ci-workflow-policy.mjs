@@ -214,11 +214,27 @@ function validateJobs(errors, workflow) {
     "pnpm format:check",
     "pnpm lint",
     "pnpm typecheck",
+    "pnpm contracts:check",
     "pnpm boundaries:check",
     "pnpm tasks:check",
     "pnpm ci:workflow:check",
     "pnpm deploy:check",
   ]);
+  const qualityCheckout = asArray(jobs.quality?.steps).find((step) =>
+    step.uses?.startsWith("actions/checkout@"),
+  );
+  if (Number(qualityCheckout?.with?.["fetch-depth"]) !== 2) {
+    errors.push("quality checkout must use fetch-depth: 2");
+  }
+  const contractCheckSteps = asArray(jobs.quality?.steps).filter(
+    (step) => String(step.run ?? "").trim() === "pnpm contracts:check",
+  );
+  if (
+    contractCheckSteps.length !== 1 ||
+    contractCheckSteps[0].env?.CONTRACT_BASE_REF !== "HEAD^1"
+  ) {
+    errors.push("quality contract check must use CONTRACT_BASE_REF=HEAD^1");
+  }
   requireCommands(errors, "tests", jobs.tests, [
     "pnpm test:unit",
     "pnpm test:integration",

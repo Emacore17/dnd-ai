@@ -2,17 +2,19 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
+last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
   - AGENTS.md#9-confini-architetturali-e-struttura-target
+  - docs/adr/0008-zod-first-contract-generation.md
 related_tasks:
   - BL-001
   - BL-002
   - BL-003
   - BL-004
   - BL-008
+  - BL-009
   - BL-079
   - BL-080
   - DOC-ARCH-001
@@ -25,6 +27,12 @@ code_refs:
   - packages/observability/src/tracing.ts
   - packages/observability/src/logger.ts
   - packages/observability/src/redaction.ts
+  - packages/contracts/src
+  - packages/contracts/generated/v1
+  - scripts/generate-contracts.mjs
+  - scripts/lib/contract-artifact-policy.mjs
+  - scripts/lib/contract-compatibility-policy.mjs
+  - scripts/lib/owned-path-policy.mjs
   - apps/api/src/observability.ts
   - apps/worker/src/observability.ts
   - apps/web/instrumentation.ts
@@ -76,6 +84,13 @@ test_refs:
   - tests/integration/observability-flow.test.mjs
   - tests/contracts/observability-contract.test.mjs
   - tests/security/observability-security.test.mjs
+  - tests/contracts/contracts-foundation.test.mjs
+  - tests/contracts/contracts-runtime.test.mjs
+  - tests/contracts/contracts-artifacts.test.mjs
+  - tests/contracts/contracts-generated.test.mjs
+  - tests/unit/contract-artifact-policy.test.mjs
+  - tests/contracts/contracts-compatibility.test.mjs
+  - tests/unit/owned-path-policy.test.mjs
 supersedes: null
 ---
 
@@ -83,7 +98,7 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` completa la fondazione PostgreSQL/pgvector. `BL-008` implementa `observability-baseline-v1` ed è una proposta branch-local `DONE/100%/PASSING`: OTel è l'unica autorità trace, Pino produce log redatti e Sentry resta error-only opzionale; review e full gate sono verdi, mentre clean checkout e delivery seguono sul commit. `BL-080` resta bloccato e il freeze Vercel invariato. Non esiste staging, quindi `BL-079` resta backlog; nessuna operazione Vercel appartiene a `BL-008`.
+`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` completa la fondazione PostgreSQL/pgvector. `BL-008` implementa `observability-baseline-v1` ed è integrato tramite PR #20/merge `ccecd683`, con CI post-merge 5/5 verde. `BL-009` implementa il candidato `api-contract-v1`: runtime schema strict e artefatti versionati generati dalla stessa fonte; test mirati, review indipendente e full gate sono verdi, clean checkout e delivery pendenti. `BL-080` resta bloccato e il freeze Vercel invariato. Non esiste staging, quindi `BL-079` resta backlog; nessuna operazione Vercel appartiene a `BL-009`.
 
 ```text
 apps/
@@ -92,7 +107,7 @@ apps/
   worker/          config e osservabilità prima dell'initializer; BullMQ pianificato
 packages/
   config/          parser Zod, profili runtime e CLI redatta
-  contracts/       DTO e schemi esterni futuri
+  contracts/       Zod strict, DTO/tipi, JSON Schema/OpenAPI generati v1
   domain/          entità, comandi, porte e invarianti puri
   rules/           Rules Engine deterministico
   ai/              porte, prompt/context e adapter AI futuri
@@ -134,6 +149,7 @@ App→app, package→app, import relativi che escono dal package e cicli workspa
 | node-pg-migrate / pg | `8.0.4` / `8.22.0` |
 | OpenTelemetry API / SDK | `1.9.1` / `2.9.0` |
 | Pino / Sentry | `10.3.1` / `10.65.0` |
+| Zod / Ajv test-only | `4.4.3` / `8.20.0` |
 
 TypeScript 7 non è stato selezionato perché `typescript-eslint@8.63.0` dichiara compatibilità `<6.1.0`. ESLint resta sulla linea `9.39.2`, compatibile con i plugin transitivi di Next 16.
 
@@ -147,6 +163,12 @@ L'API valida prima di costruire Fastify e aprire il listener. Il worker valida p
 
 Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, health contract `web-health-v1` e progetto Vercel collegato al repository corretto con Root Directory `apps/web`, Next.js e `fra1`. Fork Protection, OIDC e Trusted Source sono configurati; zero variabili applicative. Production Branch Vercel=`release/production`, branch release e Ruleset restano invariati. La policy linked e il comando CLI con `--target=preview` hanno prodotto due record Production poi rimossi. PR #13/#14/#15/#16 hanno riportato il contratto a stato unlinked/fail-closed, aggiunto guard, payload bounded e freeze. Il client Vercel omette l'esplicito target Preview prima della POST, quindi non esiste oggi un percorso first-deployment Preview-only verificato. Git auto-deploy resta spento. `.vercelignore` e `scripts/check-vercel-deploy-dry-run.mjs` consentono soltanto un dry-run bounded dalla root. `source.manualDeployment.enabled=false` e `deploy:bootstrap:check` rendono fail-closed il percorso operativo approvato, ma non sono enforcement provider contro un owner. Lo staging non è disponibile.
 
+## Contratti runtime e artefatti generati
+
+`@dnd-ai/contracts` è un leaf package browser-safe. Gli schemi Zod strict sono la fonte di request, response, error envelope, lifecycle SSE, `GameEvent`, `DungeonMasterTurnResult` e tool envelope parametrizzati da allowlist; i tipi TypeScript vengono inferiti e nessun DTO può applicare stato canonico.
+
+Il catalogo `api-contract-v1` (`1.0.0`, `schemaVersion: 1`) genera sei JSON Schema Draft 2020-12, manifest e OpenAPI 3.1.1 sotto `packages/contracts/generated/v1`. OpenAPI contiene soltanto componenti e `paths: {}` perché gli handler non sono ancora implementati. `contracts:check` confronta in sola lettura il catalogo con gli otto file versionati, congela i major già pubblicati rispetto alla base Git protetta e fallisce su missing, stale, unexpected, incompatibilità o symlink/junction nella catena. In CI usa `HEAD^1` senza fetch; il writer è soltanto `contracts:generate`. Decisione e uso sono documentati in [`ADR-0008`](../adr/0008-zod-first-contract-generation.md) e [`docs/api/README.md`](../api/README.md).
+
 ## Osservabilità implementata
 
 `@dnd-ai/observability` separa il kernel platform-neutral dal subpath `/node`. Il runtime Node usa `AsyncLocalStorage`, propagazione W3C senza baggage, provider OTel esplicito e request ID UUID v4 server-owned. API e worker inizializzano il runtime dopo la config valida e prima degli effetti; Fastify e il wrapper job estraggono/iniettano il carrier e terminano le operazioni una sola volta.
@@ -155,7 +177,7 @@ Pino serializza soltanto eventi e metadata allowlisted. Sanitizzazione e filtro 
 
 Exporter, transport e destination sono best-effort e non modificano risultato HTTP/job; init, end e shutdown sono idempotenti e bounded. La trace fake web→API→queue→worker e due flussi concorrenti sono verificati in-memory, senza rete o risorse provider. La decisione è in [`ADR-0007`](../adr/0007-observability-context-and-error-reporting.md).
 
-## Comandi disponibili in BL-001/BL-002/BL-003/BL-004/BL-008/BL-080
+## Comandi disponibili in BL-001/BL-002/BL-003/BL-004/BL-008/BL-009/BL-080
 
 ```bash
 corepack pnpm@11.13.0 install --frozen-lockfile
@@ -164,6 +186,8 @@ corepack pnpm@11.13.0 typecheck
 corepack pnpm@11.13.0 build
 corepack pnpm@11.13.0 test:contract
 corepack pnpm@11.13.0 test:security
+corepack pnpm@11.13.0 contracts:generate
+corepack pnpm@11.13.0 contracts:check
 corepack pnpm@11.13.0 config:check
 corepack pnpm@11.13.0 scan:sast
 corepack pnpm@11.13.0 boundaries:check
@@ -178,11 +202,11 @@ corepack pnpm@11.13.0 deploy:check
 corepack pnpm@11.13.0 verify
 ```
 
-`verify` copre format, lint, typecheck, build, unit, integration, database migration, contract, security, package/task/CI/deployment policy e artifact verification. I comandi preparano autonomamente i dist richiesti da un checkout pulito; la suite database usa PostgreSQL reale pin a digest, porta loopback effimera, `tmpfs`, polling bounded e cleanup fail-closed. Il dry-run provider non appartiene a `verify`: usa la sequenza PowerShell fail-closed documentata in [`PREVIEW_STAGING.md`](../operations/PREVIEW_STAGING.md#deploy-e-smoke--gate-chiuso). `deploy:bootstrap:check` deve fallire con exit `1` nello stato vigente. Browser/E2E, eval, bot, load e harness condiviso restano responsabilità dei task proprietari; nessun comando futuro è simulato da un no-op.
+`verify` copre format, lint, typecheck, build, generated contract drift, unit, integration, database migration, contract, security, package/task/CI/deployment policy e artifact verification. I comandi preparano autonomamente i dist richiesti da un checkout pulito; la suite database usa PostgreSQL reale pin a digest, porta loopback effimera, `tmpfs`, polling bounded e cleanup fail-closed. Il dry-run provider non appartiene a `verify`: usa la sequenza PowerShell fail-closed documentata in [`PREVIEW_STAGING.md`](../operations/PREVIEW_STAGING.md#deploy-e-smoke--gate-chiuso). `deploy:bootstrap:check` deve fallire con exit `1` nello stato vigente. Browser/E2E, eval, bot, load e harness condiviso restano responsabilità dei task proprietari; nessun comando futuro è simulato da un no-op.
 
 ## CI e supply chain
 
-`.github/workflows/ci.yml` separa quality, test, security e build. Il job Tests esegue anche `pnpm db:migrate:test` su container effimero senza secret CI. `CI / Merge gate` usa `always()` e considera valido soltanto `success` per ogni job richiesto, così failure, cancellation e skip non vengono mascherati. Il workflow usa `pull_request`, push `main`, merge queue e dispatch manuale; `pull_request_target` è vietato dalla policy automatica.
+`.github/workflows/ci.yml` separa quality, test, security e build. Quality usa checkout depth 2 ed esegue `pnpm contracts:check` in sola lettura con base `HEAD^1`; il job Tests esegue `pnpm db:migrate:test` su container effimero senza secret CI. `CI / Merge gate` usa `always()` e considera valido soltanto `success` per ogni job richiesto, così failure, cancellation e skip non vengono mascherati. Il workflow usa `pull_request`, push `main`, merge queue e dispatch manuale; `pull_request_target` è vietato dalla policy automatica.
 
 Nel workflow CI base le action esterne sono pin a SHA completo, checkout non persiste credenziali e i permessi globali sono read-only. La cache gestita da `setup-node` contiene soltanto lo store pnpm indicizzato dal lockfile. Security esegue SAST locale fail-on-warning, test/secret scan e dependency audit; non riceve secret applicativi.
 
