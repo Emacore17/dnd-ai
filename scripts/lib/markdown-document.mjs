@@ -125,3 +125,70 @@ export function markdownHeadingCatalog(source) {
 
   return { anchors, sections };
 }
+
+function fenceRun(line) {
+  const trimmed = line.trimStart();
+  const marker = trimmed[0];
+  if (marker !== "`" && marker !== "~") {
+    return null;
+  }
+
+  let length = 0;
+  while (trimmed[length] === marker) {
+    length += 1;
+  }
+
+  return length >= 3
+    ? { info: trimmed.slice(length).trim(), length, marker }
+    : null;
+}
+
+export function extractMermaidBlocks(source, documentPath) {
+  const blocks = [];
+  let current = null;
+
+  for (const line of source.split(/\r?\n/u)) {
+    const fence = fenceRun(line);
+    if (!current) {
+      if (fence?.info.toLowerCase() === "mermaid") {
+        current = {
+          blockIndex: blocks.length + 1,
+          documentPath,
+          fenceLength: fence.length,
+          marker: fence.marker,
+          lines: [],
+        };
+      }
+      continue;
+    }
+
+    if (
+      fence &&
+      fence.marker === current.marker &&
+      fence.length >= current.fenceLength &&
+      !fence.info
+    ) {
+      blocks.push({
+        blockIndex: current.blockIndex,
+        closed: true,
+        documentPath,
+        source: current.lines.join("\n"),
+      });
+      current = null;
+      continue;
+    }
+
+    current.lines.push(line);
+  }
+
+  if (current) {
+    blocks.push({
+      blockIndex: current.blockIndex,
+      closed: false,
+      documentPath,
+      source: current.lines.join("\n"),
+    });
+  }
+
+  return blocks;
+}

@@ -45,7 +45,7 @@ Adottare una policy modulare con tre responsabilità:
 
 1. `document-policy.mjs` continua a possedere discovery, front matter, freshness, path e link.
 2. `document-integrity-policy.mjs` possiede heading, anchor, riferimenti `§` e completezza del registro ADR.
-3. `mermaid-policy.mjs` estrae i fence `mermaid` e li valida tramite `mermaid@11.16.0` in un worker Node bounded.
+3. `mermaid-policy.mjs` estrae i fence `mermaid` e li valida tramite `mermaid@11.16.0` in un worker Node bounded; `dompurify@3.4.12`, già dipendenza transitiva di Mermaid, è dichiarato direttamente per l'adapter testuale parse-only richiesto da Node senza DOM.
 
 `docs:check` orchestra inoltre i checker già canonici per task graph e artifact contrattuali. Non ricrea la logica di `task-graph.mjs` o `generate-contracts.mjs`.
 
@@ -86,6 +86,8 @@ Ogni fence `mermaid` viene validato con `mermaid.parse` in un worker thread sepa
 - ha un timeout complessivo di 10 secondi e viene terminato dal parent in caso di hang;
 - restituisce soltanto tipo o errore normalizzato, senza stack o sorgente completa.
 
+In Node puro DOMPurify esporta una factory priva di istanza DOM, mentre il parser state di Mermaid sanitizza comunque le label. Prima dell'import dinamico di Mermaid, il worker installa quindi sull'export condiviso un adapter conservativo che esegue escape testuale; l'adapter non crea un DOM, non renderizza e non restituisce HTML.
+
 L'errore pubblico è stabile e ordinabile: `<path>: mermaid-invalid block <n>`. Dettagli del parser vengono troncati a 240 caratteri e normalizzati su una sola riga.
 
 ## Composizione dei comandi e CI
@@ -111,7 +113,7 @@ Il worker Mermaid viene avviato una sola volta per run e valida tutti i diagramm
 - Path e fragment vengono decodificati e confinati al repository prima della lettura.
 - Fence, inline code e link esterni non vengono interpretati come riferimenti normativi locali.
 - Mermaid è input non affidabile proveniente da una PR: limiti dimensionali e worker terminabile impediscono che un parser bloccato occupi indefinitamente il job.
-- Il package Mermaid è una dev dependency esatta; lockfile, licenza MIT, dependency audit e assenza dall'artifact applicativo vengono verificati.
+- Mermaid e DOMPurify sono dev dependency esatte; lockfile, licenze MIT, dependency audit e assenza dall'artifact applicativo vengono verificati.
 
 ## Test
 

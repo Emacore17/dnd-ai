@@ -40,12 +40,12 @@ supersedes: null
 
 **Architecture:** Un parser Markdown condiviso fornisce front matter, link, heading e fence senza possedere regole. `document-policy.mjs` mantiene i controlli esistenti, mentre `document-integrity-policy.mjs` aggiunge anchor, riferimenti `§`, registro ADR e invoca una policy Mermaid isolata in un worker terminabile. I checker task graph e contract drift restano canonici e vengono composti dai comandi root e dalla CI senza duplicarne la logica.
 
-**Tech Stack:** Node.js ESM/worker_threads, `yaml`, `github-slugger@2.0.0`, `mermaid@11.16.0`, node:test, pnpm `11.13.0`, GitHub Actions.
+**Tech Stack:** Node.js ESM/worker_threads, `yaml`, `github-slugger@2.0.0`, `mermaid@11.16.0`, `dompurify@3.4.12`, node:test, pnpm `11.13.0`, GitHub Actions.
 
 ## Global Constraints
 
 - Node engine `>=22.13.0`, baseline locale `24.11.0`; pnpm esatto `11.13.0`.
-- `github-slugger@2.0.0` e `mermaid@11.16.0` sono dev dependency esatte; nessun package entra negli artifact runtime.
+- `github-slugger@2.0.0`, `mermaid@11.16.0` e `dompurify@3.4.12` sono dev dependency esatte; nessun package entra negli artifact runtime.
 - Nessun browser headless, rendering SVG/PNG, rete o provider durante i check.
 - Mermaid: massimo 64 diagrammi, 128 KiB per blocco, timeout worker complessivo 10 secondi, errore pubblico massimo 240 caratteri.
 - `docs:check` deve usare direttamente i checker esistenti, senza invocare un pnpm globale annidato.
@@ -439,7 +439,7 @@ git commit -m "docs(adr): add validated decision register"
 - Consumes: `extractMermaidBlocks(source)` con `{ blockIndex, documentPath, source }`.
 - Produces: `validateMermaidDocuments(sources, options?) => Promise<string[]>`; worker message `{ results: Array<{ blockIndex, documentPath, diagramType?, error? }> }`.
 
-- [ ] **Step 1: Scrivere test RED per famiglie reali, limiti e timeout**
+- [x] **Step 1: Scrivere test RED per famiglie reali, limiti e timeout**
 
 Aggiungere test che passano questi diagrammi reali al validator:
 
@@ -471,7 +471,7 @@ setInterval(() => {}, 1_000);
 
 Il test timeout passa `workerUrl` alla fixture e `timeoutMs: 25`, aspettandosi `documentation: mermaid-worker-timeout`. Aggiungere casi per fence vuoto, 128 KiB + 1 byte e 65 blocchi.
 
-- [ ] **Step 2: Eseguire RED**
+- [x] **Step 2: Eseguire RED**
 
 Run:
 
@@ -481,18 +481,19 @@ node --test tests/contracts/document-integrity.test.mjs
 
 Expected: fallisce con modulo `mermaid-policy.mjs` mancante.
 
-- [ ] **Step 3: Aggiungere Mermaid esatto dopo il RED**
+- [x] **Step 3: Aggiungere Mermaid esatto dopo il RED**
 
 Run:
 
 ```powershell
 corepack pnpm@11.13.0 add -DwE mermaid@11.16.0
+corepack pnpm@11.13.0 add -DwE dompurify@3.4.12
 corepack pnpm@11.13.0 audit --audit-level=high
 ```
 
 Expected: dipendenza root esatta; audit `No known vulnerabilities found` oppure finding high concreto che blocca il task.
 
-- [ ] **Step 4: Implementare l'estrazione bounded dei fence**
+- [x] **Step 4: Implementare l'estrazione bounded dei fence**
 
 In `markdown-document.mjs`, `extractMermaidBlocks` deve:
 
@@ -526,7 +527,7 @@ export function extractMermaidBlocks(source, documentPath) {
 
 Un fence Mermaid non chiuso produce `mermaid-unclosed block <n>` prima di avviare il worker.
 
-- [ ] **Step 5: Implementare parent e worker**
+- [x] **Step 5: Implementare parent e worker**
 
 `scripts/validate-mermaid-worker.mjs` importa Mermaid, inizializza `startOnLoad: false` e `securityLevel: "strict"`, chiama `await mermaid.parse(source)` per ogni blocco e invia risultati normalizzati.
 
@@ -556,7 +557,7 @@ export async function validateMermaidDocuments(
 
 In `validateDocumentIntegrity`, sostituire il default no-op con `validateMermaidDocuments` importato.
 
-- [ ] **Step 6: Verificare GREEN e repository reale**
+- [x] **Step 6: Verificare GREEN e repository reale**
 
 Run:
 
@@ -567,7 +568,7 @@ node scripts/check-docs.mjs
 
 Expected: tutte le famiglie Mermaid e i sette diagrammi reali passano; negative path restituiscono errori stabili; nessun processo worker resta attivo.
 
-- [ ] **Step 7: Commit atomico Mermaid**
+- [x] **Step 7: Commit atomico Mermaid**
 
 ```powershell
 git add package.json pnpm-lock.yaml scripts/lib/markdown-document.mjs scripts/lib/document-integrity-policy.mjs scripts/lib/mermaid-policy.mjs scripts/validate-mermaid-worker.mjs tests/contracts/document-integrity.test.mjs tests/fixtures/docs/hanging-mermaid-worker.mjs
@@ -716,7 +717,7 @@ Run:
 ```powershell
 corepack pnpm@11.13.0 artifact:prepare
 corepack pnpm@11.13.0 artifact:verify
-rg -n -i "(^|[/\\])mermaid([/\\]|$)|github-slugger" artifacts\bl002
+rg -n -i "(^|[/\\])mermaid([/\\]|$)|github-slugger|dompurify" artifacts\bl002
 ```
 
 Expected: prepare/verify exit `0`; `rg` exit `1` senza match.

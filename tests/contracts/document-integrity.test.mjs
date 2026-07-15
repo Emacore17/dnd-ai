@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { URL } from "node:url";
 
 import { validateDocumentIntegrity } from "../../scripts/lib/document-integrity-policy.mjs";
+import { validateMermaidDocuments } from "../../scripts/lib/mermaid-policy.mjs";
 
 test("accepts canonical anchors, duplicate headings and numeric section lists", async () => {
   const sources = new Map([
@@ -144,4 +146,64 @@ test("rejects unknown ADR rows and status drift", async () => {
     "docs/adr/README.md: adr-status-mismatch ADR-0001 expected accepted received proposed",
     "docs/adr/README.md: unknown-adr-registration ADR-0009",
   ]);
+});
+
+test("parses the Mermaid families used by project documentation", async () => {
+  const sources = new Map([
+    ["docs/flow.md", "```mermaid\nflowchart TD\nA --> B\n```\n"],
+    ["docs/sequence.md", "```mermaid\nsequenceDiagram\nA->>B: Ping\n```\n"],
+    ["docs/state.md", "```mermaid\nstateDiagram-v2\n[*] --> ready\n```\n"],
+    ["docs/er.md", "```mermaid\nerDiagram\nA ||--o{ B : owns\n```\n"],
+  ]);
+
+  assert.deepEqual(await validateMermaidDocuments(sources), []);
+  assert.deepEqual(
+    await validateMermaidDocuments(
+      new Map([["docs/broken.md", "```mermaid\nflowchart TD\nA -->\n```\n"]]),
+    ),
+    ["docs/broken.md: mermaid-invalid block 1"],
+  );
+});
+
+test("rejects empty, unclosed, oversized and excessive Mermaid blocks", async () => {
+  const oversized = "A".repeat(128 * 1024 + 1);
+  const excessive = Array.from(
+    { length: 65 },
+    (_, index) =>
+      `\`\`\`mermaid\nflowchart TD\nA${index} --> B${index}\n\`\`\``,
+  ).join("\n");
+
+  assert.deepEqual(
+    await validateMermaidDocuments(
+      new Map([
+        ["docs/empty.md", "```mermaid\n```\n"],
+        ["docs/unclosed.md", "```mermaid\nflowchart TD\nA --> B\n"],
+        ["docs/oversized.md", `\`\`\`mermaid\n${oversized}\n\`\`\`\n`],
+      ]),
+    ),
+    [
+      "docs/empty.md: mermaid-empty block 1",
+      "docs/oversized.md: mermaid-block-too-large block 1",
+      "docs/unclosed.md: mermaid-unclosed block 1",
+    ],
+  );
+  assert.deepEqual(
+    await validateMermaidDocuments(new Map([["docs/excessive.md", excessive]])),
+    ["documentation: mermaid-block-limit exceeded 65/64"],
+  );
+});
+
+test("terminates a Mermaid worker that exceeds its deadline", async () => {
+  const workerUrl = new URL(
+    "../fixtures/docs/hanging-mermaid-worker.mjs",
+    import.meta.url,
+  );
+
+  assert.deepEqual(
+    await validateMermaidDocuments(
+      new Map([["docs/flow.md", "```mermaid\nflowchart TD\nA --> B\n```\n"]]),
+      { timeoutMs: 25, workerUrl },
+    ),
+    ["documentation: mermaid-worker-timeout"],
+  );
 });

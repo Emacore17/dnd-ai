@@ -6,6 +6,7 @@ import {
   referenceTarget,
   visibleMarkdownLines,
 } from "./markdown-document.mjs";
+import { validateMermaidDocuments } from "./mermaid-policy.mjs";
 
 const METADATA_REFERENCE_FIELDS = ["source_refs", "code_refs", "test_refs"];
 const SECTION_REFERENCE_START_PATTERN =
@@ -328,7 +329,7 @@ function validateSectionReferences({ catalogs, errors, sources }) {
 export async function validateDocumentIntegrity({
   sources,
   metadataByPath,
-  validateMermaid = async () => [],
+  validateMermaid = validateMermaidDocuments,
 }) {
   const errors = [];
   const catalogs = new Map(
