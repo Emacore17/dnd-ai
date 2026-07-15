@@ -214,9 +214,8 @@ function validateJobs(errors, workflow) {
     "pnpm format:check",
     "pnpm lint",
     "pnpm typecheck",
-    "pnpm contracts:check",
+    "pnpm docs:check",
     "pnpm boundaries:check",
-    "pnpm tasks:check",
     "pnpm ci:workflow:check",
     "pnpm deploy:check",
   ]);
@@ -226,14 +225,16 @@ function validateJobs(errors, workflow) {
   if (Number(qualityCheckout?.with?.["fetch-depth"]) !== 2) {
     errors.push("quality checkout must use fetch-depth: 2");
   }
-  const contractCheckSteps = asArray(jobs.quality?.steps).filter(
-    (step) => String(step.run ?? "").trim() === "pnpm contracts:check",
+  const documentationCheckSteps = asArray(jobs.quality?.steps).filter(
+    (step) => String(step.run ?? "").trim() === "pnpm docs:check",
   );
   if (
-    contractCheckSteps.length !== 1 ||
-    contractCheckSteps[0].env?.CONTRACT_BASE_REF !== "HEAD^1"
+    documentationCheckSteps.length !== 1 ||
+    documentationCheckSteps[0].env?.CONTRACT_BASE_REF !== "HEAD^1"
   ) {
-    errors.push("quality contract check must use CONTRACT_BASE_REF=HEAD^1");
+    errors.push(
+      "quality documentation check must use CONTRACT_BASE_REF=HEAD^1",
+    );
   }
   requireCommands(errors, "tests", jobs.tests, [
     "pnpm test:unit",

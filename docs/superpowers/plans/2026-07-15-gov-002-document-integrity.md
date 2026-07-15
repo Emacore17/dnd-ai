@@ -590,7 +590,7 @@ git commit -m "feat(governance): validate Mermaid diagrams"
 - Consumes: checker contratti, documenti e task graph già disponibili.
 - Produces: `pnpm docs:check` composto e un unico step CI `pnpm docs:check` con `CONTRACT_BASE_REF=HEAD^1`.
 
-- [ ] **Step 1: Aggiornare prima i contract test e osservare RED**
+- [x] **Step 1: Aggiornare prima i contract test e osservare RED**
 
 In `agent-workflow-contract.test.mjs` aspettarsi esattamente:
 
@@ -615,11 +615,11 @@ node --test tests/contracts/agent-workflow-contract.test.mjs tests/contracts/ci-
 
 Expected: fallisce sugli script e sul workflow correnti.
 
-- [ ] **Step 2: Aggiornare i comandi root senza pnpm annidato**
+- [x] **Step 2: Aggiornare i comandi root senza pnpm annidato**
 
 Applicare a `package.json` le due stringhe esatte del test. Lasciare `contracts:check` e `tasks:check` come comandi specialistici pubblici. `verify` mantiene build/generator/document/task primitive dirette una sola volta.
 
-- [ ] **Step 3: Consolidare il workflow Quality**
+- [x] **Step 3: Consolidare il workflow Quality**
 
 Sostituire i due step separati con:
 
@@ -632,11 +632,11 @@ Sostituire i due step separati con:
 
 Mantenere checkout `fetch-depth: 2`, permessi e tutti gli altri step invariati.
 
-- [ ] **Step 4: Rendere fail-closed la policy CI**
+- [x] **Step 4: Rendere fail-closed la policy CI**
 
 In `ci-workflow-policy.mjs`, la lista Quality deve contenere `pnpm docs:check` e non i due vecchi comandi. Sostituire `contractCheckSteps` con `documentationCheckSteps` e mantenere i controlli `length === 1` e `CONTRACT_BASE_REF === "HEAD^1"`. Il messaggio stabile diventa `quality documentation check must use CONTRACT_BASE_REF=HEAD^1`.
 
-- [ ] **Step 5: Verificare GREEN e drift reale**
+- [x] **Step 5: Verificare GREEN e drift reale**
 
 Run:
 
@@ -648,7 +648,7 @@ corepack pnpm@11.13.0 ci:workflow:check
 
 Expected: test e checker passano; l'output include `contract-artifacts: PASS`, `documentation-policy: PASS` e `task-graph: PASS` una sola volta.
 
-- [ ] **Step 6: Misurare il budget cold/warm**
+- [x] **Step 6: Misurare il budget cold/warm**
 
 Run due volte:
 
@@ -659,7 +659,7 @@ Measure-Command { corepack pnpm@11.13.0 docs:check } | Select-Object -ExpandProp
 
 Expected: prima durata ≤30, seconda ≤10. Registrare i due valori nella card GOV-002; nessun retry automatico.
 
-- [ ] **Step 7: Commit atomico della composizione CI**
+- [x] **Step 7: Commit atomico della composizione CI**
 
 ```powershell
 git add package.json .github/workflows/ci.yml scripts/lib/ci-workflow-policy.mjs tests/contracts/agent-workflow-contract.test.mjs tests/contracts/ci-workflow.test.mjs

@@ -666,7 +666,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
 
 - **Stato:** `IN_PROGRESS`
-- **Progresso:** `25%`
+- **Progresso:** `75%`
 - **Esito test:** `PARTIAL`
 - **Contesto verificato:** `YES` — base `15382d547638333e33992be96479a6f0cbff1a29`; spec SHA-256 `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329`; data: `2026-07-15`
 - **Priorità / stima:** `P0` / `M`
@@ -680,8 +680,8 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Fixture valida deve passare in locale e CI con output deterministico.
   - [ ] Verificare almeno un mapping requisito→task→test→evidenza in `docs/TRACEABILITY.md`.
 - **Documentazione e contesto:** `docs/TRACEABILITY.md`, `docs/CHANGELOG.md`, `docs/adr/README.md`, `docs/README.md`, CI docs
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` per dependency graph/lockfile e workflow CI. Design approvato: policy modulare per anchor e riferimenti `§`, registro ADR completo, Mermaid `11.16.0` parse-only in worker bounded e composizione dei checker contratti/task esistenti in `docs:check`. `GOV-003` continua a possedere front matter, freshness, path/ref/link base, whitespace e task graph; `BL-009` continua a possedere il generator/drift dei contratti. Fuori scope Vercel, deploy, provider, rendering SVG e modifica dei contratti applicativi.
+- **Evidenze di chiusura:** commit locali `c430826`, `e47f153`, `0b82dc9`; test document integrity/policy 11/11 e workflow/generated 9/9 `PASS`; `docs:check` e `ci:workflow:check` exit `0`; budget consecutivo `docs:check` 3,136 s / 3,130 s; audit high senza vulnerabilità note. PR/CI remota, full gate, review e clean checkout ancora aperti; migration/eval/trace ID `N/A`.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` per dependency graph/lockfile e workflow CI. Implementati policy modulare per anchor e riferimenti `§`, registro ADR completo, Mermaid `11.16.0` parse-only in worker bounded con adapter testuale DOMPurify `3.4.12`, e composizione dei checker contratti/task esistenti in `docs:check`. `GOV-003` continua a possedere front matter, freshness, path/ref/link base, whitespace e task graph; `BL-009` continua a possedere il generator/drift dei contratti. Fuori scope Vercel, deploy, provider, rendering SVG e modifica dei contratti applicativi.
 
 ### GOV-003 — Ottimizzazione del ciclo di sviluppo degli agenti
 
@@ -2584,7 +2584,7 @@ active_task: GOV-002
 last_completed_task: BL-010
 next_ready_task: null
 status: IN_PROGRESS
-progress: 25
+progress: 75
 started_at: 2026-07-15T18:15:00+02:00
 candidate_at: null
 cycle_target_minutes: 120

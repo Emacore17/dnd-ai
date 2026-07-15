@@ -16,11 +16,11 @@ test("agent workflow exposes bounded documentation and affected verification lan
 
   assert.equal(
     manifest.scripts["docs:check"],
-    "node scripts/check-docs.mjs && node scripts/check-task-graph.mjs",
+    "turbo run build --filter=@dnd-ai/contracts && node scripts/generate-contracts.mjs --check && node scripts/check-docs.mjs && node scripts/check-task-graph.mjs",
   );
   assert.equal(
     manifest.scripts["verify:docs"],
-    "git diff --check HEAD && node scripts/check-docs.mjs && node scripts/check-task-graph.mjs && node scripts/scan-secrets.mjs",
+    "git diff --check HEAD && turbo run build --filter=@dnd-ai/contracts && node scripts/generate-contracts.mjs --check && node scripts/check-docs.mjs && node scripts/check-task-graph.mjs && node scripts/scan-secrets.mjs",
   );
   assert.equal(
     manifest.scripts["verify:affected"],
