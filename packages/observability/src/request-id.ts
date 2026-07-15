@@ -37,7 +37,7 @@ export function createRequestId(
     return candidate;
   }
 
-  let generated: string;
+  let generated: unknown;
 
   try {
     generated = generate();
@@ -45,7 +45,7 @@ export function createRequestId(
     throw new Error(INVALID_GENERATED_REQUEST_ID_MESSAGE);
   }
 
-  if (!isCanonicalUuidV4(generated)) {
+  if (typeof generated !== "string" || !isCanonicalUuidV4(generated)) {
     throw new Error(INVALID_GENERATED_REQUEST_ID_MESSAGE);
   }
 

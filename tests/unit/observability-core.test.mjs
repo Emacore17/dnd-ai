@@ -53,6 +53,31 @@ test("createRequestId rejects invalid generator output without reflecting it", (
   );
 });
 
+test("createRequestId rejects coercible runtime outputs without invoking coercion", () => {
+  const coercionSecret = "sensitive-coercion-failure";
+  const invalidRuntimeOutputs = [
+    Object(generatedRequestId),
+    [generatedRequestId],
+    {
+      [Symbol.toPrimitive]() {
+        throw new Error(coercionSecret);
+      },
+    },
+  ];
+
+  for (const output of invalidRuntimeOutputs) {
+    assert.throws(
+      () => createRequestId(undefined, () => output),
+      (error) => {
+        assert.equal(error instanceof Error, true);
+        assert.equal(error.message, "Unable to generate a valid request ID.");
+        assert.doesNotMatch(error.message, new RegExp(coercionSecret));
+        return true;
+      },
+    );
+  }
+});
+
 test("createNoopErrorReporter returns one frozen reporter whose capture never throws", () => {
   const reporter = createNoopErrorReporter();
 
