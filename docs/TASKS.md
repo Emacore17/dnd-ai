@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
+last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -15,6 +15,7 @@ related_tasks:
   - BL-004
   - BL-008
   - BL-009
+  - BL-010
   - BL-079
   - BL-080
 code_refs:
@@ -38,9 +39,12 @@ code_refs:
   - apps/web/instrumentation-client.ts
   - packages/persistence/src/migration-runner.ts
   - packages/persistence/src/migration-manifest.ts
+  - packages/persistence/src/feature-flags.ts
   - packages/persistence/src/migrations/000001_postgresql_foundation.ts
+  - packages/persistence/src/migrations/000002_feature_flags.ts
   - infra/local/postgres.compose.yml
   - scripts/run-database-migrations.mjs
+  - scripts/manage-feature-flag.mjs
   - scripts/lib/database-migration-policy.mjs
   - scripts/lib/postgres-test-container.mjs
   - apps/api/src/runtime.ts
@@ -99,6 +103,9 @@ test_refs:
   - tests/database/database-migration-failure.test.mjs
   - tests/database/database-migrations.test.mjs
   - tests/security/database-migration-security.test.mjs
+  - tests/unit/feature-flags.test.mjs
+  - tests/database/feature-flags.test.mjs
+  - tests/security/feature-flags-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
@@ -124,13 +131,13 @@ supersedes: null
 > **Punto di ingresso agente:** [`AGENTS.md`](../AGENTS.md)
 > **Specifica canonica:** [`docs/MVP_SPEC.md`](MVP_SPEC.md)
 > **Studio UX/UI:** [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md)
-> **Baseline specifica:** SHA-256 `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c`
-> **Data baseline:** `2026-07-14`
+> **Baseline specifica:** SHA-256 `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329`
+> **Data baseline:** `2026-07-15`
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-009 — Zod, JSON Schema, OpenAPI generation`
-> **Prossimo task READY:** `—`; `BL-010` è il successivo ordinato eleggibile dopo BL-009, mentre `BL-079` resta `BACKLOG` finché lo staging non è disponibile
+> **Task attivo:** `BL-010 — Flag store/config auditato`
+> **Prossimo task READY:** `—`; dipende dalla chiusura di `BL-010`, mentre `BL-079` resta `BACKLOG` finche lo staging non e disponibile
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -589,24 +596,24 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-010 — Flag store/config auditato
 
-- **Stato:** `BACKLOG`
-- **Progresso:** `0%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
-- **Priorità / stima:** `P0` / `S`
-- **Dipendenze:** BL-003, BL-008
-- **Dipendenze operative aggiuntive:** BL-003, BL-008
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §23.2 Backpressure e degradazione; `docs/MVP_SPEC.md` §28.6 Budget enforcement; `docs/MVP_SPEC.md` §29.6 Scaling; `docs/MVP_SPEC.md` §31 `BL-010`; `docs/MVP_SPEC.md` §35.1
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — baseline `8e6e0d3d46daa057ba80999c58c83ad1c92471b1`; branch `codex/bl-010-feature-flags`; spec SHA-256 `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329`; data: `2026-07-15`
+- **Priorità / stima:** `P0` / `M`
+- **Dipendenze:** BL-003, BL-004, BL-008
+- **Dipendenze operative aggiuntive:** BL-003, BL-004, BL-008
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §22.16 Incident response; `docs/MVP_SPEC.md` §23.2 Backpressure e degradazione; `docs/MVP_SPEC.md` §27.5 Versionamento prompt/schema/model route; `docs/MVP_SPEC.md` §28.6 Budget enforcement; `docs/MVP_SPEC.md` §29.6 Scaling; `docs/MVP_SPEC.md` §29.8 Operatività; `docs/MVP_SPEC.md` §31 `BL-010`; `docs/MVP_SPEC.md` §35.1; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/adr/0006-postgresql-migration-foundation.md`; `docs/adr/0007-observability-context-and-error-reporting.md`; `docs/operations/CONFIGURATION.md`
 - **Obiettivo:** Come operatore voglio feature flag e kill switch server-side.
 - **Deliverable:** Flag store/config auditato.
 - **Criterio di accettazione:** Disabilita start/turn/model route senza deploy; audit event.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Test di accettazione automatizzato: Disabilita start/turn/model route senza deploy; audit event.
-  - [ ] Integration test di ogni kill switch senza deploy e con audit event.
-  - [ ] Test fail-safe: flag store indisponibile usa il default sicuro documentato.
-- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+  - [x] Test di accettazione automatizzato: Disabilita start/turn/model route senza deploy; audit event.
+  - [x] Integration test di ogni kill switch senza deploy e con audit event.
+  - [x] Test fail-safe: flag store indisponibile usa il default sicuro documentato.
+- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/DATABASE_MIGRATIONS.md`; `docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md`; `docs/superpowers/plans/2026-07-15-bl-010-feature-flags.md`
+- **Evidenze di chiusura:** mirati branch-local: `corepack pnpm@11.13.0 tasks:check` exit `0`; `corepack pnpm@11.13.0 test:unit` exit `0` con 88 pass/1 host skip dopo regressione malformed state; `node --test tests/database/feature-flags.test.mjs` exit `0` con 2/2 dopo regressione replay idempotente post-toggle; `corepack pnpm@11.13.0 db:migrate:test` exit `0` con 15/15; `node --test tests/security/feature-flags-security.test.mjs` exit `0` con 4/4; `corepack pnpm@11.13.0 verify:docs` exit `0` con 33 documenti/10 modificati, task graph e secret scan `PASS`. Full `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` sul candidato BL-010; commit/PR/CI `pending` per delivery derivata; migration head `000002_feature_flags`; eval/trace ID `N/A`.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK`: persistence/migration, config operativa e kill switch di sicurezza. Scope approvato dal Product Owner il 2026-07-15: PostgreSQL shared/durable store, CLI server-side, catalogo chiuso, default fail-closed, audit atomico, CAS e idempotenza; nessun endpoint admin pubblico, nessun deploy e nessuna azione Vercel. Tre tentativi di review subagent sono stati interrotti per timeout senza output utile; il pass manuale P0/P1 ha individuato e corretto la semantica di replay idempotente, ora coperta da test PostgreSQL reale.
 
 ### BL-079 — Fondazione design system e shell conversazionale mobile-first
 
@@ -2733,6 +2740,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-15 | `ccecd683` | BL-008 closure | PR protetta e CI main | PR #20 integrata senza bypass; run post-merge `29415397361` con Quality, Tests, Security, Build artifact e merge gate 5/5 `SUCCESS`. BL-009 selezionato; freeze Vercel invariato. | BL-009, BL-010, BL-066, DOC-ARCH-001, GATE-M0 |
 | 2026-07-15 | `ccecd683` + working tree | BL-009 implementation | `api-contract-v1` e compatibility boundary | Aggiunti Zod strict, UUIDv7/version gate, JSON Schema/OpenAPI components-only, generator deterministic, freeze Git dei major pubblicati e root guard junction; TDD mirato verde, full/clean/CI pendenti. | GOV-002, BL-021, BL-022, BL-028, QA-001 |
 | 2026-07-15 | candidate head derivato da Git | BL-009 candidate | Full gate e review indipendente | Quattro P1 chiusi e re-check senza P0/P1; full finale exit `0` in 86,8 s dopo regressioni su ownership generated e pnpm annidato. Proposta `DONE/100%/PASSING`; clean checkout e delivery protetta restano gate esterni immediati. | GOV-002, BL-021, BL-022, BL-028, QA-001 |
+| 2026-07-15 | candidate head derivato da Git | BL-010 candidate | Feature flag e kill switch server-side | Aggiunti `database-feature-flags-v1`, migration `000002_feature_flags`, store PostgreSQL con audit atomico, CAS, idempotenza/replay stabile e CLI operatore redatta. Tre review subagent sono andate in timeout; il pass manuale P0/P1 ha corretto il replay idempotente dopo toggle successivo. Mirati verdi e full gate finale exit `0`; proposta `DONE/100%/PASSING`. | BL-005, BL-007, BL-015, BL-021, BL-022, BL-028, QA-001 |
 
 
 ## 22. Checklist di fine sessione dell’agente

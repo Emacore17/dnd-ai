@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-data
 last_reviewed: 2026-07-15
-last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
+last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilita
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -10,13 +10,17 @@ source_refs:
   - docs/adr/0006-postgresql-migration-foundation.md
 related_tasks:
   - BL-004
+  - BL-010
 code_refs:
   - package.json
   - packages/config/src/runtime-config.ts
   - packages/persistence/src/migration-manifest.ts
   - packages/persistence/src/migration-runner.ts
   - packages/persistence/src/migrations/000001_postgresql_foundation.ts
+  - packages/persistence/src/migrations/000002_feature_flags.ts
+  - packages/persistence/src/feature-flags.ts
   - scripts/run-database-migrations.mjs
+  - scripts/manage-feature-flag.mjs
   - scripts/lib/database-migration-policy.mjs
   - scripts/lib/postgres-test-container.mjs
   - infra/local/postgres.compose.yml
@@ -26,7 +30,9 @@ test_refs:
   - tests/database/database-migration-cli.test.mjs
   - tests/database/database-migration-failure.test.mjs
   - tests/database/database-migrations.test.mjs
+  - tests/database/feature-flags.test.mjs
   - tests/security/database-migration-security.test.mjs
+  - tests/security/feature-flags-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
 supersedes: null
 ---
@@ -43,14 +49,14 @@ Questo runbook copre il lifecycle locale, l'applicazione delle migration, il con
 | pgvector | `0.8.2` |
 | Immagine | `pgvector/pgvector:0.8.2-pg17-trixie@sha256:5c97c57367a485a8e99389548db67d441ab1a878f5492c3df04989f34ecf3c75` |
 | Runner/driver | `node-pg-migrate@8.0.4` / `pg@8.22.0` |
-| Migration head | `000001_postgresql_foundation` |
-| Contract | `database-baseline-v1` |
-| Source SHA-256 | `e8543d84b9b842adf352260536dcea284c93dfb859c9ec03368f10deb9455fc7` |
-| Contract checksum | `46a2bb9ce2ca6957a3b87e423e0ea67b36688e71ebacc84c469bdb7f7a8dc449` |
+| Migration head | `000002_feature_flags` |
+| Contract | `database-feature-flags-v1` |
+| Source SHA-256 | `6fa16b6639d20772f0260f1f39201b91c42162b73f9d716f2677fe1328ed5ec8` |
+| Contract checksum | `024081e7b2ec6522479f7ba9b90d12a971416e8f5aced7c918d258485467d443` |
 | Namespace | `app`, `infra` |
 | Registro | `infra.migration_contracts` |
 
-La baseline abilita `vector` e crea i due namespace e il registro di integrità. Non contiene tabelle di dominio, RLS, colonne/indici vettoriali o dati seed.
+La baseline `000001` abilita `vector` e crea i due namespace e il registro di integrita. `000002_feature_flags` aggiunge il catalogo operativo `app.feature_flags` e l'audit append-only `app.feature_flag_events` per i kill switch server-side. Non contiene tabelle utente/campagna, RLS, colonne/indici vettoriali o dati di gioco.
 
 ## Prerequisiti e configurazione
 
@@ -128,7 +134,7 @@ Ripetere lo stesso comando su un database già all'head deve produrre un no-op e
 corepack pnpm@11.13.0 db:migrate:status:local
 ```
 
-Lo stato valido riporta `000001_postgresql_foundation`, `database-baseline-v1` e nessuna migration pendente. Il report può contenere nomi e checksum delle migration, mai la URL di connessione.
+Lo stato valido riporta `000002_feature_flags`, `database-feature-flags-v1` e nessuna migration pendente. Il report puo contenere nomi e checksum delle migration, mai la URL di connessione.
 
 ### 6. Chiusura del database locale
 
@@ -166,11 +172,11 @@ corepack pnpm@11.13.0 db:migrate:test
 
 Il comando possiede il lifecycle di un database isolato e deve verificare almeno:
 
-- database vuoto → `000001_postgresql_foundation`;
-- upgrade dalla versione precedente supportata quando esiste; per `000001` è `N/A` perché non esiste ancora un head precedente;
+- database vuoto -> `000002_feature_flags`;
+- upgrade dalla versione precedente supportata: `000001_postgresql_foundation` -> `000002_feature_flags`;
 - replay all'head come no-op;
-- presenza dell'estensione `vector`, dei namespace `app`/`infra` e di `infra.migration_contracts`;
-- source SHA normalizzato, checksum canonico e compatibilità `database-baseline-v1`;
+- presenza dell'estensione `vector`, dei namespace `app`/`infra`, di `infra.migration_contracts`, di `app.feature_flags` e di `app.feature_flag_events`;
+- source SHA normalizzato, checksum canonico e compatibilita `database-feature-flags-v1`;
 - file migration sconosciuti e symlink rifiutati prima del DDL;
 - ordine fail-closed con `checkOrder`;
 - errore DDL con rollback completo della singola transazione;
@@ -178,6 +184,8 @@ Il comando possiede il lifecycle di un database isolato e deve verificare almeno
 - rollback locale rifiutato senza conferma e in un ambiente gestito;
 - override di routing PostgreSQL nella query string rifiutato per il rollback locale;
 - output e report privi di URL o credenziali.
+
+La suite `tests/database/feature-flags.test.mjs` verifica inoltre lettura seed, cambio flag senza deploy, audit, CAS, idempotenza e rollback quando l'audit non puo essere inserito.
 
 Il test termina sempre il container isolato, anche dopo un failure. Nessun test usa SQLite, sleep arbitrari o dati reali.
 

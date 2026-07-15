@@ -1,12 +1,13 @@
 ---
 status: active
 owner: product-and-engineering
-last_reviewed: 2026-07-14
-last_verified_commit: ef803add249d16ded6f94936c59531047c8a92fa
+last_reviewed: 2026-07-15
+last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs: []
 related_tasks:
   - GOV-001
   - BL-003
+  - BL-010
   - BL-079
   - BL-080
 code_refs: []
@@ -3997,7 +3998,7 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 | BL-007 | Security | Come sistema voglio ownership scoped nei repository. | ActorContext e query tenant-safe. | P0 | BL-004, BL-006 | IDOR matrix restituisce zero accessi; risorsa altrui 404. | M |
 | BL-008 | Observability | Come operatore voglio request e trace ID end-to-end. | OTel/log/Sentry baseline. | P0 | BL-001, BL-003 | Trace web→API→worker fake; log redaction test pass. | M |
 | BL-009 | Contracts | Come client voglio DTO runtime-validati. | Zod, JSON Schema, OpenAPI generation. | P0 | BL-001 | Contract compile e response validation; schema versionato. | M |
-| BL-010 | Platform | Come operatore voglio feature flag e kill switch server-side. | Flag store/config auditato. | P0 | BL-003, BL-008 | Disabilita start/turn/model route senza deploy; audit event. | S |
+| BL-010 | Platform | Come operatore voglio feature flag e kill switch server-side. | Flag store/config auditato. | P0 | BL-003, BL-004, BL-008 | Disabilita start/turn/model route senza deploy; audit event. | M |
 | BL-079 | Frontend UX | Come giocatore voglio un’interfaccia mobile semplice e premium fin dal primo slice. | Fondazione design system, shell conversazionale, token e motion layer. | P0 | BL-001, BL-002, BL-080 | shadcn/Radix e AI Elements selettivi configurati; shell 320–430 px e desktop adattivo; target touch, reduced motion, keyboard/AA, performance e smoke staging passano. | M |
 | BL-080 | Platform | Come team voglio una preview/staging M0 isolata e riproducibile. | Provider/secret manager, provisioning, deploy automatico e smoke iniziale dei runtime deployabili. | P0 | BL-002, BL-003 | Preview/staging usa config e secret separati, non contiene dati production, pubblica URL/evidenza redatti e supera lo smoke dei runtime disponibili con rollback documentato. | M |
 | BL-011 | Character | Come designer voglio cataloghi originali versionati. | Ascendenze, classi, background, ability, item base. | P0 | BL-009 | Nessun contenuto proprietario; schema/catalog validation pass. | L |

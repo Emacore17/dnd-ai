@@ -2,12 +2,13 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
+last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
   - AGENTS.md#9-confini-architetturali-e-struttura-target
   - docs/adr/0008-zod-first-contract-generation.md
+  - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
 related_tasks:
   - BL-001
   - BL-002
@@ -15,6 +16,7 @@ related_tasks:
   - BL-004
   - BL-008
   - BL-009
+  - BL-010
   - BL-079
   - BL-080
   - DOC-ARCH-001
@@ -41,8 +43,11 @@ code_refs:
   - packages/persistence/src/migration-manifest.ts
   - packages/persistence/src/migration-runner.ts
   - packages/persistence/src/migrations/000001_postgresql_foundation.ts
+  - packages/persistence/src/migrations/000002_feature_flags.ts
+  - packages/persistence/src/feature-flags.ts
   - infra/local/postgres.compose.yml
   - scripts/run-database-migrations.mjs
+  - scripts/manage-feature-flag.mjs
   - packages
   - scripts/lib/workspace-boundaries.mjs
   - .github/workflows/ci.yml
@@ -78,7 +83,9 @@ test_refs:
   - tests/database/database-migration-cli.test.mjs
   - tests/database/database-migration-failure.test.mjs
   - tests/database/database-migrations.test.mjs
+  - tests/database/feature-flags.test.mjs
   - tests/security/database-migration-security.test.mjs
+  - tests/security/feature-flags-security.test.mjs
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
   - tests/integration/observability-flow.test.mjs
@@ -98,7 +105,7 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` completa la fondazione PostgreSQL/pgvector. `BL-008` implementa `observability-baseline-v1` ed è integrato tramite PR #20/merge `ccecd683`, con CI post-merge 5/5 verde. `BL-009` implementa il candidato `api-contract-v1`: runtime schema strict e artefatti versionati generati dalla stessa fonte; test mirati, review indipendente e full gate sono verdi, clean checkout e delivery pendenti. `BL-080` resta bloccato e il freeze Vercel invariato. Non esiste staging, quindi `BL-079` resta backlog; nessuna operazione Vercel appartiene a `BL-009`.
+`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` completa la fondazione PostgreSQL/pgvector, estesa da `BL-010` con `000002_feature_flags`: store server-side condiviso, audit append-only e CLI operatore redatta. `BL-008` implementa `observability-baseline-v1`; `BL-009` e integrato su `main` e fornisce `api-contract-v1`. `BL-080` resta bloccato e il freeze Vercel invariato. Non esiste staging, quindi `BL-079` resta backlog; nessuna operazione Vercel appartiene a `BL-010`.
 
 ```text
 apps/
@@ -111,7 +118,7 @@ packages/
   domain/          entità, comandi, porte e invarianti puri
   rules/           Rules Engine deterministico
   ai/              porte, prompt/context e adapter AI futuri
-  persistence/     manifest, runner e baseline migration; repository di dominio futuri
+  persistence/     manifest, runner, feature flag store e repository di dominio futuri
   observability/   contratti safe, tracing OTel, logging Pino e Sentry error-only
   testing/         fixture/fake condivisi senza logica di produzione
 ```
@@ -163,6 +170,12 @@ L'API valida prima di costruire Fastify e aprire il listener. Il worker valida p
 
 Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, health contract `web-health-v1` e progetto Vercel collegato al repository corretto con Root Directory `apps/web`, Next.js e `fra1`. Fork Protection, OIDC e Trusted Source sono configurati; zero variabili applicative. Production Branch Vercel=`release/production`, branch release e Ruleset restano invariati. La policy linked e il comando CLI con `--target=preview` hanno prodotto due record Production poi rimossi. PR #13/#14/#15/#16 hanno riportato il contratto a stato unlinked/fail-closed, aggiunto guard, payload bounded e freeze. Il client Vercel omette l'esplicito target Preview prima della POST, quindi non esiste oggi un percorso first-deployment Preview-only verificato. Git auto-deploy resta spento. `.vercelignore` e `scripts/check-vercel-deploy-dry-run.mjs` consentono soltanto un dry-run bounded dalla root. `source.manualDeployment.enabled=false` e `deploy:bootstrap:check` rendono fail-closed il percorso operativo approvato, ma non sono enforcement provider contro un owner. Lo staging non è disponibile.
 
+## Feature flag e kill switch
+
+`@dnd-ai/persistence` esporta un catalogo chiuso di kill switch: `campaign.start`, `turn.new` e `model.route.premium`. Ogni flag ha default sicuro `enabled=false`. `evaluateFeatureGate` restituisce disabled per chiavi sconosciute, store indisponibile o stato malformato; i consumer reali verranno collegati nei task proprietari ai boundary di side effect.
+
+Lo stato corrente vive in `app.feature_flags`; ogni cambio passa da CAS opzionale, idempotency key, digest del comando e audit in `app.feature_flag_events` nella stessa transazione. `scripts/manage-feature-flag.mjs` e i comandi root `flags:status`/`flags:set` sono l'unica superficie operativa della slice: nessun endpoint admin pubblico, nessun flag client e nessun deploy.
+
 ## Contratti runtime e artefatti generati
 
 `@dnd-ai/contracts` è un leaf package browser-safe. Gli schemi Zod strict sono la fonte di request, response, error envelope, lifecycle SSE, `GameEvent`, `DungeonMasterTurnResult` e tool envelope parametrizzati da allowlist; i tipi TypeScript vengono inferiti e nessun DTO può applicare stato canonico.
@@ -177,7 +190,7 @@ Pino serializza soltanto eventi e metadata allowlisted. Sanitizzazione e filtro 
 
 Exporter, transport e destination sono best-effort e non modificano risultato HTTP/job; init, end e shutdown sono idempotenti e bounded. La trace fake web→API→queue→worker e due flussi concorrenti sono verificati in-memory, senza rete o risorse provider. La decisione è in [`ADR-0007`](../adr/0007-observability-context-and-error-reporting.md).
 
-## Comandi disponibili in BL-001/BL-002/BL-003/BL-004/BL-008/BL-009/BL-080
+## Comandi disponibili in BL-001/BL-002/BL-003/BL-004/BL-008/BL-009/BL-010/BL-080
 
 ```bash
 corepack pnpm@11.13.0 install --frozen-lockfile
@@ -198,6 +211,8 @@ corepack pnpm@11.13.0 db:migrate:local
 corepack pnpm@11.13.0 db:rollback:local
 corepack pnpm@11.13.0 db:local:down
 corepack pnpm@11.13.0 db:migrate:test
+corepack pnpm@11.13.0 flags:status -- turn.new
+corepack pnpm@11.13.0 flags:set -- turn.new --enable --actor operator:alice --reason maintenance --idempotency-key idem-feature-cli-0001 --correlation-id corr-feature-cli-0001 --expected-version 0
 corepack pnpm@11.13.0 deploy:check
 corepack pnpm@11.13.0 verify
 ```

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
+last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -16,6 +16,7 @@ related_tasks:
   - BL-004
   - BL-008
   - BL-009
+  - BL-010
   - BL-079
   - BL-080
 code_refs:
@@ -41,6 +42,9 @@ code_refs:
   - scripts/lib/vercel-deploy-dry-run.mjs
   - scripts/lib/deployment-smoke.mjs
   - packages/persistence
+  - packages/persistence/src/feature-flags.ts
+  - packages/persistence/src/migrations/000002_feature_flags.ts
+  - scripts/manage-feature-flag.mjs
   - scripts/run-database-migrations.mjs
   - scripts/lib/postgres-test-container.mjs
   - infra/local/postgres.compose.yml
@@ -87,6 +91,9 @@ test_refs:
   - tests/unit/database-migration-policy.test.mjs
   - tests/contracts/database-migration-contract.test.mjs
   - tests/security/database-migration-security.test.mjs
+  - tests/unit/feature-flags.test.mjs
+  - tests/database/feature-flags.test.mjs
+  - tests/security/feature-flags-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
@@ -118,12 +125,16 @@ supersedes: null
 - Implementato il candidato `api-contract-v1`: Zod strict e tipi inferiti per request/response/error, lifecycle SSE, `GameEvent`, risultato turno AI e tool envelope parametrizzato da allowlist.
 - Generati manifest, sei JSON Schema Draft 2020-12 e OpenAPI 3.1.1 components-only sotto `packages/contracts/generated/v1`; aggiunti writer esplicito e checker read-only deterministico.
 - Accettato [`ADR-0008`](adr/0008-zod-first-contract-generation.md) e creato il catalogo operativo [`docs/api/README.md`](api/README.md).
+- Completato il candidato branch-local `BL-010`: aggiunti `database-feature-flags-v1`, migration `000002_feature_flags`, catalogo chiuso `campaign.start`/`turn.new`/`model.route.premium`, store PostgreSQL con safe default disabled, audit atomico, CAS/idempotenza e CLI server-side redatta.
 
 ### Changed
 
 - Integrato `BL-008` tramite PR #20/merge `ccecd683`; la run post-merge `29415397361` ha concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`, senza modificare Vercel.
 - Avviato `BL-009` in corsia `HIGH_RISK`; Quality e full verify ora richiedono `contracts:check`, mentre il relativo contract test impedisce di rimuovere silenziosamente il gate.
 - La review BL-009 ha rilevato quattro P1: UUID canonici trattati come slug, versioni `GameEvent` indipendenti, assenza di una baseline compatibilità esterna e root generated collegabile. Sono stati chiusi con UUIDv7, literal v1, confronto offline col tree Git protetto e guard symlink/junction rieseguito prima delle mutazioni.
+- `BL-010` corregge la sottostima iniziale della card: la dipendenza `BL-004` e ora esplicita e la corsia e `HIGH_RISK`, perche il criterio "senza deploy" richiede uno store condiviso e durabile.
+- Il comando operatore `scripts/manage-feature-flag.mjs` usa `runtime-config-v1`, non introduce endpoint admin pubblico e non stampa URL, password o payload arbitrari.
+- La review manuale P0/P1 di `BL-010` ha corretto la semantica di replay idempotente: un retry identico restituisce il risultato auditato originale anche se il flag e stato togglato successivamente. Tre tentativi di review subagent sono stati interrotti per timeout senza output utile e restano un finding di processo, non un'espansione del task.
 - Esteso `runtime-config-v1` con DSN Sentry opzionali service-scoped per API/worker e template web pubblico; valori assenti disabilitano l'adapter, valori server malformati falliscono prima degli effetti senza leakage.
 - Bloccato il boundary root browser-safe vs `/node`; l'SDK Sentry non entra nell'entry client iniziale quando la DSN manca e gli artifact client restano privi di marker Node.
 - Confermati fuori scope account/progetti Sentry, backend OTLP, source-map upload e qualunque configurazione o deploy Vercel.
@@ -139,6 +150,7 @@ supersedes: null
 - La prima run PR [`29413088682`](https://github.com/Emacore17/dnd-ai/actions/runs/29413088682) ha fallito nel solo job Security con HTTP `410` dagli endpoint audit legacy usati da pnpm 10; `corepack pnpm@11.13.0 audit --audit-level=high` usa il percorso bulk e termina con `No known vulnerabilities found`. Re-review del P1 senza finding residui; full finale pnpm 11 exit `0` in 85,1 s con lint/build 11, typecheck 13, unit 77/1 skip, integration 13, database 13, contract 36, security 26/3 skip e artifact 3.906 file.
 - BL-008: PR #20 integrata; run post-merge [`29415397361`](https://github.com/Emacore17/dnd-ai/actions/runs/29415397361) 5/5 `SUCCESS`.
 - BL-009 mirato: `test:contract` 55/55, artifact/compatibility/owned-path unit 7/7, `contracts:check`, package lint/typecheck, Prettier ed ESLint mirati tutti `PASS`; JSON Schema compilati con Ajv 2020 e validazione parity con Zod. Re-check indipendente senza P0/P1 residui. I primi due full hanno rilevato ownership del formato generated e risoluzione del pnpm globale nello script annidato; regressioni fail-closed applicate. Full finale exit `0` in 86,8 s: lint/build 11, typecheck 13, unit 84/1 skip host, integration 13, database 13, contract 56, security 26/3 skip host, docs 31/11 e artifact 3.942. Clean checkout e CI restano pendenti.
+- BL-010 mirato: `corepack pnpm@11.13.0 test:unit` exit `0` con 88 pass/1 host skip; `node --test tests/database/feature-flags.test.mjs` exit `0` con 2/2, inclusa regressione replay post-toggle; `corepack pnpm@11.13.0 db:migrate:test` exit `0` con 15/15, inclusi zero->head, previous->head, rollback e feature flag store; `node --test tests/security/feature-flags-security.test.mjs` exit `0` con 4/4. Full gate locale finale `PASS`; PR/CI restano delivery derivata.
 
 ## 2026-07-14
 

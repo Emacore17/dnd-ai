@@ -17,3 +17,21 @@ export {
   type GetDatabaseMigrationStatusOptions,
   type RunDatabaseMigrationsOptions,
 } from "./migration-runner.js";
+export {
+  FEATURE_FLAG_CATALOG,
+  FeatureFlagError,
+  createPostgresFeatureFlagStore,
+  evaluateFeatureGate,
+  isFeatureFlagKey,
+  type FeatureFlagChangeCommand,
+  type FeatureFlagChangeResult,
+  type FeatureFlagErrorCode,
+  type FeatureFlagKey,
+  type FeatureFlagReader,
+  type FeatureFlagReasonCode,
+  type FeatureFlagState,
+  type FeatureFlagStore,
+  type FeatureGateDecision,
+  type FeatureGateDecisionReason,
+  type FeatureGateDecisionSource,
+} from "./feature-flags.js";

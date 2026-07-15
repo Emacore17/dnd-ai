@@ -46,13 +46,15 @@ test("database migration commands use the versioned composition root", async () 
   const [
     compositionRoot,
     policy,
-    migration,
+    baselineMigration,
+    featureFlagsMigration,
     persistenceManifestSource,
     runner,
   ] = await Promise.all([
     read("scripts/run-database-migrations.mjs"),
     read("scripts/lib/database-migration-policy.mjs"),
     read("packages/persistence/src/migrations/000001_postgresql_foundation.ts"),
+    read("packages/persistence/src/migrations/000002_feature_flags.ts"),
     read("packages/persistence/src/migration-manifest.ts"),
     read("packages/persistence/src/migration-runner.ts"),
   ]);
@@ -61,23 +63,47 @@ test("database migration commands use the versioned composition root", async () 
   assert.match(compositionRoot, /runDatabaseMigrations/u);
   assert.match(compositionRoot, /getDatabaseMigrationStatus/u);
   assert.match(policy, /--confirm-local-rollback/u);
-  assert.match(migration, /createExtension\("vector"\)/u);
-  assert.match(migration, /createSchema\("app"\)/u);
+  assert.match(baselineMigration, /createExtension\("vector"\)/u);
+  assert.match(baselineMigration, /createSchema\("app"\)/u);
+  assert.match(featureFlagsMigration, /feature_flags/u);
+  assert.match(featureFlagsMigration, /feature_flag_events/u);
   assert.match(persistenceManifestSource, /000001_postgresql_foundation/u);
   assert.match(persistenceManifestSource, /database-baseline-v1/u);
+  assert.match(persistenceManifestSource, /000002_feature_flags/u);
+  assert.match(persistenceManifestSource, /database-feature-flags-v1/u);
   assert.match(runner, /const MIGRATIONS_SCHEMA = "infra"/u);
   assert.match(runner, /const MIGRATIONS_TABLE = "schema_migrations"/u);
   assert.match(runner, /validateMigrationDirectory/u);
   assert.match(runner, /entry\.isSymbolicLink\(\)/u);
 
-  const normalizedMigrationSource = migration.replace(/\r\n?/gu, "\n");
-  const sourceChecksumMatch = persistenceManifestSource.match(
+  const normalizedBaselineMigrationSource = baselineMigration.replace(
+    /\r\n?/gu,
+    "\n",
+  );
+  const baselineSourceChecksumMatch = persistenceManifestSource.match(
     /DATABASE_BASELINE_MIGRATION_SOURCE_SHA256 =\s+"([0-9a-f]{64})"/u,
   );
-  assert.ok(sourceChecksumMatch);
+  assert.ok(baselineSourceChecksumMatch);
   assert.equal(
-    createHash("sha256").update(normalizedMigrationSource).digest("hex"),
-    sourceChecksumMatch[1],
+    createHash("sha256")
+      .update(normalizedBaselineMigrationSource)
+      .digest("hex"),
+    baselineSourceChecksumMatch[1],
+  );
+
+  const normalizedFeatureFlagsMigrationSource = featureFlagsMigration.replace(
+    /\r\n?/gu,
+    "\n",
+  );
+  const featureFlagsSourceChecksumMatch = persistenceManifestSource.match(
+    /FEATURE_FLAGS_MIGRATION_SOURCE_SHA256 =\s+"([0-9a-f]{64})"/u,
+  );
+  assert.ok(featureFlagsSourceChecksumMatch);
+  assert.equal(
+    createHash("sha256")
+      .update(normalizedFeatureFlagsMigrationSource)
+      .digest("hex"),
+    featureFlagsSourceChecksumMatch[1],
   );
 });
 
