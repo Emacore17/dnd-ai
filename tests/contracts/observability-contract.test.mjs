@@ -7,12 +7,13 @@ import { fileURLToPath, URL } from "node:url";
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 
 async function readManifest(relativePath) {
-  const source = await readFile(
-    path.join(repositoryRoot, relativePath),
-    "utf8",
-  );
+  const source = await readSource(relativePath);
 
   return JSON.parse(source);
+}
+
+async function readSource(relativePath) {
+  return readFile(path.join(repositoryRoot, relativePath), "utf8");
 }
 
 function declaredDependencies(manifest) {
@@ -119,4 +120,76 @@ test("standalone unit and security scripts build observability before tests", as
     );
     assert.match(testCommand, /^node --test\b/u, scriptName);
   }
+});
+
+test("Next instrumentation keeps Node telemetry out of the browser entry", async () => {
+  const [
+    client,
+    instrumentation,
+    nextConfig,
+    sentryOptions,
+    sentryServer,
+    sentryEdge,
+    serverObservability,
+    sharedSentryOptions,
+  ] = await Promise.all([
+    readSource("apps/web/instrumentation-client.ts"),
+    readSource("apps/web/instrumentation.ts"),
+    readSource("apps/web/next.config.ts"),
+    readSource("apps/web/lib/sentry-options.ts"),
+    readSource("apps/web/sentry.server.config.ts"),
+    readSource("apps/web/sentry.edge.config.ts"),
+    readSource("apps/web/lib/server-observability.ts"),
+    readSource("packages/observability/src/sentry-options.ts"),
+  ]);
+
+  assert.match(client, /await import\(["']@sentry\/nextjs["']\)/u);
+  assert.doesNotMatch(client, /import \* as Sentry from/u);
+  assert.match(client, /from ["']\.\/lib\/sentry-options["']/u);
+  assert.match(sentryOptions, /from ["']@dnd-ai\/observability["']/u);
+  assert.doesNotMatch(
+    `${client}\n${sentryOptions}`,
+    /@dnd-ai\/observability\/node|@sentry\/node|node:async_hooks|\bpino\b/u,
+  );
+
+  assert.match(
+    serverObservability,
+    /from ["']@dnd-ai\/observability\/node["']/u,
+  );
+  assert.match(
+    instrumentation,
+    /process\.env\.NEXT_RUNTIME === ["']nodejs["']/u,
+  );
+  assert.match(
+    instrumentation,
+    /import\(["']\.\/sentry\.server\.config["']\)/u,
+  );
+  assert.match(instrumentation, /import\(["']\.\/sentry\.edge\.config["']\)/u);
+  assert.match(instrumentation, /getServerObservability/u);
+
+  assert.match(sharedSentryOptions, /sendDefaultPii:\s*false/u);
+  assert.match(sharedSentryOptions, /tracesSampleRate:\s*0/u);
+  assert.match(sharedSentryOptions, /enableLogs:\s*false/u);
+  assert.match(sharedSentryOptions, /sanitizeSentryEvent/u);
+  for (const runtimeSource of [client, sentryServer, sentryEdge]) {
+    assert.match(runtimeSource, /initializeWebSentry/u);
+  }
+  assert.match(sentryServer, /skipOpenTelemetrySetup:\s*true/u);
+
+  const forbiddenSource = [
+    client,
+    instrumentation,
+    nextConfig,
+    sentryOptions,
+    sentryServer,
+    sentryEdge,
+    serverObservability,
+    sharedSentryOptions,
+  ].join("\n");
+
+  assert.doesNotMatch(
+    forbiddenSource,
+    /withSentryConfig|SENTRY_AUTH_TOKEN|replayIntegration|replaysSessionSampleRate|replaysOnErrorSampleRate|sourceMap|upload.*map|consoleLoggingIntegration/iu,
+  );
+  assert.doesNotMatch(nextConfig, /sentry|source.?map/iu);
 });

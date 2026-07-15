@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { sanitizeSentryEvent } from "../../packages/observability/dist/index.js";
+import {
+  createSentryErrorOnlyOptions,
+  initializeSentryErrorOnly,
+  sanitizeSentryEvent,
+} from "../../packages/observability/dist/index.js";
 
 const requestId = "6f9619ff-8b86-4a5d-9f6d-8f6f3e9f4a31";
 const traceId = "c4b7f268f713f241fd4b92c8461e3991";
@@ -150,5 +154,93 @@ test("sanitizeSentryEvent fails closed for hostile events and metadata", () => {
       event: "error.captured",
       errorCode: "UNEXPECTED_ERROR",
     }),
+  );
+});
+
+test("error-only Sentry setup is inert without a valid DSN and uses a fake transport", () => {
+  let initCalls = 0;
+  const init = (options) => {
+    initCalls += 1;
+    return options;
+  };
+
+  for (const dsn of [
+    undefined,
+    "",
+    "http://public@errors.example.test/101",
+    "https://public:secret@errors.example.test/101",
+    "https://public@errors.example.test/not-a-project",
+  ]) {
+    assert.equal(
+      initializeSentryErrorOnly(init, {
+        dsn,
+        environment: "local",
+      }),
+      false,
+    );
+  }
+  assert.equal(initCalls, 0);
+
+  const fakeTransport = () => ({
+    flush: () => Promise.resolve(true),
+    send: () => Promise.resolve({ statusCode: 200 }),
+  });
+  let initializedOptions;
+
+  assert.equal(
+    initializeSentryErrorOnly(
+      (options) => {
+        initializedOptions = options;
+      },
+      {
+        dsn: "https://public@errors.example.test/101",
+        environment: "production",
+        release: "web-2026.07.15",
+        transport: fakeTransport,
+      },
+    ),
+    true,
+  );
+  assert.ok(initializedOptions);
+  assert.equal(initializedOptions.sendDefaultPii, false);
+  assert.equal(initializedOptions.tracesSampleRate, 0);
+  assert.equal(initializedOptions.enableLogs, false);
+  assert.equal(initializedOptions.transport, fakeTransport);
+  assert.equal("integrations" in initializedOptions, false);
+  assert.equal("replaysSessionSampleRate" in initializedOptions, false);
+  assert.equal("replaysOnErrorSampleRate" in initializedOptions, false);
+
+  const sanitized = initializedOptions.beforeSend({
+    environment: "production",
+    release: "web-2026.07.15",
+    tags: {
+      errorCode: "TURN_PROCESSING_FAILED",
+      event: "error.captured",
+    },
+    request: { data: canaries[5] },
+    extra: { dsn: canaries[4] },
+  });
+  const serialized = JSON.stringify(sanitized);
+
+  assert.equal(sanitized.tags.errorCode, "TURN_PROCESSING_FAILED");
+  for (const canary of canaries) {
+    assert.doesNotMatch(serialized, new RegExp(canary, "u"));
+  }
+
+  assert.equal(
+    createSentryErrorOnlyOptions({ environment: "local" }),
+    undefined,
+  );
+  assert.equal(
+    initializeSentryErrorOnly(
+      () => {
+        throw new Error(canaries[5]);
+      },
+      {
+        dsn: "https://public@errors.example.test/101",
+        environment: "local",
+      },
+    ),
+    false,
   );
 });

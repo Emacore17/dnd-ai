@@ -11,3 +11,13 @@ export { createNoopErrorReporter } from "./error-reporting.js";
 export type { SanitizedSentryEvent } from "./redaction.js";
 export { sanitizeSentryEvent, sanitizeTelemetryValue } from "./redaction.js";
 export { createRequestId } from "./request-id.js";
+export type {
+  MutableSentryErrorEvent,
+  SentryErrorOnlyConfiguration,
+  SentryErrorOnlyOptions,
+} from "./sentry-options.js";
+export {
+  createSentryErrorOnlyOptions,
+  initializeSentryErrorOnly,
+  toMutableSentryEvent,
+} from "./sentry-options.js";
