@@ -6,7 +6,7 @@ last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md
   - docs/adr/0007-observability-context-and-error-reporting.md
-  - docs/MVP_SPEC.md#24-osservabilita
+  - docs/MVP_SPEC.md#24-osservabilità
   - docs/MVP_SPEC.md#291-topologia-mvp
   - docs/MVP_SPEC.md#351-definition-of-done-per-user-story
   - docs/TASKS.md#bl-008--otellogsentry-baseline

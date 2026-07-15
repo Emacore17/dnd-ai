@@ -5,7 +5,7 @@ last_reviewed: 2026-07-15
 last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
-  - docs/MVP_SPEC.md#298-operativita
+  - docs/MVP_SPEC.md#298-disaster-recovery-e-operazioni
   - docs/TASKS.md#bl-010--flag-storeconfig-auditato
 related_tasks:
   - BL-010

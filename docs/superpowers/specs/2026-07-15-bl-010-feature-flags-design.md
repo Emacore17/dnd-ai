@@ -5,8 +5,8 @@ last_reviewed: 2026-07-15
 last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
   - docs/MVP_SPEC.md#2216-incident-response
-  - docs/MVP_SPEC.md#275-versionamento-promptschema-model-route
-  - docs/MVP_SPEC.md#298-operativita
+  - docs/MVP_SPEC.md#275-change-management-dei-prompt
+  - docs/MVP_SPEC.md#298-disaster-recovery-e-operazioni
   - docs/TASKS.md#bl-010--flag-storeconfig-auditato
   - docs/adr/0004-runtime-configuration-and-secret-injection.md
   - docs/adr/0006-postgresql-migration-foundation.md

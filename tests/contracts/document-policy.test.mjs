@@ -111,7 +111,7 @@ test("validates living metadata, repository refs, task IDs and relative links", 
       "docs/README.md",
       livingDocument({
         verified: "deadbee",
-        sourceRefs: ["docs/TASKS.md#fixture"],
+        sourceRefs: ["docs/TASKS.md#tasks"],
         codeRefs: ["src"],
         testRefs: ["tests/runtime.test.mjs", "tests/future.test.mjs (planned)"],
         body: [
@@ -133,6 +133,20 @@ test("validates living metadata, repository refs, task IDs and relative links", 
         sourceRefs: ["docs/TASKS.md"],
       }),
     ),
+    writeFixtureDocument(
+      repositoryRoot,
+      "docs/adr/README.md",
+      livingDocument({
+        body: [
+          "# ADR",
+          "",
+          "| ADR | Titolo | Stato |",
+          "|---|---|---|",
+          "| [ADR-0001](0001-proposal.md) | Proposal | `proposed` |",
+          "",
+        ].join("\n"),
+      }),
+    ),
   ]);
 
   const result = await validateDocumentPolicy({
@@ -141,6 +155,7 @@ test("validates living metadata, repository refs, task IDs and relative links", 
       "docs/TASKS.md",
       "docs/README.md",
       "docs/adr/0001-proposal.md",
+      "docs/adr/README.md",
     ],
     changedDocumentPaths: ["docs/README.md"],
     today: "2026-07-14",

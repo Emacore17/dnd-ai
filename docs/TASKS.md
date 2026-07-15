@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-15
-last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
+last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -73,6 +73,10 @@ code_refs:
   - package.json
   - scripts/check-docs.mjs
   - scripts/lib/document-policy.mjs
+  - scripts/lib/document-integrity-policy.mjs
+  - scripts/lib/markdown-document.mjs
+  - scripts/lib/mermaid-policy.mjs
+  - scripts/validate-mermaid-worker.mjs
   - scripts/verify-affected.mjs
   - scripts/lib/affected-verification.mjs
 test_refs:
@@ -109,6 +113,7 @@ test_refs:
   - docs/testing/BL-004_VERIFICATION.md
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
+  - tests/contracts/document-integrity.test.mjs
   - tests/unit/affected-verification.test.mjs
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
@@ -136,8 +141,8 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-010 — Flag store/config auditato`
-> **Prossimo task READY:** `—`; dipende dalla chiusura di `BL-010`, mentre `BL-079` resta `BACKLOG` finche lo staging non e disponibile
+> **Task attivo:** `GOV-002 — Validazione automatica della documentazione e tracciabilità`
+> **Prossimo task READY:** `—`; `GOV-002` è `IN_PROGRESS`, mentre `BL-079` resta `BACKLOG` finché lo staging non è disponibile
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -369,7 +374,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | 42% | 18 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta | `IN_PROGRESS` | 54% | 18 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -665,10 +670,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
 
-- **Stato:** `BACKLOG`
-- **Progresso:** `0%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — base `15382d547638333e33992be96479a6f0cbff1a29`; spec SHA-256 `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329`; data: `2026-07-15`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** GOV-001, BL-001, BL-002, BL-009
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §26.12, §32.3, §35.1; `docs/TASKS.md` §6
@@ -676,12 +681,12 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Deliverable:** Consolidamento di `docs/TRACEABILITY.md` e `docs/CHANGELOG.md`; `docs/adr/README.md`; comando `pnpm docs:check` per front matter, link, task ID, section refs, Mermaid e generated-doc drift.
 - **Criterio di accettazione:** La CI blocca link rotti, task ID duplicati, documento senza metadata obbligatori, riferimento a test inesistente e diff non rigenerato di OpenAPI/JSON Schema.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Fixture con link rotto, duplicate task ID e front matter mancante deve far fallire `docs:check`.
+  - [x] Fixture con link rotto, duplicate task ID e front matter mancante deve far fallire `docs:check`.
   - [ ] Fixture valida deve passare in locale e CI con output deterministico.
-  - [ ] Verificare almeno un mapping requisito→task→test→evidenza in `docs/TRACEABILITY.md`.
+  - [x] Verificare almeno un mapping requisito→task→test→evidenza in `docs/TRACEABILITY.md`.
 - **Documentazione e contesto:** `docs/TRACEABILITY.md`, `docs/CHANGELOG.md`, `docs/adr/README.md`, `docs/README.md`, CI docs
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `GOV-003` fornisce già il sottoinsieme locale fail-closed per front matter, freshness dei documenti modificati, path/ref/link, whitespace e task graph. Restano in questa card section refs, Mermaid, drift dei contratti generati e integrazione CI completa.
+- **Evidenze di chiusura:** commit locali `c430826`, `e47f153`, `0b82dc9`, `f9fbb24`; suite mirata finale 22/22 `PASS`; `docs:check` e `ci:workflow:check` exit `0`; budget consecutivo `docs:check` 3,136 s / 3,130 s; audit high senza vulnerabilità note. La review indipendente ha chiuso con test RED/GREEN i duplicati ADR e la ricomposizione dei check CI, incluso l'aggiramento whitespace/quoting; re-check finale `PASS` senza P0/P1. Full gate finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 101,4 s: lint/build 11/11, typecheck 13/13, unit 88 pass/1 skip host, integration 13/13, database 16/16, contract 66/66, security 30 pass/3 skip host, documentazione 36/19 changed e artifact 3.950 file `PASS`. Stato branch-local proposto; PR/CI remota e clean checkout ancora aperti; migration/eval/trace ID `N/A`.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` per dependency graph/lockfile e workflow CI. Implementati policy modulare per anchor e riferimenti `§`, registro ADR completo con duplicate ID fail-closed, Mermaid `11.16.0` parse-only in worker bounded con adapter testuale DOMPurify `3.4.12`, e composizione unica dei checker contratti/task esistenti in `docs:check`. `GOV-003` continua a possedere front matter, freshness, path/ref/link base, whitespace e task graph; `BL-009` continua a possedere il generator/drift dei contratti. Fuori scope Vercel, deploy, provider, rendering SVG e modifica dei contratti applicativi.
 
 ### GOV-003 — Ottimizzazione del ciclo di sviluppo degli agenti
 
@@ -2580,23 +2585,23 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: BL-009
-last_completed_task: BL-008
+active_task: GOV-002
+last_completed_task: BL-010
 next_ready_task: null
-status: DONE
-progress: 100
-started_at: 2026-07-15T14:38:47+02:00
-candidate_at: 2026-07-15T15:39:51+02:00
+status: IN_REVIEW
+progress: 90
+started_at: 2026-07-15T18:15:00+02:00
+candidate_at: null
 cycle_target_minutes: 120
-cycle_actual_minutes: 61
+cycle_actual_minutes: null
 updated_at: 2026-07-15
 agent: Codex development agent
-git_branch: codex/bl-009-contract-generation
-base_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
+git_branch: codex/gov-002-document-integrity
+base_commit: 15382d547638333e33992be96479a6f0cbff1a29
 candidate_head: null
-spec_sha256: 26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c
+spec_sha256: d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329
 context_verified: true
-test_status: PASSING
+test_status: PARTIAL
 ```
 
 ## Contesto letto
@@ -2605,24 +2610,25 @@ test_status: PASSING
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti BL-009 — `docs/MVP_SPEC.md` §§11.5, 12.6, 12.8, 19.1, 20.1, 20.4, 20.6, 29.4, 31 e 35.1; ADR-0002, design e piano TDD
-- [x] documentazione corrente — `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/operations/CI_CD.md` e `docs/api/README.md`
-- [x] codice/test interessati — `packages/contracts`, generator/policy, generated v1, workflow Quality e suite contract/unit
+- [x] riferimenti GOV-002 — `docs/MVP_SPEC.md` §§26.12, 32.3 e 35.1; card GOV-002; design approvato
+- [x] documentazione corrente — `docs/README.md`, `docs/TRACEABILITY.md`, `docs/CHANGELOG.md` e registro ADR
+- [x] codice/test interessati — document policy, contract generator, task graph, workflow Quality e relative suite contract
 
 ## Piano e scope
 
-- **Corsia:** `HIGH_RISK` perché cambiano dependency graph/lockfile, contratto pubblico generato e workflow CI; un full gate sul candidato e clean-checkout verification obbligatoria.
-- **Obiettivo verificabile:** DTO request/response/event/output AI runtime-validati da Zod e artifact JSON Schema/OpenAPI deterministici, versionati e compatibili.
-- **File/moduli previsti:** `packages/contracts`, generator e policy drift/compatibility/owned path, generated v1, workflow Quality, test e soli documenti semanticamente interessati.
-- **Azioni esterne:** sola documentazione tecnica ufficiale; nessun provider, account, deploy o modifica Vercel.
-- **Test previsti:** TDD runtime/roundtrip strict, Ajv parity, canonicalizzazione/drift, compatibilità contro base Git offline, symlink/junction, CI policy; full gate, clean checkout e review indipendente.
-- **Rischi/failure path:** UUID canonici rifiutati, versioni evento incoerenti, breaking change rigenerata dentro v1, base Git assente, artifact stale/missing/unexpected, path escape/root collegato e rimozione del gate CI.
-- **Fuori scope:** route Fastify, auth/idempotenza, schema Bible completo, tool registry concreto, database, UI, provider e Vercel.
+- **Corsia:** `HIGH_RISK` perché cambiano dependency graph/lockfile e workflow CI; un full gate sul candidato e clean-checkout verification obbligatoria.
+- **Obiettivo verificabile:** `docs:check` blocca metadata, link/anchor, riferimenti `§`, Mermaid, registro ADR, task graph e generated drift con output deterministico.
+- **File/moduli previsti:** document/integrity/Mermaid policy, worker bounded, package scripts, workflow Quality, registro ADR, test e soli documenti semanticamente interessati.
+- **Azioni esterne:** sola documentazione tecnica ufficiale e registry npm read-only; nessun provider, account, deploy o modifica Vercel.
+- **Test previsti:** TDD su anchor/section refs/ADR/Mermaid, composizione contract drift/task graph, CI policy, audit dependency, full gate, clean checkout e review indipendente.
+- **Rischi/failure path:** path escape, anchor ambiguo, section range inesistente, parser Mermaid bloccato o oversized, ADR non registrato, generated drift e rimozione del gate CI.
+- **Fuori scope:** rendering SVG/PNG, lint editoriale, link HTTP esterni, modifica dei contratti applicativi, UI, provider e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-15 18:15 +02:00 | 25% | Selezionato GOV-002 perché tutte le dipendenze sono `DONE`; approvata policy modulare con Mermaid parse-only bounded e riuso dei checker esistenti. | Base `15382d5`; spec SHA `d07620b`; `verify:docs` baseline exit `0` con 33 documenti, task graph e secret scan `PASS`; registry npm conferma `mermaid@11.16.0` MIT. | Versionare design, ottenere review utente e creare il piano TDD prima del codice. |
 | 2026-07-15 15:40 +02:00 | 100% | Re-check indipendente senza P0/P1 residui. I primi due full hanno esposto ownership di formattazione generated e risoluzione del pnpm globale nello script annidato; aggiunte regressioni fail-closed e mantenuto un unico checker diretto dopo la build. Candidato branch-local terminale in 61 minuti. | Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 86,8 s: lint/build 11, typecheck 13, unit 84/1 skip host, integration 13, DB 13, contract 56, security 26/3 skip host, docs 31/11 e artifact 3.942. | Committare il candidato, verificarlo da checkout pulito e pubblicare una sola PR protetta; nessuna azione Vercel. |
 | 2026-07-15 15:34 +02:00 | 90% | Living docs e riferimenti ora descrivono `api-contract-v1`, policy immutable-major e delivery BL-008 reale; restano solo gate HIGH_RISK e re-review mirata. | `verify:docs` exit `0`: 31 documenti/11 modificati, task graph e secret scan PASS. | Audit dipendenze, full verify e re-check dei quattro P1. |
 | 2026-07-15 15:30 +02:00 | 75% | La review indipendente ha trovato quattro P1 reali: UUID canonici trattati come slug, version gate `GameEvent` aperto, nessuna baseline compatibility esterna e root generated collegabile. TDD rosso→verde: UUIDv7 sui record, literal v1, freeze dei major contro tree Git protetto e guard symlink/junction prima delle mutazioni. | Runtime RED 3/7 e due moduli policy mancanti; GREEN `test:contract` 55/55, unit artifact/compatibility/owned path 7/7, `contracts:check`, Prettier ed ESLint mirati exit `0`; fixture Git/junction soltanto in temp. | Allineare living docs, eseguire audit e gate HIGH_RISK, poi re-review dei quattro P1. |
@@ -2682,15 +2688,15 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/bl-009-contract-generation` su base `ccecd683`; candidate head derivato da Git al commit, PR `PENDING`.
-- **Comandi eseguiti:** RED/GREEN mirati, package build/lint/typecheck, `test:contract`, unit policy, `contracts:generate`, `contracts:check`, Prettier/ESLint mirati e full `TURBO_FORCE=true corepack pnpm@11.13.0 verify`.
-- **Exit code:** contract mirato `0` (55/55); artifact/compatibility/owned-path unit `0` (7/7); full `0` in 86,8 s con contract 56/56 e tutti i gate verdi; clean/CI `N/A — gate esterni immediati prima dell'integrazione`.
-- **Report/CI URL o path:** design, piano, ADR-0008, `docs/api/README.md` e card corrente; CI BL-009 `N/A — PR non ancora aperta`.
-- **Migration head:** `000001_postgresql_foundation` invariato.
-- **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`; sei JSON Schema 2020-12, OpenAPI 3.1.1 e manifest.
+- **Commit/PR:** branch `codex/gov-002-document-integrity` su base `15382d547638333e33992be96479a6f0cbff1a29`; candidato e PR non ancora disponibili.
+- **Comandi eseguiti:** preflight Git/fingerprint, audit mirato di checker/workflow e `corepack pnpm@11.13.0 verify:docs`.
+- **Exit code:** baseline documentale `0`; test implementativi e full gate non ancora eseguiti.
+- **Report/CI URL o path:** design GOV-002; CI task `N/A — implementazione non iniziata`.
+- **Migration head:** `000002_feature_flags` invariato.
+- **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`, invariati.
 - **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
-- **Documenti aggiornati:** ADR-0008, API guide, design/piano, task/context/traceability, overview, CI/CD, README e changelog.
-- **Rischi residui/TODO tracciati:** checkout pulito e delivery protetta; se uno fallisce il task riapre. Freeze Vercel invariato.
+- **Documenti aggiornati:** design GOV-002, task e contesto operativo.
+- **Rischi residui/TODO tracciati:** review utente della spec, piano TDD, implementazione, gate HIGH_RISK e delivery protetta; freeze Vercel invariato.
 - **Task successivo reso READY:** nessuno sul branch; lo stato canonico resta su `main` fino al merge. `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale.
 
 

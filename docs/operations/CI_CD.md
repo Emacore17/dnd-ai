@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-15
-last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
+last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -14,6 +14,7 @@ related_tasks:
   - BL-004
   - BL-008
   - BL-009
+  - GOV-002
   - BL-080
   - QA-001
   - BL-070
@@ -30,6 +31,10 @@ code_refs:
   - scripts/lib/contract-artifact-policy.mjs
   - scripts/lib/contract-compatibility-policy.mjs
   - scripts/lib/owned-path-policy.mjs
+  - scripts/check-docs.mjs
+  - scripts/lib/document-policy.mjs
+  - scripts/lib/document-integrity-policy.mjs
+  - scripts/lib/mermaid-policy.mjs
   - packages/persistence/src/migration-runner.ts
   - packages/persistence/src/migrations/000001_postgresql_foundation.ts
   - scripts/lib/postgres-test-container.mjs
@@ -83,6 +88,8 @@ test_refs:
   - tests/unit/contract-artifact-policy.test.mjs
   - tests/contracts/contracts-compatibility.test.mjs
   - tests/unit/owned-path-policy.test.mjs
+  - tests/contracts/document-policy.test.mjs
+  - tests/contracts/document-integrity.test.mjs
 supersedes: null
 ---
 
@@ -92,7 +99,7 @@ supersedes: null
 
 | Job | Responsabilità | Failure behavior |
 |---|---|---|
-| `Quality` | format, lint, typecheck con declaration dependency build, contratti generati, confini, task graph, policy CI e desired state deploy | blocca build e gate |
+| `Quality` | format, lint, typecheck con declaration dependency build, gate documentale composto, confini, policy CI e desired state deploy | blocca build e gate |
 | `Tests` | unit, integration, migration PostgreSQL reale e contract | fixture rossa o failure/cleanup database propagano exit non-zero |
 | `Security` | SAST locale, test/secret scan e dependency audit | warning SAST, high/critical o scan fallito bloccano |
 | `Build artifact` | build completo, staging allowlisted, manifest e upload | manca/secret/checksum/symlink non sicuro bloccano |
@@ -154,9 +161,9 @@ La prima run della PR #20 ha fallito nel solo job Security perché pnpm 10 chiam
 
 ## Contratti generati nel gate
 
-`BL-009` aggiunge `pnpm contracts:check` al job Quality e al full `verify`. Il comando costruisce `@dnd-ai/contracts`, rigenera in memoria il catalogo `api-contract-v1` e confronta byte per byte gli otto file versionati sotto `packages/contracts/generated/v1`; non scrive nel workspace e fallisce su artifact missing, stale, unexpected, root collegati o modifiche a major pubblicati.
+`BL-009` mantiene `pnpm contracts:check` come comando specialistico e il full `verify` usa direttamente lo stesso generator. `GOV-002` compone nel job Quality un solo `pnpm docs:check`: build di `@dnd-ai/contracts`, generated drift, metadata/link/anchor/section refs/registro ADR/Mermaid e task graph. Il comando non scrive nel workspace e fallisce su artifact missing, stale, unexpected, root collegati, modifiche a major pubblicati o documentazione incoerente.
 
-Il solo writer supportato è `pnpm contracts:generate`. La compatibility baseline è il tree Git protetto: `origin/main` in locale e `HEAD^1` in CI. Quality usa `fetch-depth: 2`; il checker non esegue fetch e fallisce se la base non è disponibile. Il bootstrap ammette il primo `v1`, poi ogni major pubblicato resta immutabile e un wire change richiede `v2` parallelo. Il workflow policy contract richiede step, base e depth, così rimuoverli rende rossa la suite. JSON Schema viene inoltre compilato con Ajv 2020 e confrontato con Zod su fixture valide/negative; test temporanei provano breaking regeneration e junction senza toccare gli artifact reali.
+Il solo writer supportato è `pnpm contracts:generate`. La compatibility baseline è il tree Git protetto: `origin/main` in locale e `HEAD^1` in CI. Quality usa `fetch-depth: 2` e passa `CONTRACT_BASE_REF=HEAD^1` al solo step `pnpm docs:check`; il checker non esegue fetch e fallisce se la base non è disponibile. Il bootstrap ammette il primo `v1`, poi ogni major pubblicato resta immutabile e un wire change richiede `v2` parallelo. Il workflow policy contract richiede comando, base e depth, così rimuoverli o reintrodurre step separati rende rossa la suite. JSON Schema viene inoltre compilato con Ajv 2020 e confrontato con Zod su fixture valide/negative; test temporanei provano breaking regeneration e junction senza toccare gli artifact reali.
 
 ## Cache e artifact
 
@@ -173,6 +180,7 @@ corepack pnpm@11.13.0 scan:sast
 corepack pnpm@11.13.0 audit --audit-level=high
 corepack pnpm@11.13.0 contracts:generate
 corepack pnpm@11.13.0 contracts:check
+corepack pnpm@11.13.0 docs:check
 corepack pnpm@11.13.0 artifact:prepare
 corepack pnpm@11.13.0 artifact:verify
 corepack pnpm@11.13.0 deploy:check

@@ -39,16 +39,13 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Check generated contracts
-        run: pnpm contracts:check
+      - name: Check documentation integrity
+        run: pnpm docs:check
         env:
           CONTRACT_BASE_REF: HEAD^1
 
       - name: Check package boundaries
         run: pnpm boundaries:check
-
-      - name: Check task graph
-        run: pnpm tasks:check
 
       - name: Check CI policy
         run: pnpm ci:workflow:check

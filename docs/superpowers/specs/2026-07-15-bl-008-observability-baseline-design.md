@@ -4,7 +4,7 @@ owner: engineering-and-security
 last_reviewed: 2026-07-15
 last_verified_commit: 3d278655bf3ccec5d7dd3b142aea209cab307dca
 source_refs:
-  - docs/MVP_SPEC.md#24-osservabilita
+  - docs/MVP_SPEC.md#24-osservabilità
   - docs/MVP_SPEC.md#291-topologia-mvp
   - docs/MVP_SPEC.md#351-definition-of-done-per-user-story
   - docs/TASKS.md#bl-008--otellogsentry-baseline

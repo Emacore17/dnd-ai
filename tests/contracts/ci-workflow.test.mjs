@@ -135,7 +135,7 @@ test("the dependency audit cannot ignore registry failures", async () => {
   assert.ok(errors.some((error) => error.includes("exact audit command")));
 });
 
-test("the quality gate cannot omit generated contract drift checks", async () => {
+test("the quality gate composes documentation and generated contract checks", async () => {
   const [workflowSource, setupActionSource, packageSource] = await Promise.all([
     readFile(
       path.join(repositoryRoot, ".github", "workflows", "ci.yml"),
@@ -154,19 +154,26 @@ test("the quality gate cannot omit generated contract drift checks", async () =>
     readFile(path.join(repositoryRoot, "package.json"), "utf8"),
   ]);
   const workflow = parse(workflowSource);
-  const contractSteps = workflow.jobs.quality.steps.filter(
-    (step) => step.run === "pnpm contracts:check",
+  const documentationSteps = workflow.jobs.quality.steps.filter(
+    (step) => step.run === "pnpm docs:check",
   );
   const checkoutStep = workflow.jobs.quality.steps.find((step) =>
     String(step.uses ?? "").startsWith("actions/checkout@"),
   );
 
-  assert.equal(contractSteps.length, 1);
+  assert.equal(documentationSteps.length, 1);
+  assert.equal(
+    workflow.jobs.quality.steps.some(
+      (step) =>
+        step.run === "pnpm contracts:check" || step.run === "pnpm tasks:check",
+    ),
+    false,
+  );
   assert.equal(checkoutStep.with["fetch-depth"], 2);
-  assert.equal(contractSteps[0].env.CONTRACT_BASE_REF, "HEAD^1");
+  assert.equal(documentationSteps[0].env.CONTRACT_BASE_REF, "HEAD^1");
 
   checkoutStep.with["fetch-depth"] = 1;
-  delete contractSteps[0].env;
+  delete documentationSteps[0].env;
   const errors = validateCiDocuments(
     workflow,
     parse(setupActionSource),
@@ -175,4 +182,46 @@ test("the quality gate cannot omit generated contract drift checks", async () =>
 
   assert.ok(errors.some((error) => error.includes("fetch-depth: 2")));
   assert.ok(errors.some((error) => error.includes("CONTRACT_BASE_REF")));
+});
+
+test("the quality gate rejects legacy duplicate document checks", async () => {
+  const [workflowSource, setupActionSource, packageSource] = await Promise.all([
+    readFile(
+      path.join(repositoryRoot, ".github", "workflows", "ci.yml"),
+      "utf8",
+    ),
+    readFile(
+      path.join(
+        repositoryRoot,
+        ".github",
+        "actions",
+        "setup-workspace",
+        "action.yml",
+      ),
+      "utf8",
+    ),
+    readFile(path.join(repositoryRoot, "package.json"), "utf8"),
+  ]);
+  const workflow = parse(workflowSource);
+  workflow.jobs.quality.steps.push(
+    { run: "pnpm  contracts:check" },
+    { run: 'pnpm "tasks:check"' },
+  );
+
+  const errors = validateCiDocuments(
+    workflow,
+    parse(setupActionSource),
+    JSON.parse(packageSource),
+  );
+
+  assert.ok(
+    errors.includes(
+      "quality must not duplicate legacy command: pnpm contracts:check",
+    ),
+  );
+  assert.ok(
+    errors.includes(
+      "quality must not duplicate legacy command: pnpm tasks:check",
+    ),
+  );
 });
