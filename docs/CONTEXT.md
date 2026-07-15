@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-14
-last_verified_commit: 6e87034824abeafa76c1da19cba5db81111195f2
+last_reviewed: 2026-07-15
+last_verified_commit: 99a4f3f5441fd5a64657d2ad54fd7342e3fefef2
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -14,11 +14,13 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-008
   - BL-079
   - BL-080
 code_refs:
   - apps
   - packages
+  - packages/observability
   - packages/config
   - packages/persistence/src/migration-runner.ts
   - packages/persistence/src/migration-manifest.ts
@@ -100,20 +102,20 @@ supersedes: null
 
 | Campo | Valore |
 |---|---|
-| Data assoluta | 2026-07-14 |
+| Data assoluta | 2026-07-15 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-004` è integrato su `main` nel merge `6e87034824abeafa76c1da19cba5db81111195f2`. `GOV-003` chiude nel change set corrente; head, PR e delivery si derivano da Git e dal merge gate protetto. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `GOV-003` è integrato su `main` nel merge `99a4f3f5441fd5a64657d2ad54fd7342e3fefef2`. `BL-008` è selezionato sul branch `codex/bl-008-observability-baseline`; design approvato, implementazione e delivery ancora aperte. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `26b3e86fdd4d0ef7835b2e9f5486820dbeac671c78d50de7a01c78471393fa1c` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `—` |
+| Task attivo | `BL-008 — IN_PROGRESS/25%/NOT_RUN` |
 | Ultimo task completato | `GOV-003 — DONE/100%/PASSING` |
-| Prossimo task READY | `BL-008`; `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale |
+| Prossimo task READY | `—`; `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003` è `DONE`: l’audit di 17/28 commit documentali e 11 PR/23 pipeline di `BL-080` ha portato a corsie di rischio, lettura proporzionata, timebox provider, delivery derivata e gate rapidi fail-closed. Il candidate è stato chiuso in 43 minuti con un solo full gate e review senza P0/P1. `BL-008` è il prossimo task; `BL-079` resta `BACKLOG` fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003` è `DONE` e integrato. `BL-008` è `IN_PROGRESS`: il Product Owner ha approvato una baseline code-first con OpenTelemetry unica autorità trace, log Pino redatti e Sentry error-only off-by-default; la spec scritta è in review prima del piano TDD. Non sono stati creati account, exporter remoti o risorse provider. `BL-079` resta `BACKLOG` fino a uno staging reale.
 
 ## Decisioni operative vigenti
 
@@ -140,6 +142,7 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
 | Eval suite version | `N/A` | harness non creato |
 | Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
+| Observability contract | `observability-baseline-v1` | design approvato e testo versionato in review; implementazione e test non avviati, provider remoti assenti |
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
 | Design contract | `ux-ui-2026-07-13` | documentato, non implementato |
 | ADR UI | `ADR-0001 accepted` | vigente |
@@ -223,10 +226,11 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | CTX-R16 | Il client Vercel omette il target Preview e il provider ha restituito due record Production; la causa server resta non confermata | Entrambi rimossi; freeze PR #16 integrato; riapertura solo con fix/workaround provider supportato, containment testato e PR separata |
 | CTX-R17 | Il CLI dalla root può includere cache/output ignorati da Git e superare limiti o ampliare il payload | `.vercelignore` root-only e dry-run JSON fail-closed con budget/path/input obbligatori; contratto integrato in PR #15 e dry-run corrente PASS |
 | CTX-R18 | La suite migration richiede Docker e il primo upgrade da una versione applicata non è rappresentabile finché esiste soltanto `000001` | Harness bounded con cleanup fail-closed; zero→head/replay/rollback coperti ora, previous→head obbligatorio all'introduzione di `000002` |
+| CTX-R20 | La nuova baseline può causare context bleed, leakage di PII/secret, doppia autorità trace o dipendenze Node nel bundle client | `BL-008` applica OTel come unica autorità trace, redazione allowlisted, Sentry error-only, test concorrenti/security e contract test del bundle prima della delivery |
 
 ## Prossima azione
 
-Selezionare `BL-008` dopo l’integrazione protetta del candidate `GOV-003`. Conservare invariati freeze Vercel e stato `BACKLOG` di `BL-079`.
+Concludere la review della specifica scritta di `BL-008`, quindi produrre il piano TDD prima del codice. Conservare invariati freeze Vercel e stato `BACKLOG` di `BL-079`.
 
 ## Rischi chiusi
 

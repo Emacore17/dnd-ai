@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-14
-last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
+last_reviewed: 2026-07-15
+last_verified_commit: 99a4f3f5441fd5a64657d2ad54fd7342e3fefef2
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -12,9 +12,11 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-008
   - BL-079
   - BL-080
 code_refs:
+  - packages/observability
   - packages/persistence
   - scripts/run-database-migrations.mjs
   - infra/local/postgres.compose.yml
@@ -65,6 +67,12 @@ supersedes: null
 | [`adr/0006-postgresql-migration-foundation.md`](adr/0006-postgresql-migration-foundation.md) | Decisione accepted su tool, baseline, checksum, lock e rollback database |
 | [`operations/DATABASE_MIGRATIONS.md`](operations/DATABASE_MIGRATIONS.md) | Runbook locale/CI per PostgreSQL e migrazioni forward-only |
 | [`testing/BL-004_VERIFICATION.md`](testing/BL-004_VERIFICATION.md) | Evidenze riproducibili e gate di chiusura della fondazione migration BL-004 |
+
+## Design in review
+
+| Documento | Stato e autorità |
+|---|---|
+| [`superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md`](superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md) | Design `observability-baseline-v1` approvato nel merito e sottoposto a review del testo prima del piano TDD e del codice |
 
 ## Documenti pianificati
 

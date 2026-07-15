@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-14
-last_verified_commit: 6e87034824abeafa76c1da19cba5db81111195f2
+last_reviewed: 2026-07-15
+last_verified_commit: 99a4f3f5441fd5a64657d2ad54fd7342e3fefef2
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -14,6 +14,7 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-008
   - BL-079
   - BL-080
 code_refs:
@@ -48,6 +49,7 @@ code_refs:
   - scripts/lib/document-policy.mjs
   - scripts/verify-affected.mjs
   - scripts/lib/affected-verification.mjs
+  - packages/observability
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/ci-workflow.test.mjs
@@ -82,6 +84,17 @@ supersedes: null
 ---
 
 # Changelog documentale e contrattuale
+
+## 2026-07-15
+
+### Added
+
+- Versionato il design `observability-baseline-v1` di `BL-008`: OpenTelemetry è l'unica autorità trace, Pino applica logging JSON redatto e Sentry resta un adapter error-only opzionale senza provisioning o rete nei test.
+
+### Changed
+
+- Selezionato `BL-008` come task `IN_PROGRESS/25%/NOT_RUN` in corsia `HIGH_RISK`; allineati contesto e indice prima della review della specifica scritta e del successivo piano TDD.
+- Confermati fuori scope account/progetti Sentry, backend OTLP, source-map upload e qualunque configurazione o deploy Vercel.
 
 ## 2026-07-14
 
