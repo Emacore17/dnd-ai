@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
+last_verified_commit: dac74168f56a422ca36aad1a8297f447ee174c9b
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -12,6 +12,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-doc-arch-001-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
   - docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md
+  - docs/superpowers/plans/2026-07-16-bl-079-design-system-core.md
 related_tasks:
   - GOV-001
   - GOV-004
@@ -28,6 +29,9 @@ related_tasks:
   - QA-002
   - DOC-ARCH-001
 code_refs:
+  - apps/web/components.json
+  - apps/web/components/static-game-shell.tsx
+  - apps/web/components/ui
   - packages/testing
   - scripts/run-tests.mjs
   - scripts/lib/test-report-policy.mjs
@@ -46,6 +50,8 @@ code_refs:
   - infra/local/postgres.compose.yml
 test_refs:
   - AGENTS_VALIDATION.txt
+  - tests/contracts/web-design-system.test.mjs
+  - tests/integration/web-game-shell.test.mjs
   - docs/testing/BL-003_VERIFICATION.md
   - docs/testing/BL-080_VERIFICATION.md
   - tests/database/database-migrations.test.mjs
@@ -119,6 +125,7 @@ supersedes: null
 | [`superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`](superpowers/specs/2026-07-16-qa-001-test-foundation-design.md) | Design approvato di `testing-foundation-v1` e decomposizione QA-001/QA-002 |
 | [`superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md`](superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md) | Decisione local-first che separa BL-079, BL-081, QA-002 e smoke remoto |
 | [`superpowers/plans/2026-07-16-gov-004-unblock-ui-dependencies.md`](superpowers/plans/2026-07-16-gov-004-unblock-ui-dependencies.md) | Piano esecutivo e gate FAST di GOV-004 |
+| [`superpowers/plans/2026-07-16-bl-079-design-system-core.md`](superpowers/plans/2026-07-16-bl-079-design-system-core.md) | Piano TDD e gate HIGH_RISK della foundation shadcn/Tailwind e shell statica BL-079 |
 | [`testing/TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) | Contratto operativo di runner, fixture, container, coverage e report non-browser |
 | [`data/DATA_MODEL.md`](data/DATA_MODEL.md) | Schema fisico implementato e modello logico pianificato |
 | [`operations/LOCAL_DEVELOPMENT.md`](operations/LOCAL_DEVELOPMENT.md) | Cold start, readiness e cleanup dello sviluppo locale |

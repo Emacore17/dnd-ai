@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
+last_verified_commit: dac74168f56a422ca36aad1a8297f447ee174c9b
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -169,19 +169,19 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-16 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `DOC-ARCH-001` è integrato su `main` tramite [PR #25](https://github.com/Emacore17/dnd-ai/pull/25), functional head `1d3b5329ecef3c1a9157b0574a1c0a9faec5ad6a`, merge `9132cbd24ee6a0f8b1cc6c875114d86dc70804b5` e CI post-merge `29496032461` con cinque job `SUCCESS`. `GOV-004` è un candidato branch-local terminale sulla branch `codex/gov-004-unblock-ui`, con delivery `PENDING`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `GOV-004` è integrato su `main` tramite [PR #26](https://github.com/Emacore17/dnd-ai/pull/26), candidate `0efee4c9e585a7b2cf4f84cdbd5902467c023f9b`, merge `dac74168f56a422ca36aad1a8297f447ee174c9b` e CI PR/post-merge `29498563965`/`29498770278` con cinque job `SUCCESS`; i tree Git candidato/merge coincidono. `BL-079` è un candidato branch-local terminale sulla branch `codex/bl-079-design-system-core`; functional head `ddcbb5ead4baacda6c494e74934d2e5d5afd3fed` verificato da checkout pulito, delivery `PENDING`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `e7da3ac4d7197ac0f0e1ffc5e9fa1e4324373f521e5bf29fdf06d9603f6af920` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `GOV-004 — DONE/100%/PASSING` proposto sul branch `codex/gov-004-unblock-ui`; delivery `PENDING` |
-| Ultimo task completato | `GOV-004 — DONE/100%/PASSING` branch-local; ultimo integrato: `DOC-ARCH-001` tramite PR #25 e CI `29496032461` |
-| Prossimo task READY | `BL-079 — Design system core e shell statica mobile-first` |
+| Task attivo | `BL-079 — DONE/100%/PASSING` proposto sul branch `codex/bl-079-design-system-core`; delivery `PENDING` |
+| Ultimo task completato | `BL-079 — DONE/100%/PASSING` branch-local; ultimo integrato: `GOV-004` tramite PR #26 e CI post-merge `29498770278` |
+| Prossimo task READY | `BL-005`; anche `BL-081` è sbloccato ma segue la selezione canonica |
 | Migration head | `000002_feature_flags` / `database-feature-flags-v1` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `BL-008`, `BL-009`, `BL-010`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`; `BL-010` fornisce `database-feature-flags-v1` con migration `000002_feature_flags`; `QA-001` fornisce `testing-foundation-v1`; `DOC-ARCH-001` aggiunge ADR-0009, overview stratificata, modello dati fisico/conceptual e guida locale con contract anti-drift. Il candidato GOV-004 separa la fondazione locale `BL-079`, la shell interattiva `BL-081`, il harness `QA-002` e il remoto `BL-080`/`GATE-M0`: `BL-079` è quindi `READY` senza aggirare il blocco provider. Il gate FAST passa su 46 documenti con task graph e secret scan verdi. Redis locale applicativo, BullMQ, route API di dominio, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-008`, `BL-009`, `BL-010`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` ha ora un candidato branch-local con Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first e shell statica server-rendered verificata localmente; `BL-081` resta owner di AI Elements, interazione e Motion. Redis locale applicativo, BullMQ, route API di dominio, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
 
 ## Decisioni operative vigenti
 
@@ -294,8 +294,8 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 | ID | Rischio | Mitigazione/owner |
 |---|---|---|
-| CTX-R03 | App e package di dominio restano scaffold; il web non contiene ancora la foundation UX/UI | task M0 proprietari; non inferire comportamento applicativo dalle entry point minime |
-| CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` è il solo P0 `READY`; `BL-081` segue la foundation e `QA-002` consolida il browser gate dopo la shell interattiva |
+| CTX-R03 | App e package di dominio restano scaffold; la foundation UX/UI web è statica e in delivery branch-local | non inferire loop applicativo, API o stato canonico dalla shell fixture; integrare BL-079 tramite gate protetto |
+| CTX-R04 | La shell interattiva e il browser harness comune restano successivi alla foundation | `BL-081` è ora READY per stati/interazione/Motion; `QA-002` consolida il browser gate dopo la shell interattiva |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive assente dal bundle iniziale in `BL-081`; `QA-002` verifica reduced-motion e visual/performance regression |
 | CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | `BL-080` è `BLOCKED/50%/PARTIAL` sull'assenza di un percorso first-deployment Preview-only supportato; freeze e `GATE-M0` restano chiusi, mentre i slice UI locali avanzano senza deploy |
 | CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based/ignore-aware |
@@ -306,7 +306,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 ## Prossima azione
 
-Committare il candidato GOV-004, pubblicare e integrare un'unica PR tramite `CI / Merge gate` senza bypass, quindi selezionare `BL-079` come primo P0 `READY`. `BL-080` resta congelato/bloccato sul provider e nessuna azione Vercel è autorizzata; `BL-005` e `BL-081` restano `BACKLOG` finché `BL-079` non è `DONE`.
+Pubblicare il candidato BL-079 già passato nei gate full e clean, attendere `CI / Merge gate` e integrare senza bypass o azioni Vercel. Dopo il merge selezionare canonicamente `BL-005`; `BL-081` resta READY e `BL-080` congelato.
 
 ## Rischi chiusi
 

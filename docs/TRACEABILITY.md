@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-16
-last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
+last_verified_commit: dac74168f56a422ca36aad1a8297f447ee174c9b
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -14,6 +14,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-15-gov-002-document-integrity-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
   - docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md
+  - docs/superpowers/plans/2026-07-16-bl-079-design-system-core.md
   - docs/testing/TEST_STRATEGY.md
   - docs/adr/README.md
 related_tasks:
@@ -36,6 +37,12 @@ related_tasks:
   - DOC-ARCH-001
 code_refs:
   - apps
+  - apps/web/components.json
+  - apps/web/app/globals.css
+  - apps/web/app/layout.tsx
+  - apps/web/components/static-game-shell.tsx
+  - apps/web/components/ui
+  - apps/web/lib/static-game-shell-fixture.ts
   - packages
   - packages/config
   - packages/observability
@@ -89,6 +96,8 @@ code_refs:
   - scripts/lib/test-report-policy.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
+  - tests/contracts/web-design-system.test.mjs
+  - tests/integration/web-game-shell.test.mjs
   - tests/contracts/workspace-boundaries.test.mjs
   - tests/contracts/task-graph.test.mjs
   - docs/testing/BL-001_VERIFICATION.md
@@ -151,7 +160,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008`, `BL-009`, `BL-010`, `GOV-002`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`; `DOC-ARCH-001` è verificato tramite PR #25, merge `9132cbd24ee6a0f8b1cc6c875114d86dc70804b5` e CI post-merge `29496032461` con cinque job `SUCCESS`. `GOV-004` riallinea il grafo local-first: `BL-079` è `READY`, `BL-081` e `QA-002` restano `BACKLOG`, mentre `BL-080` resta congelato e bloccato.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008`, `BL-009`, `BL-010`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`; GOV-004 è verificato tramite PR #26, merge `dac74168f56a422ca36aad1a8297f447ee174c9b` e CI post-merge `29498770278`. `BL-079` è `DONE/100%/PASSING` come proposta branch-local con functional head `ddcbb5e` verificato nei gate full e clean; `BL-005` e `BL-081` sono `READY`, `QA-002` resta `BACKLOG`, mentre `BL-080` resta congelato e bloccato.
 
 ## Governance e baseline
 
@@ -164,7 +173,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Monorepo buildabile con tre runtime e package puri | spec §§11.2–11.3; `AGENTS.md` §9 | BL-001 | `apps/*`, `packages/*`, `turbo.json` | lint/typecheck/build su 10 workspace; report BL-001 | implemented, clean worktree PASS |
 | Import e dipendenze rispettano la allowlist | `AGENTS.md` §§4.6, 9 | BL-001 | `scripts/lib/workspace-boundaries.mjs` | `tests/contracts/workspace-boundaries.test.mjs`, inclusa fixture vietata; report BL-001 | implemented, PASS |
 | Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check` e gate composto `pnpm docs:check`; report BL-001 | implemented, PASS |
-| Fondazione UI locale separata da shell interattiva e smoke remoto | spec §31; ADR-0001; studio UX §14 | GOV-004, BL-079, BL-081, BL-080, QA-002 | design/piano GOV-004 e task graph | `pnpm tasks:check`; matrice consumer spec/task; `verify:docs` finale | GOV-004 DONE branch-local; gate 46 documenti/10 modificati, task graph e secret scan PASS; BL-079 unico P0 READY; BL-080 invariato BLOCKED |
+| Fondazione UI locale separata da shell interattiva e smoke remoto | spec §31; ADR-0001; studio UX §14 | GOV-004, BL-079, BL-081, BL-080, QA-002 | design/piani GOV-004 e BL-079, task graph, `apps/web` | task graph; contract design system; smoke standalone; browser locale | GOV-004 integrato via PR #26; BL-079 branch-local `DONE` con full/clean gate e viewport PASS; BL-080 invariato BLOCKED |
 | Architettura living implementato/target | spec §§11, 29; ADR-0009 | DOC-ARCH-001 | `docs/architecture/SYSTEM_OVERVIEW.md`, ADR-0009 | `tests/contracts/architecture-documentation.test.mjs`, Mermaid parse e `verify:docs` | PASS; contract 3/3, docs gate e full HIGH_RISK verdi |
 | Modello dati e migration head | spec §19; ADR-0006 | DOC-ARCH-001 | `docs/data/DATA_MODEL.md` | architecture-documentation contract + migration contract/database suite | PASS; head `000002_feature_flags` verificato da zero nel clean checkout |
 | Cold start locale riproducibile | spec §29.3; card DOC-ARCH-001 | DOC-ARCH-001 | `docs/operations/LOCAL_DEVELOPMENT.md` | clean checkout + `web-health-v1`/runtime integration | PASS; frozen install, config, migration, build, integration 20/20 e health reale verdi |
@@ -196,14 +205,14 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 
 | ID | Requisito normativo | Task | Codice | Test | Evidenza corrente |
 |---|---|---|---|---|---|
-| UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-081, BL-040, QA-002 | `apps/web` (planned) | `tests/e2e/mobile-game-loop.spec.ts` (planned) | studio e ADR approvati |
-| UX-P0-02 | Feed conversazionale, decisione e composer dominano il primo livello | BL-081, BL-040 | `GameConversation`, `FreeActionComposer` (planned) | component + visual regression (planned) | `docs/product/UX_UI_DESIGN.md` §§4–7 |
+| UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-081, BL-040, QA-002 | shell statica in `apps/web/components/static-game-shell.tsx`; loop interattivo planned | `tests/integration/web-game-shell.test.mjs`; E2E completo planned | candidato BL-079 verificato a 320×844 e 390×844 senza overflow/overlap; interazione resta BL-081 |
+| UX-P0-02 | Feed conversazionale, decisione e composer dominano il primo livello | BL-079, BL-081, BL-040 | shell statica BL-079; `GameConversation` e `FreeActionComposer` interattivi planned | smoke HTML e browser locale; visual regression comune planned | feed, due azioni e composer visibili insieme a 320 px; stato applicativo ancora fuori scope |
 | UX-P0-03 | HUD secondaria in drawer/sheet; desktop senza funzioni esclusive | BL-081, BL-040, QA-002 | `GameDrawer`, responsive shell (planned) | viewport/browser matrix (planned) | ADR-0001 |
-| UX-P0-04 | shadcn/ui `new-york` su Radix e token semantici | BL-079 | `components.json`, UI primitives (planned) | config/token contract test (planned) | ADR-0001 |
+| UX-P0-04 | shadcn/ui `new-york` su Radix e token semantici | BL-079 | `apps/web/components.json`, `app/globals.css`, `components/ui` | `tests/contracts/web-design-system.test.mjs` | contract 7/7 e build web PASS; Tailwind 4.3.2, Geist 1.7.2, cinque primitive selettive |
 | UX-P0-05 | AI Elements selettivo non sostituisce `TurnView`, REST+SSE o idempotenza | BL-081, BL-040, BL-041 | adapter/wrapper UI (planned) | contract + UI negative test (planned) | spec §§11.4, 21.1 |
 | UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all’animazione | BL-081, BL-027, BL-040, QA-002 | motion primitives (planned) | `tests/e2e/reduced-motion.spec.ts` (planned) | studio §11 |
-| UX-P0-07 | Touch target ≥44 px, primarie ≥48 px, safe area/tastiera/zoom | BL-079, BL-081, BL-012, BL-019, BL-040, QA-002 | UI wrappers (planned) | accessibility/device E2E (planned) | spec §§8.4–8.5, 23.1 |
-| UX-P0-08 | Stile premium contemporaneo, non pseudo-medievale | BL-079, QA-002 | theme/tokens (planned) | design review + contrast/visual regression (planned) | studio §9 |
+| UX-P0-07 | Touch target ≥44 px, primarie ≥48 px, safe area/tastiera/zoom | BL-079, BL-081, BL-012, BL-019, BL-040, QA-002 | `Button`, `Input`, token touch/safe-area e feed `100svh` | contract; browser matrix locale; E2E tastiera virtuale planned | minimo DOM 44 px, primarie 48 px, overlap `0`, Tab order e focus ring verificati su 320/390/1440 |
+| UX-P0-08 | Stile premium contemporaneo, non pseudo-medievale | BL-079, QA-002 | token graphite/cobalto e shell contemporanea in `apps/web` | review React/design e browser locale; visual regression comune planned | nessun chrome fantasy, font remoto, gradiente invasivo o runtime grafico; finding P0/P1 locale chiuso |
 | UX-P0-09 | Dado decorativo riproduce risultato backend e possiede fallback | BL-040, BL-043 | dice tray (planned) | rules contract + reduced-motion UI test (planned) | spec §21.4 |
 
 ## Criteri globali
