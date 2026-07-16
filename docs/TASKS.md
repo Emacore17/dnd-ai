@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -20,6 +20,7 @@ related_tasks:
   - BL-080
   - QA-001
   - QA-002
+  - DOC-ARCH-001
 code_refs:
   - .vercelignore
   - apps
@@ -144,6 +145,7 @@ test_refs:
   - tests/integration/testing-containers.test.mjs
   - tests/contracts/testing-package-contract.test.mjs
   - tests/security/test-report-security.test.mjs
+  - tests/contracts/architecture-documentation.test.mjs
 supersedes: null
 ---
 
@@ -158,8 +160,8 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `QA-001 — Fondazione comune per test, fixture e comandi di qualità`
-> **Prossimo task READY:** `DOC-ARCH-001`; `QA-002` resta `BACKLOG` finché `QA-001` e `BL-079` non sono `DONE`
+> **Task attivo:** `DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale`
+> **Prossimo task READY:** nessun altro task P0; `BL-079` resta `BACKLOG` finché `BL-080` è bloccato
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -312,16 +314,18 @@ Corsie: `FAST` usa `verify:docs`; `STANDARD` usa test mirati + `verify:affected`
 | [`AGENTS.md`](../AGENTS.md) | Esistente, `active` | Entry point agente | Quando cambia workflow, source hierarchy, boundary globali o policy browser/sicurezza. |
 | [`docs/CONTEXT.md`](CONTEXT.md) | Esistente, `active` | Snapshot corrente | Solo cambio reale di task, architettura, comando, versione o rischio. |
 | [`docs/README.md`](README.md) | Esistente, `active` | Indice documentazione | A ogni nuovo documento/supersede. |
-| [`docs/TRACEABILITY.md`](TRACEABILITY.md) | Esistente, `active`; automatizzazione pianificata in `GOV-002` | Requisito→task→test→evidenza | Solo se cambia il mapping funzionale. |
-| [`docs/CHANGELOG.md`](CHANGELOG.md) | Esistente, `active`; consolidamento pianificato in `GOV-002` | Modifiche documentali/contrattuali | Decisione, contratto pubblico o release; non semplice avanzamento. |
+| [`docs/TRACEABILITY.md`](TRACEABILITY.md) | Esistente, `active`; integrità automatizzata da `GOV-002` | Requisito→task→test→evidenza | Solo se cambia il mapping funzionale. |
+| [`docs/CHANGELOG.md`](CHANGELOG.md) | Esistente, `active`; integrità automatizzata da `GOV-002` | Modifiche documentali/contrattuali | Decisione, contratto pubblico o release; non semplice avanzamento. |
 | [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md) | Esistente, `active` | Contratto UX/UI mobile-first e motion | Ogni cambio a gerarchia, component stack, token, responsive o motion. |
 | [`docs/adr/0001-mobile-first-conversational-ui.md`](adr/0001-mobile-first-conversational-ui.md) | Esistente, `accepted` | Decisione UI mobile-first e stack visuale | Ogni revisione della decisione o dei guardrail. |
 | [`docs/adr/0003-ci-trust-boundary-and-artifacts.md`](adr/0003-ci-trust-boundary-and-artifacts.md) | Esistente, `accepted` | Trust boundary, gate e artifact CI | Ogni modifica a trigger, permessi, cache, scan o artifact. |
 | [`docs/operations/CI_CD.md`](operations/CI_CD.md) | Esistente, `active` | Contratto operativo della pipeline | Ogni modifica a job, Ruleset, gate o ownership differita. |
 | [`docs/testing/BL-002_VERIFICATION.md`](testing/BL-002_VERIFICATION.md) | Esistente, `active` | Evidenze riproducibili BL-002 | A ogni run o cambio del commit verificato. |
-| `docs/adr/` | Registro parziale; automazione pianificata in `GOV-002` | Decisioni architetturali | Prima o insieme a decisioni non reversibili. |
-| [`docs/architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | Esistente, baseline `BL-001`; consolidamento `DOC-ARCH-001` | Architettura implementata | Ogni cambio di confine/topologia. |
-| `docs/data/DATA_MODEL.md` | Planned (`DOC-ARCH-001`) | Entità, indici, migration head | Ogni migration/schema change. |
+| [`docs/adr/README.md`](adr/README.md) | Esistente, `active`; registro completo verificato da `GOV-002` | Indice e stato degli ADR | Ogni nuovo ADR, supersede o cambio di stato. |
+| [`docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md`](adr/0009-mvp-runtime-data-and-workflow-architecture.md) | Esistente, `accepted`; owner `DOC-ARCH-001` | Runtime, trasporti, stato autorevole e workflow MVP | Ogni revisione del confine runtime/data/workflow. |
+| [`docs/architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | Esistente, `active`; consolidato da `DOC-ARCH-001` | Stato implementato e topologia target | Ogni cambio di confine, workspace o capability. |
+| [`docs/data/DATA_MODEL.md`](data/DATA_MODEL.md) | Esistente, `active`; owner `DOC-ARCH-001` | Schema fisico, indici, migration head e modello pianificato | Ogni migration/schema change. |
+| [`docs/operations/LOCAL_DEVELOPMENT.md`](operations/LOCAL_DEVELOPMENT.md) | Esistente, `active`; owner `DOC-ARCH-001` | Percorso end-to-end locale, readiness e cleanup | Ogni cambio a install, config, servizi locali o health. |
 | `docs/features/CHARACTER_CREATION.md` | Planned (`DOC-CHAR-001`) | Character Builder | Ogni catalog/rule/API/UI change. |
 | `docs/features/CAMPAIGN_GENERATION.md` | Planned (`DOC-CAMP-001`) | Bible/prologo/generation | Ogni schema/prompt/provider flow change. |
 | `docs/features/TURN_LOOP.md` | Planned (`DOC-TURN-001`) | Orchestrator/idempotenza/recovery | Ogni state machine/commit/retry change. |
@@ -508,7 +512,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Test di accettazione automatizzato: Migrazione da DB vuoto e rollback operativo documentato.
   - [x] Migration test da database vuoto all’head e replay su database già aggiornato.
   - [x] Test rollback/forward-fix documentato e verifica vincoli/indici con PostgreSQL reale.
-- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0006-postgresql-migration-foundation.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/DATABASE_MIGRATIONS.md`; `docs/testing/BL-004_VERIFICATION.md`; `docs/data/DATA_MODEL.md` resta `planned` con owner `DOC-ARCH-001`
+- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0006-postgresql-migration-foundation.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/DATABASE_MIGRATIONS.md`; `docs/testing/BL-004_VERIFICATION.md`; `docs/data/DATA_MODEL.md` è `active` con owner `DOC-ARCH-001`
 - **Evidenze di chiusura:** test mirati: `db:migrate:test` 13/13 e unit/contract/security migration 13/13 `PASS`. Full working-tree `verify` exit `0` in 73,4 s e audit high pulito. Commit `b1030501fd82d0396add5ff4f9df10fbaa405d0b` verificato da worktree pulito: install frozen exit `0` in 0,6 s; full gate senza cache exit `0` in 66,2 s, con lint/build 11/11, typecheck 12/12, unit 47 pass/1 skip host, integration 9/9, database 13/13, contract 22/22, security 23 pass/3 skip host, policy/scan e artifact 3.238 file `PASS`. [PR #18](https://github.com/Emacore17/dnd-ai/pull/18), [CI PR `29351291907`](https://github.com/Emacore17/dnd-ai/actions/runs/29351291907) 5/5 job `SUCCESS`, incluso il job Tests con suite PostgreSQL reale e `CI / Merge gate`; report `docs/testing/BL-004_VERIFICATION.md`; head `000001_postgresql_foundation`; contract `database-baseline-v1`; source SHA `e8543d84b9b842adf352260536dcea284c93dfb859c9ec03368f10deb9455fc7`; checksum `46a2bb9ce2ca6957a3b87e423e0ea67b36688e71ebacc84c469bdb7f7a8dc449`.
 - **Note, rischi o bloccanti:** La baseline è deliberatamente infrastrutturale: ledger/versione di compatibilità, namespace applicativo ed estensione PostgreSQL richiesta, senza anticipare tabelle di dominio. `packages/persistence` riceve config validata e non importa `packages/config`; il composition root resta esterno. La suite reale copre file migration sconosciuti/symlink fail-closed, source SHA e checksum contract, database vuoto→head, replay, DDL invalido con rollback e ledger vuoto, due runner simultanei, lock occupato, vincoli/indice, rollback locale e re-apply. `previous→head` è `N/A` per la prima migration: non esiste ancora una versione applicata precedente diversa dal database vuoto; diventa obbligatorio da `000002`. `down` è limitato a URL loopback disposable senza parametri di routing e vietato in staging/production. Fuori scope: tabelle utenti/campagne/eventi/memorie, RLS, repository, backfill, provisioning gestito e harness generale `QA-001`.
 
@@ -771,10 +775,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — commit/SHA: `30f611e8e874b9c87d20d50c4c5f45528e1083a5`; data: `2026-07-16`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** GOV-002, BL-001, BL-003, BL-004, BL-008, BL-009, BL-010
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §11, §19, §24, §29; `docs/MVP_SPEC.md` decisioni architetturali
@@ -782,12 +786,12 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Deliverable:** `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/data/DATA_MODEL.md`, guida local setup, diagrammi, ADR per modular monolith/Fastify/REST+SSE/PostgreSQL+pgvector/BullMQ/event sourcing.
 - **Criterio di accettazione:** Diagrammi, package boundaries, topologia, migration head, comandi local/staging e decisioni coincidono con codice/IaC; ogni divergenza dalla spec ha ADR e aggiornamento della spec.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] `pnpm docs:check` passa e i diagrammi Mermaid sono renderizzabili.
-  - [ ] Cold-start setup seguito da ambiente pulito porta a health check verdi.
-  - [ ] Controllo automatico o review registrata dei code path citati.
+  - [x] `pnpm docs:check` passa e i diagrammi Mermaid sono renderizzabili.
+  - [x] Cold-start setup seguito da ambiente pulito porta a health check verdi.
+  - [x] Controllo automatico o review registrata dei code path citati.
 - **Documentazione e contesto:** Tutti i deliverable del task; aggiornare `docs/CONTEXT.md` e registro ADR
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+- **Evidenze di chiusura:** functional head `30f611e8e874b9c87d20d50c4c5f45528e1083a5`; contract architettura `3/3` e regressione config `6/6` `PASS`; `verify:docs` e `verify:affected` exit `0`; unico full HIGH_RISK senza cache exit `0` in 143,4 s con 11 lint/build, 13 typecheck, 251 test nei report e artifact 3.982 file; clean checkout: install frozen, `config:check`, PostgreSQL head `000002_feature_flags`, build 11/11, integration 20/20 e `web-health-v1` reale exit `0`; worktree/Compose rimossi; PR/CI `PENDING`; migration/eval/trace ID `000002_feature_flags` / `N/A` / `N/A`; docs aggiornati nello stesso change set.
+- **Note, rischi o bloccanti:** Proposta branch-local terminale in corsia `HIGH_RISK`. Il primo cold check ha rilevato che `config:check` perdeva il pin Corepack nei subprocess e invocava pnpm globale `10.21.0`; la regressione e il secondo checkout provano il pin esplicito `pnpm@11.13.0`. Il cleanup Windows usa `core.longpaths=true`. Lockfile, dipendenze, runtime di dominio, CI, provider e Vercel restano invariati; delivery `PENDING` finché la PR protetta non raggiunge `main`.
 
 ### GATE-M0 — Exit gate Milestone 0 — Fondamenta
 
@@ -2623,20 +2627,20 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: QA-001
-last_completed_task: GOV-002
-next_ready_task: DOC-ARCH-001
+active_task: DOC-ARCH-001
+last_completed_task: QA-001
+next_ready_task: none
 status: DONE
 progress: 100
-started_at: 2026-07-16T00:00:00+02:00
-candidate_at: 2026-07-16T12:11:26+02:00
+started_at: 2026-07-16T13:12:53+02:00
+candidate_at: 2026-07-16T13:48:09+02:00
 cycle_target_minutes: 120
-cycle_actual_minutes: 731
-updated_at: 2026-07-16T12:18:31+02:00
+cycle_actual_minutes: 35
+updated_at: 2026-07-16T13:48:09+02:00
 agent: Codex development agent
-git_branch: codex/qa-001-test-foundation
-base_commit: a698592b0a610735297a1026c80eae5e5114355c
-candidate_head: 7f2d4d0f360e83baf31404266df47cbee060be0d
+git_branch: codex/doc-arch-001
+base_commit: 3e9c6d5b088825066fedab4163c8482d391ab543
+candidate_head: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 spec_sha256: d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329
 context_verified: true
 test_status: PASSING
@@ -2648,24 +2652,28 @@ test_status: PASSING
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti QA-001 — `docs/MVP_SPEC.md` §§26 e 35.1; card QA-001; design approvato
-- [x] documentazione corrente — `docs/README.md`, `docs/TRACEABILITY.md`, `docs/CHANGELOG.md`, `docs/product/UX_UI_DESIGN.md` e `docs/operations/CI_CD.md`
-- [x] codice/test interessati — package testing, runner Node, harness PostgreSQL esistente, workflow e relative suite contract
+- [x] riferimenti DOC-ARCH-001 — `docs/MVP_SPEC.md` §§11, 19, 24 e 29; card e design approvato
+- [x] documentazione corrente — overview, ADR, configurazione, migration, indice, contesto e tracciabilità
+- [x] codice/test interessati — workspace manifest, composition root runtime, migration head, health web e policy documentali
 
 ## Piano e scope
 
-- **Corsia:** `HIGH_RISK` perché il candidato modifica workflow/artifact, lifecycle container e potenzialmente dependency graph/lockfile; un full gate sul candidato e clean-checkout verification obbligatoria.
-- **Obiettivo verificabile:** `testing-foundation-v1` rende uniformi e riproducibili runner Node, fixture deterministiche, process isolation, PostgreSQL/Redis reali e report JUnit/coverage.
-- **File/moduli previsti:** `packages/testing`, runner e policy root, harness PostgreSQL esistente esteso a Redis, workflow, test e soli documenti semanticamente interessati.
-- **Azioni esterne:** nessun provider, account, deploy o modifica Vercel; immagini container solo dopo pin immutabile e verifica locale.
-- **Test previsti:** TDD su runner/process isolation, seed/clock/RNG, lifecycle PostgreSQL/Redis, JUnit/coverage deterministici, cleanup failure, workflow policy, full gate e clean checkout.
-- **Rischi/failure path:** porte o container concorrenti, readiness timeout, processo orfano, cleanup fallito, report nondeterministico, fixture failing non propagata e artifact non confinato.
-- **Fuori scope:** browser/E2E/accessibility/visual regression (`QA-002`), UI, eval AI, provider e Vercel.
+- **Corsia:** `HIGH_RISK`, elevata da `STANDARD` quando il cold checkout ha provato che `config:check` invocava il pnpm globale anziché il pin Corepack.
+- **Obiettivo verificabile:** overview, modello dati e setup locale distinguono stato implementato e target pianificato e restano allineati tramite contract test.
+- **File/moduli previsti:** ADR-0009, overview, `DATA_MODEL.md`, `LOCAL_DEVELOPMENT.md`, contract test, pin del solo script composto in `package.json` e documenti di governo semanticamente interessati.
+- **Azioni esterne:** nessun provider, account, deploy o modifica Vercel; il solo side effect previsto è il Compose PostgreSQL locale durante il cold-check.
+- **Test previsti:** contract TDD architettura/config, `verify:docs`, unico `verify` HIGH_RISK, clean checkout con migration head, runtime integration e `web-health-v1` reale.
+- **Rischi/failure path:** drift package/migration/comandi, pin pnpm perso nei subprocess, capability pianificate descritte come presenti, Docker/porta/config/health e cleanup Windows long-path incompleto.
+- **Fuori scope:** Redis locale, BullMQ, API di dominio, SSE, nuove migration, UI, provider, staging e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-16 13:48 +02:00 | 100% | Candidato branch-local terminale dopo il rerun pulito, l'unico full gate HIGH_RISK e la self-review inline senza P0/P1. La review delegata prevista dalla skill non è autorizzata in questa sessione; sono stati controllati diff completo, contratti, stato implementato/pianificato, dipendenze, secret/PII, Vercel e audit. Nessun task P0 successivo è `READY`: `BL-079` resta dipendente da `BL-080` bloccato e `BL-005` resta quindi non eseguibile. | Functional head `30f611e`: clean frozen/config/migration/build/integration/health tutti exit `0`; full senza cache exit `0` in 143,4 s, 251 test/report e artifact 3.982 file; metadata finali `verify:docs` exit `0`; audit high pulito. Compose e worktree rimossi; nessuna azione Vercel. | Committare il candidato e pubblicare una sola PR protetta. |
+| 2026-07-16 13:36 +02:00 | 75% | Il primo cold checkout ha trovato due failure path reali: `config:check` usava pnpm globale `10.21.0` nei subprocess e `git clean` senza long-path lasciava file pnpm/Next. Cleanup completato sul solo worktree verificato con `core.longpaths=true`; corsia elevata a HIGH_RISK. | Install frozen e PostgreSQL health PASS; `config:check` exit `1` per engine mismatch. Regressione runtime-config RED 5/6→GREEN 6/6; contract guida reso boundary-safe e GREEN 3/3. Nessuna risorsa Compose residua. | Committare la correzione pin/guide, ripetere cold checkout sul nuovo head e poi eseguire l'unico full gate. |
+| 2026-07-16 13:27 +02:00 | 75% | ADR-0009 accepted; overview, modello dati e guida locale distinguono in modo esplicito implementato/pianificato e mantengono `BL-080` congelato. Nessun task dipendente viene reso READY. | Commit `3fa7261`, `70eff10`; contract architetturale 3/3 e `verify:docs` 44 documenti/8 modificati `PASS`; migration head `000002_feature_flags` rilevato dal codice. | Allineare indice/contesto/tracciabilità, quindi eseguire gate mirati e cold checkout con health web reale. |
+| 2026-07-16 13:12 +02:00 | 25% | Selezionato DOC-ARCH-001 dalla default branch dopo la delivery QA-001; approvata documentazione stratificata con ADR unico e marker implementato/pianificato. | Base `3e9c6d5`; design `9274bb4`, piano `64fec8a`; baseline contract 69/69 e `verify:docs` PASS; nessuna azione Vercel. | Scrivere il contract anti-drift, osservarlo rosso, poi creare ADR-0009 e consolidare l'overview. |
 | 2026-07-16 12:18 +02:00 | 100% | Candidato branch-local terminale; self-review completa senza P0/P1. La review sub-agent prevista dalla skill non è eseguibile perché la sessione vieta delega non richiesta. Delivery resta derivata/PENDING finché `7f2d4d0` non raggiunge `main` tramite gate protetto. | Worktree detached `7f2d4d0`: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con 247 test/report, coverage sopra soglia e artifact 4.003 file `PASS`; worktree rimosso. | Amend dello stesso candidato con evidenze terminali, push branch e una PR; nessuna azione Vercel. |
 | 2026-07-16 12:11 +02:00 | 90% | Il full ha trovato e chiuso due cause reali: due file non formattati, risoluzione pnpm 11 non conservata nel subprocess con cache forzata e tre contract test ancora legati ai vecchi script. Regressioni mirate verdi; nessun gate indebolito. Il target di 120 minuti è superato perché il task M/HIGH_RISK ha coperto quattro batch, lifecycle container, report security e i finding cross-platform emersi solo senza cache. | Full finale senza cache exit `0` in 141,8 s: lint/build 11, typecheck 13, unit 107+1 skip, integration 20, DB 16, contract 69, security 32+3 skip, report 247 e artifact 3.982 `PASS`. | Congelare il commit candidato, verificarlo da checkout pulito e completare la review/stato terminale. |
 | 2026-07-16 11:57 +02:00 | 90% | Living docs e workflow sono allineati; la card entra in review soltanto dopo tutti i mirati applicabili. | Foundation 19/19, runner 6/6, container 1/1, contract 10/10, security 2/2, database 16/16; `verify:docs` 39/12 `PASS`; audit high pulito. | Eseguire l’unico full gate HIGH_RISK, poi checkout pulito e review finale. |
@@ -2731,16 +2739,16 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/qa-001-test-foundation` su base `a698592b0a610735297a1026c80eae5e5114355c`; commit design e PR non ancora disponibili.
-- **Comandi eseguiti:** preflight Git/fingerprint, audit mirato di backlog/ownership/runner/harness, self-review della design spec e `corepack pnpm@11.13.0 verify:docs`.
-- **Exit code:** `git diff --check` `0`; gate documentale finale `0` con 37 documenti/9 modificati, task graph e secret scan `PASS`; test implementativi e full gate non ancora eseguiti.
-- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`; CI task `N/A — implementazione non iniziata`.
+- **Commit/PR:** branch `codex/doc-arch-001` su base `3e9c6d5b088825066fedab4163c8482d391ab543`; design `9274bb4`, piano `64fec8a`, architettura `3fa7261`, dati/setup `70eff10`, governance `f77b346`, regressione config `30f611e`; PR non ancora disponibile.
+- **Comandi eseguiti:** contract architettura/config, `verify:docs`, `verify:affected`, audit high, full HIGH_RISK senza cache e cold checkout con install/config/PostgreSQL/migration/build/integration/health reali.
+- **Exit code:** contract architettura 3/3 e config 6/6 `PASS`; docs/affected/audit/full/cold exit `0`; full 143,4 s con 251 test/report e artifact 3.982 file; clean integration 20/20 e head `000002_feature_flags`.
+- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-doc-arch-001-design.md`, `docs/superpowers/plans/2026-07-16-doc-arch-001.md`; CI `PENDING` fino alla PR protetta.
 - **Migration head:** `000002_feature_flags` invariato.
 - **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`, invariati.
 - **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
-- **Documenti aggiornati:** design QA-001, task, contesto, indice, tracciabilità, changelog e ownership UX/CI.
-- **Rischi residui/TODO tracciati:** review utente della spec, piano TDD, implementazione, gate HIGH_RISK e delivery protetta; freeze Vercel invariato.
-- **Task successivo reso READY:** `DOC-ARCH-001`; lo stato canonico resta su `main` fino al merge. `QA-002` resta `BACKLOG` finché `QA-001` e `BL-079` non sono `DONE`.
+- **Documenti aggiornati:** design/piano, ADR-0009, overview, modello dati, guida locale e record di governo allineati.
+- **Rischi residui/TODO tracciati:** sola delivery protetta; freeze Vercel invariato e nessuna capability pianificata presentata come implementata.
+- **Task successivo reso READY:** nessuno; `BL-079` resta dipendente da `BL-080` bloccato e `BL-005` dipende da `BL-079`.
 
 
 ## 21. Context Sync Log
@@ -2790,6 +2798,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-15 | `ccecd683` + working tree | BL-009 implementation | `api-contract-v1` e compatibility boundary | Aggiunti Zod strict, UUIDv7/version gate, JSON Schema/OpenAPI components-only, generator deterministic, freeze Git dei major pubblicati e root guard junction; TDD mirato verde, full/clean/CI pendenti. | GOV-002, BL-021, BL-022, BL-028, QA-001 |
 | 2026-07-15 | candidate head derivato da Git | BL-009 candidate | Full gate e review indipendente | Quattro P1 chiusi e re-check senza P0/P1; full finale exit `0` in 86,8 s dopo regressioni su ownership generated e pnpm annidato. Proposta `DONE/100%/PASSING`; clean checkout e delivery protetta restano gate esterni immediati. | GOV-002, BL-021, BL-022, BL-028, QA-001 |
 | 2026-07-15 | candidate head derivato da Git | BL-010 candidate | Feature flag e kill switch server-side | Aggiunti `database-feature-flags-v1`, migration `000002_feature_flags`, store PostgreSQL con audit atomico, CAS, idempotenza/replay stabile e CLI operatore redatta. Tre review subagent sono andate in timeout; il pass manuale P0/P1 ha corretto il replay idempotente dopo toggle successivo. Mirati verdi e full gate finale exit `0`; proposta `DONE/100%/PASSING`. | BL-005, BL-007, BL-015, BL-021, BL-022, BL-028, QA-001 |
+| 2026-07-16 | `30f611e` + candidate docs | DOC-ARCH-001 candidate | Architettura living, dati e cold start | Accettato ADR-0009; overview, schema fisico/conceptual e guida locale distinguono implementato/pianificato. Il cold checkout ha trovato e corretto la perdita del pin pnpm, poi ha verificato frozen install, migration head, build, integration e health reale; full HIGH_RISK e review P0/P1 verdi. Delivery `PENDING`, freeze Vercel invariato. | BL-005, BL-028, BL-029, BL-030, BL-036, BL-038, BL-079, BL-080, GATE-M0 |
 
 
 ## 22. Checklist di fine sessione dell’agente

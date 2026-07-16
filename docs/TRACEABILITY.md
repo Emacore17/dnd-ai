@@ -2,13 +2,14 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-16
-last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
   - docs/product/UX_UI_DESIGN.md
   - docs/adr/0007-observability-context-and-error-reporting.md
   - docs/adr/0008-zod-first-contract-generation.md
+  - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
   - docs/superpowers/specs/2026-07-15-gov-002-document-integrity-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
@@ -29,6 +30,7 @@ related_tasks:
   - BL-080
   - QA-001
   - QA-002
+  - DOC-ARCH-001
 code_refs:
   - apps
   - packages
@@ -138,6 +140,7 @@ test_refs:
   - tests/unit/contract-artifact-policy.test.mjs
   - tests/contracts/contracts-compatibility.test.mjs
   - tests/unit/owned-path-policy.test.mjs
+  - tests/contracts/architecture-documentation.test.mjs
 supersedes: null
 ---
 
@@ -145,7 +148,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008`, `BL-009` e `BL-010` sono `DONE/100%/PASSING` e integrati su `main`; BL-009 è verificato tramite PR #21/merge `8e6e0d3d46daa057ba80999c58c83ad1c92471b1` e run post-merge `29420929180`, BL-010 tramite PR #22/merge `15382d547638333e33992be96479a6f0cbff1a29` e run post-merge `29426357415`, entrambe 5/5 `SUCCESS`. `GOV-002` è candidato `IN_REVIEW` locale; `BL-080` resta congelato e `BL-079` resta `BACKLOG` fino allo staging reale.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008`, `BL-009`, `BL-010`, `GOV-002` e `QA-001` sono `DONE/100%/PASSING` e integrati su `main`; `QA-001` è verificato tramite PR #24/merge `3e9c6d5b088825066fedab4163c8482d391ab543`. `DOC-ARCH-001` è proposto `DONE/100%/PASSING` sul branch `codex/doc-arch-001`, con delivery `PENDING` fino alla PR protetta; `BL-080` resta congelato e `BL-079` resta `BACKLOG` fino a uno staging reale.
 
 ## Governance e baseline
 
@@ -158,19 +161,22 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Monorepo buildabile con tre runtime e package puri | spec §§11.2–11.3; `AGENTS.md` §9 | BL-001 | `apps/*`, `packages/*`, `turbo.json` | lint/typecheck/build su 10 workspace; report BL-001 | implemented, clean worktree PASS |
 | Import e dipendenze rispettano la allowlist | `AGENTS.md` §§4.6, 9 | BL-001 | `scripts/lib/workspace-boundaries.mjs` | `tests/contracts/workspace-boundaries.test.mjs`, inclusa fixture vietata; report BL-001 | implemented, PASS |
 | Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check` e gate composto `pnpm docs:check`; report BL-001 | implemented, PASS |
-| DTO API/evento/output AI hanno validazione runtime e artefatti interoperabili versionati | spec §§11.5, 12.6, 12.8, 19.1, 20.1, 20.4, 20.6, 29.4; ADR-0008 | BL-009 | `packages/contracts/src`, `packages/contracts/generated/v1`, generator e policy drift/compatibility/owned path | runtime strict con UUIDv7 e version gate; Ajv 2020 parity; OpenAPI 3.1.1 components-only; breaking v1, base Git assente, missing/stale/unexpected, root junction e CI depth/base test | implemented; mirati 55 contract + 7 unit e full contract 56/56 PASS; review senza P0/P1; clean/CI pending |
+| Architettura living implementato/target | spec §§11, 29; ADR-0009 | DOC-ARCH-001 | `docs/architecture/SYSTEM_OVERVIEW.md`, ADR-0009 | `tests/contracts/architecture-documentation.test.mjs`, Mermaid parse e `verify:docs` | PASS; contract 3/3, docs gate e full HIGH_RISK verdi |
+| Modello dati e migration head | spec §19; ADR-0006 | DOC-ARCH-001 | `docs/data/DATA_MODEL.md` | architecture-documentation contract + migration contract/database suite | PASS; head `000002_feature_flags` verificato da zero nel clean checkout |
+| Cold start locale riproducibile | spec §29.3; card DOC-ARCH-001 | DOC-ARCH-001 | `docs/operations/LOCAL_DEVELOPMENT.md` | clean checkout + `web-health-v1`/runtime integration | PASS; frozen install, config, migration, build, integration 20/20 e health reale verdi |
+| DTO API/evento/output AI hanno validazione runtime e artefatti interoperabili versionati | spec §§11.5, 12.6, 12.8, 19.1, 20.1, 20.4, 20.6, 29.4; ADR-0008 | BL-009 | `packages/contracts/src`, `packages/contracts/generated/v1`, generator e policy drift/compatibility/owned path | runtime strict con UUIDv7 e version gate; Ajv 2020 parity; OpenAPI 3.1.1 components-only; breaking v1, base Git assente, missing/stale/unexpected, root junction e CI depth/base test | DONE; PR #21/merge `8e6e0d3`, CI post-merge `29420929180` 5/5 `SUCCESS` |
 | PR CI fail-closed con check stabile | spec §§26.12, 29.4; ADR-0003 | BL-002 | `.github/workflows/ci.yml`, `scripts/lib/ci-gate.mjs` | clean verify head `7c6c707`; PR run `29257544214`; post-merge run `29257721274`; run negativa `29256736728`; Ruleset `18877721`; report BL-002 | PASS |
 | Dependency audit high usa un client bulk-capable senza downgrade | spec §§22.10, 26.12, 29.4; ADR-0003 | BL-002, BL-008 | pin pnpm `11.13.0`, setup action e policy progetto in `pnpm-workspace.yaml`; stale deps falliscono senza install implicito; comando audit esatto senza ignore | `tests/contracts/ci-workflow.test.mjs`, inclusa regressione `--ignore-registry-errors`; `tests/contracts/observability-contract.test.mjs`; PR #20 e run post-merge `29415397361` | PASS locale/CI |
 | Cache e artifact non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | setup action pnpm-only, `scripts/lib/secret-scanner.mjs`, `scripts/lib/build-artifact.mjs` | remote manifest `build-artifact-v1`, 3.205 file e checksum/secret verification; report BL-002 | PASS |
 | Log CI non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | workflow senza secret applicativi; output scanner redatto | scan redatto dei 5 job della run `29254494868` | PASS |
 | Gate fallito rende la PR non mergeabile | spec §31 `BL-002`; card BL-002 | BL-002 | Ruleset `main-required-ci` `18877721` | PR negativa #3/run `29256736728`: gate FAIL e `mergeStateStatus=BLOCKED`; regole `main` verificate via API | PASS |
-| Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003 | `packages/config`, API/worker composition root | unit 7/7; integration process 5/5; full verify locale/clean; CI `29285998646`; report BL-003 | DONE; PASS locale/clean/CI |
+| Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003, DOC-ARCH-001 | `packages/config`, API/worker composition root e script composto root | unit 7/7; integration process 5/5; regressione `runtime-config-contract` sul pin Corepack dei subprocess; full verify locale/clean; CI `29285998646`; report BL-003 | DONE BL-003; regressione DOC-ARCH-001 6/6 e cold rerun PASS |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
 | Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner fail-closed; web con zero secret/variabili applicative; Git Integration reale senza token Vercel persistente; emissione OIDC e Trusted Source exact-match abilitate | config/security suite; environment GitHub e progetto Vercel con zero secret applicativi; token mancante/malformato fail-before-fetch | BL-003 PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
-| Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004, BL-010 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head `000002_feature_flags`, previous→head da `000001`, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | suite DB 15/15 PASS su branch BL-010; full gate locale PASS; CI pending |
+| Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004, BL-010 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head `000002_feature_flags`, previous→head da `000001`, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | DONE; PR #22/merge `15382d5`, CI post-merge `29426357415` 5/5 `SUCCESS` |
 | Rollback database fail-closed e forward-only gestito | spec §§19.5, 29.5; ADR-0006 | BL-004 | policy CLI e runbook `DATABASE_MIGRATIONS.md` | DDL invalido annullato con ledger 0; `down` solo loopback disposable senza query routing e con conferma; staging/production rifiutati | PASS mirato/full/clean/CI |
-| Feature flag e kill switch server-side sono condivisi, auditati e fail-closed | spec §§22.16, 27.5, 28.6, 29.8, 31 `BL-010`; ADR-0004, ADR-0006, ADR-0007 | BL-010 | `packages/persistence/src/feature-flags.ts`, `packages/persistence/src/migrations/000002_feature_flags.ts`, `scripts/manage-feature-flag.mjs` | catalogo chiuso `campaign.start`/`turn.new`/`model.route.premium`; store unavailable/unknown/malformed disabled; cambio CLI senza deploy; audit atomico; CAS; idempotency replay/conflict; output redatto | unit feature flags 4/4, database feature flags 2/2 con replay post-toggle, security feature flags 4/4 e full gate locale PASS; PR/CI pending |
-| Runner, fixture e report non-browser sono isolati e riproducibili | spec §§26, 35.1 | QA-001 | `@dnd-ai/testing`, runner Node root, harness PostgreSQL/Redis e artifact `testing-foundation-v1` | process isolation/failure/timeout, golden RNG/clock, smoke container concorrente, JUnit/LCOV/checksum e symlink/secret negative path | candidato `7f2d4d0` full + clean `PASS`; [`TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) |
+| Feature flag e kill switch server-side sono condivisi, auditati e fail-closed | spec §§22.16, 27.5, 28.6, 29.8, 31 `BL-010`; ADR-0004, ADR-0006, ADR-0007 | BL-010 | `packages/persistence/src/feature-flags.ts`, `packages/persistence/src/migrations/000002_feature_flags.ts`, `scripts/manage-feature-flag.mjs` | catalogo chiuso `campaign.start`/`turn.new`/`model.route.premium`; store unavailable/unknown/malformed disabled; cambio CLI senza deploy; audit atomico; CAS; idempotency replay/conflict; output redatto | DONE; PR #22/merge `15382d5`, CI post-merge `29426357415` 5/5 `SUCCESS` |
+| Runner, fixture e report non-browser sono isolati e riproducibili | spec §§26, 35.1 | QA-001 | `@dnd-ai/testing`, runner Node root, harness PostgreSQL/Redis e artifact `testing-foundation-v1` | process isolation/failure/timeout, golden RNG/clock, smoke container concorrente, JUnit/LCOV/checksum e symlink/secret negative path | DONE; full + clean `PASS`, PR #24/merge `3e9c6d5`; [`TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) |
 | Browser, accessibility e visual regression usano un harness comune | spec §26.8; studio UX §§13–14.1 | BL-079, QA-002 | Playwright e browser harness (planned) | viewport 320/390/1440, reduced-motion, accessibility negative fixture e visual drift (planned) | QA-002 BACKLOG; dipende da QA-001 e BL-079 |
 | W3C Trace Context e request ID attraversano web→API→queue→worker senza context bleed | spec §§24.1, 24.5; ADR-0007 | BL-008 | `packages/observability`, plugin Fastify e wrapper worker | `tests/integration/observability-flow.test.mjs`: parent chain `web.request`→`api.request`→`queue.enqueue`→`worker.process`, due flussi concorrenti disgiunti; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Log JSON e metadata telemetry non espongono PII, secret, prompt o output AI | spec §§22.10, 24.2; ADR-0007 | BL-008 | sanitizer bounded, logger Pino allowlisted e reporter safe | `tests/unit/observability-core.test.mjs`, `tests/unit/observability-node.test.mjs`, `tests/security/observability-security.test.mjs`; PR #20/run `29415397361` | PASS mirato/full/clean/CI |

@@ -2,14 +2,20 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
+  - docs/MVP_SPEC.md#19-modello-dati
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
   - AGENTS.md#9-confini-architetturali-e-struttura-target
+  - docs/adr/0002-monorepo-package-boundaries.md
+  - docs/adr/0004-runtime-configuration-and-secret-injection.md
+  - docs/adr/0006-postgresql-migration-foundation.md
+  - docs/adr/0007-observability-context-and-error-reporting.md
   - docs/adr/0008-zod-first-contract-generation.md
-  - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
-  - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
+  - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
+  - docs/data/DATA_MODEL.md
+  - docs/operations/LOCAL_DEVELOPMENT.md
 related_tasks:
   - BL-001
   - BL-002
@@ -18,232 +24,132 @@ related_tasks:
   - BL-008
   - BL-009
   - BL-010
+  - BL-028
+  - BL-029
+  - BL-030
+  - BL-036
+  - BL-038
   - BL-079
   - BL-080
   - DOC-ARCH-001
   - QA-001
   - QA-002
 code_refs:
-  - .vercelignore
   - apps/web
   - apps/api
   - apps/worker
-  - packages/observability/src/node.ts
-  - packages/observability/src/tracing.ts
-  - packages/observability/src/logger.ts
-  - packages/observability/src/redaction.ts
-  - packages/contracts/src
-  - packages/contracts/generated/v1
-  - scripts/generate-contracts.mjs
-  - scripts/lib/contract-artifact-policy.mjs
-  - scripts/lib/contract-compatibility-policy.mjs
-  - scripts/lib/owned-path-policy.mjs
-  - apps/api/src/observability.ts
-  - apps/worker/src/observability.ts
-  - apps/web/instrumentation.ts
-  - apps/web/instrumentation-client.ts
+  - packages/ai
   - packages/config
-  - packages/persistence/src/migration-manifest.ts
-  - packages/persistence/src/migration-runner.ts
-  - packages/persistence/src/migrations/000001_postgresql_foundation.ts
-  - packages/persistence/src/migrations/000002_feature_flags.ts
-  - packages/persistence/src/feature-flags.ts
-  - infra/local/postgres.compose.yml
-  - scripts/run-database-migrations.mjs
-  - scripts/manage-feature-flag.mjs
-  - packages
-  - packages/testing/src
-  - scripts/run-tests.mjs
-  - scripts/lib/test-report-policy.mjs
+  - packages/contracts
+  - packages/domain
+  - packages/observability
+  - packages/persistence
+  - packages/rules
+  - packages/testing
   - scripts/lib/workspace-boundaries.mjs
   - .github/workflows/ci.yml
-  - scripts/lib/ci-workflow-policy.mjs
-  - apps/web/app/health/route.ts
-  - apps/web/package.json
-  - apps/web/vercel.json
-  - apps/web/scripts/assert-vercel-preview-build.mjs
-  - apps/web/scripts/vercel-preview-build-policy.mjs
-  - infra/deployment/vercel-staging.json
-  - .github/workflows/deployment-smoke.yml
-  - scripts/check-deployment-foundation.mjs
-  - scripts/assert-vercel-preview-bootstrap-enabled.mjs
-  - scripts/check-vercel-deploy-dry-run.mjs
-  - scripts/lib/deployment-foundation.mjs
-  - scripts/lib/vercel-deploy-dry-run.mjs
-  - turbo.json
 test_refs:
-  - tests/unit/build-artifact.test.mjs
+  - tests/contracts/architecture-documentation.test.mjs
   - tests/contracts/workspace-boundaries.test.mjs
-  - tests/contracts/ci-workflow.test.mjs
   - tests/contracts/runtime-config-contract.test.mjs
-  - tests/integration/runtime-startup.test.mjs
-  - tests/integration/web-health.test.mjs
-  - tests/contracts/deployment-foundation.test.mjs
-  - tests/unit/vercel-preview-build-policy.test.mjs
-  - tests/security/vercel-preview-build-guard.test.mjs
-  - tests/unit/vercel-preview-bootstrap-policy.test.mjs
-  - tests/security/vercel-preview-bootstrap-gate.test.mjs
-  - tests/unit/vercel-deploy-dry-run.test.mjs
-  - tests/security/vercel-deploy-dry-run.test.mjs
   - tests/contracts/database-migration-contract.test.mjs
-  - tests/database/database-migration-cli.test.mjs
-  - tests/database/database-migration-failure.test.mjs
-  - tests/database/database-migrations.test.mjs
-  - tests/database/feature-flags.test.mjs
-  - tests/security/database-migration-security.test.mjs
-  - tests/security/feature-flags-security.test.mjs
-  - tests/unit/observability-core.test.mjs
-  - tests/unit/observability-node.test.mjs
-  - tests/integration/observability-flow.test.mjs
-  - tests/contracts/observability-contract.test.mjs
-  - tests/security/observability-security.test.mjs
   - tests/contracts/contracts-foundation.test.mjs
-  - tests/contracts/contracts-runtime.test.mjs
-  - tests/contracts/contracts-artifacts.test.mjs
-  - tests/contracts/contracts-generated.test.mjs
-  - tests/unit/contract-artifact-policy.test.mjs
-  - tests/contracts/contracts-compatibility.test.mjs
-  - tests/unit/owned-path-policy.test.mjs
-  - tests/unit/testing-primitives.test.mjs
+  - tests/contracts/observability-contract.test.mjs
+  - tests/integration/runtime-startup.test.mjs
   - tests/integration/testing-containers.test.mjs
-  - tests/security/test-report-security.test.mjs
 supersedes: null
 ---
 
 # System overview
 
-## Stato implementato
+## Legenda di stato
 
-`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` completa la fondazione PostgreSQL/pgvector, estesa da `BL-010` con `000002_feature_flags`: store server-side condiviso, audit append-only e CLI operatore redatta. `BL-008` implementa `observability-baseline-v1`; `BL-009` è integrato su `main` e fornisce `api-contract-v1`. `QA-001` aggiunge sul proprio branch la fondazione test non-browser `testing-foundation-v1`. `BL-080` resta bloccato e il freeze Vercel invariato. Non esiste staging, quindi `BL-079` resta backlog; nessuna operazione Vercel appartiene a `QA-001`.
+- **Implementato**: verificabile nel repository e nei test citati.
+- **Pianificato**: requisito normativo posseduto da un task non concluso.
 
-```text
-apps/
-  web/             Next.js App Router; OTel server + Sentry error-only lazy, build guard + `/health`
-  api/             Fastify composition root; config e osservabilità prima del bind
-  worker/          config e osservabilità prima dell'initializer; BullMQ pianificato
-packages/
-  config/          parser Zod, profili runtime e CLI redatta
-  contracts/       Zod strict, DTO/tipi, JSON Schema/OpenAPI generati v1
-  domain/          entità, comandi, porte e invarianti puri
-  rules/           Rules Engine deterministico
-  ai/              porte, prompt/context e adapter AI futuri
-  persistence/     manifest, runner, feature flag store e repository di dominio futuri
-  observability/   contratti safe, tracing OTel, logging Pino e Sentry error-only
-  testing/         primitive deterministiche e lifecycle container Node-only
+La legenda vale per ogni sezione: la presenza di un workspace o di un contratto di fondazione non implica che la relativa feature di gioco sia già disponibile.
+
+## Inventario implementato
+
+| Path | Package name | Responsabilità corrente |
+|---|---|---|
+| `apps/web` | `@dnd-ai/web` | Next.js App Router, instrumentation e health route reale; la shell di gioco è pianificata in `BL-079`. |
+| `apps/api` | `@dnd-ai/api` | Composition root Fastify, configurazione fail-fast e osservabilità; nessuna API di dominio è ancora esposta. |
+| `apps/worker` | `@dnd-ai/worker` | Composition root worker, configurazione fail-fast e osservabilità; non è ancora un consumer BullMQ. |
+| `packages/ai` | `@dnd-ai/ai` | Confine package per porte e adapter AI; oggi contiene soltanto la fondazione tipizzata. |
+| `packages/config` | `@dnd-ai/config` | Parser Zod server-only e profili runtime per API, worker e migration. |
+| `packages/contracts` | `@dnd-ai/contracts` | Schemi Zod strict e artefatti JSON Schema/OpenAPI versionati. |
+| `packages/domain` | `@dnd-ai/domain` | Confine puro per entità, comandi, porte e invarianti; il dominio di gioco arriva nei task proprietari. |
+| `packages/observability` | `@dnd-ai/observability` | Correlation context, tracing OTel, logging redatto e Sentry error-only. |
+| `packages/persistence` | `@dnd-ai/persistence` | Runner migration, manifest e feature flag store PostgreSQL. |
+| `packages/rules` | `@dnd-ai/rules` | Confine puro del Rules Engine; le regole di gioco arrivano nei task proprietari. |
+| `packages/testing` | `@dnd-ai/testing` | Primitive deterministiche e lifecycle Node per PostgreSQL/Redis di test. |
+
+## Dipendenze implementate
+
+Il grafo mostra soltanto dipendenze **workspace→workspace** dichiarate nei manifest correnti. I nodi senza archi sono leaf o fondazioni non ancora collegate; non rappresentano dipendenze future.
+
+```mermaid
+flowchart LR
+    WEB["apps/web"] --> OBS["@dnd-ai/observability"]
+    API["apps/api"] --> CFG["@dnd-ai/config"]
+    API --> OBS
+    WORKER["apps/worker"] --> CFG
+    WORKER --> OBS
+    CONTRACTS["@dnd-ai/contracts"]
+    DOMAIN["@dnd-ai/domain"]
+    RULES["@dnd-ai/rules"]
+    AI["@dnd-ai/ai"]
+    PERSISTENCE["@dnd-ai/persistence"]
+    TESTING["@dnd-ai/testing"]
 ```
 
-La struttura usa i nomi compatti definiti in `AGENTS.md`: `rules` corrisponde al `rules-engine` raccomandato dalla specifica; `ai` mantiene un solo confine finché `BL-021` non introduce una separazione concreta fra porta e adapter. `config` è un leaf server-only; il dominio non importa configurazione ambientale o SDK provider.
+App→app, package→app, import relativi fuori package e cicli workspace sono vietati. Il contratto è applicato da `scripts/lib/workspace-boundaries.mjs` e dal test `workspace-boundaries`.
 
-## Direzione delle dipendenze
+## Flusso target pianificato
 
-| Sorgente | Workspace importabili |
-|---|---|
-| `config` | nessuno |
-| `contracts` | nessuno |
-| `domain` | nessuno |
-| `rules` | `domain` |
-| `ai` | `contracts`, `domain` |
-| `persistence` | `contracts`, `domain` |
-| `observability` | nessuno |
-| `testing` | tutti i package, mai le app |
-| `web` | `contracts`, `observability` |
-| `api`, `worker` | `config`, `contracts`, `domain`, `rules`, `ai`, `persistence`, `observability` |
+Il flusso seguente è la topologia normativa della vertical slice, non lo stato del runtime corrente. L'outbox evita di trattare database e queue come una singola transazione distribuita; Redis migliora il coordinamento ma non sostituisce i vincoli PostgreSQL.
 
-App→app, package→app, import relativi che escono dal package e cicli workspace sono vietati. `scripts/check-boundaries.mjs` controlla sia le dipendenze dei manifest sia gli import/export TypeScript/JavaScript. Il test contract esegue anche una fixture in cui `domain` dipende da `persistence` e richiede exit code `1`.
-
-## Fondazione test non-browser
-
-`@dnd-ai/testing` mantiene il root portabile con test ID, RNG seedato, fake clock e fixture factory; il subpath `@dnd-ai/testing/node` espone i lifecycle Docker PostgreSQL/Redis. `scripts/run-tests.mjs` costruisce soltanto i workspace della corsia, valida i file sotto `tests/`, limita l’ambiente e avvia Node con isolamento per processo e timeout bounded.
-
-JUnit e LCOV vengono normalizzati sotto `test-results/testing-foundation-v1`; `artifacts/testing` contiene soltanto file allowlisted e un manifest con commit, owner task, conteggi, byte e SHA-256. La CI verifica il manifest prima dell’upload. Browser, accessibility e visual regression restano nel confine successivo `QA-002`; il contratto operativo è in [`TEST_STRATEGY.md`](../testing/TEST_STRATEGY.md).
-
-## Toolchain riproducibile
-
-| Elemento | Versione pin |
-|---|---|
-| Node.js | `24.11.0` per il workspace; engine minimo supportato `22.13.0` |
-| pnpm | `11.13.0` |
-| Turborepo | `2.10.4` |
-| TypeScript | `6.0.3` |
-| Next.js / React | `16.2.10` / `19.2.7` |
-| Fastify | `5.10.0` |
-| PostgreSQL / pgvector | `17` / `0.8.2` |
-| node-pg-migrate / pg | `8.0.4` / `8.22.0` |
-| OpenTelemetry API / SDK | `1.9.1` / `2.9.0` |
-| Pino / Sentry | `10.3.1` / `10.65.0` |
-| Zod / Ajv test-only | `4.4.3` / `8.20.0` |
-
-TypeScript 7 non è stato selezionato perché `typescript-eslint@8.63.0` dichiara compatibilità `<6.1.0`. ESLint resta sulla linea `9.39.2`, compatibile con i plugin transitivi di Next 16.
-
-La supply-chain policy pnpm permette install script soltanto a `sharp` (runtime immagini di Next) e `unrs-resolver` (resolver nativo usato dal lint); `@sentry/cli` è negato esplicitamente perché BL-008 non carica source map. Ogni nuovo script transitivo resta bloccato finché non viene revisionato e aggiunto esplicitamente ad [`allowBuilds`](https://pnpm.io/settings#allowbuilds). Con pnpm 11 le policy progetto vivono nel manifest workspace, non in `.npmrc`: peer auto-install e global virtual store sono disabilitati, engine/exact pin sono obbligatori e `verifyDepsBeforeRun: error` rifiuta dipendenze incoerenti senza install impliciti.
-
-## Configurazione runtime
-
-Il contratto `runtime-config-v1` distingue API, worker e migration. `APP_ENV` accetta `local`, `staging` e `production`; preview usa lo schema staging con risorse isolate. URL database/Redis sono service-scoped, i profili gestiti richiedono credenziale e trasporto cifrato e gli errori riportano soltanto i nomi delle chiavi invalide.
-
-L'API valida prima di costruire Fastify e aprire il listener. Il worker valida prima dell'inizializzatore iniettato. Il composition root migration valida il profilo prima di passare la sola URL a `@dnd-ai/persistence`; il package persistence non importa config e non legge l'ambiente. API e worker accettano una DSN Sentry service-scoped opzionale. Il web non importa `@dnd-ai/config`: risolve soltanto metadata ambientali e la DSN pubblica opzionale nel proprio composition root.
-
-Template e procedure sono in [`CONFIGURATION.md`](../operations/CONFIGURATION.md). Il web ha desired state `staging-foundation-v1`, health contract `web-health-v1` e progetto Vercel collegato al repository corretto con Root Directory `apps/web`, Next.js e `fra1`. Fork Protection, OIDC e Trusted Source sono configurati; zero variabili applicative. Production Branch Vercel=`release/production`, branch release e Ruleset restano invariati. La policy linked e il comando CLI con `--target=preview` hanno prodotto due record Production poi rimossi. PR #13/#14/#15/#16 hanno riportato il contratto a stato unlinked/fail-closed, aggiunto guard, payload bounded e freeze. Il client Vercel omette l'esplicito target Preview prima della POST, quindi non esiste oggi un percorso first-deployment Preview-only verificato. Git auto-deploy resta spento. `.vercelignore` e `scripts/check-vercel-deploy-dry-run.mjs` consentono soltanto un dry-run bounded dalla root. `source.manualDeployment.enabled=false` e `deploy:bootstrap:check` rendono fail-closed il percorso operativo approvato, ma non sono enforcement provider contro un owner. Lo staging non è disponibile.
-
-## Feature flag e kill switch
-
-`@dnd-ai/persistence` esporta un catalogo chiuso di kill switch: `campaign.start`, `turn.new` e `model.route.premium`. Ogni flag ha default sicuro `enabled=false`. `evaluateFeatureGate` restituisce disabled per chiavi sconosciute, store indisponibile o stato malformato; i consumer reali verranno collegati nei task proprietari ai boundary di side effect.
-
-Lo stato corrente vive in `app.feature_flags`; ogni cambio passa da CAS opzionale, idempotency key, digest del comando e audit in `app.feature_flag_events` nella stessa transazione. `scripts/manage-feature-flag.mjs` e i comandi root `flags:status`/`flags:set` sono l'unica superficie operativa della slice: nessun endpoint admin pubblico, nessun flag client e nessun deploy.
-
-## Contratti runtime e artefatti generati
-
-`@dnd-ai/contracts` è un leaf package browser-safe. Gli schemi Zod strict sono la fonte di request, response, error envelope, lifecycle SSE, `GameEvent`, `DungeonMasterTurnResult` e tool envelope parametrizzati da allowlist; i tipi TypeScript vengono inferiti e nessun DTO può applicare stato canonico.
-
-Il catalogo `api-contract-v1` (`1.0.0`, `schemaVersion: 1`) genera sei JSON Schema Draft 2020-12, manifest e OpenAPI 3.1.1 sotto `packages/contracts/generated/v1`. OpenAPI contiene soltanto componenti e `paths: {}` perché gli handler non sono ancora implementati. `contracts:check` confronta in sola lettura il catalogo con gli otto file versionati, congela i major già pubblicati rispetto alla base Git protetta e fallisce su missing, stale, unexpected, incompatibilità o symlink/junction nella catena. In CI usa `HEAD^1` senza fetch; il writer è soltanto `contracts:generate`. Decisione e uso sono documentati in [`ADR-0008`](../adr/0008-zod-first-contract-generation.md) e [`docs/api/README.md`](../api/README.md).
-
-## Osservabilità implementata
-
-`@dnd-ai/observability` separa il kernel platform-neutral dal subpath `/node`. Il runtime Node usa `AsyncLocalStorage`, propagazione W3C senza baggage, provider OTel esplicito e request ID UUID v4 server-owned. API e worker inizializzano il runtime dopo la config valida e prima degli effetti; Fastify e il wrapper job estraggono/iniettano il carrier e terminano le operazioni una sola volta.
-
-Pino serializza soltanto eventi e metadata allowlisted. Sanitizzazione e filtro Sentry eliminano PII, credenziali, header/body raw, prompt, narrazione e output AI. Sentry usa sampling trace zero e non abilita Replay, profiling, log forwarding, tunnel o source-map upload. Il web importa gli adapter in modo lazy soltanto con DSN valida; l'assenza o malformazione della DSN pubblica disabilita l'adapter senza rompere la UI, mentre DSN server API/worker malformate falliscono lo startup in modo redatto.
-
-Exporter, transport e destination sono best-effort e non modificano risultato HTTP/job; init, end e shutdown sono idempotenti e bounded. La trace fake web→API→queue→worker e due flussi concorrenti sono verificati in-memory, senza rete o risorse provider. La decisione è in [`ADR-0007`](../adr/0007-observability-context-and-error-reporting.md).
-
-## Comandi disponibili in BL-001/BL-002/BL-003/BL-004/BL-008/BL-009/BL-010/BL-080
-
-```bash
-corepack pnpm@11.13.0 install --frozen-lockfile
-corepack pnpm@11.13.0 lint
-corepack pnpm@11.13.0 typecheck
-corepack pnpm@11.13.0 build
-corepack pnpm@11.13.0 test:contract
-corepack pnpm@11.13.0 test:security
-corepack pnpm@11.13.0 contracts:generate
-corepack pnpm@11.13.0 contracts:check
-corepack pnpm@11.13.0 config:check
-corepack pnpm@11.13.0 scan:sast
-corepack pnpm@11.13.0 boundaries:check
-corepack pnpm@11.13.0 tasks:check
-corepack pnpm@11.13.0 db:local:up
-corepack pnpm@11.13.0 db:migrate:status:local
-corepack pnpm@11.13.0 db:migrate:local
-corepack pnpm@11.13.0 db:rollback:local
-corepack pnpm@11.13.0 db:local:down
-corepack pnpm@11.13.0 db:migrate:test
-corepack pnpm@11.13.0 flags:status -- turn.new
-corepack pnpm@11.13.0 flags:set -- turn.new --enable --actor operator:alice --reason maintenance --idempotency-key idem-feature-cli-0001 --correlation-id corr-feature-cli-0001 --expected-version 0
-corepack pnpm@11.13.0 deploy:check
-corepack pnpm@11.13.0 verify
+```mermaid
+flowchart LR
+    WEB["Next.js web"] -->|"REST"| API["Fastify API"]
+    API -->|"SSE delivery"| WEB
+    API -->|"transaction + outbox"| PG[("PostgreSQL + pgvector")]
+    PG -->|"outbox pending"| DISPATCHER["Outbox dispatcher"]
+    DISPATCHER -->|"jobId=turnId"| Q["BullMQ"]
+    Q --> WORKER["Worker"]
+    WORKER -->|"eventi + proiezioni"| PG
+    API -.->|"lock/cache/rate limit"| REDIS[("Redis non autorevole")]
+    WORKER -.-> REDIS
 ```
 
-`verify` copre format, lint, typecheck, build, generated contract drift, unit, integration, database migration, contract, security, package/task/CI/deployment policy e artifact verification. I comandi preparano autonomamente i dist richiesti da un checkout pulito; la suite database usa PostgreSQL reale pin a digest, porta loopback effimera, `tmpfs`, polling bounded e cleanup fail-closed. Il dry-run provider non appartiene a `verify`: usa la sequenza PowerShell fail-closed documentata in [`PREVIEW_STAGING.md`](../operations/PREVIEW_STAGING.md#deploy-e-smoke--gate-chiuso). `deploy:bootstrap:check` deve fallire con exit `1` nello stato vigente. Browser/E2E, eval, bot, load e harness condiviso restano responsabilità dei task proprietari; nessun comando futuro è simulato da un no-op.
+Il contratto completo e le condizioni di revisione sono in [`ADR-0009`](../adr/0009-mvp-runtime-data-and-workflow-architecture.md).
 
-## CI e supply chain
+## Capability non ancora disponibili
 
-`.github/workflows/ci.yml` separa quality, test, security e build. Quality usa checkout depth 2 ed esegue `pnpm contracts:check` in sola lettura con base `HEAD^1`; il job Tests esegue `pnpm db:migrate:test` su container effimero senza secret CI. `CI / Merge gate` usa `always()` e considera valido soltanto `success` per ogni job richiesto, così failure, cancellation e skip non vengono mascherati. Il workflow usa `pull_request`, push `main`, merge queue e dispatch manuale; `pull_request_target` è vietato dalla policy automatica.
+- **BullMQ:** Pianificato
+- **Redis locale:** Pianificato
+- **API di dominio:** Pianificata
+- **Staging:** non disponibile
 
-Nel workflow CI base le action esterne sono pin a SHA completo, checkout non persiste credenziali e i permessi globali sono read-only. La cache gestita da `setup-node` contiene soltanto lo store pnpm indicizzato dal lockfile. Security esegue SAST locale fail-on-warning, test/secret scan e dependency audit; non riceve secret applicativi.
+I task proprietari sono rispettivamente `BL-030`, `BL-029`, `BL-028`/`BL-038` e `BL-080`. Lo stato bloccato di `BL-080` non autorizza deploy, release, Production o modifiche all'account Vercel.
 
-Il workflow deployment smoke è separato e accetta soltanto payload Preview coerenti. Sul dispatch del primo deployment Production il job è risultato `skipped`, quindi nessun token o fetch è stato eseguito; il secondo record Production non ha generato un nuovo smoke. Il dry-run bounded è passato, ma `@vercel/client` elimina `--target=preview` dal body e il provider ha restituito Production nello stato iniziale senza deployment: nessun altro deploy reale o redeploy è autorizzato finché Vercel non offre un fix/workaround supportato e il percorso non viene riaperto con PR separata. Non usare `--cwd apps/web`, `--prebuilt`, archivi, `--prod`, `promote`, `--skip-domain`, custom target o override manuali `VERCEL*`. Il percorso Preview resta non verificato; API e worker non partecipano finché non hanno packaging operativo.
+## Fondazioni implementate
 
-Il build produce `artifacts/bl002`: `scripts/lib/build-artifact.mjs` copia soltanto output esplicitamente ammessi, incluso `packages/config/dist`, rifiuta link esterni/path sensibili e file ambientali, scansiona i file e registra byte+SHA-256 in `build-artifact-v1`. L’upload usa soltanto questo staging validato.
+| Area | Stato verificabile | Documento proprietario |
+|---|---|---|
+| Configurazione | `runtime-config-v1`, profili service-scoped, errori redatti e startup fail-fast | [`CONFIGURATION.md`](../operations/CONFIGURATION.md), [`ADR-0004`](../adr/0004-runtime-configuration-and-secret-injection.md) |
+| Migrazioni | PostgreSQL 17 + pgvector, ledger applicativo, head `000002_feature_flags` | [`DATABASE_MIGRATIONS.md`](../operations/DATABASE_MIGRATIONS.md), [`ADR-0006`](../adr/0006-postgresql-migration-foundation.md) |
+| Feature flag | Catalogo kill switch server-side, default safe e audit append-only | [`BL-010 design`](../superpowers/specs/2026-07-15-bl-010-feature-flags-design.md) |
+| Contratti | Zod-first `api-contract-v1`, JSON Schema/OpenAPI generati e drift check | [`docs/api/README.md`](../api/README.md), [`ADR-0008`](../adr/0008-zod-first-contract-generation.md) |
+| Osservabilità | Correlation context, tracing in-memory, Pino redatto e Sentry error-only | [`BL-008 design`](../superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md), [`ADR-0007`](../adr/0007-observability-context-and-error-reporting.md) |
+| Testing | Runner Node, fixture deterministiche, lifecycle PostgreSQL/Redis e artifact verificati | [`TEST_STRATEGY.md`](../testing/TEST_STRATEGY.md) |
+| CI e supply chain | Quality, test, security, build/artifact e `CI / Merge gate` fail-closed | [`CI_CD.md`](../operations/CI_CD.md), [`ADR-0003`](../adr/0003-ci-trust-boundary-and-artifacts.md) |
+| Frontend | Pagina Next.js minima e `/health`; nessuna shell di gioco ancora implementata | [`UX_UI_DESIGN.md`](../product/UX_UI_DESIGN.md), [`ADR-0001`](../adr/0001-mobile-first-conversational-ui.md) |
 
-## Frontend e design
+## Confini operativi correnti
 
-`apps/web` contiene una pagina Server Component minima soltanto per validare il build Next.js. Non è la shell di gioco e non anticipa componenti ad hoc. `BL-079` resta in backlog dietro `BL-080` e installerà shadcn/ui, AI Elements selettivi, Motion e il sistema visuale descritto in `docs/product/UX_UI_DESIGN.md`; la fondazione database `BL-004` è indipendente dallo staging e si chiude senza anticipare UI.
+- Il web è l'unico runtime con una health route applicativa reale: `GET /health`.
+- API e worker provano il bootstrap e la configurazione, ma non offrono ancora un percorso di gioco end-to-end.
+- Le migration e i test database usano PostgreSQL locale/effimero; Redis è disponibile soltanto nel test harness di `QA-001`, non come servizio locale dell'applicazione.
+- Lo staging non esiste. Le procedure Vercel rimangono fail-closed nel runbook [`PREVIEW_STAGING.md`](../operations/PREVIEW_STAGING.md); `BL-080` resta bloccato e fuori dallo scope di `DOC-ARCH-001`.

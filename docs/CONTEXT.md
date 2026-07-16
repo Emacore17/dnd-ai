@@ -2,16 +2,18 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
   - docs/adr/0007-observability-context-and-error-reporting.md
   - docs/adr/0008-zod-first-contract-generation.md
+  - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
   - docs/superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md
   - docs/superpowers/specs/2026-07-15-bl-009-contract-generation-design.md
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
+  - docs/superpowers/specs/2026-07-16-doc-arch-001-design.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -27,6 +29,7 @@ related_tasks:
   - BL-080
   - QA-001
   - QA-002
+  - DOC-ARCH-001
 code_refs:
   - apps
   - packages
@@ -151,6 +154,7 @@ test_refs:
   - tests/unit/contract-artifact-policy.test.mjs
   - tests/contracts/contracts-compatibility.test.mjs
   - tests/unit/owned-path-policy.test.mjs
+  - tests/contracts/architecture-documentation.test.mjs
 supersedes: null
 ---
 
@@ -162,18 +166,19 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-16 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `GOV-002` è integrato su `main` tramite [PR #23](https://github.com/Emacore17/dnd-ai/pull/23), merge `a698592b0a610735297a1026c80eae5e5114355c`; CI PR `29432939311` e post-merge `29433127921` hanno concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `QA-001` è integrato su `main` tramite [PR #24](https://github.com/Emacore17/dnd-ai/pull/24), merge `3e9c6d5b088825066fedab4163c8482d391ab543`, con `CI / Merge gate` verde. `DOC-ARCH-001` è una proposta branch-local terminale sulla branch `codex/doc-arch-001`, functional head `30f611e8e874b9c87d20d50c4c5f45528e1083a5`, con delivery `PENDING`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `QA-001 — DONE/100%/PASSING` proposto sul branch `codex/qa-001-test-foundation`; delivery `PENDING` finché il candidato non raggiunge `main` tramite PR protetta |
-| Ultimo task completato | `GOV-002 — DONE/100%/PASSING`, delivery verificata su `main` tramite PR #23 e CI post-merge `29433127921` 5/5 `SUCCESS` |
-| Prossimo task READY | `DOC-ARCH-001`; `QA-002` resta `BACKLOG` finché `QA-001` e `BL-079` non sono `DONE` |
+| Task attivo | `DOC-ARCH-001 — DONE/100%/PASSING` proposto sul branch `codex/doc-arch-001`; delivery `PENDING` fino a integrazione protetta |
+| Ultimo task completato | `QA-001 — DONE/100%/PASSING`, delivery verificata su `main` tramite PR #24 |
+| Prossimo task READY | Nessuno; `BL-079` resta `BACKLOG` mentre `BL-080` è bloccato, quindi anche `QA-002` resta `BACKLOG` |
+| Migration head | `000002_feature_flags` / `database-feature-flags-v1` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `BL-008`, `BL-009` e `BL-010` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`; `BL-010` fornisce `database-feature-flags-v1` con migration `000002_feature_flags`; `GOV-002` compone generated drift, metadata/link/anchor/section refs, registro ADR, Mermaid bounded e task graph in `docs:check`. Sul branch attivo `QA-001` implementa `testing-foundation-v1`: primitive deterministiche, runner Node isolato, container PostgreSQL/Redis, coverage e artifact verificato; `QA-002` possiede il consolidamento browser dopo `BL-079`. I consumer API/worker reali restano fuori scope finché i task proprietari non implementano start campaign, turn enqueue e model route. Non sono stati creati account, exporter remoti, risorse provider o deploy. `BL-079` resta `BACKLOG` fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `BL-008`, `BL-009`, `BL-010` e `QA-001` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`; `BL-010` fornisce `database-feature-flags-v1` con migration `000002_feature_flags`; `QA-001` fornisce `testing-foundation-v1`; `GOV-002` compone generated drift, metadata/link/anchor/section refs, registro ADR, Mermaid bounded e task graph in `docs:check`. La proposta branch-local `DOC-ARCH-001` aggiunge ADR-0009, overview stratificata, modello dati fisico/conceptual e guida locale con contract anti-drift, verificati anche da checkout pulito. Redis locale applicativo, BullMQ, route API di dominio, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy. `BL-079` resta `BACKLOG` finché `BL-080` è bloccato.
 
 ## Decisioni operative vigenti
 
@@ -188,9 +193,10 @@ supersedes: null
 - OpenTelemetry è l'unica autorità trace; Pino usa un vocabolario allowlisted e Sentry resta error-only opzionale/off-by-default, con export browser/Node separati e failure containment secondo ADR-0007.
 - Fondazione database secondo ADR-0006: migration forward-only negli ambienti gestiti, `down` soltanto local/disposable con conferma, manifest/checksum immutabili, transazione singola e advisory lock fail-fast.
 - Contratti Zod-first secondo ADR-0008: JSON Schema 2020-12 e OpenAPI 3.1.1 vengono generati dallo stesso catalogo; OpenAPI resta components-only finché i task proprietari non implementano le route e la CI rifiuta drift o modifiche a major già pubblicati rispetto alla base protetta.
-- Preview/staging web in preparazione su Vercel Hobby con Root Directory `apps/web`, compute `fra1`, Git Integration nativa, Production Branch riservata e Trusted Source exact-match. Il grant condiviso `41079282` non viene ristretto per decisione PO ed è un rischio residuo accettato. Vercel CLI `55.0.0` elimina il target Preview dal body e il provider ha restituito Production; l'applicazione della regola first-deployment, coerente con `vercel/vercel#17069`, resta un'ipotesi non confermata. Finché non esiste un fix/workaround supportato, Git auto-deploy e creazione manuale approvata restano disabilitati. Sono ammessi solo dry-run/readback/contenimento; `--archive`, `--prebuilt`, `--prod`, `promote`, `redeploy`, `--cwd apps/web` e override dei metadata sono vietati. ADR-0005 resta proposed.
+- Architettura runtime/data/workflow secondo ADR-0009: processi separabili dello stesso modular monolith, Fastify, REST+SSE, PostgreSQL autorevole, Redis non autorevole, eventi+proiezioni atomici e BullMQ/outbox come target. L'ADR espone lo stato di adozione e non trasforma capability pianificate in runtime disponibile.
+- Preview/staging web non disponibile su Vercel Hobby. Root Directory, regione, Production Branch riservata e Trusted Source sono configurate, ma il grant condiviso `41079282` non viene ristretto per decisione PO ed è un rischio residuo accettato. Vercel CLI `55.0.0` elimina il target Preview dal body e il provider ha restituito Production; l'applicazione della regola first-deployment, coerente con `vercel/vercel#17069`, resta un'ipotesi non confermata. Finché non esiste un fix/workaround supportato, Git auto-deploy e creazione manuale approvata restano disabilitati. Sono ammessi solo dry-run/readback/contenimento; `--archive`, `--prebuilt`, `--prod`, `promote`, `redeploy`, `--cwd apps/web` e override dei metadata sono vietati. ADR-0005 resta proposed.
 
-Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md), [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md), [`ADR-0004`](adr/0004-runtime-configuration-and-secret-injection.md), [`ADR-0006`](adr/0006-postgresql-migration-foundation.md), [`ADR-0007`](adr/0007-observability-context-and-error-reporting.md) e [`ADR-0008`](adr/0008-zod-first-contract-generation.md). ADR-0005 è [`proposed`](adr/0005-vercel-web-preview-and-staging.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Configurazione operativa: [`CONFIGURATION.md`](operations/CONFIGURATION.md), [`DATABASE_MIGRATIONS.md`](operations/DATABASE_MIGRATIONS.md), [`PREVIEW_STAGING.md`](operations/PREVIEW_STAGING.md) e [`api/README.md`](api/README.md). Architettura implementata: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md).
+Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md), [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md), [`ADR-0004`](adr/0004-runtime-configuration-and-secret-injection.md), [`ADR-0006`](adr/0006-postgresql-migration-foundation.md), [`ADR-0007`](adr/0007-observability-context-and-error-reporting.md), [`ADR-0008`](adr/0008-zod-first-contract-generation.md) e [`ADR-0009`](adr/0009-mvp-runtime-data-and-workflow-architecture.md). ADR-0005 è [`proposed`](adr/0005-vercel-web-preview-and-staging.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Configurazione operativa: [`CONFIGURATION.md`](operations/CONFIGURATION.md), [`DATABASE_MIGRATIONS.md`](operations/DATABASE_MIGRATIONS.md), [`LOCAL_DEVELOPMENT.md`](operations/LOCAL_DEVELOPMENT.md), [`PREVIEW_STAGING.md`](operations/PREVIEW_STAGING.md) e [`api/README.md`](api/README.md). Stato architetturale e dati: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) e [`DATA_MODEL.md`](data/DATA_MODEL.md).
 
 ## Versioni e head
 
@@ -201,7 +207,7 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Rules version | `N/A` | package rules presente come scaffold; cataloghi/formule non implementati |
 | Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
 | Eval suite version | `N/A` | harness non creato |
-| Test foundation contract | `testing-foundation-v1` | candidato `7f2d4d0` verificato sul working tree e da checkout pulito: runner isolato, primitive deterministiche, container PostgreSQL/Redis, JUnit/LCOV e manifest |
+| Test foundation contract | `testing-foundation-v1` | integrato su `main` tramite PR #24: runner isolato, primitive deterministiche, container PostgreSQL/Redis, JUnit/LCOV e manifest |
 | Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
 | Observability contract | `observability-baseline-v1` | implementato e integrato tramite PR #20; run post-merge `29415397361` 5/5 `SUCCESS`; provider remoti assenti |
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
@@ -293,12 +299,11 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | CTX-R14 | L'installazione condivisa `41079282` vede 8 repository e non può essere ristretta senza togliere accesso ad altri progetti; un owner può bypassare l'interlock procedurale e invocare direttamente CLI/UI | Controlli project-level, Git disabilitato, `manualDeployment.enabled=false`, runbook fail-closed e divieto esplicito di deploy reale; l'interlock non viene presentato come enforcement provider |
 | CTX-R16 | Il client Vercel omette il target Preview e il provider ha restituito due record Production; la causa server resta non confermata | Entrambi rimossi; freeze PR #16 integrato; riapertura solo con fix/workaround provider supportato, containment testato e PR separata |
 | CTX-R17 | Il CLI dalla root può includere cache/output ignorati da Git e superare limiti o ampliare il payload | `.vercelignore` root-only e dry-run JSON fail-closed con budget/path/input obbligatori; contratto integrato in PR #15 e dry-run corrente PASS |
-| CTX-R18 | La suite migration richiede Docker e il primo upgrade da una versione applicata non è rappresentabile finché esiste soltanto `000001` | Harness bounded con cleanup fail-closed; zero→head/replay/rollback coperti ora, previous→head obbligatorio all'introduzione di `000002` |
 | CTX-R20 | La nuova baseline può causare context bleed, leakage di PII/secret, doppia autorità trace o dipendenze Node nel bundle client | `BL-008` applica OTel come unica autorità trace, redazione allowlisted, Sentry error-only, test concorrenti/security e contract test del bundle prima della delivery |
 
 ## Prossima azione
 
-Pubblicare la sola branch `codex/qa-001-test-foundation`, aprire una PR verso `main` e attendere `CI / Merge gate` senza bypass né azioni Vercel. Dopo l’integrazione protetta, `DOC-ARCH-001` è il successivo task `READY`; `QA-002` resta bloccato da `BL-079`.
+Completare la self-review P0/P1 e integrare `DOC-ARCH-001` tramite un'unica PR con `CI / Merge gate`, senza bypass e senza azioni Vercel. Dopo il task non esiste un altro P0 `READY`: `BL-079` resta dipendente da `BL-080`, `BL-080` è congelato/bloccato sul provider e `BL-005` dipende da `BL-079`. Un riordino richiede una decisione separata del Product Owner e un aggiornamento coordinato del backlog.
 
 ## Rischi chiusi
 
@@ -312,3 +317,5 @@ Pubblicare la sola branch `codex/qa-001-test-foundation`, aprire una PR verso `m
 | CTX-R15 | Production Branch Vercel separata da `main` prima dell'attivazione | CLI Vercel `55.0.0`: `Production → release/production`; lista deployment vuota; branch GitHub protetta da Ruleset `18926413` |
 | CTX-R19 | Duplicazione del ciclo agente contenuta con corsie, budget, candidato unico, delivery derivata e gate fail-closed | Audit 60,7% docs-only; candidate `GOV-003` in 43 minuti; `verify:docs` 2,65 s, `verify:affected` 6,96 s, full gate unico 72,70 s; review senza P0/P1 |
 | CTX-R02 | Drift documentale residuo coperto senza duplicare i checker canonici | `docs:check` compone 8 artifact contrattuali, document integrity e task graph; 11 test policy/document integrity e 9 workflow/generated verdi; budget 3,136 s / 3,130 s |
+| CTX-R18 | Upgrade database precedente→head ora rappresentato da `000001`→`000002` | `BL-010`: suite PostgreSQL reale copre zero→head, previous→head, replay, rollback e re-apply; migration head `000002_feature_flags` |
+| CTX-R21 | Cold start documentale e pin del package manager verificati da checkout pulito | Functional head `30f611e`: install frozen, config, migration head, build 11/11, integration 20/20 e `web-health-v1` reali `PASS`; full HIGH_RISK senza cache exit `0` in 143,4 s; worktree e Compose rimossi |
