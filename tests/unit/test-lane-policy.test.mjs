@@ -60,17 +60,23 @@ test("QA-001:child-environment-drops-application-values-and-secrets", () => {
     APP_SECRET: "must-not-pass",
     CI: "true",
     DATABASE_URL: "postgresql://user:password@example.invalid/database",
+    LOCALAPPDATA: "C:\\safe-local-app-data",
     NODE_OPTIONS: "--inspect",
     PATH: "safe-path",
+    PNPM_HOME: "C:\\safe-pnpm-home",
     REDIS_URL: "redis://user:password@example.invalid/0",
     TURBO_FORCE: "true",
   };
 
   assert.deepEqual(createChildEnvironment(source), {
     CI: "true",
+    LOCALAPPDATA: "C:\\safe-local-app-data",
     PATH: "safe-path",
+    PNPM_HOME: "C:\\safe-pnpm-home",
     TURBO_FORCE: "true",
   });
+  assert.ok(CHILD_ENV_ALLOWLIST.includes("PNPM_HOME"));
+  assert.ok(CHILD_ENV_ALLOWLIST.includes("LOCALAPPDATA"));
   assert.ok(CHILD_ENV_ALLOWLIST.includes("TURBO_FORCE"));
   assert.equal(Object.isFrozen(CHILD_ENV_ALLOWLIST), true);
 });

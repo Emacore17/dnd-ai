@@ -28,7 +28,10 @@ export function createSeededRng(seed: number): SeededRng {
     return state / UINT32_RANGE;
   }
 
-  function integer({ min, max }: Readonly<{ min: number; max: number }>): number {
+  function integer({
+    min,
+    max,
+  }: Readonly<{ min: number; max: number }>): number {
     const span = max - min + 1;
 
     if (

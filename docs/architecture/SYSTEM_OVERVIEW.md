@@ -1,14 +1,15 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-15
-last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
+last_reviewed: 2026-07-16
+last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#29-infrastruttura-e-deployment
   - AGENTS.md#9-confini-architetturali-e-struttura-target
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
+  - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
 related_tasks:
   - BL-001
   - BL-002
@@ -20,6 +21,8 @@ related_tasks:
   - BL-079
   - BL-080
   - DOC-ARCH-001
+  - QA-001
+  - QA-002
 code_refs:
   - .vercelignore
   - apps/web
@@ -49,6 +52,9 @@ code_refs:
   - scripts/run-database-migrations.mjs
   - scripts/manage-feature-flag.mjs
   - packages
+  - packages/testing/src
+  - scripts/run-tests.mjs
+  - scripts/lib/test-report-policy.mjs
   - scripts/lib/workspace-boundaries.mjs
   - .github/workflows/ci.yml
   - scripts/lib/ci-workflow-policy.mjs
@@ -98,6 +104,9 @@ test_refs:
   - tests/unit/contract-artifact-policy.test.mjs
   - tests/contracts/contracts-compatibility.test.mjs
   - tests/unit/owned-path-policy.test.mjs
+  - tests/unit/testing-primitives.test.mjs
+  - tests/integration/testing-containers.test.mjs
+  - tests/security/test-report-security.test.mjs
 supersedes: null
 ---
 
@@ -105,7 +114,7 @@ supersedes: null
 
 ## Stato implementato
 
-`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` completa la fondazione PostgreSQL/pgvector, estesa da `BL-010` con `000002_feature_flags`: store server-side condiviso, audit append-only e CLI operatore redatta. `BL-008` implementa `observability-baseline-v1`; `BL-009` e integrato su `main` e fornisce `api-contract-v1`. `BL-080` resta bloccato e il freeze Vercel invariato. Non esiste staging, quindi `BL-079` resta backlog; nessuna operazione Vercel appartiene a `BL-010`.
+`BL-001` introduce un monorepo TypeScript buildabile, `BL-002` la pipeline fail-closed e `BL-003` configurazione runtime server-only con startup fail-fast. `BL-004` completa la fondazione PostgreSQL/pgvector, estesa da `BL-010` con `000002_feature_flags`: store server-side condiviso, audit append-only e CLI operatore redatta. `BL-008` implementa `observability-baseline-v1`; `BL-009` è integrato su `main` e fornisce `api-contract-v1`. `QA-001` aggiunge sul proprio branch la fondazione test non-browser `testing-foundation-v1`. `BL-080` resta bloccato e il freeze Vercel invariato. Non esiste staging, quindi `BL-079` resta backlog; nessuna operazione Vercel appartiene a `QA-001`.
 
 ```text
 apps/
@@ -120,7 +129,7 @@ packages/
   ai/              porte, prompt/context e adapter AI futuri
   persistence/     manifest, runner, feature flag store e repository di dominio futuri
   observability/   contratti safe, tracing OTel, logging Pino e Sentry error-only
-  testing/         fixture/fake condivisi senza logica di produzione
+  testing/         primitive deterministiche e lifecycle container Node-only
 ```
 
 La struttura usa i nomi compatti definiti in `AGENTS.md`: `rules` corrisponde al `rules-engine` raccomandato dalla specifica; `ai` mantiene un solo confine finché `BL-021` non introduce una separazione concreta fra porta e adapter. `config` è un leaf server-only; il dominio non importa configurazione ambientale o SDK provider.
@@ -141,6 +150,12 @@ La struttura usa i nomi compatti definiti in `AGENTS.md`: `rules` corrisponde al
 | `api`, `worker` | `config`, `contracts`, `domain`, `rules`, `ai`, `persistence`, `observability` |
 
 App→app, package→app, import relativi che escono dal package e cicli workspace sono vietati. `scripts/check-boundaries.mjs` controlla sia le dipendenze dei manifest sia gli import/export TypeScript/JavaScript. Il test contract esegue anche una fixture in cui `domain` dipende da `persistence` e richiede exit code `1`.
+
+## Fondazione test non-browser
+
+`@dnd-ai/testing` mantiene il root portabile con test ID, RNG seedato, fake clock e fixture factory; il subpath `@dnd-ai/testing/node` espone i lifecycle Docker PostgreSQL/Redis. `scripts/run-tests.mjs` costruisce soltanto i workspace della corsia, valida i file sotto `tests/`, limita l’ambiente e avvia Node con isolamento per processo e timeout bounded.
+
+JUnit e LCOV vengono normalizzati sotto `test-results/testing-foundation-v1`; `artifacts/testing` contiene soltanto file allowlisted e un manifest con commit, owner task, conteggi, byte e SHA-256. La CI verifica il manifest prima dell’upload. Browser, accessibility e visual regression restano nel confine successivo `QA-002`; il contratto operativo è in [`TEST_STRATEGY.md`](../testing/TEST_STRATEGY.md).
 
 ## Toolchain riproducibile
 

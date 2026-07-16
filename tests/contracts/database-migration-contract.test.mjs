@@ -8,6 +8,7 @@ import { fileURLToPath, URL } from "node:url";
 import { parse } from "yaml";
 
 import { POSTGRES_TEST_IMAGE } from "../../scripts/lib/postgres-test-container.mjs";
+import { resolveTestLane } from "../../scripts/lib/test-lane-policy.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const expectedPostgresImage =
@@ -34,14 +35,14 @@ test("database migration commands use the versioned composition root", async () 
     scripts["db:rollback:local"],
     /node --env-file=packages\/persistence\/\.env\.local scripts\/run-database-migrations\.mjs down --confirm-local-rollback$/u,
   );
-  assert.match(
+  assert.equal(
     scripts["db:migrate:test"],
-    /node --test --test-concurrency=1 tests\/database\/\*\.test\.mjs$/u,
+    "node scripts/run-tests.mjs database",
   );
-  assert.match(
-    scripts.verify,
-    /node --test --test-concurrency=1 tests\/database\/\*\.test\.mjs/u,
-  );
+  const databaseLane = resolveTestLane("database");
+  assert.equal(databaseLane.concurrency, 1);
+  assert.ok(databaseLane.buildFilters.includes("@dnd-ai/persistence"));
+  assert.match(scripts.verify, /node scripts\/run-tests\.mjs all/u);
 
   const [
     compositionRoot,

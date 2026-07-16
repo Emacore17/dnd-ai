@@ -388,7 +388,7 @@ supersedes: null
 
   Expected: `PASS`; due prepare consecutivi sullo stesso commit producono gli stessi hash file nel manifest.
 
-- [ ] **Step 6: commit funzionale**
+- [x] **Step 6: commit funzionale**
 
   ```bash
   git add scripts/lib/test-report-policy.mjs scripts/prepare-test-reports.mjs scripts/verify-test-reports.mjs scripts/run-tests.mjs tests/unit/test-report-policy.test.mjs tests/security/test-report-security.test.mjs tests/fixtures/testing
@@ -417,7 +417,7 @@ supersedes: null
 - Produces: job Tests che valida e carica `artifacts/testing` con retention `7`, `if-no-files-found: error` e action già pin a SHA.
 - Produces: `docs/testing/TEST_STRATEGY.md` come contratto operativo di `testing-foundation-v1` e ownership separata `QA-002` per browser/a11y/visual.
 
-- [ ] **Step 1: scrivere il contract test CI RED**
+- [x] **Step 1: scrivere il contract test CI RED**
 
   Estendere `validateCiDocuments` e il test per richiedere dopo le quattro suite della job Tests:
 
@@ -439,13 +439,13 @@ supersedes: null
 
   Il negative test deve rifiutare path più ampio, retention >7, report verification assente e `continue-on-error`.
 
-- [ ] **Step 2: eseguire il test RED CI**
+- [x] **Step 2: eseguire il test RED CI**
 
   Run: `node --test tests/contracts/ci-workflow.test.mjs`
 
   Expected: `FAIL` con comandi/report artifact mancanti.
 
-- [ ] **Step 3: collegare package scripts, workflow e policy**
+- [x] **Step 3: collegare package scripts, workflow e policy**
 
   Sostituire le invocazioni Node duplicate nei cinque script pubblici con `node scripts/run-tests.mjs <lane>`. `test:security` mantiene `node scripts/scan-secrets.mjs` dopo la corsia. `verify` usa `node scripts/run-tests.mjs all`, prepara/verifica il report e conserva tutti gli altri gate correnti.
 
@@ -453,11 +453,11 @@ supersedes: null
 
   Expected: `PASS`; il merge gate e i nomi job restano invariati.
 
-- [ ] **Step 4: scrivere TEST_STRATEGY e allineare living docs**
+- [x] **Step 4: scrivere TEST_STRATEGY e allineare living docs**
 
   Documentare comandi, lane catalog, environment allowlist, fixture/test ID, container lifecycle, output/report schema, coverage, failure behavior, troubleshooting Docker e separazione QA-001/QA-002. Aggiornare QA-001 a `IN_REVIEW/90%/PASSING` soltanto dopo i mirati; `DONE/100%/PASSING` soltanto dopo il gate finale.
 
-- [ ] **Step 5: eseguire tutti i test mirati del task**
+- [x] **Step 5: eseguire tutti i test mirati del task**
 
   Run:
 
@@ -475,19 +475,19 @@ supersedes: null
 
   Expected: tutti exit `0`; PostgreSQL e Redis smoke reali, report policy, workflow policy, migration regressions, docs e audit `PASS`.
 
-- [ ] **Step 6: eseguire il solo full gate HIGH_RISK sul candidato**
+- [x] **Step 6: eseguire il solo full gate HIGH_RISK sul candidato**
 
   Run: `TURBO_FORCE=true corepack pnpm@11.13.0 verify`
 
   Expected: exit `0`; nessun retry, skip nuovo o test indebolito.
 
-- [ ] **Step 7: clean-checkout verification**
+- [x] **Step 7: clean-checkout verification**
 
   Creare un worktree temporaneo sibling dal candidate HEAD, eseguire `corepack pnpm@11.13.0 install --frozen-lockfile`, `TURBO_FORCE=true corepack pnpm@11.13.0 verify`, poi rimuovere soltanto quel worktree dopo averne verificato il path assoluto.
 
   Expected: install e full gate exit `0`; report/artifact restano confinati e non modificano file tracked.
 
-- [ ] **Step 8: review finale, stato e commit candidato**
+- [x] **Step 8: review finale, stato e commit candidato**
 
   Rileggere diff, report e secret scan; correggere soltanto finding P0/P1 reali. Aggiornare task, contesto e tracciabilità con comandi/exit code effettivi e stato branch-local proposto `DONE/100%/PASSING`.
 

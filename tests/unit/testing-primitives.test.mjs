@@ -35,11 +35,8 @@ test("QA-001:seeded-rng-has-a-stable-golden-sequence", () => {
   const first = createSeededRng(0x12345678);
   const second = createSeededRng(0x12345678);
   const expected = [
-    0.529668488772586,
-    0.08342198352329433,
-    0.28175287041813135,
-    0.5066478606313467,
-    0.43838545866310596,
+    0.529668488772586, 0.08342198352329433, 0.28175287041813135,
+    0.5066478606313467, 0.43838545866310596,
   ];
 
   assert.deepEqual(
@@ -60,10 +57,7 @@ test("QA-001:seeded-rng-has-a-stable-golden-sequence", () => {
 test("QA-001:seeded-rng-validates-seeds-and-inclusive-integer-ranges", () => {
   assert.throws(() => createSeededRng(0), /testing: invalid-rng-seed/u);
   assert.throws(() => createSeededRng(-1), /testing: invalid-rng-seed/u);
-  assert.throws(
-    () => createSeededRng(2 ** 32),
-    /testing: invalid-rng-seed/u,
-  );
+  assert.throws(() => createSeededRng(2 ** 32), /testing: invalid-rng-seed/u);
 
   const rng = createSeededRng(1);
   for (const invalidRange of [

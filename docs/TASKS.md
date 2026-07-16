@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
+last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -81,6 +81,13 @@ code_refs:
   - scripts/validate-mermaid-worker.mjs
   - scripts/verify-affected.mjs
   - scripts/lib/affected-verification.mjs
+  - packages/testing/src
+  - scripts/run-tests.mjs
+  - scripts/lib/test-lane-policy.mjs
+  - scripts/lib/test-process.mjs
+  - scripts/lib/test-report-policy.mjs
+  - scripts/prepare-test-reports.mjs
+  - scripts/verify-test-reports.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -129,6 +136,14 @@ test_refs:
   - tests/unit/contract-artifact-policy.test.mjs
   - tests/contracts/contracts-compatibility.test.mjs
   - tests/unit/owned-path-policy.test.mjs
+  - tests/unit/testing-primitives.test.mjs
+  - tests/unit/test-container-lifecycle.test.mjs
+  - tests/unit/test-lane-policy.test.mjs
+  - tests/unit/test-report-policy.test.mjs
+  - tests/integration/test-runner.test.mjs
+  - tests/integration/testing-containers.test.mjs
+  - tests/contracts/testing-package-contract.test.mjs
+  - tests/security/test-report-security.test.mjs
 supersedes: null
 ---
 
@@ -318,7 +333,7 @@ Corsie: `FAST` usa `verify:docs`; `STANDARD` usa test mirati + `verify:affected`
 | `docs/security/THREAT_MODEL.md` | Planned (`DOC-SEC-001`) | Threat/controls | Ogni trust boundary/dato/endpoint. |
 | `docs/security/MODERATION_POLICY.md` | Planned (`DOC-SEC-001`) | Policy safety | Ogni policy/provider/category change. |
 | `docs/operations/RUNBOOK.md` | Planned (`DOC-OPS-001`) | Operazioni/incidenti | Ogni deploy, alert, recovery o kill switch. |
-| `docs/testing/TEST_STRATEGY.md` | Planned (`QA-001`/`QA-002`/`DOC-TEST-001`) | Suite e fixture | Ogni nuovo livello/gate di test. |
+| [`docs/testing/TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) | Esistente, `active`; baseline `QA-001` | Suite, fixture, container e report | Ogni nuovo livello/gate di test; browser in `QA-002`. |
 | `docs/testing/AI_EVALS.md` | Planned (`DOC-TEST-001`) | Evals/rubriche/versioni | Ogni prompt/model/schema/eval change. |
 | `docs/testing/RELEASE_EVIDENCE.md` | Planned (`DOC-TEST-001`) | Evidenze go/no-go | Ogni release candidate. |
 
@@ -713,10 +728,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### QA-001 — Fondazione comune per test, fixture e comandi di qualità
 
-- **Stato:** `IN_PROGRESS`
-- **Progresso:** `25%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `YES` — base `a698592b0a610735297a1026c80eae5e5114355c`; spec SHA-256 `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329`; data: `2026-07-16`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — candidate implementation head `7f2d4d0f360e83baf31404266df47cbee060be0d`; base `a698592b0a610735297a1026c80eae5e5114355c`; spec SHA-256 `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329`; data: `2026-07-16`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-001, BL-002, BL-003, BL-004, BL-009
 - **Dipendenze operative aggiuntive:** GOV-001
@@ -725,12 +740,12 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Deliverable:** Contratto `testing-foundation-v1`; runner Node e command contract; container harness PostgreSQL/Redis; factory deterministiche; fake clock/RNG; JUnit/coverage; test ID collegati ai task.
 - **Criterio di accettazione:** Da checkout pulito i comandi standard partono, isolano processi e dati, producono report deterministici e propagano failure/cleanup senza retry automatici.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Self-test red/green del runner e isolamento tra due test process.
-  - [ ] Integration smoke su PostgreSQL e Redis reali/containers.
-  - [ ] Verifica seed/fake clock/RNG riproducibili e report associabile a un task ID.
-  - [ ] JUnit/coverage e manifest generati deterministicamente; fixture failing e cleanup failure bloccano la CI.
+  - [x] Self-test red/green del runner e isolamento tra due test process.
+  - [x] Integration smoke su PostgreSQL e Redis reali/containers.
+  - [x] Verifica seed/fake clock/RNG riproducibili e report associabile a un task ID.
+  - [x] JUnit/coverage e manifest generati deterministicamente; fixture failing e cleanup failure bloccano la CI.
 - **Documentazione e contesto:** `docs/testing/TEST_STRATEGY.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`
-- **Evidenze di chiusura:** design approvato dal Product Owner il `2026-07-16`; implementazione/test/PR `—`; migration/eval/trace ID `N/A`.
+- **Evidenze di chiusura:** design approvato dal Product Owner il `2026-07-16`; commit funzionali `f485af7`, `9ffd857`, `6a308fd`, `f07aa63`, candidate implementation head `7f2d4d0f360e83baf31404266df47cbee060be0d`; mirati finali: unit foundation 19/19, runner 6/6, container reali 1/1, contract 10/10, report security 2/2 e migration reali 16/16 `PASS`; `verify:docs` 39 documenti/12 modificati, task graph/secret scan `PASS`; audit high senza vulnerabilità note; doppia preparazione artifact con hash identici e verify `PASS`. Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 141,8 s: lint/build 11, typecheck 13, unit 107 pass/1 skip host con coverage testing 92,54% linee/91,89% branch/97,62% funzioni, integration 20, database 16, contract 69, security 32 pass/3 skip host, report 247 test verificati e build artifact 3.982 file `PASS`. Checkout pulito detached: install frozen exit `0` in 19,6 s e full exit `0` in 133,3 s con gli stessi conteggi, report `PASS` e artifact 4.003 file; self-review finale senza P0/P1, review sub-agent non disponibile per vincolo di sessione; delivery PR/merge ancora `PENDING`; migration/eval/trace ID `N/A`.
 - **Note, rischi o bloccanti:** Corsia `HIGH_RISK` perché il candidato modificherà workflow, artifact e lifecycle container. Scope design: Node `24.11.0` nativo, nessun secondo runner o nuova libreria container, riuso del contratto PostgreSQL esistente e Redis pin a digest. Browser/E2E/accessibility/visual regression sono stati separati in `QA-002`. Fuori scope Vercel, provider, UI ed eval AI.
 
 ### QA-002 — Browser, accessibility e visual regression harness
@@ -2611,20 +2626,20 @@ Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il t
 active_task: QA-001
 last_completed_task: GOV-002
 next_ready_task: DOC-ARCH-001
-status: IN_PROGRESS
-progress: 25
+status: DONE
+progress: 100
 started_at: 2026-07-16T00:00:00+02:00
-candidate_at: null
+candidate_at: 2026-07-16T12:11:26+02:00
 cycle_target_minutes: 120
-cycle_actual_minutes: null
-updated_at: 2026-07-16
+cycle_actual_minutes: 731
+updated_at: 2026-07-16T12:18:31+02:00
 agent: Codex development agent
 git_branch: codex/qa-001-test-foundation
 base_commit: a698592b0a610735297a1026c80eae5e5114355c
-candidate_head: null
+candidate_head: 7f2d4d0f360e83baf31404266df47cbee060be0d
 spec_sha256: d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329
 context_verified: true
-test_status: NOT_RUN
+test_status: PASSING
 ```
 
 ## Contesto letto
@@ -2651,6 +2666,10 @@ test_status: NOT_RUN
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-16 12:18 +02:00 | 100% | Candidato branch-local terminale; self-review completa senza P0/P1. La review sub-agent prevista dalla skill non è eseguibile perché la sessione vieta delega non richiesta. Delivery resta derivata/PENDING finché `7f2d4d0` non raggiunge `main` tramite gate protetto. | Worktree detached `7f2d4d0`: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con 247 test/report, coverage sopra soglia e artifact 4.003 file `PASS`; worktree rimosso. | Amend dello stesso candidato con evidenze terminali, push branch e una PR; nessuna azione Vercel. |
+| 2026-07-16 12:11 +02:00 | 90% | Il full ha trovato e chiuso due cause reali: due file non formattati, risoluzione pnpm 11 non conservata nel subprocess con cache forzata e tre contract test ancora legati ai vecchi script. Regressioni mirate verdi; nessun gate indebolito. Il target di 120 minuti è superato perché il task M/HIGH_RISK ha coperto quattro batch, lifecycle container, report security e i finding cross-platform emersi solo senza cache. | Full finale senza cache exit `0` in 141,8 s: lint/build 11, typecheck 13, unit 107+1 skip, integration 20, DB 16, contract 69, security 32+3 skip, report 247 e artifact 3.982 `PASS`. | Congelare il commit candidato, verificarlo da checkout pulito e completare la review/stato terminale. |
+| 2026-07-16 11:57 +02:00 | 90% | Living docs e workflow sono allineati; la card entra in review soltanto dopo tutti i mirati applicabili. | Foundation 19/19, runner 6/6, container 1/1, contract 10/10, security 2/2, database 16/16; `verify:docs` 39/12 `PASS`; audit high pulito. | Eseguire l’unico full gate HIGH_RISK, poi checkout pulito e review finale. |
+| 2026-07-16 11:56 +02:00 | 75% | Implementati primitive deterministiche, lifecycle PostgreSQL/Redis, runner isolato e artifact `testing-foundation-v1`; i cinque script pubblici convergono sul runner e la CI verifica il report prima dell’upload. | Commit `f485af7`, `9ffd857`, `6a308fd`, `f07aa63`; unit runner 107 pass/1 skip host e coverage 92,54/91,89/97,62; report/runner/container 19/19 e CI/gate 11/11 `PASS`; hash artifact riproducibili. | Chiudere living docs, mirati completi, audit, unico full gate HIGH_RISK e checkout pulito. |
 | 2026-07-16 00:00 +02:00 | 25% | Selezionato `QA-001` dopo `GOV-002`; l'audit ha separato la fondazione non-browser dal browser harness, ora assegnato a `QA-002` dopo `BL-079`. Approvato `testing-foundation-v1` con Node nativo e riuso del lifecycle Docker CLI. | Base `a698592`; self-review pulita; `verify:docs` exit `0` con 37 documenti/9 modificati, task graph e secret scan `PASS`; nessuna azione Vercel o provider. | Committare la spec e ottenere review utente prima del piano TDD. |
 | 2026-07-15 18:15 +02:00 | 25% | Selezionato GOV-002 perché tutte le dipendenze sono `DONE`; approvata policy modulare con Mermaid parse-only bounded e riuso dei checker esistenti. | Base `15382d5`; spec SHA `d07620b`; `verify:docs` baseline exit `0` con 33 documenti, task graph e secret scan `PASS`; registry npm conferma `mermaid@11.16.0` MIT. | Versionare design, ottenere review utente e creare il piano TDD prima del codice. |
 | 2026-07-15 15:40 +02:00 | 100% | Re-check indipendente senza P0/P1 residui. I primi due full hanno esposto ownership di formattazione generated e risoluzione del pnpm globale nello script annidato; aggiunte regressioni fail-closed e mantenuto un unico checker diretto dopo la build. Candidato branch-local terminale in 61 minuti. | Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 86,8 s: lint/build 11, typecheck 13, unit 84/1 skip host, integration 13, DB 13, contract 56, security 26/3 skip host, docs 31/11 e artifact 3.942. | Committare il candidato, verificarlo da checkout pulito e pubblicare una sola PR protetta; nessuna azione Vercel. |

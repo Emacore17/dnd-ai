@@ -64,6 +64,66 @@ test("unpinned actions, privileged PR triggers and broad artifacts fail closed",
   assert.ok(errors.some((error) => error.includes("pull_request_target")));
   assert.ok(errors.some((error) => error.includes("unpinned action")));
   assert.ok(errors.some((error) => error.includes("artifact path")));
+  assert.ok(errors.some((error) => error.includes("test reports")));
+});
+
+test("the Tests job publishes only verified deterministic reports", async () => {
+  const [workflowSource, setupActionSource, packageSource] = await Promise.all([
+    readFile(
+      path.join(repositoryRoot, ".github", "workflows", "ci.yml"),
+      "utf8",
+    ),
+    readFile(
+      path.join(
+        repositoryRoot,
+        ".github",
+        "actions",
+        "setup-workspace",
+        "action.yml",
+      ),
+      "utf8",
+    ),
+    readFile(path.join(repositoryRoot, "package.json"), "utf8"),
+  ]);
+  const workflow = parse(workflowSource);
+  const packageManifest = JSON.parse(packageSource);
+  const steps = workflow.jobs.tests.steps;
+  const prepare = steps.find((step) => step.name === "Prepare test reports");
+  const verify = steps.find((step) => step.name === "Verify test reports");
+  const upload = steps.find((step) => step.name === "Upload test reports");
+
+  assert.equal(
+    prepare.run,
+    "pnpm test:reports:prepare --required=unit,integration,database,contract",
+  );
+  assert.equal(
+    verify.run,
+    "pnpm test:reports:verify --required=unit,integration,database,contract",
+  );
+  assert.equal(
+    upload.uses,
+    "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+  );
+  assert.equal(upload.with.path, "artifacts/testing");
+  assert.equal(upload.with["if-no-files-found"], "error");
+  assert.equal(upload.with["retention-days"], 7);
+  assert.equal(
+    packageManifest.scripts["test:unit"],
+    "node scripts/run-tests.mjs unit",
+  );
+  assert.equal(
+    packageManifest.scripts["test:integration"],
+    "node scripts/run-tests.mjs integration",
+  );
+
+  steps.splice(steps.indexOf(verify), 1);
+  assert.ok(
+    validateCiDocuments(
+      workflow,
+      parse(setupActionSource),
+      packageManifest,
+    ).some((error) => error.includes("test reports")),
+  );
 });
 
 test("the security audit uses one bulk-capable pnpm pin across local and CI", () => {

@@ -23,6 +23,17 @@ const turboEntry = path.join(
   "bin",
   "turbo",
 );
+const corepackEntry = path.join(
+  path.dirname(process.execPath),
+  "node_modules",
+  "corepack",
+  "dist",
+  "corepack.js",
+);
+const packageManagerCommand =
+  process.platform === "win32" ? process.execPath : "pnpm";
+const packageManagerArguments =
+  process.platform === "win32" ? [corepackEntry, "pnpm@11.13.0"] : [];
 
 function forward(result) {
   if (result.stdout) {
@@ -91,12 +102,14 @@ async function executeLane(laneName, environment) {
   const reportWorkspace = await createReportWorkspace(lane);
   const build = await runCommandProcess({
     arguments_: [
+      ...packageManagerArguments,
+      "exec",
       turboEntry,
       "run",
       "build",
       ...lane.buildFilters.map((filter) => `--filter=${filter}`),
     ],
-    command: process.execPath,
+    command: packageManagerCommand,
     environment,
     repositoryRoot,
     timeoutMs: lane.timeoutMs,

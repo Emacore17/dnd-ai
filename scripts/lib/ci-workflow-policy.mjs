@@ -10,6 +10,9 @@ const REQUIRED_JOBS = Object.freeze([
   "ci-required",
 ]);
 const REQUIRED_PNPM_VERSION = "11.13.0";
+const TEST_REPORT_UPLOAD_ACTION =
+  "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a";
+const TEST_REPORT_LANES = "unit,integration,database,contract";
 const FORBIDDEN_QUALITY_COMMANDS = Object.freeze([
   {
     label: "pnpm contracts:check",
@@ -238,6 +241,77 @@ function validatePnpmToolchain(errors, setupAction, packageManifest) {
   }
 }
 
+function validateTestScripts(errors, packageManifest) {
+  const expectedScripts = Object.freeze({
+    "db:migrate:test": "node scripts/run-tests.mjs database",
+    "test:all": "node scripts/run-tests.mjs all",
+    "test:contract": "node scripts/run-tests.mjs contract",
+    "test:integration": "node scripts/run-tests.mjs integration",
+    "test:reports:prepare": "node scripts/prepare-test-reports.mjs",
+    "test:reports:verify": "node scripts/verify-test-reports.mjs",
+    "test:security":
+      "node scripts/run-tests.mjs security && node scripts/scan-secrets.mjs",
+    "test:unit": "node scripts/run-tests.mjs unit",
+  });
+
+  for (const [name, expected] of Object.entries(expectedScripts)) {
+    if (packageManifest?.scripts?.[name] !== expected) {
+      errors.push(`test reports require exact package script: ${name}`);
+    }
+  }
+}
+
+function validateTestReports(errors, testsJob) {
+  const steps = asArray(testsJob?.steps);
+  const prepareCommand = `pnpm test:reports:prepare --required=${TEST_REPORT_LANES}`;
+  const verifyCommand = `pnpm test:reports:verify --required=${TEST_REPORT_LANES}`;
+  const prepareIndex = steps.findIndex(
+    (step) =>
+      step.name === "Prepare test reports" && step.run === prepareCommand,
+  );
+  const verifyIndex = steps.findIndex(
+    (step) => step.name === "Verify test reports" && step.run === verifyCommand,
+  );
+  const uploadIndex = steps.findIndex(
+    (step) => step.name === "Upload test reports",
+  );
+
+  if (prepareIndex === -1) {
+    errors.push("test reports missing exact prepare command");
+  }
+  if (verifyIndex === -1) {
+    errors.push("test reports missing exact verification command");
+  }
+  if (uploadIndex === -1) {
+    errors.push("test reports missing upload step");
+    return;
+  }
+  if (
+    prepareIndex === -1 ||
+    verifyIndex === -1 ||
+    !(prepareIndex < verifyIndex && verifyIndex < uploadIndex)
+  ) {
+    errors.push("test reports must be prepared and verified before upload");
+  }
+
+  const upload = steps[uploadIndex];
+  if (upload.uses !== TEST_REPORT_UPLOAD_ACTION) {
+    errors.push("test reports must use the approved pinned upload action");
+  }
+  if (upload.with?.name !== "dnd-ai-tests-${{ github.sha }}") {
+    errors.push("test reports artifact name must bind to github.sha");
+  }
+  if (upload.with?.path !== "artifacts/testing") {
+    errors.push("test reports artifact path must be artifacts/testing");
+  }
+  if (upload.with?.["if-no-files-found"] !== "error") {
+    errors.push("test reports must fail when files are missing");
+  }
+  if (Number(upload.with?.["retention-days"]) !== 7) {
+    errors.push("test reports retention must be exactly seven days");
+  }
+}
+
 function validateJobs(errors, workflow) {
   const jobs = workflow.jobs ?? {};
 
@@ -316,6 +390,7 @@ function validateJobs(errors, workflow) {
     "pnpm db:migrate:test",
     "pnpm test:contract",
   ]);
+  validateTestReports(errors, jobs.tests);
   requireCommands(errors, "security", jobs.security, [
     "pnpm scan:sast",
     "pnpm test:security",
@@ -402,6 +477,7 @@ export function validateCiDocuments(
   validateSteps(errors, workflow, setupAction);
   validateSetupAction(errors, setupAction);
   validatePnpmToolchain(errors, setupAction, packageManifest);
+  validateTestScripts(errors, packageManifest);
   validateJobs(errors, workflow);
 
   if (workflow.concurrency?.["cancel-in-progress"] !== true) {

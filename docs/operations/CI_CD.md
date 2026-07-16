@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-16
-last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
+last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -33,6 +33,13 @@ code_refs:
   - scripts/lib/contract-artifact-policy.mjs
   - scripts/lib/contract-compatibility-policy.mjs
   - scripts/lib/owned-path-policy.mjs
+  - packages/testing/src
+  - scripts/run-tests.mjs
+  - scripts/lib/test-lane-policy.mjs
+  - scripts/lib/test-process.mjs
+  - scripts/lib/test-report-policy.mjs
+  - scripts/prepare-test-reports.mjs
+  - scripts/verify-test-reports.mjs
   - scripts/check-docs.mjs
   - scripts/lib/document-policy.mjs
   - scripts/lib/document-integrity-policy.mjs
@@ -90,6 +97,13 @@ test_refs:
   - tests/unit/contract-artifact-policy.test.mjs
   - tests/contracts/contracts-compatibility.test.mjs
   - tests/unit/owned-path-policy.test.mjs
+  - tests/unit/testing-primitives.test.mjs
+  - tests/unit/test-container-lifecycle.test.mjs
+  - tests/unit/test-report-policy.test.mjs
+  - tests/integration/test-runner.test.mjs
+  - tests/integration/testing-containers.test.mjs
+  - tests/contracts/testing-package-contract.test.mjs
+  - tests/security/test-report-security.test.mjs
   - tests/contracts/document-policy.test.mjs
   - tests/contracts/document-integrity.test.mjs
 supersedes: null
@@ -173,11 +187,16 @@ La setup action installa Node/pnpm pin e usa soltanto `setup-node` con cache `pn
 
 L’artifact caricato è soltanto `artifacts/bl002`, directory ignorata da Git e rigenerata da zero. `manifest.json` usa schema `build-artifact-v1`; `payload/` contiene gli output ammessi, incluso `packages/config/dist` ma mai file ambientali. `include-hidden-files: true` è necessario per la struttura `.next`, ma è sicuro soltanto perché lo staging rifiuta `.env`, credenziali, log, symlink esterni e file con pattern secret prima dell’upload.
 
+Il job Tests usa un artifact distinto, `artifacts/testing`, con schema `testing-foundation-v1`. Dopo `unit`, `integration`, `database` e `contract`, la pipeline normalizza JUnit/LCOV, ricrea il manifest con commit, owner task, conteggi, byte e SHA-256, lo verifica e solo allora usa l’action upload pin a SHA. Path più ampi, report mancanti, checksum errati, link, contenuto sensibile, `continue-on-error` o retention diversa da 7 giorni sono rifiutati dalla policy CI. I report non entrano nella cache e i raw runtime vengono rimossi prima dell’artifact.
+
 Comandi locali:
 
 ```powershell
 corepack pnpm@11.13.0 verify
 corepack pnpm@11.13.0 db:migrate:test
+corepack pnpm@11.13.0 test:all
+corepack pnpm@11.13.0 test:reports:prepare --required=unit,integration,database,contract,security
+corepack pnpm@11.13.0 test:reports:verify --required=unit,integration,database,contract,security
 corepack pnpm@11.13.0 scan:sast
 corepack pnpm@11.13.0 audit --audit-level=high
 corepack pnpm@11.13.0 contracts:generate
@@ -197,9 +216,9 @@ if ($LASTEXITCODE -ne 0) { throw "preview-dry-run: source manifest rejected" }
 | Gate normativo | Owner |
 |---|---|
 | migration PostgreSQL baseline, dry run e failure path | `BL-004` chiuso con CI PR `29351291907` 5/5 `SUCCESS` |
-| harness condiviso PostgreSQL/Redis e suite database funzionali successive | `QA-001` e task proprietari |
+| harness condiviso PostgreSQL/Redis | `QA-001`: implementato; le suite database funzionali restano ai task proprietari |
 | schema/OpenAPI/event compatibility | `BL-009`: implementata; review e full gate PASS, clean verify e CI PR pendenti |
-| coverage rules/domain ≥80% e report | `QA-001` |
+| coverage/report della fondazione test ≥80% | `QA-001`: implementato; soglie rules/domain entrano con i rispettivi task |
 | browser, bundle e accessibility budget | `BL-079`, `QA-002` |
 | secret manager, preview/staging M0, deploy smoke e rollback minimo | `BL-080`; contratto di injection già in `BL-003` |
 | eval prompt/schema | `BL-068` |

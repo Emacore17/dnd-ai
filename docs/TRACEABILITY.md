@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-16
-last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
+last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -12,6 +12,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
   - docs/superpowers/specs/2026-07-15-gov-002-document-integrity-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
+  - docs/testing/TEST_STRATEGY.md
   - docs/adr/README.md
 related_tasks:
   - GOV-001
@@ -78,6 +79,9 @@ code_refs:
   - scripts/lib/database-migration-policy.mjs
   - scripts/lib/postgres-test-container.mjs
   - infra/local/postgres.compose.yml
+  - packages/testing/src
+  - scripts/run-tests.mjs
+  - scripts/lib/test-report-policy.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -115,6 +119,13 @@ test_refs:
   - tests/database/feature-flags.test.mjs
   - tests/security/feature-flags-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
+  - tests/unit/testing-primitives.test.mjs
+  - tests/unit/test-container-lifecycle.test.mjs
+  - tests/unit/test-report-policy.test.mjs
+  - tests/integration/test-runner.test.mjs
+  - tests/integration/testing-containers.test.mjs
+  - tests/contracts/testing-package-contract.test.mjs
+  - tests/security/test-report-security.test.mjs
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
   - tests/integration/observability-flow.test.mjs
@@ -159,7 +170,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004, BL-010 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head `000002_feature_flags`, previous→head da `000001`, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | suite DB 15/15 PASS su branch BL-010; full gate locale PASS; CI pending |
 | Rollback database fail-closed e forward-only gestito | spec §§19.5, 29.5; ADR-0006 | BL-004 | policy CLI e runbook `DATABASE_MIGRATIONS.md` | DDL invalido annullato con ledger 0; `down` solo loopback disposable senza query routing e con conferma; staging/production rifiutati | PASS mirato/full/clean/CI |
 | Feature flag e kill switch server-side sono condivisi, auditati e fail-closed | spec §§22.16, 27.5, 28.6, 29.8, 31 `BL-010`; ADR-0004, ADR-0006, ADR-0007 | BL-010 | `packages/persistence/src/feature-flags.ts`, `packages/persistence/src/migrations/000002_feature_flags.ts`, `scripts/manage-feature-flag.mjs` | catalogo chiuso `campaign.start`/`turn.new`/`model.route.premium`; store unavailable/unknown/malformed disabled; cambio CLI senza deploy; audit atomico; CAS; idempotency replay/conflict; output redatto | unit feature flags 4/4, database feature flags 2/2 con replay post-toggle, security feature flags 4/4 e full gate locale PASS; PR/CI pending |
-| Runner, fixture e report non-browser sono isolati e riproducibili | spec §§26, 35.1 | QA-001 | `@dnd-ai/testing`, runner root e container harness PostgreSQL/Redis (planned) | self-test process isolation, golden RNG/clock, smoke container, JUnit/coverage e failure propagation (planned) | design `testing-foundation-v1` approvato; implementazione pending |
+| Runner, fixture e report non-browser sono isolati e riproducibili | spec §§26, 35.1 | QA-001 | `@dnd-ai/testing`, runner Node root, harness PostgreSQL/Redis e artifact `testing-foundation-v1` | process isolation/failure/timeout, golden RNG/clock, smoke container concorrente, JUnit/LCOV/checksum e symlink/secret negative path | candidato `7f2d4d0` full + clean `PASS`; [`TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) |
 | Browser, accessibility e visual regression usano un harness comune | spec §26.8; studio UX §§13–14.1 | BL-079, QA-002 | Playwright e browser harness (planned) | viewport 320/390/1440, reduced-motion, accessibility negative fixture e visual drift (planned) | QA-002 BACKLOG; dipende da QA-001 e BL-079 |
 | W3C Trace Context e request ID attraversano web→API→queue→worker senza context bleed | spec §§24.1, 24.5; ADR-0007 | BL-008 | `packages/observability`, plugin Fastify e wrapper worker | `tests/integration/observability-flow.test.mjs`: parent chain `web.request`→`api.request`→`queue.enqueue`→`worker.process`, due flussi concorrenti disgiunti; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Log JSON e metadata telemetry non espongono PII, secret, prompt o output AI | spec §§22.10, 24.2; ADR-0007 | BL-008 | sanitizer bounded, logger Pino allowlisted e reporter safe | `tests/unit/observability-core.test.mjs`, `tests/unit/observability-node.test.mjs`, `tests/security/observability-security.test.mjs`; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
