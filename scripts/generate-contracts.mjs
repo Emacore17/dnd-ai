@@ -162,7 +162,7 @@ async function main() {
     return;
   }
 
-  const expectedFiles = renderContractArtifactFiles(createContractArtifacts());
+  const generatedFiles = renderContractArtifactFiles(createContractArtifacts());
   const compatibilityBase = await resolveContractCompatibilityBase(
     repositoryRoot,
     process.env.CONTRACT_BASE_REF,
@@ -171,6 +171,7 @@ async function main() {
     repositoryRoot,
     compatibilityBase,
   );
+  const expectedFiles = new Map([...publishedFiles, ...generatedFiles]);
   const compatibilityErrors = compareContractCompatibilityBaseline(
     publishedFiles,
     expectedFiles,

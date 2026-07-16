@@ -1,0 +1,243 @@
+{
+  "$defs": {
+    "__schema0": {
+      "pattern": "^[1-9][0-9]*$",
+      "type": "string"
+    },
+    "__schema1": {
+      "description": "Canonical lowercase UUIDv7.",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "__schema2": {
+      "description": "Server-owned canonical lowercase UUIDv4 request ID.",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "__schema3": {
+      "maximum": 2147483647,
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "$id": "urn:dnd-ai:contracts:v2:TurnStreamEvent",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "data": {
+          "additionalProperties": false,
+          "properties": {
+            "baseStateVersion": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "queuePosition": {
+              "maximum": 10000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "requestId": {
+              "$ref": "#/$defs/__schema2"
+            },
+            "turnId": {
+              "$ref": "#/$defs/__schema1"
+            }
+          },
+          "required": [
+            "turnId",
+            "requestId",
+            "baseStateVersion"
+          ],
+          "type": "object"
+        },
+        "event": {
+          "const": "turn.accepted",
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/$defs/__schema0"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "event",
+        "data"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "data": {
+          "additionalProperties": false,
+          "properties": {
+            "percent": {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "requestId": {
+              "$ref": "#/$defs/__schema2"
+            },
+            "stage": {
+              "enum": [
+                "queued",
+                "validating",
+                "building_context",
+                "generating",
+                "executing_tools",
+                "committing",
+                "delivering"
+              ],
+              "type": "string"
+            },
+            "turnId": {
+              "$ref": "#/$defs/__schema1"
+            }
+          },
+          "required": [
+            "turnId",
+            "requestId",
+            "stage"
+          ],
+          "type": "object"
+        },
+        "event": {
+          "const": "turn.progress",
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/$defs/__schema0"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "event",
+        "data"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "data": {
+          "additionalProperties": false,
+          "properties": {
+            "checksum": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "completedAt": {
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "type": "string"
+            },
+            "requestId": {
+              "$ref": "#/$defs/__schema2"
+            },
+            "stateVersion": {
+              "$ref": "#/$defs/__schema3"
+            },
+            "turnId": {
+              "$ref": "#/$defs/__schema1"
+            }
+          },
+          "required": [
+            "turnId",
+            "requestId",
+            "stateVersion",
+            "checksum",
+            "completedAt"
+          ],
+          "type": "object"
+        },
+        "event": {
+          "const": "turn.completed",
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/$defs/__schema0"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "event",
+        "data"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "data": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "maxLength": 96,
+              "minLength": 1,
+              "pattern": "^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$",
+              "type": "string"
+            },
+            "requestId": {
+              "$ref": "#/$defs/__schema2"
+            },
+            "retryable": {
+              "type": "boolean"
+            },
+            "stateApplied": {
+              "type": "boolean"
+            },
+            "turnId": {
+              "$ref": "#/$defs/__schema1"
+            }
+          },
+          "required": [
+            "turnId",
+            "requestId",
+            "code",
+            "retryable",
+            "stateApplied"
+          ],
+          "type": "object"
+        },
+        "event": {
+          "const": "turn.failed",
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/$defs/__schema0"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "event",
+        "data"
+      ],
+      "type": "object"
+    }
+  ],
+  "title": "TurnStreamEvent",
+  "x-dnd-ai-contract-kind": "event",
+  "x-dnd-ai-contract-version": "2.0.0"
+}

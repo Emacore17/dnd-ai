@@ -2,12 +2,16 @@
 status: active
 owner: product-and-engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
-source_refs: []
+last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
+source_refs:
+  - docs/adr/0010-internal-provider-neutral-identity.md
+  - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
 related_tasks:
   - GOV-001
   - GOV-004
   - BL-003
+  - BL-005
+  - BL-006
   - BL-010
   - BL-079
   - BL-080
@@ -2483,6 +2487,9 @@ interface ApiErrorResponse {
 
 | Endpoint | Auth e autorizzazione | Request principale | Response | Idempotenza | Errori principali | Rate limit iniziale |
 |---|---|---|---|---|---|---:|
+| `POST /api/auth/sign-up` | anonimo; Origin same-origin | email, password, displayName | `202 verification_required` generico | obbligatoria | 400 schema, 403 origin, 409 key, 429 | 5/15 min/IP; 3/ora/email |
+| `POST /api/auth/verify-email` | anonimo; challenge corrente | email, codice numerico | `200 verified` + cookie sessione | obbligatoria | 410 scaduto, 422 invalido, 429 | 5 tentativi/challenge |
+| `POST /api/auth/resend-verification` | anonimo; account pending | email | `202` generico | obbligatoria | 403 origin, 409 key, 429 | cooldown 60 s; 5/giorno/email |
 | `POST /api/campaigns` | user verificato; max campagne attive | character draft/ref, companion drafts, settings/world brief | `201 CampaignDraftView` o `202` se creazione async | obbligatoria | 400 schema, 409 limit/key, 422 build/moderation | 5/ora/user |
 | `GET /api/campaigns` | user | query `status,cursor,limit≤20` | lista paginata summary | n/a | 400 cursor | 60/min |
 | `GET /api/campaigns/:campaignId` | owner | — | campaign detail safe, no hidden Bible | n/a | 404 | 120/min |
@@ -2789,8 +2796,13 @@ Asset principali: account, campagne private, hidden Bible/segreti NPC, stato can
 
 ## 22.2 Autenticazione
 
+- Decisione P0: identità interna provider-neutral secondo ADR-0010 e contratto `identity-signup-v1`; PostgreSQL è autorevole e SMTP è un adapter sostituibile. Nessun provider auth o account esterno è richiesto per `BL-005`.
 - Email verificata; password hash Argon2id se gestita internamente, con parametri aggiornabili e pepper in secret manager.
+- Password da 15 a 128 caratteri Unicode, normalizzazione NFC, blocklist server-side, nessuna composition rule artificiale. Baseline Argon2id: 19 MiB, 2 iterazioni, parallelismo 1 e pepper HMAC versionato.
+- Signup, resend e verifica usano idempotenza persistente, rate limit pre-hash per soggetti pseudonimi e risposta generica anti-enumeration.
+- Verifica tramite codice numerico a sei cifre: digest HMAC, TTL 10 minuti, massimo 5 tentativi, consumo one-time e supersession al resend. Nessuna capability auth in URL.
 - Session ID random, cookie `HttpOnly`, `Secure`, `SameSite=Lax` o `Strict`, rotazione dopo login/privilege change.
+- La prima sessione nasce atomicamente soltanto dopo verifica riuscita e usa il cookie `__Host-dnd_ai_session`; il DB conserva esclusivamente un digest del token.
 - Scadenza idle e assoluta configurabile; revoca sessioni da settings.
 - Reset password con token one-time hashato, TTL breve, rate limit e invalidazione dopo uso.
 - MFA P1 per utenti; obbligatoria per admin P0 se provider lo consente.
@@ -4191,7 +4203,7 @@ Prima di una alpha giocabile devono essere mitigati almeno R-01, R-03, R-04, R-0
 
 # 34. Decisioni aperte
 
-Le decisioni seguenti non bloccano la stesura, ma devono avere owner e data di decisione relativa alla milestone, non una data calendario arbitraria.
+Le decisioni seguenti non bloccano la stesura, ma devono avere owner e data di decisione relativa alla milestone, non una data calendario arbitraria. `OD-07` è stata chiusa il 2026-07-16 da ADR-0010: identità interna provider-neutral per P0, con possibile adapter managed futuro.
 
 | ID | Decisione | Default/assunzione corrente | Opzioni principali | Impatto | Decidere entro |
 |---|---|---|---|---|---|
@@ -4201,7 +4213,6 @@ Le decisioni seguenti non bloccano la stesura, ma devono avere owner e data di d
 | OD-04 | Monetizzazione/quota | non definita; budget interno balanced | free quota, subscription, credits, paid campaigns | cost enforcement, auth/billing, UX | prima di closed beta |
 | OD-05 | Profili AI esposti | economy/balanced interni, premium flag | unico profilo; piani differenziati | costo, pricing, quality consistency | prima di beta |
 | OD-06 | Provider AI iniziale e data terms | adapter neutro; provider da selezionare | uno o più provider approvati | privacy, costo, latency, fallback | prima di M2 integration |
-| OD-07 | Auth build vs managed | sessioni email, implementazione da scegliere | managed OIDC/auth SaaS; internal Auth.js stack | security, cost, lock-in | M0 |
 | OD-08 | Regione dati/telemetry | UE primaria | singola UE; multi-region futuro | compliance, latency, vendor | M0 |
 | OD-09 | Visibilità DC e valori relazione | DC post-roll; relazioni qualitative | trasparente; diegetico; setting | trust, min-maxing, UI | prima di M4/M5 UX |
 | OD-10 | Ampiezza catalogo v1 | contenuto minimo originale | numero di ascendenze/classi/background/item | scope/bilanciamento/IP | prima di BL-011 freeze |

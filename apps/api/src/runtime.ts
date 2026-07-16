@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 import {
   parseApiRuntimeConfig,
   type ApiRuntimeConfig,
@@ -8,21 +10,48 @@ import {
   type NodeObservability,
   type NodeObservabilityOptions,
 } from "@dnd-ai/observability/node";
+import { createPostgresIdentityStore } from "@dnd-ai/persistence";
 import type { FastifyInstance, FastifyServerOptions } from "fastify";
 
-import { createApiApp } from "./app.js";
+import { createApiApp, type ApiAppDependencies } from "./app.js";
+import { createNodeIdentityCryptography } from "./identity/identity-crypto.js";
+import {
+  verifyIdentityClientSubjectAssertion,
+  type IdentityClientSubjectAssertion,
+} from "./identity/client-subject-assertion.js";
+import { createIdentityService } from "./identity/identity-service.js";
+import { loadCommonPasswordBlocklist } from "./identity/password-blocklist.js";
+import { createArgon2PasswordHasher } from "./identity/password-hasher.js";
+import {
+  registerIdentityRoutes,
+  type RegisterIdentityRoutesOptions,
+} from "./identity/routes.js";
 import { registerApiObservability } from "./observability.js";
 
-type ApiAppFactory = (options?: FastifyServerOptions) => FastifyInstance;
+type ApiAppFactory = (
+  options?: FastifyServerOptions,
+  dependencies?: ApiAppDependencies,
+) => FastifyInstance;
 type ApiObservabilityFactory = (
   options: NodeObservabilityOptions,
 ) => NodeObservability;
+
+export interface ApiIdentityRuntime {
+  readonly routes: RegisterIdentityRoutesOptions;
+  close(): Promise<void>;
+}
+
+type ApiIdentityRuntimeFactory = (
+  config: ApiRuntimeConfig,
+) => Promise<ApiIdentityRuntime>;
 
 export interface CreateConfiguredApiAppOptions {
   readonly environment: EnvironmentSource;
   readonly createApp?: ApiAppFactory;
   readonly createObservability?: ApiObservabilityFactory;
+  readonly createIdentityRuntime?: ApiIdentityRuntimeFactory;
   readonly fastifyOptions?: FastifyServerOptions;
+  readonly identityRuntime?: ApiIdentityRuntime;
   readonly shutdownTimeoutMs?: number;
 }
 
@@ -34,6 +63,59 @@ export interface ConfiguredApiApp {
 
 export interface StartedApi extends ConfiguredApiApp {
   readonly address: string;
+}
+
+export async function createApiIdentityRuntime(
+  config: ApiRuntimeConfig,
+): Promise<ApiIdentityRuntime> {
+  const store = createPostgresIdentityStore({
+    databaseUrl: config.databaseUrl,
+  });
+  let closePromise: Promise<void> | undefined;
+  const close = (): Promise<void> => {
+    closePromise ??= store.close();
+    return closePromise;
+  };
+  try {
+    const blocklist = await loadCommonPasswordBlocklist();
+    const cryptography = createNodeIdentityCryptography({
+      challengeKey: config.identity.challenge.key,
+      challengeKeyVersion: config.identity.challenge.version,
+      randomBytes: (length) => randomBytes(length),
+      sessionKey: config.identity.session.key,
+      sessionKeyVersion: config.identity.session.version,
+      subjectHashKey: config.identity.subjectHashKey,
+    });
+    const service = createIdentityService({
+      blocklist,
+      clock: Object.freeze({ now: () => new Date() }),
+      cryptography,
+      passwordHasher: createArgon2PasswordHasher({
+        pepper: config.identity.passwordPepper.key,
+        pepperVersion: config.identity.passwordPepper.version,
+      }),
+      store,
+    });
+    return Object.freeze({
+      close,
+      routes: Object.freeze({
+        clock: Object.freeze({ now: () => new Date() }),
+        publicOrigin: config.publicOrigin,
+        service,
+        verifyClientSubjectAssertion: (
+          assertion: IdentityClientSubjectAssertion,
+          now: Date,
+        ) =>
+          verifyIdentityClientSubjectAssertion(assertion, {
+            key: config.identity.bffAssertionKey,
+            now,
+          }),
+      }),
+    });
+  } catch (error) {
+    await close().catch(() => undefined);
+    throw error;
+  }
 }
 
 export function createConfiguredApiApp(
@@ -59,6 +141,10 @@ export function createConfiguredApiApp(
         ? {}
         : { shutdownTimeoutMs: options.shutdownTimeoutMs }),
     });
+    if (options.identityRuntime !== undefined) {
+      registerIdentityRoutes(app, options.identityRuntime.routes);
+      app.addHook("onClose", async () => options.identityRuntime?.close());
+    }
   } catch (error) {
     if (observability !== undefined) {
       void observability.shutdown(500).catch(() => false);
@@ -74,7 +160,18 @@ export function createConfiguredApiApp(
 export async function startApi(
   options: CreateConfiguredApiAppOptions,
 ): Promise<StartedApi> {
-  const runtime = createConfiguredApiApp(options);
+  const config = parseApiRuntimeConfig(options.environment);
+  const identityRuntime =
+    options.identityRuntime ??
+    (await (options.createIdentityRuntime ?? createApiIdentityRuntime)(config));
+  let runtime: ConfiguredApiApp;
+
+  try {
+    runtime = createConfiguredApiApp({ ...options, identityRuntime });
+  } catch (error) {
+    await identityRuntime.close().catch(() => undefined);
+    throw error;
+  }
 
   try {
     const address = await runtime.app.listen({

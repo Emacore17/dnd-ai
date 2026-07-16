@@ -10,6 +10,7 @@ source_refs:
   - docs/adr/0004-runtime-configuration-and-secret-injection.md
   - docs/adr/0006-postgresql-migration-foundation.md
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
+  - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/operations/CONFIGURATION.md
   - docs/operations/DATABASE_MIGRATIONS.md
 related_tasks:
@@ -17,6 +18,7 @@ related_tasks:
   - BL-001
   - BL-003
   - BL-004
+  - BL-005
   - BL-079
   - BL-080
   - QA-001
@@ -25,6 +27,7 @@ code_refs:
   - pnpm-lock.yaml
   - apps/api/.env.example
   - apps/worker/.env.example
+  - apps/web/.env.example
   - packages/persistence/.env.example
   - apps/web/app/health/route.ts
   - apps/web/package.json
@@ -38,6 +41,7 @@ test_refs:
   - tests/integration/web-health.test.mjs
   - tests/database/database-migrations.test.mjs
   - tests/integration/testing-containers.test.mjs
+  - tests/integration/identity-signup-flow.test.mjs
 supersedes: null
 ---
 
@@ -45,8 +49,8 @@ supersedes: null
 
 ## Stato delle capability
 
-- **Implementato**: installazione frozen, build, validazione config, PostgreSQL/pgvector locale, migration, health HTTP del web e startup integration test.
-- **Pianificato**: Redis locale applicativo, BullMQ, API di dominio, SSE e daemon worker.
+- **Implementato**: installazione frozen, build, validazione config, PostgreSQL/pgvector locale, migration, health HTTP, verticale identity API/BFF/UI e dispatcher email fake locale.
+- **Pianificato**: Redis locale applicativo, BullMQ, API di gioco, SSE e orchestrazione turni worker.
 
 Questa guida verifica la fondazione corrente da checkout pulito. Non simula come disponibili i servizi posseduti dai task futuri.
 
@@ -80,19 +84,16 @@ Copiare i template non tracciati; non modificare i file `.env.example`.
 Copy-Item packages/persistence/.env.example packages/persistence/.env.local
 Copy-Item apps/api/.env.example apps/api/.env.local
 Copy-Item apps/worker/.env.example apps/worker/.env.local
+Copy-Item apps/web/.env.example apps/web/.env.local
 ```
 
-Il template persistence contiene già la URL sintetica del Compose locale. I template API/worker mantengono sentinelle intenzionali: per i soli check della fondazione impostare valori loopback nel processo corrente, senza committarli.
+Il template persistence contiene già la URL sintetica del Compose locale. Sostituire le sentinelle API/worker/web con URL loopback e chiavi Base64 locali generate in modo crittograficamente sicuro: pepper, sessione, subject hash e BFF assertion devono essere distinti; la chiave challenge deve coincidere fra API e worker con la stessa versione, mentre `API_AUTH_BFF_ASSERTION_KEY_BASE64` deve coincidere con `WEB_AUTH_BFF_ASSERTION_KEY_BASE64`. Conservare `WORKER_EMAIL_DELIVERY_MODE=fake`; SMTP reale non è necessario per lo sviluppo. Il web usa `WEB_API_INTERNAL_ORIGIN=http://127.0.0.1:3001`, server-only. Dettagli e matrice sono in [`CONFIGURATION.md`](CONFIGURATION.md).
 
 ```powershell
-$env:API_DATABASE_URL = "postgresql://dnd_migration_local:dnd_migration_local@127.0.0.1:55432/dnd_ai_local"
-$env:API_REDIS_URL = "redis://127.0.0.1:6379"
-$env:WORKER_DATABASE_URL = "postgresql://dnd_migration_local:dnd_migration_local@127.0.0.1:55432/dnd_ai_local"
-$env:WORKER_REDIS_URL = "redis://127.0.0.1:6379"
 corepack pnpm@11.13.0 config:check
 ```
 
-Il comando composto conserva il pin `pnpm@11.13.0` anche nei tre check annidati. Le URL Redis provano soltanto la validazione sintattica: questa baseline non avvia Redis e non deve essere interpretata come readiness del servizio. Le DSN Sentry possono restare vuote.
+Il comando composto conserva il pin `pnpm@11.13.0` nei quattro check annidati. Le URL Redis provano soltanto la validazione sintattica: questa baseline non avvia Redis e non deve essere interpretata come readiness del servizio. Le DSN Sentry possono restare vuote.
 
 ## Database locale
 
@@ -105,7 +106,7 @@ corepack pnpm@11.13.0 db:migrate:local
 corepack pnpm@11.13.0 db:migrate:status:local
 ```
 
-Lo status terminale deve indicare head `000002_feature_flags`, contract `database-feature-flags-v1` e nessuna migration pending. La struttura fisica risultante è descritta in [`DATA_MODEL.md`](../data/DATA_MODEL.md).
+Lo status terminale deve indicare head `000003_identity_signup`, contract `database-identity-signup-v1` e nessuna migration pending. La struttura fisica risultante è descritta in [`DATA_MODEL.md`](../data/DATA_MODEL.md).
 
 ## Build e readiness
 
@@ -116,7 +117,7 @@ corepack pnpm@11.13.0 build
 corepack pnpm@11.13.0 test:integration
 ```
 
-Il web costruito espone l'unico health endpoint applicativo reale. Questo esempio avvia il processo esatto su loopback, attende in modo bounded e valida il contratto `web-health-v1`.
+Il web costruito espone health, pagine auth e BFF. Questo esempio avvia il processo esatto su loopback, attende in modo bounded e valida il contratto `web-health-v1`.
 
 ```powershell
 $node = (Get-Command node).Source
@@ -143,7 +144,7 @@ if ($null -eq $health -or $health.contract -ne "web-health-v1" -or $health.statu
 }
 ```
 
-API non espone ancora un endpoint health. Il worker non è ancora un daemon BullMQ. `test:integration` verifica i composition root e i failure path senza sostenere il contrario.
+API non espone ancora un endpoint health e non ha route di gioco. Il worker non è ancora un daemon BullMQ; può eseguire soltanto il poller dell'outbox identity. `test:integration` verifica composition root, vertical slice e failure path senza sostenere il contrario.
 
 ## Arresto e cleanup
 

@@ -30,11 +30,31 @@ const managedKeys = [
   "API_PORT",
   "API_DATABASE_URL",
   "API_REDIS_URL",
+  "API_PUBLIC_ORIGIN",
+  "API_AUTH_PASSWORD_PEPPER_BASE64",
+  "API_AUTH_PASSWORD_PEPPER_VERSION",
+  "API_AUTH_CHALLENGE_HMAC_KEY_BASE64",
+  "API_AUTH_CHALLENGE_KEY_VERSION",
+  "API_AUTH_SESSION_HMAC_KEY_BASE64",
+  "API_AUTH_SESSION_KEY_VERSION",
+  "API_AUTH_SUBJECT_HASH_KEY_BASE64",
+  "API_AUTH_BFF_ASSERTION_KEY_BASE64",
   "API_SENTRY_DSN",
   "WORKER_DATABASE_URL",
   "WORKER_REDIS_URL",
+  "WORKER_AUTH_CHALLENGE_HMAC_KEY_BASE64",
+  "WORKER_AUTH_CHALLENGE_KEY_VERSION",
+  "WORKER_EMAIL_DELIVERY_MODE",
+  "WORKER_SMTP_HOST",
+  "WORKER_SMTP_PORT",
+  "WORKER_SMTP_SECURE",
+  "WORKER_SMTP_USERNAME",
+  "WORKER_SMTP_PASSWORD",
+  "WORKER_SMTP_FROM",
   "WORKER_SENTRY_DSN",
   "MIGRATION_DATABASE_URL",
+  "WEB_API_INTERNAL_ORIGIN",
+  "WEB_AUTH_BFF_ASSERTION_KEY_BASE64",
 ];
 
 function isolatedEnvironment(values = {}) {
@@ -69,6 +89,47 @@ function apiEnvironment(port) {
     API_PORT: String(port),
     API_DATABASE_URL: "postgresql://dnd_api_local@127.0.0.1:5432/dnd_ai_local",
     API_REDIS_URL: "redis://127.0.0.1:6379/0",
+    API_PUBLIC_ORIGIN: "http://127.0.0.1:3000",
+    API_AUTH_PASSWORD_PEPPER_BASE64:
+      "YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn8=",
+    API_AUTH_PASSWORD_PEPPER_VERSION: "3",
+    API_AUTH_CHALLENGE_HMAC_KEY_BASE64:
+      "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+    API_AUTH_CHALLENGE_KEY_VERSION: "7",
+    API_AUTH_SESSION_HMAC_KEY_BASE64:
+      "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=",
+    API_AUTH_SESSION_KEY_VERSION: "9",
+    API_AUTH_SUBJECT_HASH_KEY_BASE64:
+      "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=",
+    API_AUTH_BFF_ASSERTION_KEY_BASE64:
+      "gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp8=",
+  };
+}
+
+function workerEnvironment(environment = "staging") {
+  const local = environment === "local";
+  return {
+    APP_ENV: environment,
+    WORKER_DATABASE_URL: local
+      ? "postgresql://worker@127.0.0.1:5432/dnd_ai"
+      : "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
+    WORKER_REDIS_URL: local
+      ? "redis://127.0.0.1:6379/0"
+      : "rediss://worker:redis_password@staging-cache.internal:6380/1",
+    WORKER_AUTH_CHALLENGE_HMAC_KEY_BASE64:
+      "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+    WORKER_AUTH_CHALLENGE_KEY_VERSION: "7",
+    WORKER_EMAIL_DELIVERY_MODE: local ? "fake" : "smtp",
+    ...(local
+      ? {}
+      : {
+          WORKER_SMTP_HOST: "smtp.internal",
+          WORKER_SMTP_PORT: "465",
+          WORKER_SMTP_SECURE: "true",
+          WORKER_SMTP_USERNAME: "mailer",
+          WORKER_SMTP_PASSWORD: "smtp-password",
+          WORKER_SMTP_FROM: "AI Adventure <noreply@example.test>",
+        }),
   };
 }
 
@@ -100,6 +161,10 @@ test("a valid API profile binds and can be closed cleanly", async (context) => {
 
   assert.equal(runtime.config.environment, "local");
   assert.match(runtime.address, new RegExp(`:${port}$`));
+  assert.equal(
+    runtime.app.hasRoute({ method: "POST", url: "/api/auth/sign-up" }),
+    true,
+  );
 });
 
 test("worker validation runs before the injected initializer", async () => {
@@ -124,13 +189,7 @@ test("worker validation runs before the injected initializer", async () => {
   const fakeObservability = Object.freeze({ name: "worker-observability" });
 
   const result = await initializeWorkerRuntime({
-    environment: {
-      APP_ENV: "staging",
-      WORKER_DATABASE_URL:
-        "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
-      WORKER_REDIS_URL:
-        "rediss://worker:redis_password@staging-cache.internal:6380/1",
-    },
+    environment: workerEnvironment(),
     createObservability: (options) => {
       assert.equal(options.environment, "staging");
       assert.equal(options.service, "worker");
@@ -181,11 +240,7 @@ test("incompatible observability setup fails before API listen or worker initial
       createObservability: () => {
         throw error;
       },
-      environment: {
-        APP_ENV: "local",
-        WORKER_DATABASE_URL: "postgresql://worker@127.0.0.1:5432/dnd_ai",
-        WORKER_REDIS_URL: "redis://127.0.0.1:6379/0",
-      },
+      environment: workerEnvironment("local"),
       initialize: async () => {
         workerInitializerCalled = true;
       },
@@ -225,11 +280,7 @@ test("malformed Sentry DSNs fail before API construction and worker initializati
   await assert.rejects(
     initializeWorkerRuntime({
       environment: {
-        APP_ENV: "staging",
-        WORKER_DATABASE_URL:
-          "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
-        WORKER_REDIS_URL:
-          "rediss://worker:redis_password@staging-cache.internal:6380/1",
+        ...workerEnvironment(),
         WORKER_SENTRY_DSN: workerSecretDsn,
       },
       initialize: async () => {
@@ -248,11 +299,7 @@ test("malformed Sentry DSNs fail before API construction and worker initializati
     cwd: repositoryRoot,
     encoding: "utf8",
     env: isolatedEnvironment({
-      APP_ENV: "staging",
-      WORKER_DATABASE_URL:
-        "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
-      WORKER_REDIS_URL:
-        "rediss://worker:redis_password@staging-cache.internal:6380/1",
+      ...workerEnvironment(),
       WORKER_SENTRY_DSN: workerSecretDsn,
     }),
   });
@@ -266,14 +313,14 @@ test("malformed Sentry DSNs fail before API construction and worker initializati
 test("configuration CLI smoke passes local and staging fixtures without printing connection strings", () => {
   const cases = [
     ["api", apiEnvironment(3001), "local"],
+    ["worker", workerEnvironment(), "staging"],
     [
-      "worker",
+      "web",
       {
         APP_ENV: "staging",
-        WORKER_DATABASE_URL:
-          "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
-        WORKER_REDIS_URL:
-          "rediss://worker:redis_password@staging-cache.internal:6380/1",
+        WEB_API_INTERNAL_ORIGIN: "https://api.internal",
+        WEB_AUTH_BFF_ASSERTION_KEY_BASE64:
+          "gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp8=",
       },
       "staging",
     ],
@@ -314,7 +361,10 @@ test("missing configuration fails both the CLI and API process with safe non-zer
   });
 
   assert.equal(workerResult.status, 1);
-  assert.match(workerResult.stderr, /WORKER_DATABASE_URL|WORKER_REDIS_URL/);
+  assert.match(
+    workerResult.stderr,
+    /WORKER_DATABASE_URL|WORKER_REDIS_URL|WORKER_EMAIL_DELIVERY_MODE/,
+  );
   assert.doesNotMatch(workerResult.stderr, new RegExp(secret));
 
   const apiResult = spawnSync(process.execPath, [apiStartPath], {

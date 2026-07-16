@@ -68,11 +68,11 @@ test("data model follows the persistence migration head", async () => {
   ]);
   const head = stringConstant(
     migrationSource,
-    "DATABASE_FEATURE_FLAGS_MIGRATION_NAME",
+    "DATABASE_IDENTITY_SIGNUP_MIGRATION_NAME",
   );
   const contract = stringConstant(
     migrationSource,
-    "DATABASE_FEATURE_FLAGS_CONTRACT_VERSION",
+    "DATABASE_IDENTITY_SIGNUP_CONTRACT_VERSION",
   );
 
   assert.match(dataModel, new RegExp("`" + escapeRegExp(head) + "`", "u"));
@@ -83,6 +83,10 @@ test("data model follows the persistence migration head", async () => {
     "infra.migration_contracts",
     "app.feature_flags",
     "app.feature_flag_events",
+    "app.users",
+    "app.email_verification_challenges",
+    "app.user_sessions",
+    "app.identity_email_outbox",
   ]) {
     assert.match(
       dataModel,

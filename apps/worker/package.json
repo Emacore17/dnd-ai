@@ -12,10 +12,17 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "lint": "eslint src",
+    "start": "node dist/start.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@dnd-ai/config": "workspace:*",
-    "@dnd-ai/observability": "workspace:*"
+    "@dnd-ai/observability": "workspace:*",
+    "nodemailer": "9.0.3",
+    "pg": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "8.0.1",
+    "@types/pg": "8.20.0"
   }
 }

@@ -35,3 +35,8 @@ export {
   type FeatureGateDecisionReason,
   type FeatureGateDecisionSource,
 } from "./feature-flags.js";
+export {
+  IdentityPersistenceError,
+  createPostgresIdentityStore,
+  type IdentityPersistenceErrorCode,
+} from "./identity-store.js";

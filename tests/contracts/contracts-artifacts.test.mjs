@@ -19,6 +19,14 @@ const expectedCatalog = [
     "ai_output",
     "dungeon-master-turn-result.schema.json",
   ],
+  ["IdempotencyKey", "request", "idempotency-key.schema.json"],
+  ["IdentityErrorResponse", "response", "identity-error-response.schema.json"],
+  [
+    "ResendVerificationRequest",
+    "request",
+    "resend-verification-request.schema.json",
+  ],
+  ["SignUpRequest", "request", "sign-up-request.schema.json"],
   ["GameEvent", "event", "game-event.schema.json"],
   [
     "SubmitTurnAcceptedResponse",
@@ -26,6 +34,13 @@ const expectedCatalog = [
     "submit-turn-accepted-response.schema.json",
   ],
   ["SubmitTurnRequest", "request", "submit-turn-request.schema.json"],
+  [
+    "VerificationRequiredResponse",
+    "response",
+    "verification-required-response.schema.json",
+  ],
+  ["VerifiedResponse", "response", "verified-response.schema.json"],
+  ["VerifyEmailRequest", "request", "verify-email-request.schema.json"],
   ["TurnStreamEvent", "event", "turn-stream-event.schema.json"],
 ];
 
@@ -65,6 +80,21 @@ const validFixtureByContract = {
     },
     endingStatus: "not_ready",
   },
+  IdempotencyKey: "key:123456789012",
+  IdentityErrorResponse: {
+    error: {
+      code: "identity.request_invalid",
+      message: "Richiesta non valida.",
+      requestId: REQUEST_ID,
+      retryable: false,
+    },
+  },
+  ResendVerificationRequest: { email: "player@example.com" },
+  SignUpRequest: {
+    email: "player@example.com",
+    password: "correct horse battery staple",
+    displayName: "Emanuele",
+  },
   GameEvent: {
     id: EVENT_ID,
     campaignId: CAMPAIGN_ID,
@@ -96,6 +126,16 @@ const validFixtureByContract = {
     mode: "free_action",
     input: "Osservo la stanza.",
     clientStateVersion: 4,
+  },
+  VerificationRequiredResponse: {
+    status: "verification_required",
+    challengeExpiresInSeconds: 600,
+    resendAfterSeconds: 60,
+  },
+  VerifiedResponse: { status: "verified" },
+  VerifyEmailRequest: {
+    email: "player@example.com",
+    code: "012345",
   },
   TurnStreamEvent: {
     schemaVersion: 1,
@@ -133,7 +173,7 @@ function collectReferences(value, references = []) {
   return references;
 }
 
-test("the v1 contract catalog has stable unique names, kinds and filenames", () => {
+test("the v2 contract catalog has stable unique names, kinds and filenames", () => {
   assert.deepEqual(
     contracts.CONTRACT_CATALOG.map(({ fileName, kind, name }) => [
       name,
@@ -149,19 +189,19 @@ test("the v1 contract catalog has stable unique names, kinds and filenames", () 
   );
 });
 
-test("contract artifacts contain versioned JSON Schema and components-only OpenAPI", () => {
+test("contract artifacts contain versioned JSON Schema and owned identity operations", () => {
   const artifacts = contracts.createContractArtifacts();
   const expectedArtifactPaths = [
-    "v1/manifest.json",
-    "v1/openapi.json",
-    ...expectedCatalog.map(([, , fileName]) => `v1/schemas/${fileName}`),
+    "v2/manifest.json",
+    "v2/openapi.json",
+    ...expectedCatalog.map(([, , fileName]) => `v2/schemas/${fileName}`),
   ].sort();
 
   assert.deepEqual(Object.keys(artifacts).sort(), expectedArtifactPaths);
 
-  const manifest = artifacts["v1/manifest.json"];
+  const manifest = artifacts["v2/manifest.json"];
   assert.equal(manifest.schemaVersion, "contract-artifact-manifest-v1");
-  assert.equal(manifest.contractVersion, "1.0.0");
+  assert.equal(manifest.contractVersion, "2.0.0");
   assert.equal(
     manifest.jsonSchemaDialect,
     "https://json-schema.org/draft/2020-12/schema",
@@ -176,26 +216,30 @@ test("contract artifacts contain versioned JSON Schema and components-only OpenA
   );
 
   for (const [name, kind, fileName] of expectedCatalog) {
-    const schema = artifacts[`v1/schemas/${fileName}`];
+    const schema = artifacts[`v2/schemas/${fileName}`];
 
     assert.equal(
       schema.$schema,
       "https://json-schema.org/draft/2020-12/schema",
     );
-    assert.equal(schema.$id, `urn:dnd-ai:contracts:v1:${name}`);
+    assert.equal(schema.$id, `urn:dnd-ai:contracts:v2:${name}`);
     assert.equal(schema.title, name);
-    assert.equal(schema["x-dnd-ai-contract-version"], "1.0.0");
+    assert.equal(schema["x-dnd-ai-contract-version"], "2.0.0");
     assert.equal(schema["x-dnd-ai-contract-kind"], kind);
   }
 
-  const openapi = artifacts["v1/openapi.json"];
+  const openapi = artifacts["v2/openapi.json"];
   assert.equal(openapi.openapi, "3.1.1");
-  assert.equal(openapi.info.version, "1.0.0");
+  assert.equal(openapi.info.version, "2.0.0");
   assert.equal(
     openapi.jsonSchemaDialect,
     "https://spec.openapis.org/oas/3.1/dialect/base",
   );
-  assert.deepEqual(openapi.paths, {});
+  assert.deepEqual(Object.keys(openapi.paths).sort(), [
+    "/api/auth/resend-verification",
+    "/api/auth/sign-up",
+    "/api/auth/verify-email",
+  ]);
   assert.deepEqual(
     Object.keys(openapi.components.schemas).sort(),
     expectedCatalog.map(([name]) => name).sort(),
@@ -232,7 +276,7 @@ test("artifact creation returns isolated immutable snapshots", () => {
   assert.deepEqual(first, second);
   assert.equal(Object.isFrozen(first), true);
   assert.throws(() => {
-    first["v1/openapi.json"].paths.extra = {};
+    first["v2/openapi.json"].paths.extra = {};
   }, TypeError);
 });
 
@@ -252,7 +296,7 @@ test("generated JSON Schema agrees with Zod on valid and unknown-field fixtures"
 
   for (const entry of contracts.CONTRACT_CATALOG) {
     const fixture = validFixtureByContract[entry.name];
-    const schema = artifacts[`v1/schemas/${entry.fileName}`];
+    const schema = artifacts[`v2/schemas/${entry.fileName}`];
     const validate = ajv.compile(schema);
 
     assert.equal(entry.schema.safeParse(fixture).success, true, entry.name);
@@ -269,7 +313,7 @@ test("generated JSON Schema agrees with Zod on valid and unknown-field fixtures"
 });
 
 test("OpenAPI component-local references are rebased to their component root", () => {
-  const openapi = contracts.createContractArtifacts()["v1/openapi.json"];
+  const openapi = contracts.createContractArtifacts()["v2/openapi.json"];
 
   for (const [name, schema] of Object.entries(openapi.components.schemas)) {
     for (const reference of collectReferences(schema)) {

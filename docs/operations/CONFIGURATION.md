@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering-and-security
-last_reviewed: 2026-07-15
+last_reviewed: 2026-07-16
 last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
@@ -13,6 +13,7 @@ source_refs:
 related_tasks:
   - BL-003
   - BL-004
+  - BL-005
   - BL-008
   - BL-010
   - BL-080
@@ -35,6 +36,11 @@ code_refs:
   - packages/persistence/src/migration-runner.ts
   - packages/persistence/src/feature-flags.ts
   - packages/persistence/src/migrations/000002_feature_flags.ts
+  - packages/persistence/src/migrations/000003_identity_signup.ts
+  - packages/persistence/src/identity-store.ts
+  - apps/api/src/identity
+  - apps/worker/src/identity
+  - apps/web/lib/server/identity-bff.ts
   - scripts/run-database-migrations.mjs
   - scripts/manage-feature-flag.mjs
   - scripts/lib/database-migration-policy.mjs
@@ -71,6 +77,8 @@ test_refs:
   - tests/database/feature-flags.test.mjs
   - tests/security/database-migration-security.test.mjs
   - tests/security/feature-flags-security.test.mjs
+  - tests/unit/identity-runtime-config.test.mjs
+  - tests/integration/identity-signup-flow.test.mjs
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
   - tests/integration/observability-flow.test.mjs
@@ -102,17 +110,29 @@ Una preview non introduce il valore `preview`: usa lo schema `staging`, ma non n
 | API | `API_PORT` | non secret | intero `1..65535` |
 | API | `API_DATABASE_URL` | secret-bearing | URL PostgreSQL con credenziale API; nei profili gestiti `sslmode=require|verify-ca|verify-full` |
 | API | `API_REDIS_URL` | secret-bearing | URL Redis con credenziale API; nei profili gestiti protocollo `rediss:` |
+| API | `API_PUBLIC_ORIGIN` | non secret | origin browser HTTPS nei profili gestiti, senza credentials/query/hash; è l'unico Origin accettato dalle route identity |
+| API | `API_AUTH_PASSWORD_PEPPER_BASE64` + `API_AUTH_PASSWORD_PEPPER_VERSION` | secret + metadata | Base64 decodificato di almeno 32 byte e versione positiva per il prehash Argon2id |
+| API | `API_AUTH_CHALLENGE_HMAC_KEY_BASE64` + `API_AUTH_CHALLENGE_KEY_VERSION` | secret + metadata | chiave/versione per codice e digest challenge; distinta logicamente dalle altre chiavi |
+| API | `API_AUTH_SESSION_HMAC_KEY_BASE64` + `API_AUTH_SESSION_KEY_VERSION` | secret + metadata | chiave/versione per derivare token sessione replayable senza conservarlo raw |
+| API | `API_AUTH_SUBJECT_HASH_KEY_BASE64` | secret | HMAC per subject rate-limit, idempotency key e fingerprint; non condivisa con challenge/sessione |
+| API | `API_AUTH_BFF_ASSERTION_KEY_BASE64` | secret | stessa chiave server-only del web per verificare il subject client pseudonimo; distinta da pepper, challenge, sessione e subject hash |
 | API | `API_SENTRY_DSN` | identificatore provider pubblico, redatto | opzionale; DSN HTTPS con host strutturale e project ID numerico |
 | worker | `APP_ENV` | non secret | stesso discriminatore canonico |
 | worker | `WORKER_DATABASE_URL` | secret-bearing | URL PostgreSQL con credenziale worker distinta e TLS nei profili gestiti |
 | worker | `WORKER_REDIS_URL` | secret-bearing | URL Redis con credenziale worker distinta e `rediss:` nei profili gestiti |
+| worker | `WORKER_AUTH_CHALLENGE_HMAC_KEY_BASE64` + `WORKER_AUTH_CHALLENGE_KEY_VERSION` | secret + metadata | stessa versione/materiale challenge dell'API per derivare il codice in memoria; mai esposto al browser |
+| worker | `WORKER_EMAIL_DELIVERY_MODE` | non secret | `fake` soltanto in `local`; `smtp` obbligatorio nei profili gestiti |
+| worker | `WORKER_SMTP_HOST`, `WORKER_SMTP_PORT`, `WORKER_SMTP_SECURE`, `WORKER_SMTP_FROM` | configurazione delivery | host/porta/from strutturali; TLS verificato, nessun fallback permissivo |
+| worker | `WORKER_SMTP_USERNAME`, `WORKER_SMTP_PASSWORD` | secret-bearing | credenziali SMTP obbligatorie con mode `smtp`, service-scoped e mai loggate |
 | worker | `WORKER_SENTRY_DSN` | identificatore provider pubblico, redatto | opzionale; stesso vincolo DSN, service-scoped |
 | migration | `APP_ENV` | non secret | stesso discriminatore canonico |
 | migration | `MIGRATION_DATABASE_URL` | secret-bearing | URL PostgreSQL con credenziale migration distinta e TLS nei profili gestiti |
 | web | `NEXT_PUBLIC_SENTRY_DSN` | identificatore provider pubblico, redatto | opzionale; DSN HTTPS valida, incorporata nel build client quando configurata |
+| web | `APP_ENV`, `WEB_API_INTERNAL_ORIGIN` | server-only | profilo e origin interno HTTP(S) dell'API; vietati credentials/query/hash e qualunque prefisso `NEXT_PUBLIC_` |
+| web | `WEB_AUTH_BFF_ASSERTION_KEY_BASE64` | secret server-only | stesso materiale di `API_AUTH_BFF_ASSERTION_KEY_BASE64`; firma per 30 secondi il subject HMAC dell'IP trusted senza inoltrare l'IP raw |
 | web | `APP_ENV`, `VERCEL_ENV`, `NEXT_PUBLIC_VERCEL_ENV` | system metadata | risoluzione dell'environment telemetry; non sono config di dominio né secret |
 
-Non aggiungere chiavi AI, auth, storage o flag finché il task proprietario non introduce un consumer e i relativi test. Il web non dipende da `@dnd-ai/config`: il proprio composition root legge soltanto metadata ambientali e la DSN pubblica opzionale. Nessuna DSN è una credenziale, ma viene comunque redatta da log, errori e documenti operativi.
+Non aggiungere chiavi AI, storage o altri provider finché il task proprietario non introduce un consumer e i relativi test. `apps/web` non dipende da `@dnd-ai/config`: il BFF valida fail-closed la propria superficie minima server-only, mentre il parser/CLI centrale mantiene il controllo operativo degli stessi nomi. Nei profili gestiti il client IP deriva soltanto da `x-vercel-forwarded-for`, header sovrascritto dalla piattaforma come [documentato da Vercel](https://vercel.com/docs/headers/request-headers); in locale usa `x-forwarded-for` con fallback loopback. Il BFF non inoltra mai l'IP raw. Nessuna DSN è una credenziale, ma viene comunque redatta da log, errori e documenti operativi.
 
 ## Feature flag e kill switch server-side
 
@@ -140,11 +160,12 @@ Copy-Item packages/persistence/.env.example packages/persistence/.env.local
 
 Sostituire i placeholder dei template API e worker senza committare il risultato. Le tre chiavi Sentry possono restare vuote: in tal caso l'adapter remoto è disabilitato. Il template persistence è un'eccezione deliberata: contiene soltanto la URL funzionante del Compose locale, con credenziali sintetiche note `dnd_migration_local` e database `dnd_ai_local` su `127.0.0.1:55432`. Non è un secret e non deve essere riutilizzata o resa raggiungibile fuori dall'host locale.
 
-Verificare i tre profili dopo il build del parser:
+Verificare i quattro profili dopo il build del parser:
 
 ```powershell
 corepack pnpm@11.13.0 config:check:api
 corepack pnpm@11.13.0 config:check:worker
+corepack pnpm@11.13.0 config:check:web
 corepack pnpm@11.13.0 config:check:migration
 ```
 
@@ -157,7 +178,7 @@ corepack pnpm@11.13.0 build
 corepack pnpm@11.13.0 --filter @dnd-ai/api start:local
 ```
 
-La configurazione API è validata prima della creazione dell'app Fastify e del bind; API e worker non aprono ancora database/Redis. Il composition root migration, invece, usa già `MIGRATION_DATABASE_URL` per status e DDL dopo la validazione, senza stamparla o passarla come argomento CLI.
+La configurazione API è validata prima della creazione dell'app Fastify e del bind; il composition root apre il repository identity PostgreSQL solo dopo il parse e registra shutdown idempotente. Il worker apre PostgreSQL e costruisce il sender fake/SMTP solo dopo la validazione; non crea socket SMTP all'import. Redis resta configurato per la foundation ma non viene ancora aperto dai due runtime. Il composition root migration usa `MIGRATION_DATABASE_URL` per status e DDL dopo la validazione, senza stamparla o passarla come argomento CLI.
 
 Per il database locale e le migration:
 
@@ -201,5 +222,6 @@ Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo 
 - `BL-004`: migration executable, Compose e credenziali esclusivamente sintetiche locali implementati; le credenziali reali/gestite restano al provisioning dell'ambiente proprietario;
 - `BL-008`: baseline OTel/Pino/Sentry, redazione e propagazione implementate sul branch; nessun endpoint pubblico, account o backend remoto introdotto;
 - `BL-010`: configurazione dinamica auditata per flag e kill switch;
+- `BL-005`: chiavi identity versionate, origin pubblico/interno e delivery email server-only implementati; nessun secret reale o SMTP remoto verificato;
 - `BL-080`: project/provider web, Production Branch e Trusted Source configurati senza secret applicativi; freeze integrato; task bloccato finché il provider non offre un first-deployment Preview-only supportato;
 - `BL-070`: hardening, load/chaos, backup restore e go/no-go.

@@ -8,6 +8,15 @@ import {
 } from "./api.js";
 import { TurnStreamEventSchema } from "./events.js";
 import { GameEventSchema } from "./game-event.js";
+import {
+  IdempotencyKeySchema,
+  IdentityErrorResponseSchema,
+  ResendVerificationRequestSchema,
+  SignUpRequestSchema,
+  VerificationRequiredResponseSchema,
+  VerifiedResponseSchema,
+  VerifyEmailRequestSchema,
+} from "./identity.js";
 
 export type ContractKind = "request" | "response" | "event" | "ai_output";
 
@@ -40,6 +49,30 @@ export const CONTRACT_CATALOG: readonly ContractCatalogEntry[] = Object.freeze([
     "dungeon-master-turn-result.schema.json",
     DungeonMasterTurnResultSchema,
   ),
+  contract(
+    "IdempotencyKey",
+    "request",
+    "idempotency-key.schema.json",
+    IdempotencyKeySchema,
+  ),
+  contract(
+    "IdentityErrorResponse",
+    "response",
+    "identity-error-response.schema.json",
+    IdentityErrorResponseSchema,
+  ),
+  contract(
+    "ResendVerificationRequest",
+    "request",
+    "resend-verification-request.schema.json",
+    ResendVerificationRequestSchema,
+  ),
+  contract(
+    "SignUpRequest",
+    "request",
+    "sign-up-request.schema.json",
+    SignUpRequestSchema,
+  ),
   contract("GameEvent", "event", "game-event.schema.json", GameEventSchema),
   contract(
     "SubmitTurnAcceptedResponse",
@@ -52,6 +85,24 @@ export const CONTRACT_CATALOG: readonly ContractCatalogEntry[] = Object.freeze([
     "request",
     "submit-turn-request.schema.json",
     SubmitTurnRequestSchema,
+  ),
+  contract(
+    "VerificationRequiredResponse",
+    "response",
+    "verification-required-response.schema.json",
+    VerificationRequiredResponseSchema,
+  ),
+  contract(
+    "VerifiedResponse",
+    "response",
+    "verified-response.schema.json",
+    VerifiedResponseSchema,
+  ),
+  contract(
+    "VerifyEmailRequest",
+    "request",
+    "verify-email-request.schema.json",
+    VerifyEmailRequestSchema,
   ),
   contract(
     "TurnStreamEvent",

@@ -54,19 +54,19 @@ test(
 
       assertSuccessfulCommand(
         runMigrationCli(["status"], databaseUrl),
-        "Database migration status: current=empty; contract=none; applied=0; pending=2\n",
+        `Database migration status: current=empty; contract=none; applied=0; pending=${DATABASE_MIGRATION_MANIFEST.length}\n`,
         databaseUrl,
       );
 
       assertSuccessfulCommand(
         runMigrationCli(["up"], databaseUrl),
-        `Database migration up complete: current=${DATABASE_MIGRATION_HEAD}; changed=2\n`,
+        `Database migration up complete: current=${DATABASE_MIGRATION_HEAD}; changed=${DATABASE_MIGRATION_MANIFEST.length}\n`,
         databaseUrl,
       );
 
       assertSuccessfulCommand(
         runMigrationCli(["status"], databaseUrl),
-        `Database migration status: current=${DATABASE_MIGRATION_HEAD}; contract=${DATABASE_CONTRACT_VERSION}; applied=2; pending=0\n`,
+        `Database migration status: current=${DATABASE_MIGRATION_HEAD}; contract=${DATABASE_CONTRACT_VERSION}; applied=${DATABASE_MIGRATION_MANIFEST.length}; pending=0\n`,
         databaseUrl,
       );
 

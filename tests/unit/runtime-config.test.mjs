@@ -14,6 +14,20 @@ const apiLocalEnvironment = Object.freeze({
   API_PORT: "3001",
   API_DATABASE_URL: "postgresql://dnd_api_local@127.0.0.1:5432/dnd_ai_local",
   API_REDIS_URL: "redis://127.0.0.1:6379/0",
+  API_PUBLIC_ORIGIN: "http://127.0.0.1:3000",
+  API_AUTH_PASSWORD_PEPPER_BASE64:
+    "YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn8=",
+  API_AUTH_PASSWORD_PEPPER_VERSION: "3",
+  API_AUTH_CHALLENGE_HMAC_KEY_BASE64:
+    "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+  API_AUTH_CHALLENGE_KEY_VERSION: "7",
+  API_AUTH_SESSION_HMAC_KEY_BASE64:
+    "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=",
+  API_AUTH_SESSION_KEY_VERSION: "9",
+  API_AUTH_SUBJECT_HASH_KEY_BASE64:
+    "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=",
+  API_AUTH_BFF_ASSERTION_KEY_BASE64:
+    "gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp8=",
 });
 
 const workerStagingEnvironment = Object.freeze({
@@ -22,10 +36,40 @@ const workerStagingEnvironment = Object.freeze({
     "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
   WORKER_REDIS_URL:
     "rediss://worker:redis_password@staging-cache.internal:6380/1",
+  WORKER_AUTH_CHALLENGE_HMAC_KEY_BASE64:
+    "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+  WORKER_AUTH_CHALLENGE_KEY_VERSION: "7",
+  WORKER_EMAIL_DELIVERY_MODE: "smtp",
+  WORKER_SMTP_HOST: "smtp.internal",
+  WORKER_SMTP_PORT: "465",
+  WORKER_SMTP_SECURE: "true",
+  WORKER_SMTP_USERNAME: "mailer",
+  WORKER_SMTP_PASSWORD: "smtp-password",
+  WORKER_SMTP_FROM: "AI Adventure <noreply@example.test>",
 });
 
 const apiSentryDsn = "https://api-public-key@errors.example.test/101";
 const workerSentryDsn = "https://worker-public-key@errors.example.test/202";
+
+function legacyApiConfig(config) {
+  return Object.freeze(
+    Object.fromEntries(
+      Object.entries(config).filter(
+        ([key]) => key !== "identity" && key !== "publicOrigin",
+      ),
+    ),
+  );
+}
+
+function legacyWorkerConfig(config) {
+  return Object.freeze(
+    Object.fromEntries(
+      Object.entries(config).filter(
+        ([key]) => key !== "emailDelivery" && key !== "identity",
+      ),
+    ),
+  );
+}
 
 test("optional Sentry DSNs are omitted when absent or blank", () => {
   for (const API_SENTRY_DSN of [undefined, "", "   "]) {
@@ -51,11 +95,13 @@ test("optional Sentry DSNs are omitted when absent or blank", () => {
 
 test("valid Sentry DSNs remain scoped to their owning service", () => {
   assert.deepEqual(
-    parseApiRuntimeConfig({
-      ...apiLocalEnvironment,
-      API_SENTRY_DSN: apiSentryDsn,
-      WORKER_SENTRY_DSN: workerSentryDsn,
-    }),
+    legacyApiConfig(
+      parseApiRuntimeConfig({
+        ...apiLocalEnvironment,
+        API_SENTRY_DSN: apiSentryDsn,
+        WORKER_SENTRY_DSN: workerSentryDsn,
+      }),
+    ),
     {
       environment: "local",
       host: "127.0.0.1",
@@ -67,11 +113,13 @@ test("valid Sentry DSNs remain scoped to their owning service", () => {
   );
 
   assert.deepEqual(
-    parseWorkerRuntimeConfig({
-      ...workerStagingEnvironment,
-      API_SENTRY_DSN: apiSentryDsn,
-      WORKER_SENTRY_DSN: workerSentryDsn,
-    }),
+    legacyWorkerConfig(
+      parseWorkerRuntimeConfig({
+        ...workerStagingEnvironment,
+        API_SENTRY_DSN: apiSentryDsn,
+        WORKER_SENTRY_DSN: workerSentryDsn,
+      }),
+    ),
     {
       environment: "staging",
       databaseUrl:
@@ -108,10 +156,12 @@ test("Sentry DSNs reject unsafe schemes, hosts and project paths without reflect
 });
 
 test("API configuration parses, normalizes and strips unrelated environment values", () => {
-  const config = parseApiRuntimeConfig({
-    ...apiLocalEnvironment,
-    UNRELATED_PROCESS_VALUE: "must-not-cross-the-boundary",
-  });
+  const config = legacyApiConfig(
+    parseApiRuntimeConfig({
+      ...apiLocalEnvironment,
+      UNRELATED_PROCESS_VALUE: "must-not-cross-the-boundary",
+    }),
+  );
 
   assert.deepEqual(config, {
     environment: "local",
@@ -125,12 +175,15 @@ test("API configuration parses, normalizes and strips unrelated environment valu
 });
 
 test("worker and migration configurations preserve distinct staging and production profiles", () => {
-  assert.deepEqual(parseWorkerRuntimeConfig(workerStagingEnvironment), {
-    environment: "staging",
-    databaseUrl:
-      "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
-    redisUrl: "rediss://worker:redis_password@staging-cache.internal:6380/1",
-  });
+  assert.deepEqual(
+    legacyWorkerConfig(parseWorkerRuntimeConfig(workerStagingEnvironment)),
+    {
+      environment: "staging",
+      databaseUrl:
+        "postgresql://worker_user:worker_password@staging-db.internal:5432/dnd_ai?sslmode=require",
+      redisUrl: "rediss://worker:redis_password@staging-cache.internal:6380/1",
+    },
+  );
 
   assert.deepEqual(
     parseMigrationRuntimeConfig({
@@ -150,9 +203,10 @@ test("missing staging keys fail without falling back to local or production valu
   assert.throws(
     () =>
       parseWorkerRuntimeConfig({
-        APP_ENV: "staging",
+        ...workerStagingEnvironment,
         WORKER_DATABASE_URL:
           "postgresql://worker_user@staging-db.internal:5432/dnd_ai?sslmode=require",
+        WORKER_REDIS_URL: undefined,
       }),
     (error) => {
       assert.equal(error instanceof RuntimeConfigurationError, true);
@@ -183,6 +237,7 @@ test("missing and malformed values report key names without reflecting secret va
   assert.throws(
     () =>
       parseApiRuntimeConfig({
+        ...apiLocalEnvironment,
         APP_ENV: "preview",
         API_HOST: "",
         API_PORT: "three-thousand",
@@ -246,7 +301,9 @@ test("managed profiles require structured hosts, database names, TLS and credent
   assert.throws(
     () =>
       parseApiRuntimeConfig({
+        ...apiLocalEnvironment,
         APP_ENV: "staging",
+        API_PUBLIC_ORIGIN: "https://api.example.test",
         API_HOST: "bad host",
         API_PORT: "3001",
         API_DATABASE_URL: "postgresql:not-a-connection-string",
@@ -272,6 +329,7 @@ test("managed profiles require structured hosts, database names, TLS and credent
   assert.throws(
     () =>
       parseWorkerRuntimeConfig({
+        ...workerStagingEnvironment,
         APP_ENV: "production",
         WORKER_DATABASE_URL:
           "postgresql://worker:database_password@production-db.internal:5432/dnd_ai",
@@ -290,6 +348,7 @@ test("managed profiles require structured hosts, database names, TLS and credent
   assert.throws(
     () =>
       parseWorkerRuntimeConfig({
+        ...workerStagingEnvironment,
         APP_ENV: "staging",
         WORKER_DATABASE_URL:
           "postgresql://worker@staging-db.internal:5432/dnd_ai?sslmode=require",
@@ -307,6 +366,7 @@ test("managed profiles require structured hosts, database names, TLS and credent
   assert.throws(
     () =>
       parseWorkerRuntimeConfig({
+        ...workerStagingEnvironment,
         APP_ENV: "staging",
         WORKER_DATABASE_URL:
           "postgresql://worker:database_password@bad_host:5432/dnd_ai?sslmode=require",

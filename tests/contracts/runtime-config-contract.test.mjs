@@ -36,20 +36,43 @@ test("service-specific local templates expose only their own configuration surfa
   );
 
   assert.deepEqual(Object.keys(api).sort(), [
+    "API_AUTH_BFF_ASSERTION_KEY_BASE64",
+    "API_AUTH_CHALLENGE_HMAC_KEY_BASE64",
+    "API_AUTH_CHALLENGE_KEY_VERSION",
+    "API_AUTH_PASSWORD_PEPPER_BASE64",
+    "API_AUTH_PASSWORD_PEPPER_VERSION",
+    "API_AUTH_SESSION_HMAC_KEY_BASE64",
+    "API_AUTH_SESSION_KEY_VERSION",
+    "API_AUTH_SUBJECT_HASH_KEY_BASE64",
     "API_DATABASE_URL",
     "API_HOST",
     "API_PORT",
+    "API_PUBLIC_ORIGIN",
     "API_REDIS_URL",
     "API_SENTRY_DSN",
     "APP_ENV",
   ]);
   assert.deepEqual(Object.keys(worker).sort(), [
     "APP_ENV",
+    "WORKER_AUTH_CHALLENGE_HMAC_KEY_BASE64",
+    "WORKER_AUTH_CHALLENGE_KEY_VERSION",
     "WORKER_DATABASE_URL",
+    "WORKER_EMAIL_DELIVERY_MODE",
     "WORKER_REDIS_URL",
     "WORKER_SENTRY_DSN",
+    "WORKER_SMTP_FROM",
+    "WORKER_SMTP_HOST",
+    "WORKER_SMTP_PASSWORD",
+    "WORKER_SMTP_PORT",
+    "WORKER_SMTP_SECURE",
+    "WORKER_SMTP_USERNAME",
   ]);
-  assert.deepEqual(Object.keys(web), ["NEXT_PUBLIC_SENTRY_DSN"]);
+  assert.deepEqual(Object.keys(web), [
+    "APP_ENV",
+    "WEB_API_INTERNAL_ORIGIN",
+    "WEB_AUTH_BFF_ASSERTION_KEY_BASE64",
+    "NEXT_PUBLIC_SENTRY_DSN",
+  ]);
   assert.deepEqual(Object.keys(migration).sort(), [
     "APP_ENV",
     "MIGRATION_DATABASE_URL",
@@ -62,15 +85,19 @@ test("service-specific local templates expose only their own configuration surfa
       false,
     );
   }
+  assert.equal(web.APP_ENV, "local");
 
   assert.equal("API_SENTRY_DSN" in worker, false);
   assert.equal("WORKER_SENTRY_DSN" in api, false);
   assert.equal("NEXT_PUBLIC_SENTRY_DSN" in api, false);
   assert.equal("NEXT_PUBLIC_SENTRY_DSN" in worker, false);
   assert.equal(web.NEXT_PUBLIC_SENTRY_DSN, "");
+  assert.equal(web.WEB_API_INTERNAL_ORIGIN, "http://127.0.0.1:3001");
 
   assert.equal(api.API_HOST, "127.0.0.1");
   assert.equal(api.API_PORT, "3001");
+  assert.equal(api.API_PUBLIC_ORIGIN, "http://127.0.0.1:3000");
+  assert.equal(worker.WORKER_EMAIL_DELIVERY_MODE, "fake");
   assert.deepEqual(
     [
       api.API_DATABASE_URL,
@@ -138,7 +165,12 @@ test("pure config parsing does not read ambient process state", async () => {
   assert.equal("@dnd-ai/config" in webManifest.dependencies, false);
 
   const webTemplate = parseExample(await read("apps/web/.env.example"));
-  assert.deepEqual(Object.keys(webTemplate), ["NEXT_PUBLIC_SENTRY_DSN"]);
+  assert.deepEqual(Object.keys(webTemplate), [
+    "APP_ENV",
+    "WEB_API_INTERNAL_ORIGIN",
+    "WEB_AUTH_BFF_ASSERTION_KEY_BASE64",
+    "NEXT_PUBLIC_SENTRY_DSN",
+  ]);
 });
 
 test("workspace typecheck builds dependency declarations on a clean checkout", async () => {
@@ -154,6 +186,7 @@ test("the composed config check preserves the pinned package manager", async () 
     rootManifest.scripts["config:check"],
     "corepack pnpm@11.13.0 config:check:api && " +
       "corepack pnpm@11.13.0 config:check:worker && " +
+      "corepack pnpm@11.13.0 config:check:web && " +
       "corepack pnpm@11.13.0 config:check:migration",
   );
 });

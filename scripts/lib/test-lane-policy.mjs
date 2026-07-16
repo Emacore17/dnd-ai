@@ -31,10 +31,13 @@ function freezeLane(configuration) {
 export const TEST_LANES = Object.freeze({
   unit: freezeLane({
     buildFilters: [
+      "@dnd-ai/api",
       "@dnd-ai/config",
+      "@dnd-ai/domain",
       "@dnd-ai/observability",
       "@dnd-ai/persistence",
       "@dnd-ai/testing",
+      "@dnd-ai/worker",
     ],
     concurrency: 4,
     name: "unit",
@@ -73,10 +76,12 @@ export const TEST_LANES = Object.freeze({
   }),
   security: freezeLane({
     buildFilters: [
+      "@dnd-ai/api",
       "@dnd-ai/config",
       "@dnd-ai/observability",
       "@dnd-ai/persistence",
       "@dnd-ai/testing",
+      "@dnd-ai/worker",
     ],
     concurrency: 2,
     name: "security",
