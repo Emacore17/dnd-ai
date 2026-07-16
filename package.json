@@ -38,7 +38,7 @@
     "db:migrate:local": "turbo run build --filter=@dnd-ai/config --filter=@dnd-ai/persistence && node --env-file=packages/persistence/.env.local scripts/run-database-migrations.mjs up",
     "db:migrate:status:local": "turbo run build --filter=@dnd-ai/config --filter=@dnd-ai/persistence && node --env-file=packages/persistence/.env.local scripts/run-database-migrations.mjs status",
     "db:rollback:local": "turbo run build --filter=@dnd-ai/config --filter=@dnd-ai/persistence && node --env-file=packages/persistence/.env.local scripts/run-database-migrations.mjs down --confirm-local-rollback",
-    "db:migrate:test": "turbo run build --filter=@dnd-ai/config --filter=@dnd-ai/persistence && node --test --test-concurrency=1 tests/database/*.test.mjs",
+    "db:migrate:test": "turbo run build --filter=@dnd-ai/config --filter=@dnd-ai/persistence --filter=@dnd-ai/testing && node --test --test-concurrency=1 tests/database/*.test.mjs",
     "flags:status": "turbo run build --filter=@dnd-ai/config --filter=@dnd-ai/persistence && node scripts/manage-feature-flag.mjs status",
     "flags:set": "turbo run build --filter=@dnd-ai/config --filter=@dnd-ai/persistence && node scripts/manage-feature-flag.mjs set",
     "test:unit": "turbo run build --filter=@dnd-ai/config --filter=@dnd-ai/observability --filter=@dnd-ai/persistence && node --test tests/unit/*.test.mjs",
