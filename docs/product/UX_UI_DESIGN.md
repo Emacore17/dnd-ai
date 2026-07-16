@@ -1,12 +1,13 @@
 ---
 status: active
 owner: product-design-and-frontend
-last_reviewed: 2026-07-13
+last_reviewed: 2026-07-16
 last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
 source_refs:
   - docs/MVP_SPEC.md#8-esperienza-utente
   - docs/MVP_SPEC.md#21-interfaccia-utente
   - docs/MVP_SPEC.md#23-requisiti-non-funzionali
+  - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
 related_tasks:
   - GOV-001
   - BL-079
@@ -27,6 +28,8 @@ related_tasks:
   - BL-074
   - BL-076
   - BL-078
+  - QA-001
+  - QA-002
 code_refs:
   - apps/web (planned)
 test_refs:
@@ -350,7 +353,7 @@ Le feature M1–M3 consumano questa fondazione; non ridefiniscono palette, spaci
 
 Ogni task che crea o modifica una superficie utente dipende esplicitamente da `BL-079` e cita sia questo contratto sia `docs/adr/0001-mobile-first-conversational-ui.md`. La regola vale anche per identity, recovery e backlog differito: un gate di milestone transitivo non sostituisce il collegamento al design system concretamente consumato.
 
-`BL-079` possiede il setup component/browser minimo necessario a dimostrare shell, accessibilità e responsive behavior. `QA-001` lo consolida successivamente nel harness comune per tutto il repository; non è una dipendenza di `BL-079` e non ne duplica le fixture.
+`BL-079` possiede il setup component/browser minimo necessario a dimostrare shell, accessibilità e responsive behavior. `QA-001` costruisce prima la fondazione test non-browser. `QA-002`, dipendente da entrambi, consolida successivamente il setup browser nel harness comune senza duplicare le fixture di feature.
 
 ## 15. Rischi e mitigazioni
 

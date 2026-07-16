@@ -1,13 +1,14 @@
 ---
 status: active
 owner: engineering-and-security
-last_reviewed: 2026-07-15
+last_reviewed: 2026-07-16
 last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#264-integration-test-database
   - docs/MVP_SPEC.md#294-cicd
   - docs/adr/0008-zod-first-contract-generation.md
+  - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
 related_tasks:
   - BL-002
   - BL-003
@@ -17,6 +18,7 @@ related_tasks:
   - GOV-002
   - BL-080
   - QA-001
+  - QA-002
   - BL-070
 code_refs:
   - .vercelignore
@@ -198,7 +200,7 @@ if ($LASTEXITCODE -ne 0) { throw "preview-dry-run: source manifest rejected" }
 | harness condiviso PostgreSQL/Redis e suite database funzionali successive | `QA-001` e task proprietari |
 | schema/OpenAPI/event compatibility | `BL-009`: implementata; review e full gate PASS, clean verify e CI PR pendenti |
 | coverage rules/domain ≥80% e report | `QA-001` |
-| browser, bundle e accessibility budget | `BL-079`, `QA-001` |
+| browser, bundle e accessibility budget | `BL-079`, `QA-002` |
 | secret manager, preview/staging M0, deploy smoke e rollback minimo | `BL-080`; contratto di injection già in `BL-003` |
 | eval prompt/schema | `BL-068` |
 | container, SBOM, image scan, load/chaos, restore e release hardening | `BL-070` |

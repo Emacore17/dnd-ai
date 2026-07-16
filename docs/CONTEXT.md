@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-15
+last_reviewed: 2026-07-16
 last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md
@@ -11,6 +11,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md
   - docs/superpowers/specs/2026-07-15-bl-009-contract-generation-design.md
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
+  - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -24,6 +25,8 @@ related_tasks:
   - BL-010
   - BL-079
   - BL-080
+  - QA-001
+  - QA-002
 code_refs:
   - apps
   - packages
@@ -146,20 +149,20 @@ supersedes: null
 
 | Campo | Valore |
 |---|---|
-| Data assoluta | 2026-07-15 |
+| Data assoluta | 2026-07-16 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-010` è integrato su `main` tramite [PR #22](https://github.com/Emacore17/dnd-ai/pull/22), merge `15382d547638333e33992be96479a6f0cbff1a29`; CI PR `29426133056` e post-merge `29426357415` hanno concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `GOV-002` è integrato su `main` tramite [PR #23](https://github.com/Emacore17/dnd-ai/pull/23), merge `a698592b0a610735297a1026c80eae5e5114355c`; CI PR `29432939311` e post-merge `29433127921` hanno concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | candidato branch-local `GOV-002 — DONE/100%/PASSING` su `codex/gov-002-document-integrity`; suite mirata 22/22, review senza P0/P1 e full gate finale verde in 101,4 s; restano clean checkout e delivery protetta per rendere canonico lo stato su `main` |
-| Ultimo task completato | `BL-010 — DONE/100%/PASSING`, delivery verificata su `main` |
-| Prossimo task READY | `—`; `GOV-002` è in corso. `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale |
+| Task attivo | `QA-001 — IN_PROGRESS/25%/NOT_RUN` sul branch `codex/qa-001-test-foundation`; decomposizione e design approvati, implementazione non iniziata |
+| Ultimo task completato | `GOV-002 — DONE/100%/PASSING`, delivery verificata su `main` tramite PR #23 e CI post-merge `29433127921` 5/5 `SUCCESS` |
+| Prossimo task READY | `DOC-ARCH-001`; `QA-002` resta `BACKLOG` finché `QA-001` e `BL-079` non sono `DONE` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-003`, `BL-008`, `BL-009` e `BL-010` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`; `BL-010` fornisce `database-feature-flags-v1` con migration `000002_feature_flags`, catalogo kill switch server-side, store PostgreSQL con audit atomico, CAS, idempotenza, replay stabile e CLI redatta. Il candidato `GOV-002` compone generated drift, metadata/link/anchor/section refs, registro ADR, Mermaid bounded e task graph in `docs:check`; i tempi consecutivi osservati sono 3,136 s e 3,130 s. I consumer API/worker reali restano fuori scope finché i task proprietari non implementano start campaign, turn enqueue e model route. Non sono stati creati account, exporter remoti, risorse provider o deploy. `BL-079` resta `BACKLOG` fino a uno staging reale.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `BL-008`, `BL-009` e `BL-010` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`; `BL-010` fornisce `database-feature-flags-v1` con migration `000002_feature_flags`; `GOV-002` compone generated drift, metadata/link/anchor/section refs, registro ADR, Mermaid bounded e task graph in `docs:check`. `QA-001` è stato ristretto alla fondazione test non-browser; `QA-002` possiede il consolidamento browser dopo `BL-079`, eliminando la dipendenza incoerente emersa nell'audit. I consumer API/worker reali restano fuori scope finché i task proprietari non implementano start campaign, turn enqueue e model route. Non sono stati creati account, exporter remoti, risorse provider o deploy. `BL-079` resta `BACKLOG` fino a uno staging reale.
 
 ## Decisioni operative vigenti
 
@@ -187,6 +190,7 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Rules version | `N/A` | package rules presente come scaffold; cataloghi/formule non implementati |
 | Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
 | Eval suite version | `N/A` | harness non creato |
+| Test foundation contract | `testing-foundation-v1` approved | design approvato; runner, primitive deterministiche, container PostgreSQL/Redis e report non ancora implementati |
 | Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
 | Observability contract | `observability-baseline-v1` | implementato e integrato tramite PR #20; run post-merge `29415397361` 5/5 `SUCCESS`; provider remoti assenti |
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
@@ -242,7 +246,7 @@ corepack pnpm@11.13.0 verify:affected
 corepack pnpm@11.13.0 verify
 ```
 
-E2E, eval, bot, load e il test harness container/browser generale restano pianificati nei task proprietari, soprattutto `QA-001`; non vanno sostituiti da no-op. La suite migration è reale e fa parte di `verify`/CI; il harness condiviso futuro potrà consolidarne il lifecycle senza cambiare il contratto.
+Eval, bot e load restano pianificati nei task proprietari e non vanno sostituiti da no-op. `QA-001` possiede il test harness container non-browser; `BL-079` crea il setup browser minimo della feature e `QA-002` lo consolida in browser/accessibility/visual regression harness. La suite migration è reale e fa parte di `verify`/CI; il harness condiviso potrà consolidarne il lifecycle senza cambiare il contratto.
 
 Verifiche documentali manuali correnti:
 
@@ -268,8 +272,8 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 | ID | Rischio | Mitigazione/owner |
 |---|---|---|
 | CTX-R03 | App e package di dominio restano scaffold; il web non contiene ancora la foundation UX/UI | task M0 proprietari; non inferire comportamento applicativo dalle entry point minime |
-| CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` resta in M0 e dipende dalla foundation operativa `BL-080` |
-| CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive gated o rimosso nel task `BL-079` |
+| CTX-R04 | Mobile UX potrebbe essere implementata tardi | `BL-079` resta in M0 e dipende dalla foundation operativa `BL-080`; `QA-002` consolida il browser gate dopo la feature |
+| CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive gated o rimosso in `BL-079`; `QA-002` verifica reduced-motion e visual/performance regression |
 | CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | `BL-080` è `BLOCKED/50%/PARTIAL` sull'assenza di un percorso first-deployment Preview-only supportato; freeze integrato e BL-079/GATE-M0 non sbloccati |
 | CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based/ignore-aware |
 | CTX-R14 | L'installazione condivisa `41079282` vede 8 repository e non può essere ristretta senza togliere accesso ad altri progetti; un owner può bypassare l'interlock procedurale e invocare direttamente CLI/UI | Controlli project-level, Git disabilitato, `manualDeployment.enabled=false`, runbook fail-closed e divieto esplicito di deploy reale; l'interlock non viene presentato come enforcement provider |
@@ -280,7 +284,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Concludere review, full gate e clean checkout del candidato `GOV-002`, quindi pubblicare una sola PR protetta senza riaprire il freeze Vercel. `BL-079` resta `BACKLOG` finché non esiste staging reale.
+Completare la review della design spec `QA-001`, scrivere il piano TDD e implementare `testing-foundation-v1` senza browser harness o azioni Vercel. `QA-002` resta bloccato da `QA-001` e `BL-079`; `DOC-ARCH-001` è il successivo task `READY` indipendente.
 
 ## Rischi chiusi
 

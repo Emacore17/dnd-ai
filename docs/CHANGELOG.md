@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-15
+last_reviewed: 2026-07-16
 last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md
@@ -19,6 +19,8 @@ related_tasks:
   - BL-010
   - BL-079
   - BL-080
+  - QA-001
+  - QA-002
 code_refs:
   - .github/workflows/ci.yml
   - scripts/lib/build-artifact.mjs
@@ -119,6 +121,23 @@ supersedes: null
 ---
 
 # Changelog documentale e contrattuale
+
+## 2026-07-16
+
+### Added
+
+- Approvato il design `testing-foundation-v1` per `QA-001`: runner Node nativo, primitive deterministiche, container PostgreSQL/Redis e report JUnit/coverage senza secondo runner o nuova libreria container.
+- Aggiunto `QA-002` per consolidare Playwright, accessibility e visual regression dopo `QA-001` e `BL-079`.
+
+### Changed
+
+- Corrette le dipendenze QA: `QA-001` possiede soltanto la fondazione non-browser; `QA-002` possiede browser/device matrix, reduced-motion, accessibility e visual artifact; `GATE-M0` dipende da entrambi.
+- Allineato lo stato canonico dopo `GOV-002`: PR #23, merge `a698592` e CI post-merge `29433127921` 5/5 `SUCCESS`; `QA-001` è il task attivo e `DOC-ARCH-001` il successivo `READY`.
+- Confermato il freeze Vercel: la decomposizione QA non abilita deploy, provider o Production.
+
+### Verification
+
+- Design approvato dal Product Owner e self-review completata il 2026-07-16; `verify:docs` passa con 37 documenti, 9 modificati, task graph e secret scan `PASS` prima del piano TDD.
 
 ## 2026-07-15
 
@@ -268,7 +287,7 @@ supersedes: null
 - Selezionati shadcn/ui `new-york` con Radix, AI Elements come presentational layer e Motion come motion layer; Rive resta opzionale e subordinato a performance gate.
 - Estesi backlog, test UI e gate M0 per includere mobile matrix, accessibility, visual regression e performance trace.
 - Resi espliciti `BL-079` e i riferimenti UX/ADR in ogni task che modifica UI; sostituite le dipendenze differite testuali con task/gate verificabili.
-- Chiarita l’ownership: `BL-079` crea il browser harness minimo di feature, `QA-001` lo consolida senza blocco circolare.
+- Chiarita l’ownership iniziale: `BL-079` crea il browser harness minimo di feature; il consolidamento, allora assegnato a `QA-001`, è stato successivamente separato in `QA-002` dalla decomposizione del 2026-07-16.
 - Aggiunto un override pnpm a `postcss@8.5.10` per correggere il finding moderato transitivo `GHSA-qx2v-qp2m-jg93`; audit successivo senza vulnerabilità note.
 - Il quality contract locale ora include format, unit, integration, contract, security, workflow policy, build e artifact verification; le suite future restano assegnate ai task proprietari.
 - Attivata sul repository pubblico la Ruleset `main-required-ci` (`18877721`), strict e senza bypass, con `CI / Merge gate` richiesto da GitHub Actions; `BL-002` passa a `DONE` e `BL-079` a `READY`.

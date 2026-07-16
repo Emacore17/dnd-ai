@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering-and-qa
-last_reviewed: 2026-07-15
+last_reviewed: 2026-07-16
 last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
@@ -11,6 +11,7 @@ source_refs:
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
   - docs/superpowers/specs/2026-07-15-gov-002-document-integrity-design.md
+  - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
   - docs/adr/README.md
 related_tasks:
   - GOV-001
@@ -25,6 +26,8 @@ related_tasks:
   - BL-040
   - BL-079
   - BL-080
+  - QA-001
+  - QA-002
 code_refs:
   - apps
   - packages
@@ -139,8 +142,8 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 |---|---|---|---|---|---|
 | Cold start riproducibile | `AGENTS.md` §2; `docs/TASKS.md` §§3, 6 | GOV-001 | `AGENTS.md`, `docs/README.md`, `docs/CONTEXT.md`, `docs/TASKS.md` | `AGENTS_VALIDATION.txt` | implemented |
 | Contesto con hash/data/versioni | `docs/TASKS.md` §6.3 | GOV-001 | `docs/CONTEXT.md` | cold-start review in `AGENTS_VALIDATION.txt` | implemented |
-| Link, anchor e riferimenti documentali validi | `AGENTS.md` §12.3; spec §§26.12, 32.3, 35.1 | GOV-001, GOV-002, GOV-003 | documenti attivi, `scripts/lib/document-integrity-policy.mjs`, registro ADR e worker Mermaid | `tests/contracts/document-policy.test.mjs`, `tests/contracts/document-integrity.test.mjs`; `pnpm docs:check` verifica generated drift, metadata/freshness, path/ref/link/anchor, section refs, ADR, Mermaid e task graph | implemented locally, targeted PASS; full/clean/CI pending |
-| Requisito→task→test→evidenza | `docs/TASKS.md` §6 | GOV-001, GOV-002 | questo documento | mapping GOV-002 verso policy Markdown/Mermaid/ADR, contract test e comandi riproducibili | implemented locally, targeted PASS |
+| Link, anchor e riferimenti documentali validi | `AGENTS.md` §12.3; spec §§26.12, 32.3, 35.1 | GOV-001, GOV-002, GOV-003 | documenti attivi, `scripts/lib/document-integrity-policy.mjs`, registro ADR e worker Mermaid | `tests/contracts/document-policy.test.mjs`, `tests/contracts/document-integrity.test.mjs`; `pnpm docs:check` verifica generated drift, metadata/freshness, path/ref/link/anchor, section refs, ADR, Mermaid e task graph | DONE; PR #23/merge `a698592`, CI post-merge `29433127921` 5/5 `SUCCESS` |
+| Requisito→task→test→evidenza | `docs/TASKS.md` §6 | GOV-001, GOV-002 | questo documento | mapping GOV-002 verso policy Markdown/Mermaid/ADR, contract test e comandi riproducibili | DONE; PR #23/merge `a698592`, CI post-merge `29433127921` 5/5 `SUCCESS` |
 | Monorepo buildabile con tre runtime e package puri | spec §§11.2–11.3; `AGENTS.md` §9 | BL-001 | `apps/*`, `packages/*`, `turbo.json` | lint/typecheck/build su 10 workspace; report BL-001 | implemented, clean worktree PASS |
 | Import e dipendenze rispettano la allowlist | `AGENTS.md` §§4.6, 9 | BL-001 | `scripts/lib/workspace-boundaries.mjs` | `tests/contracts/workspace-boundaries.test.mjs`, inclusa fixture vietata; report BL-001 | implemented, PASS |
 | Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check` e gate composto `pnpm docs:check`; report BL-001 | implemented, PASS |
@@ -156,6 +159,8 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004, BL-010 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head `000002_feature_flags`, previous→head da `000001`, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | suite DB 15/15 PASS su branch BL-010; full gate locale PASS; CI pending |
 | Rollback database fail-closed e forward-only gestito | spec §§19.5, 29.5; ADR-0006 | BL-004 | policy CLI e runbook `DATABASE_MIGRATIONS.md` | DDL invalido annullato con ledger 0; `down` solo loopback disposable senza query routing e con conferma; staging/production rifiutati | PASS mirato/full/clean/CI |
 | Feature flag e kill switch server-side sono condivisi, auditati e fail-closed | spec §§22.16, 27.5, 28.6, 29.8, 31 `BL-010`; ADR-0004, ADR-0006, ADR-0007 | BL-010 | `packages/persistence/src/feature-flags.ts`, `packages/persistence/src/migrations/000002_feature_flags.ts`, `scripts/manage-feature-flag.mjs` | catalogo chiuso `campaign.start`/`turn.new`/`model.route.premium`; store unavailable/unknown/malformed disabled; cambio CLI senza deploy; audit atomico; CAS; idempotency replay/conflict; output redatto | unit feature flags 4/4, database feature flags 2/2 con replay post-toggle, security feature flags 4/4 e full gate locale PASS; PR/CI pending |
+| Runner, fixture e report non-browser sono isolati e riproducibili | spec §§26, 35.1 | QA-001 | `@dnd-ai/testing`, runner root e container harness PostgreSQL/Redis (planned) | self-test process isolation, golden RNG/clock, smoke container, JUnit/coverage e failure propagation (planned) | design `testing-foundation-v1` approvato; implementazione pending |
+| Browser, accessibility e visual regression usano un harness comune | spec §26.8; studio UX §§13–14.1 | BL-079, QA-002 | Playwright e browser harness (planned) | viewport 320/390/1440, reduced-motion, accessibility negative fixture e visual drift (planned) | QA-002 BACKLOG; dipende da QA-001 e BL-079 |
 | W3C Trace Context e request ID attraversano web→API→queue→worker senza context bleed | spec §§24.1, 24.5; ADR-0007 | BL-008 | `packages/observability`, plugin Fastify e wrapper worker | `tests/integration/observability-flow.test.mjs`: parent chain `web.request`→`api.request`→`queue.enqueue`→`worker.process`, due flussi concorrenti disgiunti; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Log JSON e metadata telemetry non espongono PII, secret, prompt o output AI | spec §§22.10, 24.2; ADR-0007 | BL-008 | sanitizer bounded, logger Pino allowlisted e reporter safe | `tests/unit/observability-core.test.mjs`, `tests/unit/observability-node.test.mjs`, `tests/security/observability-security.test.mjs`; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Sentry resta error-only, off-by-default e non altera il risultato applicativo | spec §§24.4, 24.5; ADR-0007 | BL-008 | adapter Node/Next, transport fake, failure containment idempotente e bounded | unit/integration/security: exporter, destination e transport failure; zero rete; nessun Replay/profiling/log forwarding/tunnel/source map; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
@@ -170,14 +175,14 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 
 | ID | Requisito normativo | Task | Codice | Test | Evidenza corrente |
 |---|---|---|---|---|---|
-| UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-040 | `apps/web` (planned) | `tests/e2e/mobile-game-loop.spec.ts` (planned) | studio e ADR approvati |
+| UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-040, QA-002 | `apps/web` (planned) | `tests/e2e/mobile-game-loop.spec.ts` (planned) | studio e ADR approvati |
 | UX-P0-02 | Feed conversazionale, decisione e composer dominano il primo livello | BL-079, BL-040 | `GameConversation`, `FreeActionComposer` (planned) | component + visual regression (planned) | `docs/product/UX_UI_DESIGN.md` §§4–7 |
-| UX-P0-03 | HUD secondaria in drawer/sheet; desktop senza funzioni esclusive | BL-079, BL-040 | `GameDrawer`, responsive shell (planned) | viewport/browser matrix (planned) | ADR-0001 |
+| UX-P0-03 | HUD secondaria in drawer/sheet; desktop senza funzioni esclusive | BL-079, BL-040, QA-002 | `GameDrawer`, responsive shell (planned) | viewport/browser matrix (planned) | ADR-0001 |
 | UX-P0-04 | shadcn/ui `new-york` su Radix e token semantici | BL-079 | `components.json`, UI primitives (planned) | config/token contract test (planned) | ADR-0001 |
 | UX-P0-05 | AI Elements selettivo non sostituisce `TurnView`, REST+SSE o idempotenza | BL-079, BL-040, BL-041 | adapter/wrapper UI (planned) | contract + UI negative test (planned) | spec §§11.4, 21.1 |
-| UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all’animazione | BL-079, BL-027, BL-040 | motion primitives (planned) | `tests/e2e/reduced-motion.spec.ts` (planned) | studio §11 |
-| UX-P0-07 | Touch target ≥44 px, primarie ≥48 px, safe area/tastiera/zoom | BL-079, BL-012, BL-019, BL-040 | UI wrappers (planned) | accessibility/device E2E (planned) | spec §§8.4–8.5, 23.1 |
-| UX-P0-08 | Stile premium contemporaneo, non pseudo-medievale | BL-079 | theme/tokens (planned) | design review + contrast/visual regression (planned) | studio §9 |
+| UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all’animazione | BL-079, BL-027, BL-040, QA-002 | motion primitives (planned) | `tests/e2e/reduced-motion.spec.ts` (planned) | studio §11 |
+| UX-P0-07 | Touch target ≥44 px, primarie ≥48 px, safe area/tastiera/zoom | BL-079, BL-012, BL-019, BL-040, QA-002 | UI wrappers (planned) | accessibility/device E2E (planned) | spec §§8.4–8.5, 23.1 |
+| UX-P0-08 | Stile premium contemporaneo, non pseudo-medievale | BL-079, QA-002 | theme/tokens (planned) | design review + contrast/visual regression (planned) | studio §9 |
 | UX-P0-09 | Dado decorativo riproduce risultato backend e possiede fallback | BL-040, BL-043 | dice tray (planned) | rules contract + reduced-motion UI test (planned) | spec §21.4 |
 
 ## Criteri globali
