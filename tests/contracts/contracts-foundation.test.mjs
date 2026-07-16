@@ -4,6 +4,8 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath, URL } from "node:url";
 
+import { resolveTestLane } from "../../scripts/lib/test-lane-policy.mjs";
+
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 
 async function readJson(relativePath) {
@@ -48,11 +50,14 @@ test("standalone contract commands build the package and check generated drift",
   );
   assert.equal(
     manifest.scripts["test:contract"],
-    "turbo run build --filter=@dnd-ai/contracts && node --test tests/contracts/*.test.mjs",
+    "node scripts/run-tests.mjs contract",
+  );
+  assert.ok(
+    resolveTestLane("contract").buildFilters.includes("@dnd-ai/contracts"),
   );
   assert.match(
     manifest.scripts.verify,
-    /turbo run build && node scripts\/generate-contracts\.mjs --check &&/u,
+    /turbo run build && node scripts\/generate-contracts\.mjs --check && node scripts\/run-tests\.mjs all &&/u,
   );
   assert.doesNotMatch(manifest.scripts.verify, /&& pnpm contracts:check &&/u);
 });

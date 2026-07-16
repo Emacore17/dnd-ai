@@ -1,13 +1,16 @@
 ---
 status: active
 owner: engineering-and-qa
-last_reviewed: 2026-07-13
+last_reviewed: 2026-07-16
 last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
 source_refs:
   - docs/MVP_SPEC.md#112-forma-del-sistema
   - docs/TASKS.md#bl-001--configurare-workspace-app-e-package-boundaries
+  - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
 related_tasks:
   - BL-001
+  - QA-001
+  - QA-002
 code_refs:
   - apps
   - packages
@@ -58,6 +61,6 @@ Il primo aggregatore `verify` richiamava il pnpm globale `10.21.0` e falliva con
 
 ## Scope residuo
 
-Il report prova soltanto `BL-001`. CI remota, suite complete, database, config ambiente e browser harness comune appartengono rispettivamente a `BL-002`, `QA-001`, `BL-004`, `BL-003` e `QA-001`. shadcn/ui, AI Elements e Motion appartengono a `BL-079`.
+Il report prova soltanto `BL-001`. CI remota, fondazione test non-browser, database, config ambiente e browser harness comune appartengono rispettivamente a `BL-002`, `QA-001`, `BL-004`, `BL-003` e `QA-002`. Il setup browser minimo della feature, shadcn/ui, AI Elements e Motion appartengono a `BL-079`.
 
 Dopo il run, la chiusura documentale ha aggiornato soltanto il front matter `last_verified_commit` della specifica: il corpo normativo non è cambiato e la baseline corrente è `ed2c7882f94fa751e30dc6f1c73e279388891d7e0fcd686db30aad3b565096f6`.

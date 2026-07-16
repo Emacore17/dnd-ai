@@ -78,6 +78,20 @@ jobs:
       - name: Contract tests
         run: pnpm test:contract
 
+      - name: Prepare test reports
+        run: pnpm test:reports:prepare --required=unit,integration,database,contract
+
+      - name: Verify test reports
+        run: pnpm test:reports:verify --required=unit,integration,database,contract
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dnd-ai-tests-${{ github.sha }}
+          path: artifacts/testing
+          if-no-files-found: error
+          retention-days: 7
+
   security:
     name: Security
     runs-on: ubuntu-24.04

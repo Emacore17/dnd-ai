@@ -6,6 +6,8 @@ import { fileURLToPath, URL } from "node:url";
 
 import { parse } from "yaml";
 
+import { resolveTestLane } from "../../scripts/lib/test-lane-policy.mjs";
+
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 
 async function readManifest(relativePath) {
@@ -116,17 +118,19 @@ test("the Sentry CLI install script stays explicitly blocked", async () => {
 test("standalone unit and security scripts build observability before tests", async () => {
   const manifest = await readManifest("package.json");
 
-  for (const scriptName of ["test:unit", "test:security"]) {
-    const script = manifest.scripts[scriptName];
-    const [buildCommand, testCommand] = script.split(/\s+&&\s+/u);
-
-    assert.match(buildCommand, /^turbo run build\b/u, scriptName);
-    assert.match(
-      buildCommand,
-      /(?:^|\s)--filter=@dnd-ai\/observability(?:\s|$)/u,
-      scriptName,
+  assert.equal(
+    manifest.scripts["test:unit"],
+    "node scripts/run-tests.mjs unit",
+  );
+  assert.equal(
+    manifest.scripts["test:security"],
+    "node scripts/run-tests.mjs security && node scripts/scan-secrets.mjs",
+  );
+  for (const laneName of ["unit", "security"]) {
+    assert.ok(
+      resolveTestLane(laneName).buildFilters.includes("@dnd-ai/observability"),
+      laneName,
     );
-    assert.match(testCommand, /^node --test\b/u, scriptName);
   }
 });
 

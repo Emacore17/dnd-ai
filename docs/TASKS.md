@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-15
-last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
+last_reviewed: 2026-07-16
+last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -18,6 +18,8 @@ related_tasks:
   - BL-010
   - BL-079
   - BL-080
+  - QA-001
+  - QA-002
 code_refs:
   - .vercelignore
   - apps
@@ -79,6 +81,13 @@ code_refs:
   - scripts/validate-mermaid-worker.mjs
   - scripts/verify-affected.mjs
   - scripts/lib/affected-verification.mjs
+  - packages/testing/src
+  - scripts/run-tests.mjs
+  - scripts/lib/test-lane-policy.mjs
+  - scripts/lib/test-process.mjs
+  - scripts/lib/test-report-policy.mjs
+  - scripts/prepare-test-reports.mjs
+  - scripts/verify-test-reports.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/workspace-boundaries.test.mjs
@@ -127,6 +136,14 @@ test_refs:
   - tests/unit/contract-artifact-policy.test.mjs
   - tests/contracts/contracts-compatibility.test.mjs
   - tests/unit/owned-path-policy.test.mjs
+  - tests/unit/testing-primitives.test.mjs
+  - tests/unit/test-container-lifecycle.test.mjs
+  - tests/unit/test-lane-policy.test.mjs
+  - tests/unit/test-report-policy.test.mjs
+  - tests/integration/test-runner.test.mjs
+  - tests/integration/testing-containers.test.mjs
+  - tests/contracts/testing-package-contract.test.mjs
+  - tests/security/test-report-security.test.mjs
 supersedes: null
 ---
 
@@ -141,8 +158,8 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `GOV-002 — Validazione automatica della documentazione e tracciabilità`
-> **Prossimo task READY:** `—`; `GOV-002` è `IN_PROGRESS`, mentre `BL-079` resta `BACKLOG` finché lo staging non è disponibile
+> **Task attivo:** `QA-001 — Fondazione comune per test, fixture e comandi di qualità`
+> **Prossimo task READY:** `DOC-ARCH-001`; `QA-002` resta `BACKLOG` finché `QA-001` e `BL-079` non sono `DONE`
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -316,7 +333,7 @@ Corsie: `FAST` usa `verify:docs`; `STANDARD` usa test mirati + `verify:affected`
 | `docs/security/THREAT_MODEL.md` | Planned (`DOC-SEC-001`) | Threat/controls | Ogni trust boundary/dato/endpoint. |
 | `docs/security/MODERATION_POLICY.md` | Planned (`DOC-SEC-001`) | Policy safety | Ogni policy/provider/category change. |
 | `docs/operations/RUNBOOK.md` | Planned (`DOC-OPS-001`) | Operazioni/incidenti | Ogni deploy, alert, recovery o kill switch. |
-| `docs/testing/TEST_STRATEGY.md` | Planned (`QA-001`/`DOC-TEST-001`) | Suite e fixture | Ogni nuovo livello/gate di test. |
+| [`docs/testing/TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) | Esistente, `active`; baseline `QA-001` | Suite, fixture, container e report | Ogni nuovo livello/gate di test; browser in `QA-002`. |
 | `docs/testing/AI_EVALS.md` | Planned (`DOC-TEST-001`) | Evals/rubriche/versioni | Ogni prompt/model/schema/eval change. |
 | `docs/testing/RELEASE_EVIDENCE.md` | Planned (`DOC-TEST-001`) | Evidenze go/no-go | Ogni release candidate. |
 
@@ -374,7 +391,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | 54% | 18 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta | `IN_PROGRESS` | 57% | 19 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -642,7 +659,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Smoke della shell su preview/staging fornita da `BL-080` senza dipendenza inversa.
 - **Documentazione e contesto:** `docs/product/UX_UI_DESIGN.md`, `docs/adr/0001-mobile-first-conversational-ui.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, `docs/testing/TEST_STRATEGY.md` quando creato
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report visual/a11y/performance `—`; component inventory/versioni `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** Non installare tutte le registry AI Elements; non introdurre `useChat` o un trasporto parallelo; Rive è opzionale e non può bloccare la shell. `BL-079` possiede il setup browser/component minimo necessario ai propri test e consuma lo staging dopo `BL-080`; `QA-001` consolida il harness comune senza diventare una dipendenza circolare.
+- **Note, rischi o bloccanti:** Non installare tutte le registry AI Elements; non introdurre `useChat` o un trasporto parallelo; Rive è opzionale e non può bloccare la shell. `BL-079` possiede il setup browser/component minimo necessario ai propri test e consuma lo staging dopo `BL-080`; `QA-001` fornisce la fondazione non-browser e `QA-002` consolida il harness comune dopo la feature, senza dipendenza circolare.
 
 ### BL-080 — Fondazione preview/staging M0
 
@@ -711,29 +728,50 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### QA-001 — Fondazione comune per test, fixture e comandi di qualità
 
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — candidate implementation head `7f2d4d0f360e83baf31404266df47cbee060be0d`; base `a698592b0a610735297a1026c80eae5e5114355c`; spec SHA-256 `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329`; data: `2026-07-16`
+- **Priorità / stima:** `P0` / `M`
+- **Dipendenze:** BL-001, BL-002, BL-003, BL-004, BL-009
+- **Dipendenze operative aggiuntive:** GOV-001
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §26 Strategia di testing; `docs/MVP_SPEC.md` §35 Definition of Done; `docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`
+- **Obiettivo:** Rendere uniformi, isolate e riproducibili le suite non-browser fin dalle prime feature.
+- **Deliverable:** Contratto `testing-foundation-v1`; runner Node e command contract; container harness PostgreSQL/Redis; factory deterministiche; fake clock/RNG; JUnit/coverage; test ID collegati ai task.
+- **Criterio di accettazione:** Da checkout pulito i comandi standard partono, isolano processi e dati, producono report deterministici e propagano failure/cleanup senza retry automatici.
+- **Test obbligatori prima di `DONE`:**
+  - [x] Self-test red/green del runner e isolamento tra due test process.
+  - [x] Integration smoke su PostgreSQL e Redis reali/containers.
+  - [x] Verifica seed/fake clock/RNG riproducibili e report associabile a un task ID.
+  - [x] JUnit/coverage e manifest generati deterministicamente; fixture failing e cleanup failure bloccano la CI.
+- **Documentazione e contesto:** `docs/testing/TEST_STRATEGY.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`
+- **Evidenze di chiusura:** design approvato dal Product Owner il `2026-07-16`; commit funzionali `f485af7`, `9ffd857`, `6a308fd`, `f07aa63`, candidate implementation head `7f2d4d0f360e83baf31404266df47cbee060be0d`; mirati finali: unit foundation 19/19, runner 6/6, container reali 1/1, contract 10/10, report security 2/2 e migration reali 16/16 `PASS`; `verify:docs` 39 documenti/12 modificati, task graph/secret scan `PASS`; audit high senza vulnerabilità note; doppia preparazione artifact con hash identici e verify `PASS`. Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 141,8 s: lint/build 11, typecheck 13, unit 107 pass/1 skip host con coverage testing 92,54% linee/91,89% branch/97,62% funzioni, integration 20, database 16, contract 69, security 32 pass/3 skip host, report 247 test verificati e build artifact 3.982 file `PASS`. Checkout pulito detached: install frozen exit `0` in 19,6 s e full exit `0` in 133,3 s con gli stessi conteggi, report `PASS` e artifact 4.003 file; self-review finale senza P0/P1, review sub-agent non disponibile per vincolo di sessione; delivery PR/merge ancora `PENDING`; migration/eval/trace ID `N/A`.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` perché il candidato modificherà workflow, artifact e lifecycle container. Scope design: Node `24.11.0` nativo, nessun secondo runner o nuova libreria container, riuso del contratto PostgreSQL esistente e Redis pin a digest. Browser/E2E/accessibility/visual regression sono stati separati in `QA-002`. Fuori scope Vercel, provider, UI ed eval AI.
+
+### QA-002 — Browser, accessibility e visual regression harness
+
 - **Stato:** `BACKLOG`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P0` / `M`
-- **Dipendenze:** BL-001, BL-002, BL-003, BL-004, BL-009
-- **Dipendenze operative aggiuntive:** GOV-001
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §26 Strategia di testing; `docs/MVP_SPEC.md` §35 Definition of Done
-- **Obiettivo:** Rendere eseguibili in modo uniforme unit, integration, contract, E2E, security ed eval fin dalle prime feature.
-- **Deliverable:** Test runner e command contract; Testcontainers/PostgreSQL/Redis; factory deterministic; fake clock/RNG; fixture builder; browser/device matrix, accessibility e visual regression harness per UI; report JUnit/coverage; convenzione test ID collegata ai task.
-- **Criterio di accettazione:** Da checkout pulito i comandi standard partono, isolano dati e producono report; una fixture failing blocca la CI e una retry non rende flaky il risultato.
+- **Dipendenze:** QA-001, BL-079
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §26.8; `docs/MVP_SPEC.md` §35.1; `docs/product/UX_UI_DESIGN.md` §13–§14.1; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`
+- **Obiettivo:** Consolidare il setup browser di `BL-079` in un harness comune, accessibile e deterministico.
+- **Deliverable:** Playwright e lifecycle server locale; viewport 320/390/1440 e touch; keyboard/focus/zoom/safe area; reduced-motion; accessibility scan; visual regression e artifact deterministici.
+- **Criterio di accettazione:** Da checkout pulito il browser harness verifica la shell reale senza dipendere da Vercel, isola processi/artifact e fallisce su accessibility blocker, snapshot drift o server/browser non pronto.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Self-test red/green del runner e isolamento tra due test process.
-  - [ ] Integration smoke su PostgreSQL e Redis reali/containers.
-  - [ ] Verifica seed/fake clock/RNG riproducibili e report associabile a un task ID.
-  - [ ] Smoke del browser harness su viewport 320/390/1440, reduced-motion e accessibility scan con artifact deterministico.
-- **Documentazione e contesto:** `docs/testing/TEST_STRATEGY.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** Consolida e rende comune il setup browser/component minimo creato da `BL-079`; non ne blocca l’esecuzione e non duplica fixture di feature già verificate.
+  - [ ] Smoke reale sulle viewport 320/390/1440 e almeno un profilo touch.
+  - [ ] Keyboard/focus, zoom 200%, safe area e reduced-motion conservano contenuto e CTA raggiungibili.
+  - [ ] Accessibility scan prova una fixture valida e una violazione intenzionale che blocca il gate.
+  - [ ] Visual artifact stabile su due run; server failure, browser crash e snapshot drift propagano exit non-zero.
+- **Documentazione e contesto:** `docs/testing/TEST_STRATEGY.md`; `docs/product/UX_UI_DESIGN.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
+- **Evidenze di chiusura:** commit/PR `—`; comandi/report/CI `—`; migration/eval/trace ID `N/A`.
+- **Note, rischi o bloccanti:** Non duplica le fixture di `BL-079` e non ne blocca l’implementazione. È bloccato finché `QA-001` e `BL-079` non sono `DONE`. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`.
 
 ### DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale
 
-- **Stato:** `BACKLOG`
+- **Stato:** `READY`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
@@ -758,7 +796,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P0` / `S`
-- **Dipendenze:** GOV-001, GOV-002, QA-001, DOC-ARCH-001, BL-001..BL-010, BL-079, BL-080
+- **Dipendenze:** GOV-001, GOV-002, QA-001, QA-002, DOC-ARCH-001, BL-001..BL-010, BL-079, BL-080
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §30 Milestone 0; `docs/MVP_SPEC.md` §35.3
 - **Obiettivo:** Validare in modo integrato tutti i deliverable di M0 prima di autorizzare il lavoro della milestone successiva.
 - **Deliverable:** Report di exit gate M0, demo riproducibile, evidenze e aggiornamento della dashboard.
@@ -2585,23 +2623,23 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: GOV-002
-last_completed_task: BL-010
-next_ready_task: null
-status: IN_REVIEW
-progress: 90
-started_at: 2026-07-15T18:15:00+02:00
-candidate_at: null
+active_task: QA-001
+last_completed_task: GOV-002
+next_ready_task: DOC-ARCH-001
+status: DONE
+progress: 100
+started_at: 2026-07-16T00:00:00+02:00
+candidate_at: 2026-07-16T12:11:26+02:00
 cycle_target_minutes: 120
-cycle_actual_minutes: null
-updated_at: 2026-07-15
+cycle_actual_minutes: 731
+updated_at: 2026-07-16T12:18:31+02:00
 agent: Codex development agent
-git_branch: codex/gov-002-document-integrity
-base_commit: 15382d547638333e33992be96479a6f0cbff1a29
-candidate_head: null
+git_branch: codex/qa-001-test-foundation
+base_commit: a698592b0a610735297a1026c80eae5e5114355c
+candidate_head: 7f2d4d0f360e83baf31404266df47cbee060be0d
 spec_sha256: d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329
 context_verified: true
-test_status: PARTIAL
+test_status: PASSING
 ```
 
 ## Contesto letto
@@ -2610,24 +2648,29 @@ test_status: PARTIAL
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti GOV-002 — `docs/MVP_SPEC.md` §§26.12, 32.3 e 35.1; card GOV-002; design approvato
-- [x] documentazione corrente — `docs/README.md`, `docs/TRACEABILITY.md`, `docs/CHANGELOG.md` e registro ADR
-- [x] codice/test interessati — document policy, contract generator, task graph, workflow Quality e relative suite contract
+- [x] riferimenti QA-001 — `docs/MVP_SPEC.md` §§26 e 35.1; card QA-001; design approvato
+- [x] documentazione corrente — `docs/README.md`, `docs/TRACEABILITY.md`, `docs/CHANGELOG.md`, `docs/product/UX_UI_DESIGN.md` e `docs/operations/CI_CD.md`
+- [x] codice/test interessati — package testing, runner Node, harness PostgreSQL esistente, workflow e relative suite contract
 
 ## Piano e scope
 
-- **Corsia:** `HIGH_RISK` perché cambiano dependency graph/lockfile e workflow CI; un full gate sul candidato e clean-checkout verification obbligatoria.
-- **Obiettivo verificabile:** `docs:check` blocca metadata, link/anchor, riferimenti `§`, Mermaid, registro ADR, task graph e generated drift con output deterministico.
-- **File/moduli previsti:** document/integrity/Mermaid policy, worker bounded, package scripts, workflow Quality, registro ADR, test e soli documenti semanticamente interessati.
-- **Azioni esterne:** sola documentazione tecnica ufficiale e registry npm read-only; nessun provider, account, deploy o modifica Vercel.
-- **Test previsti:** TDD su anchor/section refs/ADR/Mermaid, composizione contract drift/task graph, CI policy, audit dependency, full gate, clean checkout e review indipendente.
-- **Rischi/failure path:** path escape, anchor ambiguo, section range inesistente, parser Mermaid bloccato o oversized, ADR non registrato, generated drift e rimozione del gate CI.
-- **Fuori scope:** rendering SVG/PNG, lint editoriale, link HTTP esterni, modifica dei contratti applicativi, UI, provider e Vercel.
+- **Corsia:** `HIGH_RISK` perché il candidato modifica workflow/artifact, lifecycle container e potenzialmente dependency graph/lockfile; un full gate sul candidato e clean-checkout verification obbligatoria.
+- **Obiettivo verificabile:** `testing-foundation-v1` rende uniformi e riproducibili runner Node, fixture deterministiche, process isolation, PostgreSQL/Redis reali e report JUnit/coverage.
+- **File/moduli previsti:** `packages/testing`, runner e policy root, harness PostgreSQL esistente esteso a Redis, workflow, test e soli documenti semanticamente interessati.
+- **Azioni esterne:** nessun provider, account, deploy o modifica Vercel; immagini container solo dopo pin immutabile e verifica locale.
+- **Test previsti:** TDD su runner/process isolation, seed/clock/RNG, lifecycle PostgreSQL/Redis, JUnit/coverage deterministici, cleanup failure, workflow policy, full gate e clean checkout.
+- **Rischi/failure path:** porte o container concorrenti, readiness timeout, processo orfano, cleanup fallito, report nondeterministico, fixture failing non propagata e artifact non confinato.
+- **Fuori scope:** browser/E2E/accessibility/visual regression (`QA-002`), UI, eval AI, provider e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-16 12:18 +02:00 | 100% | Candidato branch-local terminale; self-review completa senza P0/P1. La review sub-agent prevista dalla skill non è eseguibile perché la sessione vieta delega non richiesta. Delivery resta derivata/PENDING finché `7f2d4d0` non raggiunge `main` tramite gate protetto. | Worktree detached `7f2d4d0`: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con 247 test/report, coverage sopra soglia e artifact 4.003 file `PASS`; worktree rimosso. | Amend dello stesso candidato con evidenze terminali, push branch e una PR; nessuna azione Vercel. |
+| 2026-07-16 12:11 +02:00 | 90% | Il full ha trovato e chiuso due cause reali: due file non formattati, risoluzione pnpm 11 non conservata nel subprocess con cache forzata e tre contract test ancora legati ai vecchi script. Regressioni mirate verdi; nessun gate indebolito. Il target di 120 minuti è superato perché il task M/HIGH_RISK ha coperto quattro batch, lifecycle container, report security e i finding cross-platform emersi solo senza cache. | Full finale senza cache exit `0` in 141,8 s: lint/build 11, typecheck 13, unit 107+1 skip, integration 20, DB 16, contract 69, security 32+3 skip, report 247 e artifact 3.982 `PASS`. | Congelare il commit candidato, verificarlo da checkout pulito e completare la review/stato terminale. |
+| 2026-07-16 11:57 +02:00 | 90% | Living docs e workflow sono allineati; la card entra in review soltanto dopo tutti i mirati applicabili. | Foundation 19/19, runner 6/6, container 1/1, contract 10/10, security 2/2, database 16/16; `verify:docs` 39/12 `PASS`; audit high pulito. | Eseguire l’unico full gate HIGH_RISK, poi checkout pulito e review finale. |
+| 2026-07-16 11:56 +02:00 | 75% | Implementati primitive deterministiche, lifecycle PostgreSQL/Redis, runner isolato e artifact `testing-foundation-v1`; i cinque script pubblici convergono sul runner e la CI verifica il report prima dell’upload. | Commit `f485af7`, `9ffd857`, `6a308fd`, `f07aa63`; unit runner 107 pass/1 skip host e coverage 92,54/91,89/97,62; report/runner/container 19/19 e CI/gate 11/11 `PASS`; hash artifact riproducibili. | Chiudere living docs, mirati completi, audit, unico full gate HIGH_RISK e checkout pulito. |
+| 2026-07-16 00:00 +02:00 | 25% | Selezionato `QA-001` dopo `GOV-002`; l'audit ha separato la fondazione non-browser dal browser harness, ora assegnato a `QA-002` dopo `BL-079`. Approvato `testing-foundation-v1` con Node nativo e riuso del lifecycle Docker CLI. | Base `a698592`; self-review pulita; `verify:docs` exit `0` con 37 documenti/9 modificati, task graph e secret scan `PASS`; nessuna azione Vercel o provider. | Committare la spec e ottenere review utente prima del piano TDD. |
 | 2026-07-15 18:15 +02:00 | 25% | Selezionato GOV-002 perché tutte le dipendenze sono `DONE`; approvata policy modulare con Mermaid parse-only bounded e riuso dei checker esistenti. | Base `15382d5`; spec SHA `d07620b`; `verify:docs` baseline exit `0` con 33 documenti, task graph e secret scan `PASS`; registry npm conferma `mermaid@11.16.0` MIT. | Versionare design, ottenere review utente e creare il piano TDD prima del codice. |
 | 2026-07-15 15:40 +02:00 | 100% | Re-check indipendente senza P0/P1 residui. I primi due full hanno esposto ownership di formattazione generated e risoluzione del pnpm globale nello script annidato; aggiunte regressioni fail-closed e mantenuto un unico checker diretto dopo la build. Candidato branch-local terminale in 61 minuti. | Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 86,8 s: lint/build 11, typecheck 13, unit 84/1 skip host, integration 13, DB 13, contract 56, security 26/3 skip host, docs 31/11 e artifact 3.942. | Committare il candidato, verificarlo da checkout pulito e pubblicare una sola PR protetta; nessuna azione Vercel. |
 | 2026-07-15 15:34 +02:00 | 90% | Living docs e riferimenti ora descrivono `api-contract-v1`, policy immutable-major e delivery BL-008 reale; restano solo gate HIGH_RISK e re-review mirata. | `verify:docs` exit `0`: 31 documenti/11 modificati, task graph e secret scan PASS. | Audit dipendenze, full verify e re-check dei quattro P1. |
@@ -2688,16 +2731,16 @@ test_status: PARTIAL
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/gov-002-document-integrity` su base `15382d547638333e33992be96479a6f0cbff1a29`; candidato e PR non ancora disponibili.
-- **Comandi eseguiti:** preflight Git/fingerprint, audit mirato di checker/workflow e `corepack pnpm@11.13.0 verify:docs`.
-- **Exit code:** baseline documentale `0`; test implementativi e full gate non ancora eseguiti.
-- **Report/CI URL o path:** design GOV-002; CI task `N/A — implementazione non iniziata`.
+- **Commit/PR:** branch `codex/qa-001-test-foundation` su base `a698592b0a610735297a1026c80eae5e5114355c`; commit design e PR non ancora disponibili.
+- **Comandi eseguiti:** preflight Git/fingerprint, audit mirato di backlog/ownership/runner/harness, self-review della design spec e `corepack pnpm@11.13.0 verify:docs`.
+- **Exit code:** `git diff --check` `0`; gate documentale finale `0` con 37 documenti/9 modificati, task graph e secret scan `PASS`; test implementativi e full gate non ancora eseguiti.
+- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`; CI task `N/A — implementazione non iniziata`.
 - **Migration head:** `000002_feature_flags` invariato.
 - **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`, invariati.
 - **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
-- **Documenti aggiornati:** design GOV-002, task e contesto operativo.
+- **Documenti aggiornati:** design QA-001, task, contesto, indice, tracciabilità, changelog e ownership UX/CI.
 - **Rischi residui/TODO tracciati:** review utente della spec, piano TDD, implementazione, gate HIGH_RISK e delivery protetta; freeze Vercel invariato.
-- **Task successivo reso READY:** nessuno sul branch; lo stato canonico resta su `main` fino al merge. `BL-079` resta `BACKLOG` finché `BL-080` non fornisce staging reale.
+- **Task successivo reso READY:** `DOC-ARCH-001`; lo stato canonico resta su `main` fino al merge. `QA-002` resta `BACKLOG` finché `QA-001` e `BL-079` non sono `DONE`.
 
 
 ## 21. Context Sync Log

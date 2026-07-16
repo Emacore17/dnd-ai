@@ -1,13 +1,14 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-15
-last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
+last_reviewed: 2026-07-16
+last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/adr/README.md
+  - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
 related_tasks:
   - GOV-001
   - BL-001
@@ -18,7 +19,12 @@ related_tasks:
   - BL-009
   - BL-079
   - BL-080
+  - QA-001
+  - QA-002
 code_refs:
+  - packages/testing
+  - scripts/run-tests.mjs
+  - scripts/lib/test-report-policy.mjs
   - packages/observability
   - apps/api/src/observability.ts
   - apps/worker/src/observability.ts
@@ -52,6 +58,9 @@ test_refs:
   - tests/unit/contract-artifact-policy.test.mjs
   - tests/contracts/contracts-compatibility.test.mjs
   - tests/unit/owned-path-policy.test.mjs
+  - tests/unit/testing-primitives.test.mjs
+  - tests/integration/testing-containers.test.mjs
+  - tests/security/test-report-security.test.mjs
 supersedes: null
 ---
 
@@ -99,13 +108,14 @@ supersedes: null
 | [`api/README.md`](api/README.md) | Catalogo `api-contract-v1`, uso runtime, artefatti e politica di versione |
 | [`superpowers/specs/2026-07-15-bl-009-contract-generation-design.md`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md) | Design della vertical slice contrattuale BL-009 |
 | [`superpowers/plans/2026-07-15-bl-009-contract-generation.md`](superpowers/plans/2026-07-15-bl-009-contract-generation.md) | Piano TDD e gate HIGH_RISK di BL-009 |
+| [`superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`](superpowers/specs/2026-07-16-qa-001-test-foundation-design.md) | Design approvato di `testing-foundation-v1` e decomposizione QA-001/QA-002 |
+| [`testing/TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) | Contratto operativo di runner, fixture, container, coverage e report non-browser |
 
 ## Documenti pianificati
 
 I path seguenti sono pianificati e non sono link finché non esistono:
 
 - `docs/data/DATA_MODEL.md` — `DOC-ARCH-001`;
-- `docs/testing/TEST_STRATEGY.md` — `QA-001`;
 - `docs/testing/AI_EVALS.md` — `DOC-TEST-001`;
 - `docs/testing/RELEASE_EVIDENCE.md` — `DOC-TEST-001`;
 - `docs/features/CHARACTER_CREATION.md` — `DOC-CHAR-001`;
