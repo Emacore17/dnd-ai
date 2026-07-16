@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
+last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -11,6 +11,7 @@ related_tasks:
   - GOV-001
   - GOV-002
   - GOV-003
+  - GOV-004
   - BL-001
   - BL-002
   - BL-003
@@ -20,6 +21,7 @@ related_tasks:
   - BL-010
   - BL-079
   - BL-080
+  - BL-081
   - QA-001
   - QA-002
   - DOC-ARCH-001
@@ -139,14 +141,19 @@ supersedes: null
 
 ### Added
 
+- Approvata la decomposizione GOV-004: `BL-079` possiede design system core e shell statica, `BL-081` shell conversazionale/stati/Motion, `QA-002` il harness comune e `BL-080`/`GATE-M0` lo smoke remoto.
+- Aggiunti design e piano versionati GOV-004; `BL-081` è una card P0/M separatamente verificabile e senza dipendenze Vercel.
 - Approvato il design `testing-foundation-v1` per `QA-001`: runner Node nativo, primitive deterministiche, container PostgreSQL/Redis e report JUnit/coverage senza secondo runner o nuova libreria container.
-- Aggiunto `QA-002` per consolidare Playwright, accessibility e visual regression dopo `QA-001` e `BL-079`.
+- Aggiunto `QA-002` per consolidare Playwright, accessibility e visual regression dopo `QA-001` e `BL-081`.
 - Implementato `@dnd-ai/testing` con test ID, RNG seedato, fake clock, fixture factory e subpath Node-only per lifecycle Docker PostgreSQL/Redis a digest immutabile.
 - Aggiunti runner a corsie con process isolation/timeout/environment allowlist, normalizzazione JUnit/LCOV, artifact `testing-foundation-v1` e [`TEST_STRATEGY.md`](testing/TEST_STRATEGY.md).
 - Accettato [`ADR-0009`](adr/0009-mvp-runtime-data-and-workflow-architecture.md) e aggiunti modello dati living e guida cold-start locale con contract anti-drift.
 
 ### Changed
 
+- Rimosso il vincolo circolare operativo `BL-079`→`BL-080`: `BL-079` è il solo P0 `READY`; `BL-005` e `BL-081` restano `BACKLOG` finché la foundation non è completata, mentre `BL-080` resta `BLOCKED/50%/PARTIAL`.
+- Allineati i consumer conversazionali `BL-027`, `BL-039`, `BL-040`, `BL-071` e `BL-072` a `BL-081`; form e builder continuano a dipendere soltanto da `BL-079`.
+- Aggiornata la delivery di `DOC-ARCH-001`: PR #25, merge `9132cbd24ee6a0f8b1cc6c875114d86dc70804b5` e CI post-merge `29496032461` con cinque job `SUCCESS`.
 - Corrette le dipendenze QA: `QA-001` possiede soltanto la fondazione non-browser; `QA-002` possiede browser/device matrix, reduced-motion, accessibility e visual artifact; `GATE-M0` dipende da entrambi.
 - Allineato lo stato canonico dopo `QA-001`: PR #24/merge `3e9c6d5`; `DOC-ARCH-001` è il task attivo e nessun altro P0 è `READY` mentre `BL-080` resta bloccato.
 - Confermato il freeze Vercel: la decomposizione QA non abilita deploy, provider o Production.
@@ -156,13 +163,14 @@ supersedes: null
 
 ### Verification
 
+- GOV-004: `tasks:check` exit `0`; il primo gate FAST ha isolato un solo anchor BL-079 obsoleto, corretto alla causa; il rerun completo `verify:docs` è `PASS` con 8 artifact contrattuali, 46 documenti/10 modificati, task graph e secret scan verdi. La self-review ha corretto due label di stato pre-terminali e non lascia finding P0/P1.
 - Design approvato dal Product Owner e self-review completata il 2026-07-16; `verify:docs` passa con 37 documenti, 9 modificati, task graph e secret scan `PASS` prima del piano TDD.
 - TDD report/runner/container mirato `19/19 PASS`; contract CI/gate `11/11 PASS`; runner unit reale 107 pass/1 skip host con coverage testing 92,54% linee, 91,89% branch e 97,62% funzioni; due prepare consecutivi producono hash identici e verify artifact `PASS`.
 - Full finale senza cache `PASS` in 141,8 s: lint/build 11 workspace, typecheck 13 task, unit 107 pass/1 skip host, integration 20, database 16, contract 69, security 32 pass/3 skip host, manifest report per 247 test e build artifact 3.982 file. Il gate ha prima esposto e chiuso formattazione, risoluzione pnpm nel subprocess forzato e tre contract test obsoleti.
 - Candidate implementation head `7f2d4d0` verificato da worktree detached: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con gli stessi test/report e build artifact 4.003 file. Self-review senza P0/P1; delivery poi verificata tramite PR #24/merge `3e9c6d5`.
 - `DOC-ARCH-001`: contract architetturale 3/3 e regressione config 6/6 verdi; `verify:docs` su 44 documenti e `verify:affected` exit `0`.
 - Il primo cold checkout ha rilevato correttamente pnpm globale `10.21.0` nel comando composto e il limite Windows long-path del cleanup; regressione config 5/6 RED→6/6 GREEN. Il rerun del functional head `30f611e` ha chiuso frozen install, config, PostgreSQL head `000002_feature_flags`, build 11/11, integration 20/20 e `web-health-v1`; risorse Compose e worktree rimossi.
-- Unico full gate HIGH_RISK senza cache exit `0` in 143,4 s: lint/build 11, typecheck 13, report verificati per 251 test, contract 73, security 32 pass/3 skip host e artifact 3.982 file. Delivery DOC-ARCH-001 ancora `PENDING` fino alla PR protetta; nessuna azione Vercel.
+- Unico full gate HIGH_RISK senza cache exit `0` in 143,4 s: lint/build 11, typecheck 13, report verificati per 251 test, contract 73, security 32 pass/3 skip host e artifact 3.982 file. Delivery DOC-ARCH-001 verificata tramite PR #25, merge `9132cbd24ee6a0f8b1cc6c875114d86dc70804b5` e CI post-merge `29496032461`; nessuna azione Vercel.
 
 ## 2026-07-15
 

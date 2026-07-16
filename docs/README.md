@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
+last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -11,8 +11,10 @@ source_refs:
   - docs/adr/README.md
   - docs/superpowers/specs/2026-07-16-doc-arch-001-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
+  - docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md
 related_tasks:
   - GOV-001
+  - GOV-004
   - BL-001
   - BL-002
   - BL-003
@@ -21,6 +23,7 @@ related_tasks:
   - BL-009
   - BL-079
   - BL-080
+  - BL-081
   - QA-001
   - QA-002
   - DOC-ARCH-001
@@ -114,6 +117,8 @@ supersedes: null
 | [`superpowers/specs/2026-07-15-bl-009-contract-generation-design.md`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md) | Design della vertical slice contrattuale BL-009 |
 | [`superpowers/plans/2026-07-15-bl-009-contract-generation.md`](superpowers/plans/2026-07-15-bl-009-contract-generation.md) | Piano TDD e gate HIGH_RISK di BL-009 |
 | [`superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`](superpowers/specs/2026-07-16-qa-001-test-foundation-design.md) | Design approvato di `testing-foundation-v1` e decomposizione QA-001/QA-002 |
+| [`superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md`](superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md) | Decisione local-first che separa BL-079, BL-081, QA-002 e smoke remoto |
+| [`superpowers/plans/2026-07-16-gov-004-unblock-ui-dependencies.md`](superpowers/plans/2026-07-16-gov-004-unblock-ui-dependencies.md) | Piano esecutivo e gate FAST di GOV-004 |
 | [`testing/TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) | Contratto operativo di runner, fixture, container, coverage e report non-browser |
 | [`data/DATA_MODEL.md`](data/DATA_MODEL.md) | Schema fisico implementato e modello logico pianificato |
 | [`operations/LOCAL_DEVELOPMENT.md`](operations/LOCAL_DEVELOPMENT.md) | Cold start, readiness e cleanup dello sviluppo locale |

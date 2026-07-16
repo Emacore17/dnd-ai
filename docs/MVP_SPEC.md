@@ -1,15 +1,18 @@
 ---
 status: active
 owner: product-and-engineering
-last_reviewed: 2026-07-15
-last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
+last_reviewed: 2026-07-16
+last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
 source_refs: []
 related_tasks:
   - GOV-001
+  - GOV-004
   - BL-003
   - BL-010
   - BL-079
   - BL-080
+  - BL-081
+  - QA-002
 code_refs: []
 test_refs:
   - AGENTS_VALIDATION.txt
@@ -3999,8 +4002,9 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 | BL-008 | Observability | Come operatore voglio request e trace ID end-to-end. | OTel/log/Sentry baseline. | P0 | BL-001, BL-003 | Trace web→API→worker fake; log redaction test pass. | M |
 | BL-009 | Contracts | Come client voglio DTO runtime-validati. | Zod, JSON Schema, OpenAPI generation. | P0 | BL-001 | Contract compile e response validation; schema versionato. | M |
 | BL-010 | Platform | Come operatore voglio feature flag e kill switch server-side. | Flag store/config auditato. | P0 | BL-003, BL-004, BL-008 | Disabilita start/turn/model route senza deploy; audit event. | M |
-| BL-079 | Frontend UX | Come giocatore voglio un’interfaccia mobile semplice e premium fin dal primo slice. | Fondazione design system, shell conversazionale, token e motion layer. | P0 | BL-001, BL-002, BL-080 | shadcn/Radix e AI Elements selettivi configurati; shell 320–430 px e desktop adattivo; target touch, reduced motion, keyboard/AA, performance e smoke staging passano. | M |
+| BL-079 | Frontend UX | Come giocatore voglio una fondazione visuale mobile semplice e premium fin dal primo slice. | Design system core, token, primitive accessibili e shell statica. | P0 | BL-001, BL-002, QA-001 | shadcn/Radix `new-york`, token, Geist/Lucide, target touch e shell 320–430 px/desktop adattiva passano build e verifica locale senza dipendere da staging. | S |
 | BL-080 | Platform | Come team voglio una preview/staging M0 isolata e riproducibile. | Provider/secret manager, provisioning, deploy automatico e smoke iniziale dei runtime deployabili. | P0 | BL-002, BL-003 | Preview/staging usa config e secret separati, non contiene dati production, pubblica URL/evidenza redatti e supera lo smoke dei runtime disponibili con rollback documentato. | M |
+| BL-081 | Frontend UX | Come giocatore voglio una shell conversazionale interattiva e affidabile. | Wrapper conversazionali, drawer, stati fixture e motion layer. | P0 | BL-079, QA-001 | AI Elements selettivi non sostituiscono `TurnView`/REST+SSE; shell 320–430 px e desktop, focus, reduced motion, overflow e bundle senza Rive iniziale superano smoke locale. | M |
 | BL-011 | Character | Come designer voglio cataloghi originali versionati. | Ascendenze, classi, background, ability, item base. | P0 | BL-009 | Nessun contenuto proprietario; schema/catalog validation pass. | L |
 | BL-012 | Character | Come giocatore voglio scegliere identità e classe. | Step builder con preview. | P0 | BL-011, BL-079 | Solo opzioni catalogo; keyboard/accessibility smoke. | M |
 | BL-013 | Character | Come giocatore voglio allocare attributi validi. | Point allocation/array standard. | P0 | BL-011, BL-079 | Budget invariabile; score 8–16; server ricalcola. | M |
@@ -4017,7 +4021,7 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 | BL-024 | Campaign Bible | Come sistema voglio validare raggiungibilità e sicurezza. | Semantic graph validator. | P0 | BL-022, BL-023 | Ending/revelation/act path; orphan reference zero. | L |
 | BL-025 | Campaign Bible | Come sistema voglio seed canonici atomici. | Persist Bible, NPC, location, quest, clocks, scene. | P0 | BL-024 | Retry non duplica; transaction all-or-nothing. | L |
 | BL-026 | Prologo | Come giocatore voglio un prologo coerente. | Generate from validated IDs/state. | P0 | BL-025 | Nessun ID inventato; prima decisione disponibile; moderated. | M |
-| BL-027 | Generation UX | Come giocatore voglio progress e retry sicuro. | Generation state, SSE/poll, error UI. | P0 | BL-023–BL-026, BL-079 | Step reali; failed precommit retry; no duplicate campaign start. | M |
+| BL-027 | Generation UX | Come giocatore voglio progress e retry sicuro. | Generation state, SSE/poll, error UI. | P0 | BL-023–BL-026, BL-079, BL-081 | Step reali; failed precommit retry; no duplicate campaign start. | M |
 | BL-028 | Turn Loop | Come client voglio inviare un turno idempotente. | POST turns, request hash, 202. | P0 | BL-007, BL-009 | Same key/body same turn; body diverso 409. | L |
 | BL-029 | Turn Loop | Come sistema voglio un solo turno attivo per campagna. | Redis lock + partial unique index. | P0 | BL-028 | Concurrency test: uno accepted, altri 409. | M |
 | BL-030 | Workflow | Come sistema voglio elaborare turni su worker. | BullMQ/outbox/job ID deterministico. | P0 | BL-028, BL-029 | Job duplicato no-op; stuck watchdog recupera. | L |
@@ -4029,8 +4033,8 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 | BL-036 | Event Sourcing | Come sistema voglio eventi append-only e proiezioni atomiche. | Event writer, sequence, causation. | P0 | BL-004, BL-033–BL-035 | Event+projection transaction; append-only permission. | XL |
 | BL-037 | Snapshots | Come sistema voglio ripristino rapido. | Snapshot triggers, checksum, reducer replay. | P0 | BL-036 | Restore = current checksum; corrupt snapshot skipped. | L |
 | BL-038 | Streaming | Come giocatore voglio progress e narrazione SSE. | Stream endpoint, events, heartbeats. | P0 | BL-034–BL-036 | Progress before commit; definitive chunks after commit. | L |
-| BL-039 | Recovery UX | Come giocatore voglio riconnettermi senza doppio turno. | GET status, Last-Event-ID, retry banner. | P0 | BL-028, BL-038, BL-079 | Disconnect after commit renders same response; no resubmit. | L |
-| BL-040 | Game UI | Come giocatore voglio una schermata centrale completa. | Narrative cards, composer, party/objective/drawers. | P0 | BL-038, BL-039, BL-079 | Tutte le modalità base renderizzate; responsive/AA. | XL |
+| BL-039 | Recovery UX | Come giocatore voglio riconnettermi senza doppio turno. | GET status, Last-Event-ID, retry banner. | P0 | BL-028, BL-038, BL-079, BL-081 | Disconnect after commit renders same response; no resubmit. | L |
+| BL-040 | Game UI | Come giocatore voglio una schermata centrale completa. | Narrative cards, composer, party/objective/drawers. | P0 | BL-038, BL-039, BL-079, BL-081 | Tutte le modalità base renderizzate; responsive/AA. | XL |
 | BL-041 | State Diff | Come client voglio aggiornamenti canonici espliciti. | Backend state diff/player view. | P0 | BL-036, BL-040 | UI non estrae HP/item dalla prosa; version check. | M |
 | BL-042 | Rules Core | Come sistema voglio RNG iniettato e roll registrati. | Crypto RNG prod/seed test. | P0 | BL-009 | Ogni roll ha source/call; replay usa valore evento. | M |
 | BL-043 | Skill Checks | Come giocatore voglio prove e salvezza verificabili. | DC bands, modifiers, advantage, degree. | P0 | BL-011, BL-042 | Formula esatta; impossible action no roll. | L |
@@ -4061,8 +4065,8 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 | BL-068 | AI Eval | Come team voglio un harness di evaluation versionato. | Fixtures, assertions, grader, report. | P0 | BL-021, BL-035, BL-051 | 48 casi eseguibili; deterministic fail precedence. | XL |
 | BL-069 | Bot Simulation | Come team voglio campagne automatiche complete. | Goal/explorer/adversarial bots. | P0 | BL-040, BL-051, BL-061, BL-068 | ≥40 campaigns run; artifact riproducibile; cost report. | XL |
 | BL-070 | Release | Come operatore voglio load/chaos/restore e runbook. | Staging tests, backup restore, incident docs. | P0 | BL-063–BL-069 | SLO pass; restore checksum; no Sev1; go/no-go signed. | XL |
-| BL-071 | UX | Come giocatore voglio una timeline degli eventi principali. | Player-safe event chronology. | P1 | BL-036, BL-056, BL-079 | No hidden event; filter/accessible. | M |
-| BL-072 | Analytics | Come Product voglio feedback su coerenza e narrativa. | Rating/tag events e dashboard. | P1 | BL-025, BL-040, BL-079 | Opt-out; no free text required; funnel visible. | M |
+| BL-071 | UX | Come giocatore voglio una timeline degli eventi principali. | Player-safe event chronology. | P1 | BL-036, BL-056, BL-079, BL-081 | No hidden event; filter/accessible. | M |
+| BL-072 | Analytics | Come Product voglio feedback su coerenza e narrativa. | Rating/tag events e dashboard. | P1 | BL-025, BL-040, BL-079, BL-081 | Opt-out; no free text required; funnel visible. | M |
 | BL-073 | Identity | Come utente voglio social login. | OIDC providers allowlisted. | P1 | BL-006, BL-079 | Account linking sicuro; no duplicate identity. | M |
 | BL-074 | Export | Come giocatore voglio esportare la cronaca in Markdown. | Narrative compilation P1. | P1 | BL-062, BL-067, BL-079 | Sanitized, no hidden facts, signed URL. | M |
 | BL-075 | Rules | Come designer voglio un quarto archetipo o più abilità. | Catalog expansion dopo bilanciamento. | P2 | GATE-MVP, BL-011, BL-064, BL-069 | Nuovi contenuti passano rules/eval; no breaking campaigns. | L |
@@ -4112,7 +4116,7 @@ Tutti i criteri seguenti sono P0 e devono passare in staging con evidenza automa
 - WCAG 2.2 AA per journey P0 senza blocker critici.
 - Ogni journey giocatore P0 è completabile a 320 px, ottimizzato a 360–430 px e non viene coperto da tastiera virtuale o safe area.
 - Azioni frequenti rispettano target touch ≥44×44 CSS px, primarie ≥48 px; nessuna funzione esiste soltanto in hover o desktop.
-- Il percorso reduced-motion conserva informazioni, focus order e tempi di disponibilità delle azioni; Motion/Rive rispettano il budget verificato in `BL-079`.
+- Il percorso reduced-motion conserva informazioni, focus order e tempi di disponibilità delle azioni; Motion/Rive rispettano il budget verificato in `BL-081` e consolidato da `QA-002`.
 - La UI usa la gerarchia conversazionale e la progressive disclosure definite in §8/§21; niente dashboard densa o chrome pseudo-medievale nel core loop.
 - Nessuna vulnerabilità critical/high aperta; medium con owner/mitigation approvata.
 - Nessun prompt/model/schema change non versionato.
@@ -4134,7 +4138,7 @@ Tutti i criteri seguenti sono P0 e devono passare in staging con evidenza automa
 | Progress/finale | Bible predicates, pacing, ending gate | AC-20, AC-21 |
 | Safety/security | moderation, auth, validation | AC-22, AC-23 |
 | QA/deployment | eval harness, CI/CD/IaC | AC-24, AC-25 |
-| UX/UI mobile-first | design tokens, shell conversazionale, HUD on demand, motion layer | BL-079 + mobile/reduced-motion/visual regression suite |
+| UX/UI mobile-first | design tokens, shell conversazionale, HUD on demand, motion layer | BL-079 + BL-081 + QA-002 mobile/reduced-motion/visual regression suite |
 
 ## 32.4 Go/no-go
 

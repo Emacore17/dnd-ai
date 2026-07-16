@@ -2,13 +2,14 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
+last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
   - GOV-001
   - GOV-002
   - GOV-003
+  - GOV-004
   - BL-001
   - BL-002
   - BL-003
@@ -18,6 +19,7 @@ related_tasks:
   - BL-010
   - BL-079
   - BL-080
+  - BL-081
   - QA-001
   - QA-002
   - DOC-ARCH-001
@@ -155,13 +157,13 @@ supersedes: null
 > **Punto di ingresso agente:** [`AGENTS.md`](../AGENTS.md)
 > **Specifica canonica:** [`docs/MVP_SPEC.md`](MVP_SPEC.md)
 > **Studio UX/UI:** [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md)
-> **Baseline specifica:** SHA-256 `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329`
-> **Data baseline:** `2026-07-15`
+> **Baseline specifica:** SHA-256 `e7da3ac4d7197ac0f0e1ffc5e9fa1e4324373f521e5bf29fdf06d9603f6af920`
+> **Data baseline:** `2026-07-16`
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale`
-> **Prossimo task READY:** nessun altro task P0; `BL-079` resta `BACKLOG` finché `BL-080` è bloccato
+> **Task attivo:** `GOV-004 — Sblocco local-first della fondazione UX/UI`
+> **Prossimo task READY:** `BL-079 — Design system core e shell statica mobile-first`
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -395,7 +397,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | 57% | 19 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta | `IN_PROGRESS` | 57% | 21 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -641,29 +643,26 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Evidenze di chiusura:** mirati branch-local: `corepack pnpm@11.13.0 tasks:check` exit `0`; `corepack pnpm@11.13.0 test:unit` exit `0` con 88 pass/1 host skip dopo regressione malformed state; `node --test tests/database/feature-flags.test.mjs` exit `0` con 2/2 dopo regressione replay idempotente post-toggle; `corepack pnpm@11.13.0 db:migrate:test` exit `0` con 15/15; `node --test tests/security/feature-flags-security.test.mjs` exit `0` con 4/4; `corepack pnpm@11.13.0 verify:docs` exit `0` con 33 documenti/10 modificati, task graph e secret scan `PASS`. Full `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` sul candidato BL-010; commit/PR/CI `pending` per delivery derivata; migration head `000002_feature_flags`; eval/trace ID `N/A`.
 - **Note, rischi o bloccanti:** Corsia `HIGH_RISK`: persistence/migration, config operativa e kill switch di sicurezza. Scope approvato dal Product Owner il 2026-07-15: PostgreSQL shared/durable store, CLI server-side, catalogo chiuso, default fail-closed, audit atomico, CAS e idempotenza; nessun endpoint admin pubblico, nessun deploy e nessuna azione Vercel. Tre tentativi di review subagent sono stati interrotti per timeout senza output utile; il pass manuale P0/P1 ha individuato e corretto la semantica di replay idempotente, ora coperta da test PostgreSQL reale.
 
-### BL-079 — Fondazione design system e shell conversazionale mobile-first
+### BL-079 — Design system core e shell statica mobile-first
 
-- **Stato:** `BACKLOG`
+- **Stato:** `READY`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
-- **Priorità / stima:** `P0` / `M`
-- **Dipendenze:** BL-001, BL-002, BL-080
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§8, 11.4, 21, 23.1, 26.8, 32.2; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-079`; `docs/MVP_SPEC.md` §35.1
-- **Obiettivo:** Come giocatore casual voglio un’interfaccia semplice, premium e comoda sul telefono, così posso leggere, decidere e agire senza una HUD densa.
-- **Deliverable:** shadcn/ui `new-york` su Radix; `components.json`; token semantici; font/icon/touch-target contract; primitive AI Elements selettive; wrapper `GameConversation`, `NarrativeTurn`, `FreeActionComposer` e `GameDrawer`; Motion lazy/reduced; shell fixture mobile e desktop adattiva; decisione performance-gated su Rive.
-- **Criterio di accettazione:** Il core shell funziona a 320 px ed è ottimizzato a 360–430 px; desktop amplia senza funzioni esclusive; composer, safe area, tastiera virtuale, due suggested actions, drawer HUD e stati idle/loading/error/reconnect sono verificati; keyboard/WCAG 2.2 AA, target touch, reduced-motion, visual regression e performance smoke passano.
+- **Contesto verificato:** `YES` — design head `84357e83dbc173e9a3445b7df24a3b7e7157fbaa`; data: `2026-07-16`
+- **Priorità / stima:** `P0` / `S`
+- **Dipendenze:** BL-001, BL-002, QA-001
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§8, 11.4, 21, 23.1, 26.8, 32.2; `docs/product/UX_UI_DESIGN.md` §§2–10, 12–14.1; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md`; `docs/MVP_SPEC.md` §31 `BL-079`; `docs/MVP_SPEC.md` §35.1
+- **Obiettivo:** Come giocatore casual voglio una fondazione visuale semplice, premium e comoda sul telefono, così ogni slice successivo eredita gerarchia, accessibilità e touch ergonomici coerenti.
+- **Deliverable:** shadcn/ui `new-york` su Radix; `components.json`; Tailwind/PostCSS; token semantici; Geist/Lucide; contratti per radius, spacing, focus e touch target; primitive form/feedback minime; shell statica mobile-first con fixture e adattamento desktop.
+- **Criterio di accettazione:** La shell statica funziona a 320 px ed è ottimizzata a 360–430 px; desktop amplia la stessa gerarchia; font, token, focus, target touch, safe area e primitive base passano build, test contrattuali e verifica visuale locale senza dipendere da preview/staging.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Component test di token e wrapper per idle, loading, long content, error, reconnect e completed.
-  - [ ] E2E a 320, 360, 390, 768, 1024 e 1440 px; portrait/landscape, tastiera virtuale e safe area senza CTA coperte o overflow orizzontale.
-  - [ ] Keyboard-only, screen reader smoke, accessibility scan WCAG 2.2 AA e target frequenti ≥44×44 CSS px / primari ≥48 px.
-  - [ ] Reduced-motion mantiene contenuto, focus order e azioni; motion layer usa transform/opacity nei percorsi frequenti.
-  - [ ] Bundle/performance trace documenta Motion lazy; Rive è assente dal bundle iniziale e viene adottato solo se supera il gate, altrimenti rimosso.
-  - [ ] Visual regression delle shell P0 e review “five-second comprehension” con finding tracciati.
-  - [ ] Smoke della shell su preview/staging fornita da `BL-080` senza dipendenza inversa.
-- **Documentazione e contesto:** `docs/product/UX_UI_DESIGN.md`, `docs/adr/0001-mobile-first-conversational-ui.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, `docs/testing/TEST_STRATEGY.md` quando creato
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report visual/a11y/performance `—`; component inventory/versioni `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** Non installare tutte le registry AI Elements; non introdurre `useChat` o un trasporto parallelo; Rive è opzionale e non può bloccare la shell. `BL-079` possiede il setup browser/component minimo necessario ai propri test e consuma lo staging dopo `BL-080`; `QA-001` fornisce la fondazione non-browser e `QA-002` consolida il harness comune dopo la feature, senza dipendenza circolare.
+  - [ ] Contract test per configurazione shadcn, token semantici, font/icon policy, focus e target touch.
+  - [ ] Component test delle primitive minime e della shell statica per contenuto breve/lungo e feedback base.
+  - [ ] Build/typecheck del workspace web e verifica locale a 320, 390 e 1440 px senza overflow orizzontale o CTA coperte.
+  - [ ] Keyboard smoke e review “five-second comprehension” con finding P0/P1 chiusi.
+- **Documentazione e contesto:** `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
+- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report visual/contract `—`; component inventory/versioni `—`; docs aggiornati `—`
+- **Note, rischi o bloccanti:** Fuori scope wrapper conversazionali, AI Elements, drawer interattivo, state machine, Motion, Rive, Playwright comune e smoke remoto: appartengono rispettivamente a `BL-081`, `QA-002` e `BL-080`. Nessuna azione Vercel è richiesta o autorizzata.
 
 ### BL-080 — Fondazione preview/staging M0
 
@@ -684,10 +683,31 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Guard build fail-closed verificato per local, Preview, Production, metadata mancanti/incoerenti e output redatto; il build Vercel usa l'entrypoint dedicato per contratto. La prova provider resta separata e aperta.
   - [x] Payload CLI verificato prima dell'upload: `.vercelignore` root-only, dry-run JSON bounded, input obbligatori, mode/hash, path e budget fail-closed; la prova provider reale resta separata e aperta.
   - [ ] Deploy remoto fallito senza action `ready`, smoke o promozione Production.
-  - [ ] Rollback o redeploy provato; baseline web corrente e health check dei runtime disponibili verificati. Lo smoke della shell mobile resta un gate di `BL-079` dopo la disponibilità dell'ambiente.
+  - [ ] Rollback o redeploy provato; baseline web corrente e health check dei runtime disponibili verificati. Lo smoke remoto della shell viene ricomposto da `GATE-M0` dopo la disponibilità dell'ambiente.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/operations/CI_CD.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/PREVIEW_STAGING.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0004-runtime-configuration-and-secret-injection.md`; `docs/adr/0005-vercel-web-preview-and-staging.md`; `docs/testing/BL-080_VERIFICATION.md`
 - **Evidenze di chiusura:** foundation `50efcbe620ad7c1fc6eb3cf1b79cdb27b0c383af`/PR #7; hardening `1766406b9bd701a9880705b371fdc0b05a73abe1`/PR #10; attivazione `7335053c59838cf3b581d7f09645450372aa0429`/PR #12; contenimento PR #13; guard PR #14; payload policy `13032743552654f9f68d87050eb11cabbdd92325`/PR #15; freeze `1cb655abee8a55b6974d90ae20b4244b12ba1192`, evidence sync `e5dff7bf371bd91321587fecadbd8f51264cc263`, [PR #16](https://github.com/Emacore17/dnd-ai/pull/16), CI `29343319207`/`29343526054` 5/5 `SUCCESS`, merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`. Nessun deployment Vercel è stato creato da PR #16 o dal merge; progetto ancora a zero deployment/alias. Audit sorgente e riferimenti provider in `docs/testing/BL-080_VERIFICATION.md`.
-- **Note, rischi o bloccanti:** fatti osservati: Vercel CLI `55.0.0` passa `preview` internamente, `@vercel/client 17.6.4` omette il campo prima della POST e il provider ha restituito record Production. L'applicazione server della regola first-deployment documentata è l'ipotesi più forte, coerente con `vercel/vercel#17069`, ma non è confermata dal maintainer. Blocco concreto: sul progetto con zero deployment non esiste oggi un percorso first-deployment Preview-only supportato e verificato compatibile con il divieto Product Owner di Production; smoke, failure e redeploy restano impossibili. Condizione di sblocco: fix o workaround ufficiale/provider-confirmed, senza upgrade/cambio account/Production, seguito da PR separata, containment testato e Preview reale. Il contenimento mantiene `source.autoDeploy=false`, `git.deploymentEnabled=false`, binding `null`, guard Preview-only, payload policy, dry-run bounded e `source.manualDeployment.enabled=false`. Sono consentiti soltanto dry-run, readback e contenimento per ID/URL esatto; nessun deploy, retry, redeploy, riattivazione Git, promozione o Production è autorizzato. L'installazione condivisa resta invariata per decisione PO. `BL-079` resta `BACKLOG`.
+- **Note, rischi o bloccanti:** fatti osservati: Vercel CLI `55.0.0` passa `preview` internamente, `@vercel/client 17.6.4` omette il campo prima della POST e il provider ha restituito record Production. L'applicazione server della regola first-deployment documentata è l'ipotesi più forte, coerente con `vercel/vercel#17069`, ma non è confermata dal maintainer. Blocco concreto: sul progetto con zero deployment non esiste oggi un percorso first-deployment Preview-only supportato e verificato compatibile con il divieto Product Owner di Production; smoke, failure e redeploy restano impossibili. Condizione di sblocco: fix o workaround ufficiale/provider-confirmed, senza upgrade/cambio account/Production, seguito da PR separata, containment testato e Preview reale. Il contenimento mantiene `source.autoDeploy=false`, `git.deploymentEnabled=false`, binding `null`, guard Preview-only, payload policy, dry-run bounded e `source.manualDeployment.enabled=false`. Sono consentiti soltanto dry-run, readback e contenimento per ID/URL esatto; nessun deploy, retry, redeploy, riattivazione Git, promozione o Production è autorizzato. L'installazione condivisa resta invariata per decisione PO. `BL-079` e `BL-081` avanzano localmente senza modificare questo blocco o il gate remoto.
+
+### BL-081 — Shell conversazionale interattiva e motion layer
+
+- **Stato:** `BACKLOG`
+- **Progresso:** `0%`
+- **Esito test:** `NOT_RUN`
+- **Contesto verificato:** `YES` — design head `84357e83dbc173e9a3445b7df24a3b7e7157fbaa`; data: `2026-07-16`
+- **Priorità / stima:** `P0` / `M`
+- **Dipendenze:** BL-079, QA-001
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§8, 11.4, 21, 23.1, 26.8, 32.2; `docs/product/UX_UI_DESIGN.md` §§4–14.1; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md`; `docs/MVP_SPEC.md` §31 `BL-081`; `docs/MVP_SPEC.md` §35.1
+- **Obiettivo:** Come giocatore voglio una shell conversazionale interattiva e affidabile, così posso leggere, decidere e agire con una mano senza una HUD densa.
+- **Deliverable:** Wrapper `GameConversation`, `NarrativeTurn`, `FreeActionComposer` e `GameDrawer`; primitive AI Elements selettive senza trasporto parallelo; fixture deterministiche per stati turno; drawer HUD; Motion lazy/reduced; progressive enhancement desktop.
+- **Criterio di accettazione:** La shell interattiva funziona a 320–430 px e desktop; composer, safe area, tastiera virtuale, due azioni suggerite, drawer, focus, overflow, stati idle/submitting/progress/completed/reconnect/error e contenuto equivalente senza motion superano smoke locale; Rive resta assente dal bundle iniziale.
+- **Test obbligatori prima di `DONE`:**
+  - [ ] Component test dei wrapper e degli stati deterministici, inclusi contenuto lungo, errore e reconnect.
+  - [ ] Smoke locale 320/390/1440 px per touch target, focus, safe area, tastiera virtuale e overflow.
+  - [ ] Reduced-motion mantiene contenuto, focus order e azioni; Motion usa `LazyMotion`/feature subset e transform/opacity nei percorsi frequenti.
+  - [ ] Bundle check prova AI Elements selettivi, assenza di `useChat`/trasporto parallelo e assenza di Rive iniziale.
+- **Documentazione e contesto:** `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
+- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report smoke/a11y/bundle `—`; component inventory/versioni `—`; docs aggiornati `—`
+- **Note, rischi o bloccanti:** `QA-002` consolida il browser harness comune dopo questa feature; `BL-080` e `GATE-M0` possiedono lo smoke remoto. Nessuna azione Vercel è richiesta o autorizzata.
 
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
 
@@ -730,6 +750,26 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Evidenze di chiusura:** audit baseline: BL-003/BL-080/BL-004 hanno 17 commit documentali su 28 (60,7%); BL-080 ha usato 11 PR, 23 CI e 115 job in 8h07m51s, con sole 28m46s di PR aperte. Candidate in 43 minuti; `verify:docs` exit `0` in 2,65 s; `verify:affected` finale exit `0` in 6,96 s; unico `TURBO_FORCE=true corepack pnpm@10.34.5 verify` exit `0` in 72,70 s: lint/build 11/11, typecheck 12/12, unit 55 pass/1 skip host, integration 9/9, database 13/13, contract 26/26, security 23 pass/3 skip host, policy/scan/docs e artifact 3.238 file `PASS`. Re-review finale: nessun P0/P1.
 - **Note, rischi o bloccanti:** Nessun blocco residuo. CI completa e Ruleset restano invariate; `HIGH_RISK` resta fail-closed. I target saranno ricalcolati da Git/PR/Actions dopo i prossimi cinque task; un mancato target genera un task `GOV`/`BUG`, non un bypass. Nessuna operazione Vercel è stata eseguita.
 
+### GOV-004 — Sblocco local-first della fondazione UX/UI
+
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — commit/SHA: `84357e83dbc173e9a3445b7df24a3b7e7157fbaa`; data: `2026-07-16`
+- **Priorità / stima:** `P0` / `S`
+- **Dipendenze:** GOV-001, GOV-002, GOV-003, DOC-ARCH-001
+- **Riferimenti obbligatori:** [`design GOV-004`](superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md); [`piano GOV-004`](superpowers/plans/2026-07-16-gov-004-unblock-ui-dependencies.md); `docs/MVP_SPEC.md` §31; `docs/product/UX_UI_DESIGN.md` §14; ADR-0001
+- **Obiettivo:** Separare fondazione visuale, shell conversazionale e smoke remoto per sbloccare lo sviluppo locale senza aggirare `BL-080`.
+- **Deliverable:** Specifica, backlog, ADR, studio UX, contesto e tracciabilità concordano su `BL-079`/`BL-081`/`QA-002` e sul gate remoto `BL-080`/`GATE-M0`.
+- **Criterio di accettazione:** `BL-079` è il solo P0 `READY`; il grafo è aciclico; nessun criterio locale richiede staging; `BL-080` resta bloccato.
+- **Test obbligatori prima di `DONE`:**
+  - [x] `pnpm verify:docs` passa con task graph, Mermaid, metadata, link e secret scan.
+  - [x] Spec, task, ADR-0001 e studio UX descrivono la stessa matrice dei consumer.
+  - [x] Il diff non contiene file Vercel, workflow, runtime o lockfile.
+- **Documentazione e contesto:** design/piano GOV-004; `docs/MVP_SPEC.md`; `docs/TASKS.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/CHANGELOG.md`; studio UX/UI; ADR-0001
+- **Evidenze di chiusura:** design head `84357e83dbc173e9a3445b7df24a3b7e7157fbaa`; `tasks:check` exit `0`; `verify:docs` exit `0` con artifact contrattuali 8, document policy 46 documenti/10 modificati, task graph e secret scan `PASS`; self-review P0/P1 completata con un P1 di stato corretto e nessun finding residuo; candidate/PR `PENDING`; migration/eval/trace ID `N/A`.
+- **Note, rischi o bloccanti:** Nessuna azione provider. `BL-080` e `GATE-M0` restano invariati nel loro stato remoto.
+
 ### QA-001 — Fondazione comune per test, fixture e comandi di qualità
 
 - **Stato:** `DONE`
@@ -749,7 +789,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Verifica seed/fake clock/RNG riproducibili e report associabile a un task ID.
   - [x] JUnit/coverage e manifest generati deterministicamente; fixture failing e cleanup failure bloccano la CI.
 - **Documentazione e contesto:** `docs/testing/TEST_STRATEGY.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`
-- **Evidenze di chiusura:** design approvato dal Product Owner il `2026-07-16`; commit funzionali `f485af7`, `9ffd857`, `6a308fd`, `f07aa63`, candidate implementation head `7f2d4d0f360e83baf31404266df47cbee060be0d`; mirati finali: unit foundation 19/19, runner 6/6, container reali 1/1, contract 10/10, report security 2/2 e migration reali 16/16 `PASS`; `verify:docs` 39 documenti/12 modificati, task graph/secret scan `PASS`; audit high senza vulnerabilità note; doppia preparazione artifact con hash identici e verify `PASS`. Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 141,8 s: lint/build 11, typecheck 13, unit 107 pass/1 skip host con coverage testing 92,54% linee/91,89% branch/97,62% funzioni, integration 20, database 16, contract 69, security 32 pass/3 skip host, report 247 test verificati e build artifact 3.982 file `PASS`. Checkout pulito detached: install frozen exit `0` in 19,6 s e full exit `0` in 133,3 s con gli stessi conteggi, report `PASS` e artifact 4.003 file; self-review finale senza P0/P1, review sub-agent non disponibile per vincolo di sessione; delivery PR/merge ancora `PENDING`; migration/eval/trace ID `N/A`.
+- **Evidenze di chiusura:** design approvato dal Product Owner il `2026-07-16`; commit funzionali `f485af7`, `9ffd857`, `6a308fd`, `f07aa63`, candidate implementation head `7f2d4d0f360e83baf31404266df47cbee060be0d`; mirati finali: unit foundation 19/19, runner 6/6, container reali 1/1, contract 10/10, report security 2/2 e migration reali 16/16 `PASS`; `verify:docs` 39 documenti/12 modificati, task graph/secret scan `PASS`; audit high senza vulnerabilità note; doppia preparazione artifact con hash identici e verify `PASS`. Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 141,8 s: lint/build 11, typecheck 13, unit 107 pass/1 skip host con coverage testing 92,54% linee/91,89% branch/97,62% funzioni, integration 20, database 16, contract 69, security 32 pass/3 skip host, report 247 test verificati e build artifact 3.982 file `PASS`. Checkout pulito detached: install frozen exit `0` in 19,6 s e full exit `0` in 133,3 s con gli stessi conteggi, report `PASS` e artifact 4.003 file; self-review finale senza P0/P1, review sub-agent non disponibile per vincolo di sessione; delivery verificata tramite PR #24 e merge `3e9c6d5b088825066fedab4163c8482d391ab543`; migration/eval/trace ID `N/A`.
 - **Note, rischi o bloccanti:** Corsia `HIGH_RISK` perché il candidato modificherà workflow, artifact e lifecycle container. Scope design: Node `24.11.0` nativo, nessun secondo runner o nuova libreria container, riuso del contratto PostgreSQL esistente e Redis pin a digest. Browser/E2E/accessibility/visual regression sono stati separati in `QA-002`. Fuori scope Vercel, provider, UI ed eval AI.
 
 ### QA-002 — Browser, accessibility e visual regression harness
@@ -759,9 +799,9 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P0` / `M`
-- **Dipendenze:** QA-001, BL-079
+- **Dipendenze:** QA-001, BL-081
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §26.8; `docs/MVP_SPEC.md` §35.1; `docs/product/UX_UI_DESIGN.md` §13–§14.1; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`
-- **Obiettivo:** Consolidare il setup browser di `BL-079` in un harness comune, accessibile e deterministico.
+- **Obiettivo:** Consolidare lo smoke browser di `BL-081` in un harness comune, accessibile e deterministico.
 - **Deliverable:** Playwright e lifecycle server locale; viewport 320/390/1440 e touch; keyboard/focus/zoom/safe area; reduced-motion; accessibility scan; visual regression e artifact deterministici.
 - **Criterio di accettazione:** Da checkout pulito il browser harness verifica la shell reale senza dipendere da Vercel, isola processi/artifact e fallisce su accessibility blocker, snapshot drift o server/browser non pronto.
 - **Test obbligatori prima di `DONE`:**
@@ -771,7 +811,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Visual artifact stabile su due run; server failure, browser crash e snapshot drift propagano exit non-zero.
 - **Documentazione e contesto:** `docs/testing/TEST_STRATEGY.md`; `docs/product/UX_UI_DESIGN.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
 - **Evidenze di chiusura:** commit/PR `—`; comandi/report/CI `—`; migration/eval/trace ID `N/A`.
-- **Note, rischi o bloccanti:** Non duplica le fixture di `BL-079` e non ne blocca l’implementazione. È bloccato finché `QA-001` e `BL-079` non sono `DONE`. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`.
+- **Note, rischi o bloccanti:** Non duplica le fixture di `BL-081` e non ne blocca l’implementazione. È bloccato finché `QA-001` e `BL-081` non sono `DONE`. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`.
 
 ### DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale
 
@@ -790,8 +830,8 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Cold-start setup seguito da ambiente pulito porta a health check verdi.
   - [x] Controllo automatico o review registrata dei code path citati.
 - **Documentazione e contesto:** Tutti i deliverable del task; aggiornare `docs/CONTEXT.md` e registro ADR
-- **Evidenze di chiusura:** functional head `30f611e8e874b9c87d20d50c4c5f45528e1083a5`; contract architettura `3/3` e regressione config `6/6` `PASS`; `verify:docs` e `verify:affected` exit `0`; unico full HIGH_RISK senza cache exit `0` in 143,4 s con 11 lint/build, 13 typecheck, 251 test nei report e artifact 3.982 file; clean checkout: install frozen, `config:check`, PostgreSQL head `000002_feature_flags`, build 11/11, integration 20/20 e `web-health-v1` reale exit `0`; worktree/Compose rimossi; PR/CI `PENDING`; migration/eval/trace ID `000002_feature_flags` / `N/A` / `N/A`; docs aggiornati nello stesso change set.
-- **Note, rischi o bloccanti:** Proposta branch-local terminale in corsia `HIGH_RISK`. Il primo cold check ha rilevato che `config:check` perdeva il pin Corepack nei subprocess e invocava pnpm globale `10.21.0`; la regressione e il secondo checkout provano il pin esplicito `pnpm@11.13.0`. Il cleanup Windows usa `core.longpaths=true`. Lockfile, dipendenze, runtime di dominio, CI, provider e Vercel restano invariati; delivery `PENDING` finché la PR protetta non raggiunge `main`.
+- **Evidenze di chiusura:** candidate `1d3b5329ecef3c1a9157b0574a1c0a9faec5ad6a`; contract architettura `3/3` e regressione config `6/6` `PASS`; `verify:docs` e `verify:affected` exit `0`; unico full HIGH_RISK senza cache exit `0` in 143,4 s con 11 lint/build, 13 typecheck, 251 test nei report e artifact 3.982 file; clean checkout: install frozen, `config:check`, PostgreSQL head `000002_feature_flags`, build 11/11, integration 20/20 e `web-health-v1` reale exit `0`; worktree/Compose rimossi; PR #25, merge `9132cbd24ee6a0f8b1cc6c875114d86dc70804b5` e CI post-merge `29496032461` cinque job `SUCCESS`; migration/eval/trace ID `000002_feature_flags` / `N/A` / `N/A`; docs aggiornati nello stesso change set.
+- **Note, rischi o bloccanti:** Delivery protetta verificata. Il primo cold check ha rilevato che `config:check` perdeva il pin Corepack nei subprocess e invocava pnpm globale `10.21.0`; la regressione e il secondo checkout provano il pin esplicito `pnpm@11.13.0`. Il cleanup Windows usa `core.longpaths=true`. Lockfile, dipendenze, runtime di dominio, CI, provider e Vercel restano invariati.
 
 ### GATE-M0 — Exit gate Milestone 0 — Fondamenta
 
@@ -800,7 +840,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P0` / `S`
-- **Dipendenze:** GOV-001, GOV-002, QA-001, QA-002, DOC-ARCH-001, BL-001..BL-010, BL-079, BL-080
+- **Dipendenze:** GOV-001, GOV-002, QA-001, QA-002, DOC-ARCH-001, BL-001..BL-010, BL-079, BL-080, BL-081
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §30 Milestone 0; `docs/MVP_SPEC.md` §35.3
 - **Obiettivo:** Validare in modo integrato tutti i deliverable di M0 prima di autorizzare il lavoro della milestone successiva.
 - **Deliverable:** Report di exit gate M0, demo riproducibile, evidenze e aggiornamento della dashboard.
@@ -1199,7 +1239,7 @@ Generare una campagna canonica partendo dal setup, con moderation, validation, s
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P0` / `M`
-- **Dipendenze:** BL-023–BL-026, BL-079
+- **Dipendenze:** BL-023–BL-026, BL-079, BL-081
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §8.3 Stati UX del turno; `docs/MVP_SPEC.md` §20.5 Status e retry; `docs/MVP_SPEC.md` §20.6 Eventi SSE; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-027`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come giocatore voglio progress e retry sicuro.
 - **Deliverable:** Generation state, SSE/poll, error UI.
@@ -1487,7 +1527,7 @@ Implementare il loop di turno completo con idempotenza, workspace, eventi, snaps
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P0` / `L`
-- **Dipendenze:** BL-028, BL-038, BL-079
+- **Dipendenze:** BL-028, BL-038, BL-079, BL-081
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20.5 Status e retry; `docs/MVP_SPEC.md` §20.6 Eventi SSE; `docs/MVP_SPEC.md` §21.5 Retry sicuro; `docs/MVP_SPEC.md` §32 AC-15; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-039`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come giocatore voglio riconnettermi senza doppio turno.
 - **Deliverable:** GET status, Last-Event-ID, retry banner.
@@ -1507,7 +1547,7 @@ Implementare il loop di turno completo con idempotenza, workspace, eventi, snaps
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P0` / `XL`
-- **Dipendenze:** BL-038, BL-039, BL-079
+- **Dipendenze:** BL-038, BL-039, BL-079, BL-081
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §8 Esperienza utente; `docs/MVP_SPEC.md` §10 Tipologie di turno; `docs/MVP_SPEC.md` §21 Interfaccia utente; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-040`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come giocatore voglio una schermata centrale completa.
 - **Deliverable:** Narrative cards, composer, party/objective/drawers.
@@ -2405,7 +2445,7 @@ I task seguenti restano `DEFERRED`. Non devono essere avviati automaticamente: r
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P1` / `M`
-- **Dipendenze:** BL-036, BL-056, BL-079
+- **Dipendenze:** BL-036, BL-056, BL-079, BL-081
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §21 Interfaccia utente; `docs/MVP_SPEC.md` §25 Analytics; `docs/MVP_SPEC.md` §6.2 Incluso P1; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-071`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come giocatore voglio una timeline degli eventi principali.
 - **Deliverable:** Player-safe event chronology.
@@ -2426,7 +2466,7 @@ I task seguenti restano `DEFERRED`. Non devono essere avviati automaticamente: r
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P1` / `M`
-- **Dipendenze:** BL-025, BL-040, BL-079
+- **Dipendenze:** BL-025, BL-040, BL-079, BL-081
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §25 Analytics; `docs/MVP_SPEC.md` §6.2 Incluso P1; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-072`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come Product voglio feedback su coerenza e narrativa.
 - **Deliverable:** Rating/tag events e dashboard.
@@ -2627,21 +2667,21 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: DOC-ARCH-001
-last_completed_task: QA-001
-next_ready_task: none
+active_task: GOV-004
+last_completed_task: GOV-004
+next_ready_task: BL-079
 status: DONE
 progress: 100
-started_at: 2026-07-16T13:12:53+02:00
-candidate_at: 2026-07-16T13:48:09+02:00
-cycle_target_minutes: 120
-cycle_actual_minutes: 35
-updated_at: 2026-07-16T13:48:09+02:00
+started_at: 2026-07-16T14:15:52+02:00
+candidate_at: 2026-07-16T14:24:01+02:00
+cycle_target_minutes: 15
+cycle_actual_minutes: 8
+updated_at: 2026-07-16T14:24:01+02:00
 agent: Codex development agent
-git_branch: codex/doc-arch-001
-base_commit: 3e9c6d5b088825066fedab4163c8482d391ab543
-candidate_head: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
-spec_sha256: d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329
+git_branch: codex/gov-004-unblock-ui
+base_commit: 9132cbd24ee6a0f8b1cc6c875114d86dc70804b5
+candidate_head: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
+spec_sha256: e7da3ac4d7197ac0f0e1ffc5e9fa1e4324373f521e5bf29fdf06d9603f6af920
 context_verified: true
 test_status: PASSING
 ```
@@ -2652,24 +2692,27 @@ test_status: PASSING
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti DOC-ARCH-001 — `docs/MVP_SPEC.md` §§11, 19, 24 e 29; card e design approvato
-- [x] documentazione corrente — overview, ADR, configurazione, migration, indice, contesto e tracciabilità
-- [x] codice/test interessati — workspace manifest, composition root runtime, migration head, health web e policy documentali
+- [x] riferimenti GOV-004 — design approvato, `docs/MVP_SPEC.md` §31, studio UX/UI §14 e ADR-0001
+- [x] documentazione corrente — task graph, contesto, tracciabilità, changelog e baseline post PR #25
+- [x] codice/test interessati — task graph e policy documentali; nessun runtime nello scope
 
 ## Piano e scope
 
-- **Corsia:** `HIGH_RISK`, elevata da `STANDARD` quando il cold checkout ha provato che `config:check` invocava il pnpm globale anziché il pin Corepack.
-- **Obiettivo verificabile:** overview, modello dati e setup locale distinguono stato implementato e target pianificato e restano allineati tramite contract test.
-- **File/moduli previsti:** ADR-0009, overview, `DATA_MODEL.md`, `LOCAL_DEVELOPMENT.md`, contract test, pin del solo script composto in `package.json` e documenti di governo semanticamente interessati.
-- **Azioni esterne:** nessun provider, account, deploy o modifica Vercel; il solo side effect previsto è il Compose PostgreSQL locale durante il cold-check.
-- **Test previsti:** contract TDD architettura/config, `verify:docs`, unico `verify` HIGH_RISK, clean checkout con migration head, runtime integration e `web-health-v1` reale.
-- **Rischi/failure path:** drift package/migration/comandi, pin pnpm perso nei subprocess, capability pianificate descritte come presenti, Docker/porta/config/health e cleanup Windows long-path incompleto.
-- **Fuori scope:** Redis locale, BullMQ, API di dominio, SSE, nuove migration, UI, provider, staging e Vercel.
+- **Corsia:** `FAST`, esclusivamente documentazione, stato task e metadata.
+- **Obiettivo verificabile:** `BL-079` diventa il solo P0 `READY`; `BL-081` possiede la shell interattiva e `BL-080` conserva il gate remoto bloccato.
+- **File/moduli previsti:** specifica, task, ADR-0001, studio UX/UI, contesto, tracciabilità, changelog, indice e design/piano GOV-004.
+- **Azioni esterne:** nessun provider, account, deploy, release o modifica Vercel.
+- **Test previsti:** baseline RED documentale, task graph e un solo `verify:docs` finale con re-run dopo le evidenze terminali.
+- **Rischi/failure path:** dipendenza circolare, più task READY, consumer conversazionale senza BL-081, criteri locali ancora legati allo staging o metadata incoerenti.
+- **Fuori scope:** implementazione shadcn/UI, browser harness, auth, runtime, workflow, dipendenze, lockfile, provider e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-16 14:30 +02:00 | 100% | Il gate ha trovato un solo anchor obsoleto dopo il rename BL-079; corretto il riferimento alla causa. La self-review ha poi corretto due label di stato ancora pre-terminali; nessun P0/P1 residuo, un solo task READY e freeze remoto invariato. | Primo `verify:docs` exit `1` sul solo anchor; rerun completo exit `0`: 8 artifact, 46 documenti/10 modificati, task graph e secret scan `PASS`; diff limitato a 10 Markdown. | Rilanciare il gate sul contenuto corretto, committare e pubblicare una sola PR protetta. |
+| 2026-07-16 14:24 +02:00 | 90% | Fonti normative e grafo allineati: BL-079 possiede core/statico locale, BL-081 interazione/Motion, QA-002 il harness comune e BL-080/GATE-M0 il remoto. BL-079 è il solo P0 READY. | `tasks:check` exit `0`; `git diff --check` exit `0`; spec SHA `e7da3ac4…`; nessun file runtime, workflow, lockfile o Vercel nel diff. | Sincronizzare living docs, eseguire `verify:docs`, self-review e chiudere il candidato FAST. |
+| 2026-07-16 14:15 +02:00 | 25% | Approvata e pianificata la decomposizione local-first: BL-079 foundation/statica, BL-081 shell interattiva, QA-002 harness, BL-080/GATE-M0 remoto. | Base `9132cbd`; design `84357e8`, piano `3d560ee`; baseline `verify:docs` RED sui nuovi ID non ancora registrati e su due metadata della spec, senza azioni esterne. | Correggere i metadata della spec e riallineare MVP spec, ADR-0001 e studio UX/UI. |
 | 2026-07-16 13:48 +02:00 | 100% | Candidato branch-local terminale dopo il rerun pulito, l'unico full gate HIGH_RISK e la self-review inline senza P0/P1. La review delegata prevista dalla skill non è autorizzata in questa sessione; sono stati controllati diff completo, contratti, stato implementato/pianificato, dipendenze, secret/PII, Vercel e audit. Nessun task P0 successivo è `READY`: `BL-079` resta dipendente da `BL-080` bloccato e `BL-005` resta quindi non eseguibile. | Functional head `30f611e`: clean frozen/config/migration/build/integration/health tutti exit `0`; full senza cache exit `0` in 143,4 s, 251 test/report e artifact 3.982 file; metadata finali `verify:docs` exit `0`; audit high pulito. Compose e worktree rimossi; nessuna azione Vercel. | Committare il candidato e pubblicare una sola PR protetta. |
 | 2026-07-16 13:36 +02:00 | 75% | Il primo cold checkout ha trovato due failure path reali: `config:check` usava pnpm globale `10.21.0` nei subprocess e `git clean` senza long-path lasciava file pnpm/Next. Cleanup completato sul solo worktree verificato con `core.longpaths=true`; corsia elevata a HIGH_RISK. | Install frozen e PostgreSQL health PASS; `config:check` exit `1` per engine mismatch. Regressione runtime-config RED 5/6→GREEN 6/6; contract guida reso boundary-safe e GREEN 3/3. Nessuna risorsa Compose residua. | Committare la correzione pin/guide, ripetere cold checkout sul nuovo head e poi eseguire l'unico full gate. |
 | 2026-07-16 13:27 +02:00 | 75% | ADR-0009 accepted; overview, modello dati e guida locale distinguono in modo esplicito implementato/pianificato e mantengono `BL-080` congelato. Nessun task dipendente viene reso READY. | Commit `3fa7261`, `70eff10`; contract architetturale 3/3 e `verify:docs` 44 documenti/8 modificati `PASS`; migration head `000002_feature_flags` rilevato dal codice. | Allineare indice/contesto/tracciabilità, quindi eseguire gate mirati e cold checkout con health web reale. |
@@ -2739,16 +2782,16 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/doc-arch-001` su base `3e9c6d5b088825066fedab4163c8482d391ab543`; design `9274bb4`, piano `64fec8a`, architettura `3fa7261`, dati/setup `70eff10`, governance `f77b346`, regressione config `30f611e`; PR non ancora disponibile.
-- **Comandi eseguiti:** contract architettura/config, `verify:docs`, `verify:affected`, audit high, full HIGH_RISK senza cache e cold checkout con install/config/PostgreSQL/migration/build/integration/health reali.
-- **Exit code:** contract architettura 3/3 e config 6/6 `PASS`; docs/affected/audit/full/cold exit `0`; full 143,4 s con 251 test/report e artifact 3.982 file; clean integration 20/20 e head `000002_feature_flags`.
-- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-doc-arch-001-design.md`, `docs/superpowers/plans/2026-07-16-doc-arch-001.md`; CI `PENDING` fino alla PR protetta.
+- **Commit/PR:** branch `codex/gov-004-unblock-ui` su base `9132cbd24ee6a0f8b1cc6c875114d86dc70804b5`; design head `84357e83dbc173e9a3445b7df24a3b7e7157fbaa`; candidato e PR `PENDING`.
+- **Comandi eseguiti:** baseline RED `verify:docs`; `git diff --check`; `tasks:check`; gate FAST `verify:docs` completo.
+- **Exit code:** diff e task graph `0`; primo gate finale `1` sul solo anchor BL-079 obsoleto, correzione causale e rerun `0` con artifact contrattuali 8, document policy 46 documenti/10 modificati, task graph e secret scan `PASS`.
+- **Report/CI URL o path:** design e piano GOV-004; evidence locale nel registro; PR/CI `PENDING`.
 - **Migration head:** `000002_feature_flags` invariato.
 - **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`, invariati.
 - **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
-- **Documenti aggiornati:** design/piano, ADR-0009, overview, modello dati, guida locale e record di governo allineati.
-- **Rischi residui/TODO tracciati:** sola delivery protetta; freeze Vercel invariato e nessuna capability pianificata presentata come implementata.
-- **Task successivo reso READY:** nessuno; `BL-079` resta dipendente da `BL-080` bloccato e `BL-005` dipende da `BL-079`.
+- **Documenti aggiornati:** spec, backlog, contesto, tracciabilità, changelog, indice, ADR-0001 e studio UX/UI.
+- **Rischi residui/TODO tracciati:** `BL-080` resta bloccato; `GATE-M0` conserva lo smoke remoto; nessuna azione provider o Vercel.
+- **Task successivo reso READY:** `BL-079`; `BL-005` e `BL-081` restano `BACKLOG` finché la foundation non è `DONE`.
 
 
 ## 21. Context Sync Log
@@ -2757,6 +2800,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 
 | Data | Commit | Task | Documento/componente | Modifica | Task da riesaminare |
 |---|---|---|---|---|---|
+| 2026-07-16 | `84357e8` + candidate docs | GOV-004 | Spec, backlog e contratto UX/UI | Separati design system/statico (`BL-079`), shell interattiva/Motion (`BL-081`), harness (`QA-002`) e smoke remoto (`BL-080`/`GATE-M0`). Spec SHA `e7da3ac4d7197ac0f0e1ffc5e9fa1e4324373f521e5bf29fdf06d9603f6af920`; task graph PASS e `BL-079` unico P0 READY. | BL-005, BL-006, BL-012–BL-014, BL-016, BL-017, BL-019, BL-027, BL-039, BL-040, BL-071, BL-072, QA-002, GATE-M0 |
 | 2026-07-13 | `N/A` | Creazione `TASKS.md` | Baseline | Derivato il piano operativo dalla spec SHA `f6692930e752108b8ddba52867679514e1fd14e6343ba7b6736d9d6b61cb71b1`. | Tutti, alla prima esecuzione |
 | 2026-07-13 | `N/A` | Allineamento BL-051 | `docs/MVP_SPEC.md` / tool suite | Corretto il conteggio da 21 a 23 tool per allinearlo all’allowlist obbligatoria. | BL-032, BL-051, DOC-RULES-001 |
 | 2026-07-13 | `N/A` | GOV-001 | `AGENTS.md`, `TASKS.md`, `docs/MVP_SPEC.md` | Creato e validato l’entry point agente (SHA `1c53683f00393fd1a992287d7efdd8d1b8bb9b107b6804869ead80761148756c`), formalizzati workflow, clean code, documentazione e uso sicuro del browser; aggiunti backlink. Nuova spec SHA `fe49613992adf7f476bbd56bc279ca76ddfc79bfc7b8d20272da2142c5594a83` dovuta alla sola navigazione. | GOV-001, GOV-002, tutti i task alla cold start |

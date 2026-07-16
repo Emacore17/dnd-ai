@@ -2,7 +2,7 @@
 status: active
 owner: product-design-and-frontend
 last_reviewed: 2026-07-16
-last_verified_commit: 6cda07a60022665f321b48dd82fbeb1d9bef586f
+last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
 source_refs:
   - docs/MVP_SPEC.md#8-esperienza-utente
   - docs/MVP_SPEC.md#21-interfaccia-utente
@@ -10,7 +10,9 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
 related_tasks:
   - GOV-001
+  - GOV-004
   - BL-079
+  - BL-081
   - BL-005
   - BL-006
   - BL-012
@@ -275,7 +277,7 @@ Regole normative:
 5. State diff che evidenzia cosa è cambiato e poi si stabilizza.
 6. Drawer che segue il gesto e conserva focus/scroll.
 
-Un asset Rive può essere sperimentato per generazione mondo o dado, ma entra nel P0 soltanto se supera il gate di `BL-079`.
+Un asset Rive può essere sperimentato per generazione mondo o dado, ma entra nel P0 soltanto se supera il gate di `BL-081`.
 
 ## 12. Stati e failure path
 
@@ -338,22 +340,29 @@ Gli errori osservati diventano finding con severità e task, non note informali.
 
 `BL-079` deve produrre, nell’ordine:
 
-1. `components.json` Radix e token semantici;
-2. font, icon policy, radius, spacing e touch-target contract;
-3. shell mobile statica con dati fixture;
-4. wrapper `GameConversation`, `NarrativeTurn`, `FreeActionComposer`, `GameDrawer` e motion primitives;
-5. stati idle/loading/error/reconnect/completed con fake deterministico;
-6. responsive desktop enhancement;
-7. test component, keyboard, accessibility, reduced-motion, visual regression e performance trace;
-8. decisione documentata su Rive: adottare con budget o rimuovere.
+1. `components.json`, Tailwind/PostCSS e token semantici;
+2. font, icon policy, radius, spacing, focus e touch-target contract;
+3. primitive form/feedback minime e shell statica mobile-first con dati fixture;
+4. build, contract e verifica visuale locale dei breakpoint essenziali.
+
+`BL-081` deve produrre, nell’ordine:
+
+1. wrapper `GameConversation`, `NarrativeTurn`, `FreeActionComposer` e `GameDrawer`;
+2. primitive AI Elements selettive senza `useChat` o trasporto parallelo;
+3. stati idle/submitting/progress/completed/reconnect/error con fake deterministico;
+4. Motion lazy/reduced e progressive enhancement desktop;
+5. smoke locale per focus, touch target, overflow e contenuto equivalente senza motion;
+6. decisione Rive: assente dal bundle iniziale salvo benchmark successivo.
+
+`QA-002` consolida Playwright, accessibility, visual regression, device matrix e failure path dopo `BL-081`.
 
 Le feature M1–M3 consumano questa fondazione; non ridefiniscono palette, spacing, componenti chat o motion localmente.
 
 ### 14.1 Dipendenze dei task UI
 
-Ogni task che crea o modifica una superficie utente dipende esplicitamente da `BL-079` e cita sia questo contratto sia `docs/adr/0001-mobile-first-conversational-ui.md`. La regola vale anche per identity, recovery e backlog differito: un gate di milestone transitivo non sostituisce il collegamento al design system concretamente consumato.
+Ogni task che crea o modifica una superficie utente dipende esplicitamente da `BL-079` e cita sia questo contratto sia `docs/adr/0001-mobile-first-conversational-ui.md`. La regola vale anche per identity, recovery e backlog differito: un gate di milestone transitivo non sostituisce il collegamento al design system concretamente consumato. `BL-027`, `BL-039`, `BL-040`, `BL-071` e `BL-072` dipendono inoltre da `BL-081` perché consumano la conversazione di gioco.
 
-`BL-079` possiede il setup component/browser minimo necessario a dimostrare shell, accessibilità e responsive behavior. `QA-001` costruisce prima la fondazione test non-browser. `QA-002`, dipendente da entrambi, consolida successivamente il setup browser nel harness comune senza duplicare le fixture di feature.
+`BL-079` possiede il design system core e la shell statica. `BL-081` possiede wrapper conversazionali, stati, Motion e smoke browser minimo di feature. `QA-001` fornisce la fondazione test non-browser; `QA-002`, dipendente da `QA-001` e `BL-081`, consolida il setup browser nel harness comune senza duplicare le fixture di feature. Preview/staging non è un prerequisito dei due slice locali: lo smoke remoto resta in `BL-080` e `GATE-M0`.
 
 ## 15. Rischi e mitigazioni
 
