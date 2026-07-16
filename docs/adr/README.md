@@ -1,13 +1,14 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-15
-last_verified_commit: c430826993da7aca26313ddbfba77192af23e120
+last_reviewed: 2026-07-16
+last_verified_commit: 3e9c6d5b088825066fedab4163c8482d391ab543
 source_refs:
   - AGENTS.md#3-gerarchia-delle-fonti-della-verità
   - docs/TASKS.md#gov-002--validazione-automatica-della-documentazione-e-tracciabilità
 related_tasks:
   - GOV-002
+  - DOC-ARCH-001
 code_refs:
   - scripts/lib/document-integrity-policy.mjs
 test_refs:
@@ -29,3 +30,4 @@ Il registro elenca ogni ADR numerato una sola volta. Stato e target sono verific
 | [ADR-0006](0006-postgresql-migration-foundation.md) | Fondazione PostgreSQL e contratto delle migrazioni | `accepted` |
 | [ADR-0007](0007-observability-context-and-error-reporting.md) | Contesto osservabile ed error reporting | `accepted` |
 | [ADR-0008](0008-zod-first-contract-generation.md) | Contratti Zod-first e artefatti generati | `accepted` |
+| [ADR-0009](0009-mvp-runtime-data-and-workflow-architecture.md) | Architettura runtime, dati e workflow dell'MVP | `accepted` |

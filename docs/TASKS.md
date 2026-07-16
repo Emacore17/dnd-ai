@@ -158,8 +158,8 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `QA-001 — Fondazione comune per test, fixture e comandi di qualità`
-> **Prossimo task READY:** `DOC-ARCH-001`; `QA-002` resta `BACKLOG` finché `QA-001` e `BL-079` non sono `DONE`
+> **Task attivo:** `DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale`
+> **Prossimo task READY:** nessun altro task P0; `BL-079` resta `BACKLOG` finché `BL-080` è bloccato
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -771,10 +771,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
+- **Stato:** `IN_PROGRESS`
+- **Progresso:** `25%`
 - **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Contesto verificato:** `YES` — commit/SHA: `3e9c6d5b088825066fedab4163c8482d391ab543`; data: `2026-07-16`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** GOV-002, BL-001, BL-003, BL-004, BL-008, BL-009, BL-010
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §11, §19, §24, §29; `docs/MVP_SPEC.md` decisioni architetturali
@@ -787,7 +787,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Controllo automatico o review registrata dei code path citati.
 - **Documentazione e contesto:** Tutti i deliverable del task; aggiornare `docs/CONTEXT.md` e registro ADR
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+- **Note, rischi o bloccanti:** Corsia `STANDARD`; documenti living e contract test read-only. Fuori scope runtime, CI, provider e Vercel.
 
 ### GATE-M0 — Exit gate Milestone 0 — Fondamenta
 
@@ -2623,20 +2623,20 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: QA-001
-last_completed_task: GOV-002
-next_ready_task: DOC-ARCH-001
-status: DONE
-progress: 100
-started_at: 2026-07-16T00:00:00+02:00
-candidate_at: 2026-07-16T12:11:26+02:00
-cycle_target_minutes: 120
-cycle_actual_minutes: 731
-updated_at: 2026-07-16T12:18:31+02:00
+active_task: DOC-ARCH-001
+last_completed_task: QA-001
+next_ready_task: none
+status: IN_PROGRESS
+progress: 25
+started_at: 2026-07-16T13:12:53+02:00
+candidate_at: null
+cycle_target_minutes: 60
+cycle_actual_minutes: null
+updated_at: 2026-07-16T13:12:53+02:00
 agent: Codex development agent
-git_branch: codex/qa-001-test-foundation
-base_commit: a698592b0a610735297a1026c80eae5e5114355c
-candidate_head: 7f2d4d0f360e83baf31404266df47cbee060be0d
+git_branch: codex/doc-arch-001
+base_commit: 3e9c6d5b088825066fedab4163c8482d391ab543
+candidate_head: null
 spec_sha256: d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329
 context_verified: true
 test_status: PASSING
@@ -2648,24 +2648,25 @@ test_status: PASSING
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti QA-001 — `docs/MVP_SPEC.md` §§26 e 35.1; card QA-001; design approvato
-- [x] documentazione corrente — `docs/README.md`, `docs/TRACEABILITY.md`, `docs/CHANGELOG.md`, `docs/product/UX_UI_DESIGN.md` e `docs/operations/CI_CD.md`
-- [x] codice/test interessati — package testing, runner Node, harness PostgreSQL esistente, workflow e relative suite contract
+- [x] riferimenti DOC-ARCH-001 — `docs/MVP_SPEC.md` §§11, 19, 24 e 29; card e design approvato
+- [x] documentazione corrente — overview, ADR, configurazione, migration, indice, contesto e tracciabilità
+- [x] codice/test interessati — workspace manifest, composition root runtime, migration head, health web e policy documentali
 
 ## Piano e scope
 
-- **Corsia:** `HIGH_RISK` perché il candidato modifica workflow/artifact, lifecycle container e potenzialmente dependency graph/lockfile; un full gate sul candidato e clean-checkout verification obbligatoria.
-- **Obiettivo verificabile:** `testing-foundation-v1` rende uniformi e riproducibili runner Node, fixture deterministiche, process isolation, PostgreSQL/Redis reali e report JUnit/coverage.
-- **File/moduli previsti:** `packages/testing`, runner e policy root, harness PostgreSQL esistente esteso a Redis, workflow, test e soli documenti semanticamente interessati.
-- **Azioni esterne:** nessun provider, account, deploy o modifica Vercel; immagini container solo dopo pin immutabile e verifica locale.
-- **Test previsti:** TDD su runner/process isolation, seed/clock/RNG, lifecycle PostgreSQL/Redis, JUnit/coverage deterministici, cleanup failure, workflow policy, full gate e clean checkout.
-- **Rischi/failure path:** porte o container concorrenti, readiness timeout, processo orfano, cleanup fallito, report nondeterministico, fixture failing non propagata e artifact non confinato.
-- **Fuori scope:** browser/E2E/accessibility/visual regression (`QA-002`), UI, eval AI, provider e Vercel.
+- **Corsia:** `STANDARD` perché il candidato aggiunge un contract test read-only e documentazione, senza runtime, workflow, dipendenze o deploy.
+- **Obiettivo verificabile:** overview, modello dati e setup locale distinguono stato implementato e target pianificato e restano allineati tramite contract test.
+- **File/moduli previsti:** ADR-0009, overview, `DATA_MODEL.md`, `LOCAL_DEVELOPMENT.md`, contract test e soli documenti di governo semanticamente interessati.
+- **Azioni esterne:** nessun provider, account, deploy o modifica Vercel; il solo side effect previsto è il Compose PostgreSQL locale durante il cold-check.
+- **Test previsti:** contract TDD, `verify:docs`, `verify:affected`, clean checkout con migration head, runtime integration e `web-health-v1` reale.
+- **Rischi/failure path:** drift package/migration/comandi, capability pianificate descritte come presenti, Docker/porta/config/health e cleanup incompleto.
+- **Fuori scope:** Redis locale, BullMQ, API di dominio, SSE, nuove migration, UI, provider, staging e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-16 13:12 +02:00 | 25% | Selezionato DOC-ARCH-001 dalla default branch dopo la delivery QA-001; approvata documentazione stratificata con ADR unico e marker implementato/pianificato. | Base `3e9c6d5`; design `9274bb4`, piano `64fec8a`; baseline contract 69/69 e `verify:docs` PASS; nessuna azione Vercel. | Scrivere il contract anti-drift, osservarlo rosso, poi creare ADR-0009 e consolidare l'overview. |
 | 2026-07-16 12:18 +02:00 | 100% | Candidato branch-local terminale; self-review completa senza P0/P1. La review sub-agent prevista dalla skill non è eseguibile perché la sessione vieta delega non richiesta. Delivery resta derivata/PENDING finché `7f2d4d0` non raggiunge `main` tramite gate protetto. | Worktree detached `7f2d4d0`: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con 247 test/report, coverage sopra soglia e artifact 4.003 file `PASS`; worktree rimosso. | Amend dello stesso candidato con evidenze terminali, push branch e una PR; nessuna azione Vercel. |
 | 2026-07-16 12:11 +02:00 | 90% | Il full ha trovato e chiuso due cause reali: due file non formattati, risoluzione pnpm 11 non conservata nel subprocess con cache forzata e tre contract test ancora legati ai vecchi script. Regressioni mirate verdi; nessun gate indebolito. Il target di 120 minuti è superato perché il task M/HIGH_RISK ha coperto quattro batch, lifecycle container, report security e i finding cross-platform emersi solo senza cache. | Full finale senza cache exit `0` in 141,8 s: lint/build 11, typecheck 13, unit 107+1 skip, integration 20, DB 16, contract 69, security 32+3 skip, report 247 e artifact 3.982 `PASS`. | Congelare il commit candidato, verificarlo da checkout pulito e completare la review/stato terminale. |
 | 2026-07-16 11:57 +02:00 | 90% | Living docs e workflow sono allineati; la card entra in review soltanto dopo tutti i mirati applicabili. | Foundation 19/19, runner 6/6, container 1/1, contract 10/10, security 2/2, database 16/16; `verify:docs` 39/12 `PASS`; audit high pulito. | Eseguire l’unico full gate HIGH_RISK, poi checkout pulito e review finale. |
@@ -2731,16 +2732,16 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/qa-001-test-foundation` su base `a698592b0a610735297a1026c80eae5e5114355c`; commit design e PR non ancora disponibili.
-- **Comandi eseguiti:** preflight Git/fingerprint, audit mirato di backlog/ownership/runner/harness, self-review della design spec e `corepack pnpm@11.13.0 verify:docs`.
-- **Exit code:** `git diff --check` `0`; gate documentale finale `0` con 37 documenti/9 modificati, task graph e secret scan `PASS`; test implementativi e full gate non ancora eseguiti.
-- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`; CI task `N/A — implementazione non iniziata`.
+- **Commit/PR:** branch `codex/doc-arch-001` su base `3e9c6d5b088825066fedab4163c8482d391ab543`; design `9274bb4`, piano `64fec8a`; PR non ancora disponibile.
+- **Comandi eseguiti:** cold start mirata, review design/piano, `verify:docs` e baseline `test:contract`.
+- **Exit code:** gate documentale `0`; contract baseline 69/69; test DOC-ARCH-001 non ancora eseguiti.
+- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-doc-arch-001-design.md`, `docs/superpowers/plans/2026-07-16-doc-arch-001.md`; CI task `N/A — implementazione in corso`.
 - **Migration head:** `000002_feature_flags` invariato.
 - **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`, invariati.
 - **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
-- **Documenti aggiornati:** design QA-001, task, contesto, indice, tracciabilità, changelog e ownership UX/CI.
-- **Rischi residui/TODO tracciati:** review utente della spec, piano TDD, implementazione, gate HIGH_RISK e delivery protetta; freeze Vercel invariato.
-- **Task successivo reso READY:** `DOC-ARCH-001`; lo stato canonico resta su `main` fino al merge. `QA-002` resta `BACKLOG` finché `QA-001` e `BL-079` non sono `DONE`.
+- **Documenti aggiornati:** design e piano DOC-ARCH-001; task state nel batch funzionale iniziale.
+- **Rischi residui/TODO tracciati:** implementazione, cold checkout, gate STANDARD e delivery protetta; freeze Vercel invariato.
+- **Task successivo reso READY:** nessuno; `BL-079` resta dipendente da `BL-080` bloccato e `BL-005` dipende da `BL-079`.
 
 
 ## 21. Context Sync Log
