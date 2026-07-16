@@ -2,10 +2,11 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 3e9c6d5b088825066fedab4163c8482d391ab543
+last_verified_commit: 70eff10dab107fd6082df3a7aa1f77f2fac5d5bf
 source_refs:
   - AGENTS.md#3-gerarchia-delle-fonti-della-verità
   - docs/TASKS.md#gov-002--validazione-automatica-della-documentazione-e-tracciabilità
+  - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
 related_tasks:
   - GOV-002
   - DOC-ARCH-001

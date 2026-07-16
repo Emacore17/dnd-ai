@@ -2,10 +2,11 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
+last_verified_commit: 70eff10dab107fd6082df3a7aa1f77f2fac5d5bf
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
+  - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -21,6 +22,7 @@ related_tasks:
   - BL-080
   - QA-001
   - QA-002
+  - DOC-ARCH-001
 code_refs:
   - .github/workflows/ci.yml
   - scripts/lib/build-artifact.mjs
@@ -127,6 +129,7 @@ test_refs:
   - tests/integration/testing-containers.test.mjs
   - tests/contracts/testing-package-contract.test.mjs
   - tests/security/test-report-security.test.mjs
+  - tests/contracts/architecture-documentation.test.mjs
 supersedes: null
 ---
 
@@ -140,20 +143,23 @@ supersedes: null
 - Aggiunto `QA-002` per consolidare Playwright, accessibility e visual regression dopo `QA-001` e `BL-079`.
 - Implementato `@dnd-ai/testing` con test ID, RNG seedato, fake clock, fixture factory e subpath Node-only per lifecycle Docker PostgreSQL/Redis a digest immutabile.
 - Aggiunti runner a corsie con process isolation/timeout/environment allowlist, normalizzazione JUnit/LCOV, artifact `testing-foundation-v1` e [`TEST_STRATEGY.md`](testing/TEST_STRATEGY.md).
+- Accettato [`ADR-0009`](adr/0009-mvp-runtime-data-and-workflow-architecture.md) e aggiunti modello dati living e guida cold-start locale con contract anti-drift.
 
 ### Changed
 
 - Corrette le dipendenze QA: `QA-001` possiede soltanto la fondazione non-browser; `QA-002` possiede browser/device matrix, reduced-motion, accessibility e visual artifact; `GATE-M0` dipende da entrambi.
-- Allineato lo stato canonico dopo `GOV-002`: PR #23, merge `a698592` e CI post-merge `29433127921` 5/5 `SUCCESS`; `QA-001` è il task attivo e `DOC-ARCH-001` il successivo `READY`.
+- Allineato lo stato canonico dopo `QA-001`: PR #24/merge `3e9c6d5`; `DOC-ARCH-001` è il task attivo e nessun altro P0 è `READY` mentre `BL-080` resta bloccato.
 - Confermato il freeze Vercel: la decomposizione QA non abilita deploy, provider o Production.
 - Unificati `test:unit`, `test:integration`, `db:migrate:test`, `test:contract` e `test:security` sul runner versionato; la CI prepara, verifica e carica soltanto `artifacts/testing` dopo le quattro suite del job Tests.
+- `SYSTEM_OVERVIEW.md` separa inventario/dipendenze implementate dalla topologia pianificata; [`DATA_MODEL.md`](data/DATA_MODEL.md) passa da planned ad active senza presentare lo schema concettuale come SQL esistente.
 
 ### Verification
 
 - Design approvato dal Product Owner e self-review completata il 2026-07-16; `verify:docs` passa con 37 documenti, 9 modificati, task graph e secret scan `PASS` prima del piano TDD.
 - TDD report/runner/container mirato `19/19 PASS`; contract CI/gate `11/11 PASS`; runner unit reale 107 pass/1 skip host con coverage testing 92,54% linee, 91,89% branch e 97,62% funzioni; due prepare consecutivi producono hash identici e verify artifact `PASS`.
 - Full finale senza cache `PASS` in 141,8 s: lint/build 11 workspace, typecheck 13 task, unit 107 pass/1 skip host, integration 20, database 16, contract 69, security 32 pass/3 skip host, manifest report per 247 test e build artifact 3.982 file. Il gate ha prima esposto e chiuso formattazione, risoluzione pnpm nel subprocess forzato e tre contract test obsoleti.
-- Candidate implementation head `7f2d4d0` verificato da worktree detached: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con gli stessi test/report e build artifact 4.003 file. Self-review senza P0/P1; worktree temporaneo rimosso e delivery remota ancora pending.
+- Candidate implementation head `7f2d4d0` verificato da worktree detached: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con gli stessi test/report e build artifact 4.003 file. Self-review senza P0/P1; delivery poi verificata tramite PR #24/merge `3e9c6d5`.
+- `DOC-ARCH-001`: contract architetturale 3/3 e `verify:docs` verdi su 44 documenti; cold checkout e gate candidato restano nel batch finale.
 
 ## 2026-07-15
 

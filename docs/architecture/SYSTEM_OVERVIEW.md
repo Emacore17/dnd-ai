@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 3e9c6d5b088825066fedab4163c8482d391ab543
+last_verified_commit: 70eff10dab107fd6082df3a7aa1f77f2fac5d5bf
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#19-modello-dati
@@ -14,6 +14,8 @@ source_refs:
   - docs/adr/0007-observability-context-and-error-reporting.md
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
+  - docs/data/DATA_MODEL.md
+  - docs/operations/LOCAL_DEVELOPMENT.md
 related_tasks:
   - BL-001
   - BL-002

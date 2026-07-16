@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
+last_verified_commit: 70eff10dab107fd6082df3a7aa1f77f2fac5d5bf
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -20,6 +20,7 @@ related_tasks:
   - BL-080
   - QA-001
   - QA-002
+  - DOC-ARCH-001
 code_refs:
   - .vercelignore
   - apps
@@ -144,6 +145,7 @@ test_refs:
   - tests/integration/testing-containers.test.mjs
   - tests/contracts/testing-package-contract.test.mjs
   - tests/security/test-report-security.test.mjs
+  - tests/contracts/architecture-documentation.test.mjs
 supersedes: null
 ---
 
@@ -312,16 +314,18 @@ Corsie: `FAST` usa `verify:docs`; `STANDARD` usa test mirati + `verify:affected`
 | [`AGENTS.md`](../AGENTS.md) | Esistente, `active` | Entry point agente | Quando cambia workflow, source hierarchy, boundary globali o policy browser/sicurezza. |
 | [`docs/CONTEXT.md`](CONTEXT.md) | Esistente, `active` | Snapshot corrente | Solo cambio reale di task, architettura, comando, versione o rischio. |
 | [`docs/README.md`](README.md) | Esistente, `active` | Indice documentazione | A ogni nuovo documento/supersede. |
-| [`docs/TRACEABILITY.md`](TRACEABILITY.md) | Esistente, `active`; automatizzazione pianificata in `GOV-002` | Requisito→task→test→evidenza | Solo se cambia il mapping funzionale. |
-| [`docs/CHANGELOG.md`](CHANGELOG.md) | Esistente, `active`; consolidamento pianificato in `GOV-002` | Modifiche documentali/contrattuali | Decisione, contratto pubblico o release; non semplice avanzamento. |
+| [`docs/TRACEABILITY.md`](TRACEABILITY.md) | Esistente, `active`; integrità automatizzata da `GOV-002` | Requisito→task→test→evidenza | Solo se cambia il mapping funzionale. |
+| [`docs/CHANGELOG.md`](CHANGELOG.md) | Esistente, `active`; integrità automatizzata da `GOV-002` | Modifiche documentali/contrattuali | Decisione, contratto pubblico o release; non semplice avanzamento. |
 | [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md) | Esistente, `active` | Contratto UX/UI mobile-first e motion | Ogni cambio a gerarchia, component stack, token, responsive o motion. |
 | [`docs/adr/0001-mobile-first-conversational-ui.md`](adr/0001-mobile-first-conversational-ui.md) | Esistente, `accepted` | Decisione UI mobile-first e stack visuale | Ogni revisione della decisione o dei guardrail. |
 | [`docs/adr/0003-ci-trust-boundary-and-artifacts.md`](adr/0003-ci-trust-boundary-and-artifacts.md) | Esistente, `accepted` | Trust boundary, gate e artifact CI | Ogni modifica a trigger, permessi, cache, scan o artifact. |
 | [`docs/operations/CI_CD.md`](operations/CI_CD.md) | Esistente, `active` | Contratto operativo della pipeline | Ogni modifica a job, Ruleset, gate o ownership differita. |
 | [`docs/testing/BL-002_VERIFICATION.md`](testing/BL-002_VERIFICATION.md) | Esistente, `active` | Evidenze riproducibili BL-002 | A ogni run o cambio del commit verificato. |
-| `docs/adr/` | Registro parziale; automazione pianificata in `GOV-002` | Decisioni architetturali | Prima o insieme a decisioni non reversibili. |
-| [`docs/architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | Esistente, baseline `BL-001`; consolidamento `DOC-ARCH-001` | Architettura implementata | Ogni cambio di confine/topologia. |
-| `docs/data/DATA_MODEL.md` | Planned (`DOC-ARCH-001`) | Entità, indici, migration head | Ogni migration/schema change. |
+| [`docs/adr/README.md`](adr/README.md) | Esistente, `active`; registro completo verificato da `GOV-002` | Indice e stato degli ADR | Ogni nuovo ADR, supersede o cambio di stato. |
+| [`docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md`](adr/0009-mvp-runtime-data-and-workflow-architecture.md) | Esistente, `accepted`; owner `DOC-ARCH-001` | Runtime, trasporti, stato autorevole e workflow MVP | Ogni revisione del confine runtime/data/workflow. |
+| [`docs/architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | Esistente, `active`; consolidato da `DOC-ARCH-001` | Stato implementato e topologia target | Ogni cambio di confine, workspace o capability. |
+| [`docs/data/DATA_MODEL.md`](data/DATA_MODEL.md) | Esistente, `active`; owner `DOC-ARCH-001` | Schema fisico, indici, migration head e modello pianificato | Ogni migration/schema change. |
+| [`docs/operations/LOCAL_DEVELOPMENT.md`](operations/LOCAL_DEVELOPMENT.md) | Esistente, `active`; owner `DOC-ARCH-001` | Percorso end-to-end locale, readiness e cleanup | Ogni cambio a install, config, servizi locali o health. |
 | `docs/features/CHARACTER_CREATION.md` | Planned (`DOC-CHAR-001`) | Character Builder | Ogni catalog/rule/API/UI change. |
 | `docs/features/CAMPAIGN_GENERATION.md` | Planned (`DOC-CAMP-001`) | Bible/prologo/generation | Ogni schema/prompt/provider flow change. |
 | `docs/features/TURN_LOOP.md` | Planned (`DOC-TURN-001`) | Orchestrator/idempotenza/recovery | Ogni state machine/commit/retry change. |
@@ -508,7 +512,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Test di accettazione automatizzato: Migrazione da DB vuoto e rollback operativo documentato.
   - [x] Migration test da database vuoto all’head e replay su database già aggiornato.
   - [x] Test rollback/forward-fix documentato e verifica vincoli/indici con PostgreSQL reale.
-- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0006-postgresql-migration-foundation.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/DATABASE_MIGRATIONS.md`; `docs/testing/BL-004_VERIFICATION.md`; `docs/data/DATA_MODEL.md` resta `planned` con owner `DOC-ARCH-001`
+- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/0006-postgresql-migration-foundation.md`; `docs/operations/CONFIGURATION.md`; `docs/operations/DATABASE_MIGRATIONS.md`; `docs/testing/BL-004_VERIFICATION.md`; `docs/data/DATA_MODEL.md` è `active` con owner `DOC-ARCH-001`
 - **Evidenze di chiusura:** test mirati: `db:migrate:test` 13/13 e unit/contract/security migration 13/13 `PASS`. Full working-tree `verify` exit `0` in 73,4 s e audit high pulito. Commit `b1030501fd82d0396add5ff4f9df10fbaa405d0b` verificato da worktree pulito: install frozen exit `0` in 0,6 s; full gate senza cache exit `0` in 66,2 s, con lint/build 11/11, typecheck 12/12, unit 47 pass/1 skip host, integration 9/9, database 13/13, contract 22/22, security 23 pass/3 skip host, policy/scan e artifact 3.238 file `PASS`. [PR #18](https://github.com/Emacore17/dnd-ai/pull/18), [CI PR `29351291907`](https://github.com/Emacore17/dnd-ai/actions/runs/29351291907) 5/5 job `SUCCESS`, incluso il job Tests con suite PostgreSQL reale e `CI / Merge gate`; report `docs/testing/BL-004_VERIFICATION.md`; head `000001_postgresql_foundation`; contract `database-baseline-v1`; source SHA `e8543d84b9b842adf352260536dcea284c93dfb859c9ec03368f10deb9455fc7`; checksum `46a2bb9ce2ca6957a3b87e423e0ea67b36688e71ebacc84c469bdb7f7a8dc449`.
 - **Note, rischi o bloccanti:** La baseline è deliberatamente infrastrutturale: ledger/versione di compatibilità, namespace applicativo ed estensione PostgreSQL richiesta, senza anticipare tabelle di dominio. `packages/persistence` riceve config validata e non importa `packages/config`; il composition root resta esterno. La suite reale copre file migration sconosciuti/symlink fail-closed, source SHA e checksum contract, database vuoto→head, replay, DDL invalido con rollback e ledger vuoto, due runner simultanei, lock occupato, vincoli/indice, rollback locale e re-apply. `previous→head` è `N/A` per la prima migration: non esiste ancora una versione applicata precedente diversa dal database vuoto; diventa obbligatorio da `000002`. `down` è limitato a URL loopback disposable senza parametri di routing e vietato in staging/production. Fuori scope: tabelle utenti/campagne/eventi/memorie, RLS, repository, backfill, provisioning gestito e harness generale `QA-001`.
 
@@ -772,8 +776,8 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 ### DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale
 
 - **Stato:** `IN_PROGRESS`
-- **Progresso:** `25%`
-- **Esito test:** `NOT_RUN`
+- **Progresso:** `75%`
+- **Esito test:** `PARTIAL`
 - **Contesto verificato:** `YES` — commit/SHA: `3e9c6d5b088825066fedab4163c8482d391ab543`; data: `2026-07-16`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** GOV-002, BL-001, BL-003, BL-004, BL-008, BL-009, BL-010
@@ -782,9 +786,9 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Deliverable:** `docs/architecture/SYSTEM_OVERVIEW.md`, `docs/data/DATA_MODEL.md`, guida local setup, diagrammi, ADR per modular monolith/Fastify/REST+SSE/PostgreSQL+pgvector/BullMQ/event sourcing.
 - **Criterio di accettazione:** Diagrammi, package boundaries, topologia, migration head, comandi local/staging e decisioni coincidono con codice/IaC; ogni divergenza dalla spec ha ADR e aggiornamento della spec.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] `pnpm docs:check` passa e i diagrammi Mermaid sono renderizzabili.
+  - [x] `pnpm docs:check` passa e i diagrammi Mermaid sono renderizzabili.
   - [ ] Cold-start setup seguito da ambiente pulito porta a health check verdi.
-  - [ ] Controllo automatico o review registrata dei code path citati.
+  - [x] Controllo automatico o review registrata dei code path citati.
 - **Documentazione e contesto:** Tutti i deliverable del task; aggiornare `docs/CONTEXT.md` e registro ADR
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
 - **Note, rischi o bloccanti:** Corsia `STANDARD`; documenti living e contract test read-only. Fuori scope runtime, CI, provider e Vercel.
@@ -2627,19 +2631,19 @@ active_task: DOC-ARCH-001
 last_completed_task: QA-001
 next_ready_task: none
 status: IN_PROGRESS
-progress: 25
+progress: 75
 started_at: 2026-07-16T13:12:53+02:00
 candidate_at: null
 cycle_target_minutes: 60
 cycle_actual_minutes: null
-updated_at: 2026-07-16T13:12:53+02:00
+updated_at: 2026-07-16T13:27:00+02:00
 agent: Codex development agent
 git_branch: codex/doc-arch-001
 base_commit: 3e9c6d5b088825066fedab4163c8482d391ab543
 candidate_head: null
 spec_sha256: d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329
 context_verified: true
-test_status: PASSING
+test_status: PARTIAL
 ```
 
 ## Contesto letto
@@ -2666,6 +2670,7 @@ test_status: PASSING
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-16 13:27 +02:00 | 75% | ADR-0009 accepted; overview, modello dati e guida locale distinguono in modo esplicito implementato/pianificato e mantengono `BL-080` congelato. Nessun task dipendente viene reso READY. | Commit `3fa7261`, `70eff10`; contract architetturale 3/3 e `verify:docs` 44 documenti/8 modificati `PASS`; migration head `000002_feature_flags` rilevato dal codice. | Allineare indice/contesto/tracciabilità, quindi eseguire gate mirati e cold checkout con health web reale. |
 | 2026-07-16 13:12 +02:00 | 25% | Selezionato DOC-ARCH-001 dalla default branch dopo la delivery QA-001; approvata documentazione stratificata con ADR unico e marker implementato/pianificato. | Base `3e9c6d5`; design `9274bb4`, piano `64fec8a`; baseline contract 69/69 e `verify:docs` PASS; nessuna azione Vercel. | Scrivere il contract anti-drift, osservarlo rosso, poi creare ADR-0009 e consolidare l'overview. |
 | 2026-07-16 12:18 +02:00 | 100% | Candidato branch-local terminale; self-review completa senza P0/P1. La review sub-agent prevista dalla skill non è eseguibile perché la sessione vieta delega non richiesta. Delivery resta derivata/PENDING finché `7f2d4d0` non raggiunge `main` tramite gate protetto. | Worktree detached `7f2d4d0`: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con 247 test/report, coverage sopra soglia e artifact 4.003 file `PASS`; worktree rimosso. | Amend dello stesso candidato con evidenze terminali, push branch e una PR; nessuna azione Vercel. |
 | 2026-07-16 12:11 +02:00 | 90% | Il full ha trovato e chiuso due cause reali: due file non formattati, risoluzione pnpm 11 non conservata nel subprocess con cache forzata e tre contract test ancora legati ai vecchi script. Regressioni mirate verdi; nessun gate indebolito. Il target di 120 minuti è superato perché il task M/HIGH_RISK ha coperto quattro batch, lifecycle container, report security e i finding cross-platform emersi solo senza cache. | Full finale senza cache exit `0` in 141,8 s: lint/build 11, typecheck 13, unit 107+1 skip, integration 20, DB 16, contract 69, security 32+3 skip, report 247 e artifact 3.982 `PASS`. | Congelare il commit candidato, verificarlo da checkout pulito e completare la review/stato terminale. |
@@ -2732,15 +2737,15 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/doc-arch-001` su base `3e9c6d5b088825066fedab4163c8482d391ab543`; design `9274bb4`, piano `64fec8a`; PR non ancora disponibile.
-- **Comandi eseguiti:** cold start mirata, review design/piano, `verify:docs` e baseline `test:contract`.
-- **Exit code:** gate documentale `0`; contract baseline 69/69; test DOC-ARCH-001 non ancora eseguiti.
+- **Commit/PR:** branch `codex/doc-arch-001` su base `3e9c6d5b088825066fedab4163c8482d391ab543`; design `9274bb4`, piano `64fec8a`, architettura `3fa7261`, dati/setup `70eff10`; PR non ancora disponibile.
+- **Comandi eseguiti:** cold start mirata, review design/piano, contract architetturale e `verify:docs`; cold checkout e `verify:affected` ancora aperti.
+- **Exit code:** contract architetturale 3/3 e gate documentale su 44 documenti `0`; gate candidato finale non ancora eseguito.
 - **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-doc-arch-001-design.md`, `docs/superpowers/plans/2026-07-16-doc-arch-001.md`; CI task `N/A — implementazione in corso`.
 - **Migration head:** `000002_feature_flags` invariato.
 - **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`, invariati.
 - **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
-- **Documenti aggiornati:** design e piano DOC-ARCH-001; task state nel batch funzionale iniziale.
-- **Rischi residui/TODO tracciati:** implementazione, cold checkout, gate STANDARD e delivery protetta; freeze Vercel invariato.
+- **Documenti aggiornati:** design/piano, ADR-0009, overview, modello dati, guida locale e record di governo in allineamento.
+- **Rischi residui/TODO tracciati:** cold checkout, gate STANDARD, self-review e delivery protetta; freeze Vercel invariato.
 - **Task successivo reso READY:** nessuno; `BL-079` resta dipendente da `BL-080` bloccato e `BL-005` dipende da `BL-079`.
 
 

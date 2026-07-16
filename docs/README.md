@@ -2,12 +2,14 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
+last_verified_commit: 70eff10dab107fd6082df3a7aa1f77f2fac5d5bf
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
   - docs/adr/0008-zod-first-contract-generation.md
+  - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
   - docs/adr/README.md
+  - docs/superpowers/specs/2026-07-16-doc-arch-001-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
 related_tasks:
   - GOV-001
@@ -21,6 +23,7 @@ related_tasks:
   - BL-080
   - QA-001
   - QA-002
+  - DOC-ARCH-001
 code_refs:
   - packages/testing
   - scripts/run-tests.mjs
@@ -61,6 +64,7 @@ test_refs:
   - tests/unit/testing-primitives.test.mjs
   - tests/integration/testing-containers.test.mjs
   - tests/security/test-report-security.test.mjs
+  - tests/contracts/architecture-documentation.test.mjs
 supersedes: null
 ---
 
@@ -86,7 +90,7 @@ supersedes: null
 | [`product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md) | Contratto UX/UI mobile-first, design system e motion |
 | [`adr/README.md`](adr/README.md) | Registro completo e validato delle decisioni architetturali |
 | [`adr/0001-mobile-first-conversational-ui.md`](adr/0001-mobile-first-conversational-ui.md) | Decisione accepted su shell, stack visuale e guardrail |
-| [`architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | Monorepo implementato, direzioni di dipendenza e toolchain |
+| [`architecture/SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) | Inventario e dipendenze implementate, topologia target e capability non disponibili |
 | [`adr/0002-monorepo-package-boundaries.md`](adr/0002-monorepo-package-boundaries.md) | Decisione accepted su workspace e boundary enforcement |
 | [`testing/BL-001_VERIFICATION.md`](testing/BL-001_VERIFICATION.md) | Evidenza riproducibile della clean-worktree verification di BL-001 |
 | [`adr/0003-ci-trust-boundary-and-artifacts.md`](adr/0003-ci-trust-boundary-and-artifacts.md) | Decisione accepted su trust boundary, cache, gate e artifact CI |
@@ -105,17 +109,19 @@ supersedes: null
 | [`superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md`](superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md) | Design attivo del contratto `observability-baseline-v1` |
 | [`superpowers/plans/2026-07-15-bl-008-observability-baseline.md`](superpowers/plans/2026-07-15-bl-008-observability-baseline.md) | Piano TDD e gate HIGH_RISK di BL-008 |
 | [`adr/0008-zod-first-contract-generation.md`](adr/0008-zod-first-contract-generation.md) | Decisione accepted su fonte Zod, versioning, OpenAPI components-only e generated drift |
+| [`adr/0009-mvp-runtime-data-and-workflow-architecture.md`](adr/0009-mvp-runtime-data-and-workflow-architecture.md) | Decisione accepted su runtime, trasporti, stato autorevole e workflow MVP |
 | [`api/README.md`](api/README.md) | Catalogo `api-contract-v1`, uso runtime, artefatti e politica di versione |
 | [`superpowers/specs/2026-07-15-bl-009-contract-generation-design.md`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md) | Design della vertical slice contrattuale BL-009 |
 | [`superpowers/plans/2026-07-15-bl-009-contract-generation.md`](superpowers/plans/2026-07-15-bl-009-contract-generation.md) | Piano TDD e gate HIGH_RISK di BL-009 |
 | [`superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`](superpowers/specs/2026-07-16-qa-001-test-foundation-design.md) | Design approvato di `testing-foundation-v1` e decomposizione QA-001/QA-002 |
 | [`testing/TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) | Contratto operativo di runner, fixture, container, coverage e report non-browser |
+| [`data/DATA_MODEL.md`](data/DATA_MODEL.md) | Schema fisico implementato e modello logico pianificato |
+| [`operations/LOCAL_DEVELOPMENT.md`](operations/LOCAL_DEVELOPMENT.md) | Cold start, readiness e cleanup dello sviluppo locale |
 
 ## Documenti pianificati
 
 I path seguenti sono pianificati e non sono link finché non esistono:
 
-- `docs/data/DATA_MODEL.md` — `DOC-ARCH-001`;
 - `docs/testing/AI_EVALS.md` — `DOC-TEST-001`;
 - `docs/testing/RELEASE_EVIDENCE.md` — `DOC-TEST-001`;
 - `docs/features/CHARACTER_CREATION.md` — `DOC-CHAR-001`;
