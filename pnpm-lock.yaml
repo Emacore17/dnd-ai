@@ -187,7 +187,11 @@ importers:
 
   packages/rules: {}
 
-  packages/testing: {}
+  packages/testing:
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
 
 packages:
 
