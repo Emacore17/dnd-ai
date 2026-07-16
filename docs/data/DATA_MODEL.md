@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
+last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md#19-modello-dati
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilit%C3%A0
@@ -11,6 +11,7 @@ source_refs:
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
+  - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
 related_tasks:
   - DOC-ARCH-001
   - BL-004
@@ -202,13 +203,13 @@ flowchart LR
 
 ### Identity signup implementata
 
-ADR-0010 e `identity-signup-v1` sono materializzati dalla migration `000003_identity_signup` e dal repository PostgreSQL. Email normalizzata univoca, utente pending fino alla verifica, challenge one-time, digest-only, audit append-only e transazioni atomiche sono protetti sia da constraint/indici sia dai test concorrenti. Login, logout, reset, rinnovo/revoca completa e ownership delle risorse restano estensioni forward-only di `BL-006`/`BL-007`.
+ADR-0010 e `identity-signup-v1` sono materializzati dalla migration `000003_identity_signup` e dal repository PostgreSQL. Email normalizzata univoca, utente pending fino alla verifica, challenge one-time, digest-only, audit append-only e transazioni atomiche sono protetti sia da constraint/indici sia dai test concorrenti. `identity-access-v1` approva per BL-006 una migration forward-only `000004_identity_access` con challenge reset, outbox tipizzato e store session/reset specializzato; queste strutture restano pianificate finché il codice non viene implementato. Ownership delle risorse resta BL-007.
 
 ## Ownership dei task
 
 | Area concettuale | Task proprietario | Regola per la migration futura |
 |---|---|---|
-| Utente, verifica, sessione e ownership | `BL-005`–`BL-007` | `BL-005` ha introdotto `000003_identity_signup`, constraint, concorrenza e test negativi; `BL-006` estende il lifecycle con una nuova migration senza riscrivere la head condivisa. |
+| Utente, verifica, sessione e ownership | `BL-005`–`BL-007` | `BL-005` ha introdotto `000003_identity_signup`, constraint, concorrenza e test negativi; BL-006 pianifica `000004_identity_access` per login, refresh, revoca e reset senza riscrivere la head condivisa; BL-007 aggiunge ownership. |
 | Personaggio e cataloghi | `BL-011`, `BL-015`–`BL-017` | Nessuna tabella è nominata in anticipo; aggregate e autosave definiscono il contratto. |
 | Campagna, Bible, scena, location, quest e clock | `BL-018`, `BL-022`–`BL-025` | Persistenza soltanto dopo schema e validazione della Bible. |
 | NPC e knowledge state | `BL-025`, `BL-052`, `BL-053` | Knowledge boundary e ownership precedono qualsiasi indice di retrieval. |

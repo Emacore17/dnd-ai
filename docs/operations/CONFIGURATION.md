@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-16
-last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
+last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md#5-assunzioni
   - docs/MVP_SPEC.md#2210-segreti-e-cifratura
@@ -10,10 +10,12 @@ source_refs:
   - docs/MVP_SPEC.md#298-disaster-recovery-e-operazioni
   - docs/adr/0004-runtime-configuration-and-secret-injection.md
   - docs/adr/0007-observability-context-and-error-reporting.md
+  - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
 related_tasks:
   - BL-003
   - BL-004
   - BL-005
+  - BL-006
   - BL-008
   - BL-010
   - BL-080
@@ -223,5 +225,6 @@ Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo 
 - `BL-008`: baseline OTel/Pino/Sentry, redazione e propagazione implementate sul branch; nessun endpoint pubblico, account o backend remoto introdotto;
 - `BL-010`: configurazione dinamica auditata per flag e kill switch;
 - `BL-005`: chiavi identity versionate, origin pubblico/interno e delivery email server-only implementati; nessun secret reale o SMTP remoto verificato;
+- `BL-006`: design approvato per una chiave HMAC reset dedicata e durate sessione tipizzate; variabili e parser non sono ancora implementati e verranno aggiunti soltanto con test fail-fast/redaction;
 - `BL-080`: project/provider web, Production Branch e Trusted Source configurati senza secret applicativi; freeze integrato; task bloccato finché il provider non offre un first-deployment Preview-only supportato;
 - `BL-070`: hardening, load/chaos, backup restore e go/no-go.

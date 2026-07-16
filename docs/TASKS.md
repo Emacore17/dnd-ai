@@ -2,11 +2,12 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 0761b18d5b910c309e763774749b5bf1352b1d6c
+last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
+  - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -169,13 +170,13 @@ supersedes: null
 > **Punto di ingresso agente:** [`AGENTS.md`](../AGENTS.md)
 > **Specifica canonica:** [`docs/MVP_SPEC.md`](MVP_SPEC.md)
 > **Studio UX/UI:** [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md)
-> **Baseline specifica:** SHA-256 `6f14bd0e92814500f8a9ed3a3c910a530eb3be35cd91eba8b8edd0d96fa60671`
+> **Baseline specifica:** SHA-256 `cf9f7b148554cc96735b1de0077079c9f6cd5ca4238a21375ca4709f7310659a`
 > **Data baseline:** `2026-07-16`
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-005 — DONE/100%/PASSING` come proposta branch-local sulla branch `codex/bl-005-signup-verify`; delivery `PENDING`
-> **Prossimo task READY:** `BL-006 — Sessioni, reset, revoca`; avviarlo soltanto dopo la delivery protetta di `BL-005`
+> **Task attivo:** `BL-006 — IN_PROGRESS/25%/PARTIAL` sulla branch `codex/bl-006-sessions-reset`; design `identity-access-v1` approvato e in review documentale
+> **Prossimo task READY:** `BL-081 — Shell conversazionale interattiva e motion layer`; non avviarlo mentre BL-006 è attivo
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -548,18 +549,18 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] API/E2E happy path e negative path; rate-limit e cookie/security headers.
   - [x] Component/mobile accessibility smoke delle schermate signup e verifica sulla fondazione `BL-079`.
 - **Documentazione e contesto:** design `identity-signup-v1`; ADR-0010; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/data/DATA_MODEL.md`; threat model proprietario di `DOC-SEC-001`
-- **Evidenze di chiusura:** candidato branch-local implementato: contract `2.0.0`/artifact `v2`, migration head `000003_identity_signup` e contract `database-identity-signup-v1`; aggregato identity `74/74 PASS` su 21 file e browser locale 320/390/1440. Full HIGH_RISK iniziale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 176,9 s: lint `11/11`, typecheck `16/16`, build `11/11`, unit `148` (147 pass/1 skip host), integration `32/32`, database `21/21`, contract `91/91`, security `42` (39 pass/3 skip host), report `333` test e artifact `4.178` file `PASS`. Il functional head `0761b18` è stato poi verificato da checkout detached pulito: install frozen `701` package in 19,6 s, generated drift `23/23`, database `21/21`, build API/worker/web `8/8`, vertical identity + smoke web `3/3`, secret scan e `verify:docs` `PASS`; worktree temporanea rimossa. La prima run PR #28 ha rilevato che la corsia security isolata non compilava API/worker; la regressione TDD ha esteso i filtri senza modificare runtime di prodotto. Full correttivo forzato exit `0` in 290,2 s con gli stessi 333 test/artifact e corsia security autonoma `42` test `PASS`. PR e nuova CI protetta restano evidenza di delivery esterna `PENDING`, non un gate locale mancante della proposta `DONE`.
+- **Evidenze di chiusura:** contract `2.0.0`/artifact `v2`, migration head `000003_identity_signup` e contract `database-identity-signup-v1`; aggregato identity `74/74 PASS` su 21 file e browser locale 320/390/1440. Full HIGH_RISK iniziale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 176,9 s: lint `11/11`, typecheck `16/16`, build `11/11`, unit `148` (147 pass/1 skip host), integration `32/32`, database `21/21`, contract `91/91`, security `42` (39 pass/3 skip host), report `333` test e artifact `4.178` file `PASS`. Il functional head `0761b18` è stato poi verificato da checkout detached pulito: install frozen `701` package in 19,6 s, generated drift `23/23`, database `21/21`, build API/worker/web `8/8`, vertical identity + smoke web `3/3`, secret scan e `verify:docs` `PASS`; worktree temporanea rimossa. La prima run PR #28 ha rilevato che la corsia security isolata non compilava API/worker; la regressione TDD ha esteso i filtri senza modificare runtime di prodotto. Full correttivo forzato exit `0` in 290,2 s con gli stessi 333 test/artifact e corsia security autonoma `42` test `PASS`. Il candidato corretto `c2e4332b408f1cac3e2c69920cd18e5e772e87bf` è stato integrato tramite [PR #28](https://github.com/Emacore17/dnd-ai/pull/28), merge `e173fd9424ad77330ae8302f68affd4832d66798`; CI PR `29525777416` e post-merge `29526030389` hanno concluso tutti e cinque i job con `SUCCESS`.
 - **Note, rischi o bloccanti:** Corsia `HIGH_RISK`: security/auth, schema, config, dipendenze, cookie e delivery email. Nessun provider/account/deploy è autorizzato; i test usano fake email deterministico e simulano timeout senza rete. SMTP reale, staging e Vercel non sono stati verificati. Il target di 120 minuti è stato superato perché la card M accorpa schema, crypto nativa, tre runtime e UI browser; i gate candidati hanno inoltre trovato formattazione/lint, clock skew PostgreSQL e un test documentale fermo a `000002`, tutti corretti alla causa senza ampliare lo scope. Il warning `MaxListenersExceededWarning` del reporter resta non bloccante e preesistente alla slice.
 
 ### BL-006 — Sessioni, reset, revoca
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Stato:** `IN_PROGRESS`
+- **Progresso:** `25%`
+- **Esito test:** `PARTIAL`
+- **Contesto verificato:** `YES` — base integrata: `e173fd9424ad77330ae8302f68affd4832d66798`; data: `2026-07-16`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-005, BL-079
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20 API; `docs/MVP_SPEC.md` §22.2 Autenticazione; `docs/MVP_SPEC.md` §32 AC-01; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/adr/0010-internal-provider-neutral-identity.md`; `docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`; `docs/MVP_SPEC.md` §31 `BL-006`; `docs/MVP_SPEC.md` §35.1
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20 API; `docs/MVP_SPEC.md` §§22.2 e 22.8–22.12; `docs/MVP_SPEC.md` §§26.5, 26.8 e 26.9; `docs/MVP_SPEC.md` §32 AC-01; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/adr/0010-internal-provider-neutral-identity.md`; `docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`; `docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md`; `docs/MVP_SPEC.md` §31 `BL-006`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come utente voglio login/logout/reset sicuri.
 - **Deliverable:** Sessioni, reset, revoca.
 - **Criterio di accettazione:** Cookie sicuri; logout revoca; reset one-time e rate-limited.
@@ -568,9 +569,9 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Unit e integration test di token/session lifecycle, scadenza, revoca e replay.
   - [ ] API/E2E happy path e negative path; rate-limit e cookie/security headers.
   - [ ] Component/mobile accessibility smoke di login, logout e reset sulla fondazione `BL-079`.
-- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`; `docs/security/THREAT_MODEL.md`
+- **Documentazione e contesto:** design `identity-access-v1`; ADR-0010; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/data/DATA_MODEL.md`; `docs/security/THREAT_MODEL.md`
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK`. Design approvato: sessione idle 24 h/assoluta 30 giorni, refresh esplicito con rotazione, logout corrente idempotente, revoca globale, reset con codice email a sei cifre/TTL 10 minuti/5 tentativi e nessun auto-login. UI essenziale shadcn mobile-first, senza lista device o metadata. Nessun provider, SMTP reale, deploy o azione Vercel è autorizzato. Implementazione non ancora iniziata: attende review del design versionato e piano TDD.
 
 ### BL-007 — ActorContext e query tenant-safe
 
@@ -2679,23 +2680,23 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: BL-005
+active_task: BL-006
 last_completed_task: BL-005
-next_ready_task: BL-006
-status: DONE
-progress: 100
-started_at: 2026-07-16T16:16:04+02:00
-candidate_at: 2026-07-16T19:34:00+02:00
+next_ready_task: BL-081
+status: IN_PROGRESS
+progress: 25
+started_at: 2026-07-16T21:56:29+02:00
+candidate_at: null
 cycle_target_minutes: 120
-cycle_actual_minutes: 198
-updated_at: 2026-07-16T19:34:00+02:00
+cycle_actual_minutes: 4
+updated_at: 2026-07-16T22:00:16+02:00
 agent: Codex development agent
-git_branch: codex/bl-005-signup-verify
-base_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
-candidate_head: derived_from_git
-spec_sha256: 6f14bd0e92814500f8a9ed3a3c910a530eb3be35cd91eba8b8edd0d96fa60671
+git_branch: codex/bl-006-sessions-reset
+base_commit: e173fd9424ad77330ae8302f68affd4832d66798
+candidate_head: null
+spec_sha256: cf9f7b148554cc96735b1de0077079c9f6cd5ca4238a21375ca4709f7310659a
 context_verified: true
-test_status: PASSING
+test_status: PARTIAL
 ```
 
 ## Contesto letto
@@ -2704,24 +2705,26 @@ test_status: PASSING
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti BL-005 — `docs/MVP_SPEC.md` §§20, 22.2, 22.8–22.10, 31, 32 AC-01 e 35.1; studio UX/UI; ADR-0001/0004/0006/0007/0008
-- [x] documentazione corrente — task graph, contesto e baseline post PR #27/merge `a9a2e4b`
-- [x] codice/test interessati — API Fastify, config, contratti, dominio, persistence/migration e route/componenti Next.js auth
+- [x] riferimenti BL-006 — `docs/MVP_SPEC.md` §§20, 22.2, 22.8–22.12, 26.5, 26.8, 26.9, 31, 32 AC-01 e 35.1; studio UX/UI; ADR-0001/0010; design BL-005/BL-006
+- [x] documentazione corrente — task graph, contesto e baseline post PR #28/merge `e173fd9`
+- [x] codice/test interessati — API Fastify identity, config, contratti, dominio, persistence/migration/outbox e route/componenti Next.js auth
 
 ## Piano e scope
 
-- **Corsia:** `HIGH_RISK` perché cambieranno auth/security, migration, config, dipendenze, cookie e side effect email; target 120 minuti per slice, con decomposizione se il piano supera il budget.
-- **Obiettivo verificabile:** signup pending, verifica one-time e prima sessione sicura convergono senza duplicazioni; rate limit/idempotenza/privacy e UI shadcn mobile superano i gate definiti da `identity-signup-v1`.
-- **File/moduli previsti:** contratti/domain/persistence/config; route/application service API; pagine e componenti auth web; test unit/database/integration/contract/security/UI; living docs e piano BL-005.
+- **Corsia:** `HIGH_RISK` perché cambieranno auth/security, migration, config, contratti, cookie e side effect email; target 120 minuti per slice, con decomposizione se il piano supera il budget.
+- **Obiettivo verificabile:** login, rotazione/scadenza sessione, logout, revoca globale e reset one-time convergono senza session fixation, replay o enumeration; UI shadcn mobile e failure path soddisfano `identity-access-v1`.
+- **File/moduli previsti:** contract artifact `v3`, domain policy, store specializzato e migration `000004`; route/application service API; outbox reset; pagine/componenti auth web; test unit/database/integration/contract/security/UI; living docs e piano BL-006.
 - **Azioni esterne:** sola consultazione di standard/documentazione ufficiale e registry npm; nessun provider auth/email, account, secret reale, deploy, release o modifica Vercel.
-- **Test previsti:** TDD RED/GREEN per policy/crypto, migration PostgreSQL reale, concorrenza/idempotenza, API/security/redaction, component/accessibility e browser locale; unico full `verify` finale e clean checkout.
-- **Rischi/failure path:** enumeration, Argon2 DoS, challenge replay/race, cookie leakage, config secret errata, outbox crash/retry, timeout SMTP, duplicate delivery, PII nei log, Origin/CSRF e overflow/tastiera mobile.
-- **Fuori scope:** login/logout/reset e revoca completa (`BL-006`), social/MFA, provider gestiti, account SMTP reali, campagne, AI Elements/Motion/Rive e Vercel.
+- **Test previsti:** TDD RED/GREEN per contract/policy/config, migration PostgreSQL reale, session/reset store, race/idempotenza, API/security/redaction, outbox, component/accessibility e browser locale; unico full `verify` finale e clean checkout.
+- **Rischi/failure path:** enumeration, Argon2 DoS, session fixation/rotation race, idle/absolute expiry, reset replay/race, cookie leakage, config secret errata, outbox crash/retry, PII nei log, Origin/CSRF e overflow/tastiera mobile.
+- **Fuori scope:** social/MFA, provider gestiti, account SMTP reali, lista/device metadata, remember-me, campagne/ActorContext, AI Elements/Motion/Rive, staging, Production e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-16 22:04 +02:00 | 25% | Il gate documentale è verde. La self-review ha corretto lo SHA specifica rimasto alla baseline precedente e ha reso esplicito `credential_version` nel target migration per chiudere il race login/reset; nessun placeholder, capability futura presentata come disponibile o finding P0/P1 residuo. | `git diff --check` e `verify:docs` confermati dopo le correzioni: 23 artifact, 52 documenti/13 modificati, task graph e secret scan `PASS`. | Committare la specifica e chiedere review utente prima della skill di pianificazione TDD. |
+| 2026-07-16 22:00 +02:00 | 25% | Selezionato BL-006 dalla delivery protetta di BL-005. Il Product Owner ha approvato `identity-access-v1`: codice reset email a sei cifre, sessioni 24 h idle/30 giorni absolute, logout/revoca essenziali e UI shadcn progressiva senza device metadata. I riferimenti della card sono stati completati con security, API/E2E e test. | Base `e173fd9`; PR #28 CI `29525777416` e post-merge `29526030389` 5/5 `SUCCESS`. Install frozen 701 package, build API/worker/web 8 task, baseline identity 16/16 e `verify:docs` iniziale PASS; nessuna azione Vercel. | Versionare design e allineamento living, eseguire `verify:docs` e self-review; chiedere review utente prima del piano TDD. |
 | 2026-07-16 20:51 +02:00 | 100% | La prima CI PR ha provato un gap di isolamento, non una vulnerabilità: `test:security` importava i nuovi dist API/worker senza compilarli nella propria corsia. Aggiunti soltanto i due filtri mancanti e una regressione; nessun runtime di prodotto o gate è stato indebolito. | PR #28 run `29524998132`: Quality/Tests PASS, Security FAIL su due `ERR_MODULE_NOT_FOUND`, merge gate correttamente FAIL. Regressione RED 2/3→GREEN 3/3; security forzata 42 test + secret scan PASS; full HIGH_RISK correttivo exit `0` in 290,2 s, 333 test e artifact 4.178 PASS. | Committare e pubblicare la correzione funzionale sulla stessa PR; attendere una sola nuova CI protetta. |
 | 2026-07-16 19:34 +02:00 | 100% | Il functional head è riproducibile da checkout detached pulito e la self-review terminale non lascia finding P0/P1. BL-005 diventa proposta branch-local `DONE/100%/PASSING`; la delivery resta derivata `PENDING`, senza copiare evidenze remote non ancora esistenti. | Head `0761b18`: install frozen 701 package/19,6 s; generated drift 23/23; database 21/21; build API/worker/web 8/8; vertical identity + smoke web 3/3; secret scan e `verify:docs` PASS; worktree temporanea rimossa. | Incorporare lo snapshot terminale nello stesso commit funzionale; poi una sola PR protetta e `CI / Merge gate`, senza azioni Vercel. |
 | 2026-07-16 19:29 +02:00 | 90% | Candidato completo dopo la chiusura di tre failure reali dei gate: formattazione/lint espliciti, supersede migration monotono anche con clock skew e contract documentale aggiornato dall'head `000002` a `000003`. Nessun controllo è stato indebolito. | Full HIGH_RISK finale exit `0` in 176,9 s: lint 11, typecheck 16, build 11, unit 148, integration 32, database 21, contract 91, security 42, report 333 e artifact 4.178 file `PASS`; `verify:docs` 51/19 e 23 artifact `PASS`. | Congelare il commit funzionale e verificare install/generate/migration/identity/web/secret da checkout pulito; poi aggiornare lo snapshot terminale nello stesso commit. |
@@ -2805,16 +2808,16 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/bl-005-signup-verify` su base `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2`; functional head identity verificato `0761b18d5b910c309e763774749b5bf1352b1d6c`; PR #28 aperta. La run iniziale `29524998132` ha bloccato il merge sulla corsia security non autonoma; correzione funzionale verificata localmente e nuova CI ancora `PENDING`.
+- **Commit/PR:** branch `codex/bl-005-signup-verify` su base `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2`; implementation `1c783c63bae309e73d8024e2292433ea00439abf`, correzione `c2e4332b408f1cac3e2c69920cd18e5e772e87bf`, [PR #28](https://github.com/Emacore17/dnd-ai/pull/28) e merge `e173fd9424ad77330ae8302f68affd4832d66798`.
 - **Comandi eseguiti:** test TDD mirati per contratti/policy/config/crypto/migration/store/API/cookie/outbox/BFF/UI/verticale; browser locale 320/390/1440; audit high; `verify:docs`; full `TURBO_FORCE=true corepack pnpm@11.13.0 verify`; checkout detached con install frozen, generated drift, migration, build runtime, verticale/smoke, secret scan e docs gate; self-review completa.
 - **Exit code:** full HIGH_RISK iniziale `0` in 176,9 s e correttivo `0` in 290,2 s con lint 11, typecheck 16, build 11, report 333 e artifact 4.178 file `PASS`; checkout pulito identity `0` su ogni comando, inclusi database 21/21, build 8/8 e verticale/smoke 3/3; regressione lane 3/3 e security isolata 42 test `PASS`.
-- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`, piano BL-005 e ADR-0010; la CI remota sarà prodotta dalla singola PR protetta.
+- **Report/CI URL o path:** design/piano BL-005 e ADR-0010; CI PR `29525777416` e post-merge `29526030389`, entrambe con cinque job `SUCCESS` incluso `CI / Merge gate`.
 - **Migration head:** `000003_identity_signup`; contract `database-identity-signup-v1`; source SHA `22821ad6cf592d99ed63cd444cf2a6b4e3ea936685c0e32b975bf71e06969d05`; checksum `5890760af32ac99501ce9a5119e4e9d2b43c6687d6c4e14c5a4cf27188d35f88`.
 - **Contract/schema/event version:** `identity-signup-v1`; artifact `v2` / SemVer `2.0.0`; `schemaVersion: 1` degli envelope evento/SSE invariato; artifact `v1` preservato byte-per-byte.
 - **Prompt/model/eval version:** nessuna modifica AI; non applicabile a BL-005.
 - **Documenti aggiornati:** ADR-0010, MVP spec, task/contesto/tracciabilità, modello dati, overview, UX/UI, catalogo API, configurazione/migration/cold start, indice, changelog, design e piano BL-005.
 - **Rischi residui tracciati:** SMTP reale e staging non verificati perché fuori scope locale; warning `MaxListenersExceededWarning` preesistente/non bloccante del reporter Node; freeze BL-080 invariato e nessuna azione provider o Vercel.
-- **Task successivo reso READY:** `BL-006 — Sessioni, reset, revoca`; selezionarlo soltanto dopo l'integrazione protetta di BL-005. `BL-081` resta READY ma viene dopo il primo P0 eseguibile nell'ordine del backlog.
+- **Task successivo reso READY:** `BL-006 — Sessioni, reset, revoca`, ora selezionato e `IN_PROGRESS`; `BL-081` resta READY ma non viene avviato in parallelo.
 
 
 ## 21. Context Sync Log
@@ -2823,6 +2826,8 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 
 | Data | Commit | Task | Documento/componente | Modifica | Task da riesaminare |
 |---|---|---|---|---|---|
+| 2026-07-16 | `e173fd9` + design branch | BL-006 | Spec, ADR-0010, backlog e UX/UI | Approvato `identity-access-v1`: contract `v3`, migration target `000004`, session lifecycle, reset one-time, transazioni, failure path e superfici auth mobile. Spec SHA `cf9f7b148554cc96735b1de0077079c9f6cd5ca4238a21375ca4709f7310659a`. | BL-006, BL-007, BL-065, BL-067, QA-002 |
+| 2026-07-16 | `e173fd9` | BL-005 delivery | Identity signup e CI security isolata | PR #28 integra il candidato corretto `c2e4332`; CI PR `29525777416` e post-merge `29526030389` 5/5 `SUCCESS`. BL-006 è sbloccato senza azioni Vercel. | BL-006, BL-007, BL-015, BL-036, QA-002, GATE-M0 |
 | 2026-07-16 | `0761b18` + candidate docs | BL-005 candidate | Identity runtime, contract `v2`, migration `000003` e form auth | Signup/verify/resend, sessione iniziale, outbox email, BFF firmato e UI shadcn mobile hanno superato mirati, browser, full HIGH_RISK e checkout pulito. Proposta `DONE/100%/PASSING`; delivery protetta `PENDING`, nessuna azione Vercel. | BL-006, BL-007, BL-015, BL-036, QA-002, GATE-M0 |
 | 2026-07-16 | `a9a2e4b` + design branch | BL-005 | Spec, ADR-0010, backlog, dati e UX/UI | Chiusa OD-07 con identità interna provider-neutral; definiti `identity-signup-v1`, migration target, contratti HTTP, security policy, outbox SMTP e form shadcn mobile. Spec SHA `6f14bd0e92814500f8a9ed3a3c910a530eb3be35cd91eba8b8edd0d96fa60671`. | BL-005, BL-006, DOC-SEC-001 |
 | 2026-07-16 | `a9a2e4b` | BL-079 delivery | Fondazione UX/UI | PR #27 e CI post-merge `29502533089` integrano la shell statica e sbloccano BL-005/BL-081 senza azioni Vercel. | BL-005, BL-006, BL-081, QA-002 |

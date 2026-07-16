@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
+last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -15,6 +15,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md
   - docs/superpowers/plans/2026-07-16-bl-079-design-system-core.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
+  - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
 related_tasks:
   - GOV-001
   - GOV-004
@@ -131,8 +132,9 @@ supersedes: null
 | [`adr/0008-zod-first-contract-generation.md`](adr/0008-zod-first-contract-generation.md) | Decisione accepted su fonte Zod, versioning, OpenAPI components-only e generated drift |
 | [`adr/0009-mvp-runtime-data-and-workflow-architecture.md`](adr/0009-mvp-runtime-data-and-workflow-architecture.md) | Decisione accepted su runtime, trasporti, stato autorevole e workflow MVP |
 | [`adr/0010-internal-provider-neutral-identity.md`](adr/0010-internal-provider-neutral-identity.md) | Decisione accepted su identità interna, verifica email e boundary provider-neutral |
-| [`superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`](superpowers/specs/2026-07-16-bl-005-signup-verification-design.md) | Contratto `identity-signup-v1`, materializzato dal candidato BL-005 locale |
+| [`superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`](superpowers/specs/2026-07-16-bl-005-signup-verification-design.md) | Contratto `identity-signup-v1`, implementato e integrato da BL-005 |
 | [`superpowers/plans/2026-07-16-bl-005-signup-verification.md`](superpowers/plans/2026-07-16-bl-005-signup-verification.md) | Piano TDD in sette batch, gate HIGH_RISK e limiti provider del candidato BL-005 |
+| [`superpowers/specs/2026-07-16-bl-006-session-access-design.md`](superpowers/specs/2026-07-16-bl-006-session-access-design.md) | Contratto approvato `identity-access-v1` per login, sessioni, revoca e recupero password |
 | [`api/README.md`](api/README.md) | Catalogo artifact `v1` immutabile + `v2` identity, uso runtime e politica di versione |
 | [`superpowers/specs/2026-07-15-bl-009-contract-generation-design.md`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md) | Design della vertical slice contrattuale BL-009 |
 | [`superpowers/plans/2026-07-15-bl-009-contract-generation.md`](superpowers/plans/2026-07-15-bl-009-contract-generation.md) | Piano TDD e gate HIGH_RISK di BL-009 |

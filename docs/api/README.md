@@ -2,16 +2,18 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: ccecd683c12ebfe29f4cc6be78c950ebb01ca288
+last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md#126-schema-del-turno
   - docs/MVP_SPEC.md#128-schemi-separati
   - docs/MVP_SPEC.md#20-api
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/adr/0010-internal-provider-neutral-identity.md
+  - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
 related_tasks:
   - BL-009
   - BL-005
+  - BL-006
   - BL-021
   - BL-022
   - BL-028
@@ -42,6 +44,8 @@ supersedes: null
 `@dnd-ai/contracts` espone schemi Zod strict e tipi inferiti. L'artifact `v1` (`1.0.0`) resta immutabile; BL-005 pubblica l'artifact `v2` (`2.0.0`) per aggiungere le operazioni identity. `schemaVersion: 1` degli envelope evento/SSE non cambia, perché il relativo wire format è invariato.
 
 OpenAPI `v2` descrive soltanto le route effettivamente implementate `/api/auth/sign-up`, `/api/auth/verify-email` e `/api/auth/resend-verification`, inclusi idempotency header, risposte, errori e cookie applicabili. Le route del turno restano assenti finché il task proprietario non implementa handler e comportamento.
+
+`identity-access-v1` approva per BL-006 un nuovo artifact immutabile `v3` / `3.0.0` con sign-in, refresh, sign-out, revoke-all e reset password. `v3` è un target di implementazione: directory generate, export e route non esistono ancora e non devono essere presentati come runtime disponibile.
 
 | Contratto | Tipo | Responsabilità |
 |---|---|---|

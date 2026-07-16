@@ -2,10 +2,11 @@
 status: active
 owner: product-and-engineering
 last_reviewed: 2026-07-16
-last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
+last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
+  - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
 related_tasks:
   - GOV-001
   - GOV-004
@@ -2490,6 +2491,12 @@ interface ApiErrorResponse {
 | `POST /api/auth/sign-up` | anonimo; Origin same-origin | email, password, displayName | `202 verification_required` generico | obbligatoria | 400 schema, 403 origin, 409 key, 429 | 5/15 min/IP; 3/ora/email |
 | `POST /api/auth/verify-email` | anonimo; challenge corrente | email, codice numerico | `200 verified` + cookie sessione | obbligatoria | 410 scaduto, 422 invalido, 429 | 5 tentativi/challenge |
 | `POST /api/auth/resend-verification` | anonimo; account pending | email | `202` generico | obbligatoria | 403 origin, 409 key, 429 | cooldown 60 s; 5/giorno/email |
+| `POST /api/auth/sign-in` | anonimo; Origin same-origin | email, password | `200 authenticated` + nuovo cookie sessione | obbligatoria | 400 schema, 401 generico, 403 origin, 409 key, 429 | 10/15 min/IP; 5/15 min/email |
+| `POST /api/auth/session/refresh` | sessione valida; Origin same-origin | — | `200 authenticated` + cookie ruotato | obbligatoria | 401 sessione, 403 origin, 409 key | 12/ora/user |
+| `POST /api/auth/sign-out` | cookie opzionale; Origin same-origin | — | `204` + cookie eliminato | obbligatoria | 403 origin, 409 key | 30/ora/soggetto |
+| `POST /api/auth/sessions/revoke-all` | user verificato; Origin same-origin | `confirmation=revoke_all` | `204` + tutte le sessioni revocate e cookie eliminato | obbligatoria | 400, 401, 403, 409, 429 | 5/ora/user |
+| `POST /api/auth/password-reset/request` | anonimo; Origin same-origin | email | `202` sempre generico | obbligatoria | 400 schema, 403 origin, 409 key, 429, 503 | 10/15 min/IP; 5/giorno/email; cooldown 60 s |
+| `POST /api/auth/password-reset/confirm` | anonimo; challenge corrente | email, codice numerico, nuova password | `200 password_reset`, nessuna sessione e cookie eliminato | obbligatoria | 400, 403, 409, 422 generico, 429 | 5 tentativi/challenge; 10/15 min/IP |
 | `POST /api/campaigns` | user verificato; max campagne attive | character draft/ref, companion drafts, settings/world brief | `201 CampaignDraftView` o `202` se creazione async | obbligatoria | 400 schema, 409 limit/key, 422 build/moderation | 5/ora/user |
 | `GET /api/campaigns` | user | query `status,cursor,limit≤20` | lista paginata summary | n/a | 400 cursor | 60/min |
 | `GET /api/campaigns/:campaignId` | owner | — | campaign detail safe, no hidden Bible | n/a | 404 | 120/min |
@@ -2796,15 +2803,16 @@ Asset principali: account, campagne private, hidden Bible/segreti NPC, stato can
 
 ## 22.2 Autenticazione
 
-- Decisione P0: identità interna provider-neutral secondo ADR-0010 e contratto `identity-signup-v1`; PostgreSQL è autorevole e SMTP è un adapter sostituibile. Nessun provider auth o account esterno è richiesto per `BL-005`.
+- Decisione P0: identità interna provider-neutral secondo ADR-0010 e contratti `identity-signup-v1`/`identity-access-v1`; PostgreSQL è autorevole e SMTP è un adapter sostituibile. Nessun provider auth o account esterno è richiesto per `BL-005` o `BL-006`.
 - Email verificata; password hash Argon2id se gestita internamente, con parametri aggiornabili e pepper in secret manager.
 - Password da 15 a 128 caratteri Unicode, normalizzazione NFC, blocklist server-side, nessuna composition rule artificiale. Baseline Argon2id: 19 MiB, 2 iterazioni, parallelismo 1 e pepper HMAC versionato.
 - Signup, resend e verifica usano idempotenza persistente, rate limit pre-hash per soggetti pseudonimi e risposta generica anti-enumeration.
 - Verifica tramite codice numerico a sei cifre: digest HMAC, TTL 10 minuti, massimo 5 tentativi, consumo one-time e supersession al resend. Nessuna capability auth in URL.
 - Session ID random, cookie `HttpOnly`, `Secure`, `SameSite=Lax` o `Strict`, rotazione dopo login/privilege change.
 - La prima sessione nasce atomicamente soltanto dopo verifica riuscita e usa il cookie `__Host-dnd_ai_session`; il DB conserva esclusivamente un digest del token.
-- Scadenza idle e assoluta configurabile; revoca sessioni da settings.
-- Reset password con token one-time hashato, TTL breve, rate limit e invalidazione dopo uso.
+- Scadenza idle di 24 ore e assoluta di 30 giorni, applicate server-side; refresh esplicito ruota il token e non supera l'absolute expiry.
+- Logout corrente idempotente e revoca globale da settings; entrambe eliminano sempre il cookie nel browser.
+- Reset password tramite codice numerico a sei cifre: digest HMAC con chiave dedicata, TTL 10 minuti, massimo 5 tentativi, consumo one-time, supersession e risposta generica anti-enumeration. Il successo revoca tutte le sessioni e non esegue auto-login.
 - MFA P1 per utenti; obbligatoria per admin P0 se provider lo consente.
 - Nessun token auth in URL/SSE query; stream usa cookie o short-lived signed ticket bound a user/turn.
 
