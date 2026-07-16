@@ -44,9 +44,14 @@ code_refs:
   - apps/worker/src/observability.ts
   - apps/web/instrumentation.ts
   - apps/web/instrumentation-client.ts
+  - apps/api/src/identity
+  - apps/worker/src/identity
+  - apps/web/components/auth
   - packages/persistence
+  - packages/persistence/src/identity-store.ts
   - packages/contracts/src
   - packages/contracts/generated/v1
+  - packages/contracts/generated/v2
   - scripts/generate-contracts.mjs
   - scripts/lib/contract-compatibility-policy.mjs
   - scripts/lib/owned-path-policy.mjs
@@ -78,6 +83,8 @@ test_refs:
   - tests/integration/testing-containers.test.mjs
   - tests/security/test-report-security.test.mjs
   - tests/contracts/architecture-documentation.test.mjs
+  - tests/contracts/identity-contracts.test.mjs
+  - tests/integration/identity-signup-flow.test.mjs
 supersedes: null
 ---
 
@@ -124,8 +131,9 @@ supersedes: null
 | [`adr/0008-zod-first-contract-generation.md`](adr/0008-zod-first-contract-generation.md) | Decisione accepted su fonte Zod, versioning, OpenAPI components-only e generated drift |
 | [`adr/0009-mvp-runtime-data-and-workflow-architecture.md`](adr/0009-mvp-runtime-data-and-workflow-architecture.md) | Decisione accepted su runtime, trasporti, stato autorevole e workflow MVP |
 | [`adr/0010-internal-provider-neutral-identity.md`](adr/0010-internal-provider-neutral-identity.md) | Decisione accepted su identità interna, verifica email e boundary provider-neutral |
-| [`superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`](superpowers/specs/2026-07-16-bl-005-signup-verification-design.md) | Design approvato `identity-signup-v1` per signup, verifica, prima sessione e UI mobile |
-| [`api/README.md`](api/README.md) | Catalogo `api-contract-v1`, uso runtime, artefatti e politica di versione |
+| [`superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`](superpowers/specs/2026-07-16-bl-005-signup-verification-design.md) | Contratto `identity-signup-v1`, materializzato dal candidato BL-005 locale |
+| [`superpowers/plans/2026-07-16-bl-005-signup-verification.md`](superpowers/plans/2026-07-16-bl-005-signup-verification.md) | Piano TDD in sette batch, gate HIGH_RISK e limiti provider del candidato BL-005 |
+| [`api/README.md`](api/README.md) | Catalogo artifact `v1` immutabile + `v2` identity, uso runtime e politica di versione |
 | [`superpowers/specs/2026-07-15-bl-009-contract-generation-design.md`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md) | Design della vertical slice contrattuale BL-009 |
 | [`superpowers/plans/2026-07-15-bl-009-contract-generation.md`](superpowers/plans/2026-07-15-bl-009-contract-generation.md) | Piano TDD e gate HIGH_RISK di BL-009 |
 | [`superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`](superpowers/specs/2026-07-16-qa-001-test-foundation-design.md) | Design approvato di `testing-foundation-v1` e decomposizione QA-001/QA-002 |
@@ -133,7 +141,7 @@ supersedes: null
 | [`superpowers/plans/2026-07-16-gov-004-unblock-ui-dependencies.md`](superpowers/plans/2026-07-16-gov-004-unblock-ui-dependencies.md) | Piano esecutivo e gate FAST di GOV-004 |
 | [`superpowers/plans/2026-07-16-bl-079-design-system-core.md`](superpowers/plans/2026-07-16-bl-079-design-system-core.md) | Piano TDD e gate HIGH_RISK della foundation shadcn/Tailwind e shell statica BL-079 |
 | [`testing/TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) | Contratto operativo di runner, fixture, container, coverage e report non-browser |
-| [`data/DATA_MODEL.md`](data/DATA_MODEL.md) | Schema fisico implementato e modello logico pianificato |
+| [`data/DATA_MODEL.md`](data/DATA_MODEL.md) | Schema fisico fino a `000003_identity_signup` e modello di gioco pianificato |
 | [`operations/LOCAL_DEVELOPMENT.md`](operations/LOCAL_DEVELOPMENT.md) | Cold start, readiness e cleanup dello sviluppo locale |
 
 ## Documenti pianificati

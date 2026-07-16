@@ -13,6 +13,20 @@ const apiEnvironment = {
   API_HOST: "127.0.0.1",
   API_PORT: "3001",
   API_REDIS_URL: "redis://127.0.0.1:6379/0",
+  API_PUBLIC_ORIGIN: "http://127.0.0.1:3000",
+  API_AUTH_PASSWORD_PEPPER_BASE64:
+    "YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn8=",
+  API_AUTH_PASSWORD_PEPPER_VERSION: "3",
+  API_AUTH_CHALLENGE_HMAC_KEY_BASE64:
+    "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+  API_AUTH_CHALLENGE_KEY_VERSION: "7",
+  API_AUTH_SESSION_HMAC_KEY_BASE64:
+    "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=",
+  API_AUTH_SESSION_KEY_VERSION: "9",
+  API_AUTH_SUBJECT_HASH_KEY_BASE64:
+    "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=",
+  API_AUTH_BFF_ASSERTION_KEY_BASE64:
+    "gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp8=",
 };
 
 test("trace and request ID cross web, Fastify, queue metadata and worker without context bleed", async (context) => {

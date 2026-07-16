@@ -2,6 +2,7 @@ export {
   RuntimeConfigurationError,
   parseApiRuntimeConfig,
   parseMigrationRuntimeConfig,
+  parseWebRuntimeConfig,
   parseWorkerRuntimeConfig,
   runtimeEnvironments,
 } from "./runtime-config.js";
@@ -12,5 +13,9 @@ export type {
   EnvironmentSource,
   MigrationRuntimeConfig,
   RuntimeEnvironment,
+  WebRuntimeConfig,
+  VersionedSecret,
+  ApiIdentityRuntimeConfig,
+  WorkerEmailDeliveryConfig,
   WorkerRuntimeConfig,
 } from "./runtime-config.js";

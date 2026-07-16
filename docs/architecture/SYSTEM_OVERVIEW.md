@@ -61,6 +61,10 @@ test_refs:
   - tests/contracts/observability-contract.test.mjs
   - tests/integration/runtime-startup.test.mjs
   - tests/integration/testing-containers.test.mjs
+  - tests/integration/identity-signup-flow.test.mjs
+  - tests/contracts/identity-contracts.test.mjs
+  - tests/contracts/web-identity-ui.test.mjs
+  - tests/security/identity-api-security.test.mjs
 supersedes: null
 ---
 
@@ -77,15 +81,15 @@ La legenda vale per ogni sezione: la presenza di un workspace o di un contratto 
 
 | Path | Package name | Responsabilità corrente |
 |---|---|---|
-| `apps/web` | `@dnd-ai/web` | Next.js App Router, instrumentation e health route reale; la shell di gioco è pianificata in `BL-079`. |
-| `apps/api` | `@dnd-ai/api` | Composition root Fastify, configurazione fail-fast e osservabilità; nessuna API di dominio è ancora esposta. |
-| `apps/worker` | `@dnd-ai/worker` | Composition root worker, configurazione fail-fast e osservabilità; non è ancora un consumer BullMQ. |
+| `apps/web` | `@dnd-ai/web` | Next.js App Router, health, foundation UI, BFF auth same-origin e form `/sign-up`/`/verify-email`; la shell di gioco interattiva resta `BL-081`. |
+| `apps/api` | `@dnd-ai/api` | Composition root Fastify, osservabilità e route identity signup/verify/resend; nessuna API di gioco è ancora esposta. |
+| `apps/worker` | `@dnd-ai/worker` | Composition root worker e dispatcher PostgreSQL dell'outbox email identity; non è ancora un consumer BullMQ. |
 | `packages/ai` | `@dnd-ai/ai` | Confine package per porte e adapter AI; oggi contiene soltanto la fondazione tipizzata. |
-| `packages/config` | `@dnd-ai/config` | Parser Zod server-only e profili runtime per API, worker e migration. |
-| `packages/contracts` | `@dnd-ai/contracts` | Schemi Zod strict e artefatti JSON Schema/OpenAPI versionati. |
-| `packages/domain` | `@dnd-ai/domain` | Confine puro per entità, comandi, porte e invarianti; il dominio di gioco arriva nei task proprietari. |
+| `packages/config` | `@dnd-ai/config` | Parser Zod server-only e profili runtime per API, worker, web e migration, incluse chiavi/versioni identity e SMTP. |
+| `packages/contracts` | `@dnd-ai/contracts` | Schemi Zod strict e artefatti JSON Schema/OpenAPI `v1` immutabile + `v2` identity. |
+| `packages/domain` | `@dnd-ai/domain` | Policy, tipi e porte identity pure oltre ai confini del futuro dominio di gioco. |
 | `packages/observability` | `@dnd-ai/observability` | Correlation context, tracing OTel, logging redatto e Sentry error-only. |
-| `packages/persistence` | `@dnd-ai/persistence` | Runner migration, manifest e feature flag store PostgreSQL. |
+| `packages/persistence` | `@dnd-ai/persistence` | Runner migration, manifest, feature flag store e repository identity PostgreSQL. |
 | `packages/rules` | `@dnd-ai/rules` | Confine puro del Rules Engine; le regole di gioco arrivano nei task proprietari. |
 | `packages/testing` | `@dnd-ai/testing` | Primitive deterministiche e lifecycle Node per PostgreSQL/Redis di test. |
 
@@ -96,15 +100,18 @@ Il grafo mostra soltanto dipendenze **workspace→workspace** dichiarate nei man
 ```mermaid
 flowchart LR
     WEB["apps/web"] --> OBS["@dnd-ai/observability"]
+    WEB --> CFG["@dnd-ai/config"]
+    WEB --> CONTRACTS["@dnd-ai/contracts"]
     API["apps/api"] --> CFG["@dnd-ai/config"]
+    API --> CONTRACTS
+    API --> DOMAIN["@dnd-ai/domain"]
     API --> OBS
+    API --> PERSISTENCE["@dnd-ai/persistence"]
     WORKER["apps/worker"] --> CFG
     WORKER --> OBS
-    CONTRACTS["@dnd-ai/contracts"]
-    DOMAIN["@dnd-ai/domain"]
+    PERSISTENCE --> DOMAIN
     RULES["@dnd-ai/rules"]
     AI["@dnd-ai/ai"]
-    PERSISTENCE["@dnd-ai/persistence"]
     TESTING["@dnd-ai/testing"]
 ```
 
@@ -129,32 +136,46 @@ flowchart LR
 
 Il contratto completo e le condizioni di revisione sono in [`ADR-0009`](../adr/0009-mvp-runtime-data-and-workflow-architecture.md).
 
+## Flusso identity implementato nel candidato BL-005
+
+Il verticale auth è separato dalla futura pipeline dei turni. Il browser parla soltanto con il BFF same-origin; il BFF converte l'IP trusted del provider in un subject HMAC firmato e bounded senza inoltrare l'IP raw; Fastify verifica l'asserzione e applica Origin, rate limit e idempotenza. PostgreSQL committa utente/challenge/outbox o attivazione/sessione in una singola transazione. Il worker deriva il codice in memoria e può duplicare la sola consegna dopo un crash, mai lo stato canonico.
+
+```mermaid
+flowchart LR
+    FORM["Form auth mobile"] -->|"POST same-origin"| BFF["Next BFF"]
+    BFF -->|"REST bounded + subject firmato"| API_ID["Fastify IdentityService"]
+    API_ID -->|"transaction"| PG_ID[("PostgreSQL identity")]
+    PG_ID -->|"claim + lease token"| EMAIL_WORKER["Email outbox dispatcher"]
+    EMAIL_WORKER -->|"fake locale o SMTP configurato"| MAIL["Email delivery port"]
+    FORM -->|"codice 6 cifre"| BFF
+```
+
 ## Capability non ancora disponibili
 
 - **BullMQ:** Pianificato
 - **Redis locale:** Pianificato
 - **API di dominio:** Pianificata
-- **Identity signup e sessione:** design approvato, runtime Pianificato
 - **Staging:** non disponibile
 
-I task proprietari sono rispettivamente `BL-030`, `BL-029`, `BL-028`/`BL-038`, `BL-005`/`BL-006` e `BL-080`. Identity segue ADR-0010 e `identity-signup-v1`, ma resta non disponibile finché migration, route e UI di BL-005 non superano i gate. Lo stato bloccato di `BL-080` non autorizza deploy, release, Production o modifiche all'account Vercel.
+I task proprietari sono rispettivamente `BL-030`, `BL-029`, `BL-028`/`BL-038` e `BL-080`. Signup, verifica e sessione iniziale sono implementati nel candidato BL-005; login/logout/reset e revoca completa restano `BL-006`. Lo stato bloccato di `BL-080` non autorizza deploy, release, Production o modifiche all'account Vercel.
 
 ## Fondazioni implementate
 
 | Area | Stato verificabile | Documento proprietario |
 |---|---|---|
 | Configurazione | `runtime-config-v1`, profili service-scoped, errori redatti e startup fail-fast | [`CONFIGURATION.md`](../operations/CONFIGURATION.md), [`ADR-0004`](../adr/0004-runtime-configuration-and-secret-injection.md) |
-| Migrazioni | PostgreSQL 17 + pgvector, ledger applicativo, head `000002_feature_flags` | [`DATABASE_MIGRATIONS.md`](../operations/DATABASE_MIGRATIONS.md), [`ADR-0006`](../adr/0006-postgresql-migration-foundation.md) |
+| Migrazioni | PostgreSQL 17 + pgvector, ledger applicativo, candidato head `000003_identity_signup` | [`DATABASE_MIGRATIONS.md`](../operations/DATABASE_MIGRATIONS.md), [`ADR-0006`](../adr/0006-postgresql-migration-foundation.md) |
 | Feature flag | Catalogo kill switch server-side, default safe e audit append-only | [`BL-010 design`](../superpowers/specs/2026-07-15-bl-010-feature-flags-design.md) |
-| Contratti | Zod-first `api-contract-v1`, JSON Schema/OpenAPI generati e drift check | [`docs/api/README.md`](../api/README.md), [`ADR-0008`](../adr/0008-zod-first-contract-generation.md) |
+| Contratti | Zod-first `v1` immutabile + artifact `v2` con operazioni identity, JSON Schema/OpenAPI e drift check | [`docs/api/README.md`](../api/README.md), [`ADR-0008`](../adr/0008-zod-first-contract-generation.md) |
+| Identity | Signup/verify/resend, prima sessione, rate limit/idempotenza, outbox email e BFF/form mobile | [`identity-signup-v1`](../superpowers/specs/2026-07-16-bl-005-signup-verification-design.md), [`ADR-0010`](../adr/0010-internal-provider-neutral-identity.md) |
 | Osservabilità | Correlation context, tracing in-memory, Pino redatto e Sentry error-only | [`BL-008 design`](../superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md), [`ADR-0007`](../adr/0007-observability-context-and-error-reporting.md) |
 | Testing | Runner Node, fixture deterministiche, lifecycle PostgreSQL/Redis e artifact verificati | [`TEST_STRATEGY.md`](../testing/TEST_STRATEGY.md) |
 | CI e supply chain | Quality, test, security, build/artifact e `CI / Merge gate` fail-closed | [`CI_CD.md`](../operations/CI_CD.md), [`ADR-0003`](../adr/0003-ci-trust-boundary-and-artifacts.md) |
-| Frontend | Pagina Next.js minima e `/health`; nessuna shell di gioco ancora implementata | [`UX_UI_DESIGN.md`](../product/UX_UI_DESIGN.md), [`ADR-0001`](../adr/0001-mobile-first-conversational-ui.md) |
+| Frontend | Foundation/shell statica, `/health` e form auth shadcn mobile-first; shell di gioco interattiva non ancora implementata | [`UX_UI_DESIGN.md`](../product/UX_UI_DESIGN.md), [`ADR-0001`](../adr/0001-mobile-first-conversational-ui.md) |
 
 ## Confini operativi correnti
 
-- Il web è l'unico runtime con una health route applicativa reale: `GET /health`.
-- API e worker provano il bootstrap e la configurazione, ma non offrono ancora un percorso di gioco end-to-end.
+- Il web espone `GET /health`, due pagine auth e tre Route Handler BFF; il secret di asserzione resta server-only e il browser non riceve secret identity né l'origin API interno.
+- API e worker offrono il verticale identity ma non ancora un percorso di gioco end-to-end.
 - Le migration e i test database usano PostgreSQL locale/effimero; Redis è disponibile soltanto nel test harness di `QA-001`, non come servizio locale dell'applicazione.
 - Lo staging non esiste. Le procedure Vercel rimangono fail-closed nel runbook [`PREVIEW_STAGING.md`](../operations/PREVIEW_STAGING.md); `BL-080` resta bloccato e fuori dallo scope di `DOC-ARCH-001`.

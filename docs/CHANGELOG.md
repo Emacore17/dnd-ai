@@ -2,13 +2,14 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
+last_verified_commit: 0761b18d5b910c309e763774749b5bf1352b1d6c
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
+  - docs/superpowers/plans/2026-07-16-bl-005-signup-verification.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -151,6 +152,11 @@ supersedes: null
 
 ### Added
 
+- Implementato il candidato branch-local BL-005: contract artifact `v2`/SemVer `2.0.0`, policy identity pura, Argon2id con pepper, HMAC domain-separated, migration `000003_identity_signup` e repository PostgreSQL atomico/idempotente.
+- Aggiunte route Fastify signup/verify/resend con Origin/rate limit/cookie sicuro, dispatcher outbox con lease token e retry bounded, BFF Next same-origin e form shadcn mobile-first `/sign-up`/`/verify-email`.
+- Chiuso il finding P1 sul rate limit dietro proxy: il BFF usa l'header client provider-controlled nei profili gestiti, inoltra soltanto un subject HMAC firmato per 30 secondi e l'API rifiuta asserzioni parziali, alterate o scadute; nessun IP raw attraversa il confine.
+- Reso monotono il supersede del contract migration identity con `GREATEST(CURRENT_TIMESTAMP, applied_at)`: l'upgrade da `000002` resta valido anche con clock di transazione arretrato; il failure path è coperto da una regressione PostgreSQL deterministica e dal checksum canonico aggiornato.
+- Aggiunta la vertical slice PostgreSQL reale `identity-signup-flow`: pending→delivery→active/session, replay cookie, concorrenza senza duplicati e failure path per codice errato/scaduto, supersession, abuso, conflitto, Origin e timeout email.
 - Approvato il design `identity-signup-v1` di BL-005: identità interna provider-neutral, Argon2id con pepper versionato, codice email one-time, transactional outbox SMTP, prima sessione post-verifica e UI shadcn mobile-first.
 - Accettato [`ADR-0010`](adr/0010-internal-provider-neutral-identity.md), che chiude `OD-07` senza introdurre provider, account o deploy remoti.
 - Implementato il candidato BL-079: Tailwind CSS v4, shadcn/ui `new-york` su Radix, Geist locale, Lucide, token semantici e cinque primitive selettive (`Button`, `Card`, `Badge`, `Separator`, `Input`).
@@ -166,7 +172,8 @@ supersedes: null
 
 ### Changed
 
-- `BL-005` passa a `IN_PROGRESS/25%/PARTIAL`; `BL-081` resta il prossimo task READY e non viene avviato in parallelo.
+- `BL-005` raggiunge la proposta branch-local `DONE/100%/PASSING`: implementazione, mirati, full HIGH_RISK e checkout pulito sono verdi; la sola delivery protetta resta `PENDING`. `BL-006` diventa il prossimo P0 `READY`, mentre `BL-081` resta READY ma non viene avviato in parallelo.
+- Allineati overview, modello dati, catalogo API e runbook a contract `v2`, migration head candidata `000003_identity_signup`, config identity/SMTP server-only e limiti reali: nessun SMTP, provider, staging o Vercel è dichiarato verificato.
 - Corretto il metadata CI/CD che riferiva `packages/observability/dist`, output generato e non versionato: il riferimento canonico resta il package sorgente, così `verify:docs` è riproducibile in checkout pulito.
 - Allineata la delivery BL-079 a PR #27, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI post-merge `29502533089` 5/5 `SUCCESS`.
 - `BL-079` ha raggiunto `DONE/100%/PASSING` dopo mirati, matrice browser, audit, full gate, checkout pulito e self-review; la delivery protetta ha poi sbloccato `BL-005` e `BL-081`, con selezione canonica `BL-005`.
@@ -183,6 +190,7 @@ supersedes: null
 
 ### Verification
 
+- BL-005: lint/typecheck/build mirati `24/24`; aggregato identity `74/74 PASS` su 21 file, inclusa verticale PostgreSQL reale `2/2`; regressione BFF/config/API/security `52/52`; browser locale 320/390/1440 e `verify:docs` verdi. Full HIGH_RISK exit `0` in 176,9 s con 333 test nei report e artifact 4.178 file. Functional head `0761b18` verificato da checkout detached: install frozen 701 package/19,6 s, generated drift 23/23, database 21/21, build runtime 8/8, verticale/smoke 3/3, secret scan/docs PASS e cleanup completato.
 - Design BL-005: `git diff --check` e `verify:docs` exit `0`; 8 artifact contrattuali, 49 documenti/13 modificati, task graph e secret scan `PASS`. Il primo gate su checkout pulito ha riprodotto il solo `code_ref` a `packages/observability/dist`; rimosso il riferimento generato, il rerun è verde senza build artifact preesistenti.
 - BL-079 functional head `ddcbb5ead4baacda6c494e74934d2e5d5afd3fed` verificato da worktree detached: install frozen in 14,9 s; Turbo build web+dipendenze, contract 7/7, lint, typecheck e smoke HTTP 1/1 tutti exit `0`; cleanup completato e self-review senza P0/P1. Il typecheck diretto preliminare ha confermato il prerequisito `^build` dichiarato dal grafo e non ha richiesto correzioni.
 - BL-079 full `HIGH_RISK`: `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 150,6 s con lint/build 11, typecheck 13, unit 107 pass/1 skip host, integration 21, database 16, contract 80, security 32 pass/3 skip host, report 259 test e artifact 3.987 file; audit high senza vulnerabilità. Il warning reporter è stato isolato nel `node:internal/test_runner` della suite unit preesistente e non modifica l'esito né lo scope UI.

@@ -61,6 +61,7 @@
   --radius: 0.875rem;
   --touch-target: 2.75rem;
   --touch-target-primary: 3rem;
+  --safe-area-top: max(env(safe-area-inset-top), 1rem);
   --safe-area-bottom: max(env(safe-area-inset-bottom), 0.75rem);
 }
 
@@ -94,6 +95,11 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 3px;
+  }
+
+  .auth-page {
+    padding-top: var(--safe-area-top);
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
   }
 }
 

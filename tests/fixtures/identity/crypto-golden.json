@@ -1,0 +1,18 @@
+{
+  "challengeKeyBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+  "challengeKeyVersion": 7,
+  "challengeRandomHex": "000102030405060708090a0b0c0d0e0f",
+  "challengeId": "00010203-0405-4607-8809-0a0b0c0d0e0f",
+  "code": "473268",
+  "codeDigest": "5417505742092005544e8033f9b9bad7311808a203c45a4a54ae11061fbea346",
+  "sessionKeyBase64": "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=",
+  "sessionKeyVersion": 9,
+  "sessionRandomHex": "101112131415161718191a1b1c1d1e1f",
+  "sessionId": "10111213-1415-4617-9819-1a1b1c1d1e1f",
+  "token": "oAZUeo6Kd8v3wJ-XMmePhopExCYZ5gw3-x83QHRq6dk",
+  "tokenDigest": "858c9c9e65272552df24bf0c9c09ebecd2f1be7ecdcf3cf2910d74bb5cecb6d8",
+  "subjectKeyBase64": "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=",
+  "emailSubjectHash": "25c6780225af57b60a256078f4e44cf4bbebdb4e339ed948603b56aa965afe61",
+  "idempotencyKeyDigest": "6038508158c79670651ec01a4d105e6d9e1f450493ac4ed61dfe7fb8ee80cc66",
+  "requestFingerprint": "a6dd55d7823d3b8d2cb9521e3a0cac1271eea55494eda4df588f527b98a6a154"
+}

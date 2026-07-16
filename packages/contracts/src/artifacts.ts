@@ -1,8 +1,10 @@
 import { z } from "zod";
 
 import { CONTRACT_CATALOG, type ContractCatalogEntry } from "./catalog.js";
+import { createIdentityOpenApiPaths } from "./operations.js";
 import {
   CONTRACT_ID_NAMESPACE,
+  CONTRACT_MAJOR_VERSION,
   CONTRACT_VERSION,
   JSON_SCHEMA_DIALECT,
   OPENAPI_SCHEMA_DIALECT,
@@ -165,19 +167,19 @@ export function createContractArtifacts(
       title: "AI Adventure API Contracts",
       version: CONTRACT_VERSION,
       description:
-        "Versioned component contracts. Operations are added only by their owning implementation tasks.",
+        "Contratti versionati e operazioni identity implementate dal task proprietario BL-005.",
     },
-    paths: {},
+    paths: createIdentityOpenApiPaths(),
     components: { schemas: componentSchemas },
     "x-dnd-ai-contract-version": CONTRACT_VERSION,
   };
   const artifacts: Record<string, unknown> = {
-    "v1/manifest.json": manifest,
-    "v1/openapi.json": openapi,
+    [`${CONTRACT_MAJOR_VERSION}/manifest.json`]: manifest,
+    [`${CONTRACT_MAJOR_VERSION}/openapi.json`]: openapi,
   };
 
   for (const { entry, schema } of generatedSchemas) {
-    artifacts[`v1/schemas/${entry.fileName}`] = schema;
+    artifacts[`${CONTRACT_MAJOR_VERSION}/schemas/${entry.fileName}`] = schema;
   }
 
   return deepFreeze(artifacts);

@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-16
-last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
+last_verified_commit: 0761b18d5b910c309e763774749b5bf1352b1d6c
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -52,6 +52,7 @@ code_refs:
   - packages/observability
   - packages/contracts/src
   - packages/contracts/generated/v1
+  - packages/contracts/generated/v2
   - scripts/generate-contracts.mjs
   - scripts/lib/contract-artifact-policy.mjs
   - scripts/lib/contract-compatibility-policy.mjs
@@ -90,6 +91,8 @@ code_refs:
   - packages/persistence
   - packages/persistence/src/feature-flags.ts
   - packages/persistence/src/migrations/000002_feature_flags.ts
+  - packages/persistence/src/migrations/000003_identity_signup.ts
+  - packages/persistence/src/identity-store.ts
   - scripts/manage-feature-flag.mjs
   - scripts/run-database-migrations.mjs
   - scripts/lib/database-migration-policy.mjs
@@ -153,6 +156,11 @@ test_refs:
   - tests/contracts/contracts-runtime.test.mjs
   - tests/contracts/contracts-artifacts.test.mjs
   - tests/contracts/contracts-generated.test.mjs
+  - tests/contracts/identity-contracts.test.mjs
+  - tests/contracts/web-identity-ui.test.mjs
+  - tests/integration/identity-signup-flow.test.mjs
+  - tests/security/identity-api-security.test.mjs
+  - tests/security/identity-email-security.test.mjs
   - tests/unit/contract-artifact-policy.test.mjs
   - tests/contracts/contracts-compatibility.test.mjs
   - tests/unit/owned-path-policy.test.mjs
@@ -164,7 +172,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`; BL-079 è verificato tramite PR #27, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI post-merge `29502533089`. `BL-005` è `IN_PROGRESS/25%/PARTIAL` con design approvato, `BL-081` è `READY`, `QA-002` resta `BACKLOG`, mentre `BL-080` resta congelato e bloccato.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`; BL-079 è verificato tramite PR #27, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI post-merge `29502533089`. Il candidato branch-local `BL-005` è una proposta `DONE/100%/PASSING`: runtime identity, verticale PostgreSQL, full HIGH_RISK e checkout pulito sono verdi; la delivery resta `PENDING`. `BL-006` e `BL-081` sono `READY`, con selezione P0 canonica `BL-006` dopo il merge; `QA-002` resta `BACKLOG`, mentre `BL-080` resta congelato e bloccato.
 
 ## Governance e baseline
 
@@ -179,7 +187,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check` e gate composto `pnpm docs:check`; report BL-001 | implemented, PASS |
 | Fondazione UI locale separata da shell interattiva e smoke remoto | spec §31; ADR-0001; studio UX §14 | GOV-004, BL-079, BL-081, BL-080, QA-002 | design/piani GOV-004 e BL-079, task graph, `apps/web` | task graph; contract design system; smoke standalone; browser locale | GOV-004 integrato via PR #26; BL-079 integrato via PR #27 con full/clean/CI e viewport PASS; BL-080 invariato BLOCKED |
 | Architettura living implementato/target | spec §§11, 29; ADR-0009 | DOC-ARCH-001 | `docs/architecture/SYSTEM_OVERVIEW.md`, ADR-0009 | `tests/contracts/architecture-documentation.test.mjs`, Mermaid parse e `verify:docs` | PASS; contract 3/3, docs gate e full HIGH_RISK verdi |
-| Modello dati e migration head | spec §19; ADR-0006 | DOC-ARCH-001 | `docs/data/DATA_MODEL.md` | architecture-documentation contract + migration contract/database suite | PASS; head `000002_feature_flags` verificato da zero nel clean checkout |
+| Modello dati e migration head | spec §19; ADR-0006, ADR-0010 | DOC-ARCH-001, BL-005 | `docs/data/DATA_MODEL.md`; `000003_identity_signup` | architecture-documentation contract + migration contract/database/identity suite | candidato head `000003_identity_signup`, contract `database-identity-signup-v1`, zero→head e previous→head PostgreSQL reali PASS; delivery pending |
 | Cold start locale riproducibile | spec §29.3; card DOC-ARCH-001 | DOC-ARCH-001 | `docs/operations/LOCAL_DEVELOPMENT.md` | clean checkout + `web-health-v1`/runtime integration | PASS; frozen install, config, migration, build, integration 20/20 e health reale verdi |
 | DTO API/evento/output AI hanno validazione runtime e artefatti interoperabili versionati | spec §§11.5, 12.6, 12.8, 19.1, 20.1, 20.4, 20.6, 29.4; ADR-0008 | BL-009 | `packages/contracts/src`, `packages/contracts/generated/v1`, generator e policy drift/compatibility/owned path | runtime strict con UUIDv7 e version gate; Ajv 2020 parity; OpenAPI 3.1.1 components-only; breaking v1, base Git assente, missing/stale/unexpected, root junction e CI depth/base test | DONE; PR #21/merge `8e6e0d3`, CI post-merge `29420929180` 5/5 `SUCCESS` |
 | PR CI fail-closed con check stabile | spec §§26.12, 29.4; ADR-0003 | BL-002 | `.github/workflows/ci.yml`, `scripts/lib/ci-gate.mjs` | clean verify head `7c6c707`; PR run `29257544214`; post-merge run `29257721274`; run negativa `29256736728`; Ruleset `18877721`; report BL-002 | PASS |
@@ -188,10 +196,10 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Log CI non espongono credenziali | spec §§22.10, 29.4; ADR-0003 | BL-002 | workflow senza secret applicativi; output scanner redatto | scan redatto dei 5 job della run `29254494868` | PASS |
 | Gate fallito rende la PR non mergeabile | spec §31 `BL-002`; card BL-002 | BL-002 | Ruleset `main-required-ci` `18877721` | PR negativa #3/run `29256736728`: gate FAIL e `mergeStateStatus=BLOCKED`; regole `main` verificate via API | PASS |
 | Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003, DOC-ARCH-001 | `packages/config`, API/worker composition root e script composto root | unit 7/7; integration process 5/5; regressione `runtime-config-contract` sul pin Corepack dei subprocess; full verify locale/clean; CI `29285998646`; report BL-003 | DONE BL-003; regressione DOC-ARCH-001 6/6 e cold rerun PASS |
-| Signup pending, verifica one-time e prima sessione sicura | spec §§20, 22.2, 22.8–22.10, 32 AC-01; ADR-0010 | BL-005, BL-006 | design `identity-signup-v1`; runtime e migration planned | unit/DB/API/security/UI e concorrenza/idempotenza planned da BL-005 | design approved; implementation IN_PROGRESS |
+| Signup pending, verifica one-time e prima sessione sicura | spec §§20, 22.2, 22.8–22.10, 32 AC-01; ADR-0010 | BL-005, BL-006 | `apps/api/src/identity`, `apps/worker/src/identity`, `apps/web/app/{sign-up,verify-email,api/auth}`, `apps/web/lib/server`, `packages/persistence/src/identity-store.ts`, migration `000003`, contract artifact `v2` | unit/DB/API/worker/BFF/UI/security; asserzione subject HMAC BFF→API; vertical `identity-signup-flow` su PostgreSQL reale; concorrenza, replay, supersession, timeout e rate limit | candidato BL-005 `DONE/100%/PASSING`: mirati, browser, full e clean PASS; CI/delivery pending; login/logout/reset restano BL-006 |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
-| Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-080 | template service-scoped, scanner fail-closed; web con zero secret/variabili applicative; Git Integration reale senza token Vercel persistente; emissione OIDC e Trusted Source exact-match abilitate | config/security suite; environment GitHub e progetto Vercel con zero secret applicativi; token mancante/malformato fail-before-fetch | BL-003 PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
-| Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004, BL-010 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head `000002_feature_flags`, previous→head da `000001`, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | DONE; PR #22/merge `15382d5`, CI post-merge `29426357415` 5/5 `SUCCESS` |
+| Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-005, BL-080 | template service-scoped, scanner fail-closed; BFF assertion key soltanto server-side con IP pseudonimo e nessun valore identity nel bundle client; Git Integration reale senza token Vercel persistente; emissione OIDC e Trusted Source exact-match abilitate | config/security/BFF suite; header provider-controlled, firma/timestamp/tampering; environment GitHub e progetto Vercel senza secret applicativi di staging; token mancante/malformato fail-before-fetch | BL-003 PASS; candidato BL-005 mirato PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
+| Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004, BL-010, BL-005 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head `000003_identity_signup`, previous→head da `000002`, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | fondazione/flag DONE su main; candidato identity PostgreSQL PASS e delivery pending |
 | Rollback database fail-closed e forward-only gestito | spec §§19.5, 29.5; ADR-0006 | BL-004 | policy CLI e runbook `DATABASE_MIGRATIONS.md` | DDL invalido annullato con ledger 0; `down` solo loopback disposable senza query routing e con conferma; staging/production rifiutati | PASS mirato/full/clean/CI |
 | Feature flag e kill switch server-side sono condivisi, auditati e fail-closed | spec §§22.16, 27.5, 28.6, 29.8, 31 `BL-010`; ADR-0004, ADR-0006, ADR-0007 | BL-010 | `packages/persistence/src/feature-flags.ts`, `packages/persistence/src/migrations/000002_feature_flags.ts`, `scripts/manage-feature-flag.mjs` | catalogo chiuso `campaign.start`/`turn.new`/`model.route.premium`; store unavailable/unknown/malformed disabled; cambio CLI senza deploy; audit atomico; CAS; idempotency replay/conflict; output redatto | DONE; PR #22/merge `15382d5`, CI post-merge `29426357415` 5/5 `SUCCESS` |
 | Runner, fixture e report non-browser sono isolati e riproducibili | spec §§26, 35.1 | QA-001 | `@dnd-ai/testing`, runner Node root, harness PostgreSQL/Redis e artifact `testing-foundation-v1` | process isolation/failure/timeout, golden RNG/clock, smoke container concorrente, JUnit/LCOV/checksum e symlink/secret negative path | DONE; full + clean `PASS`, PR #24/merge `3e9c6d5`; [`TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) |

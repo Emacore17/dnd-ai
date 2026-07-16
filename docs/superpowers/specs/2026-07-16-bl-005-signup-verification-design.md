@@ -21,18 +21,29 @@ related_tasks:
   - BL-006
 code_refs:
   - apps/api/src/runtime.ts
+  - apps/api/src/identity
   - apps/worker/src/runtime.ts
+  - apps/worker/src/identity
   - apps/web/app
+  - apps/web/components/auth
   - apps/web/components/ui
   - packages/config/src/runtime-config.ts
   - packages/contracts/src
+  - packages/contracts/generated/v2
   - packages/domain
   - packages/persistence/src/migration-manifest.ts
+  - packages/persistence/src/migrations/000003_identity_signup.ts
+  - packages/persistence/src/identity-store.ts
 test_refs:
   - tests/contracts/runtime-config-contract.test.mjs
   - tests/contracts/database-migration-contract.test.mjs
   - tests/contracts/contracts-generated.test.mjs
   - tests/contracts/web-design-system.test.mjs
+  - tests/contracts/identity-contracts.test.mjs
+  - tests/contracts/web-identity-ui.test.mjs
+  - tests/integration/identity-signup-flow.test.mjs
+  - tests/security/identity-api-security.test.mjs
+  - tests/security/identity-email-security.test.mjs
 supersedes: null
 ---
 
@@ -45,6 +56,10 @@ Il Product Owner ha approvato il design il 2026-07-16. `BL-005` adotta identità
 La slice usa i componenti shadcn/ui già posseduti dal prodotto per un percorso mobile-first semplice, contemporaneo e accessibile. Non introduce provider auth gestiti, social login, magic link, account esterni, configurazione Vercel o invii SMTP reali nei test.
 
 Il contratto implementativo prende il nome `identity-signup-v1`.
+
+### Stato implementativo del candidato
+
+Il candidato branch-local materializza il design con contract artifact `v2` (`2.0.0`), migration `000003_identity_signup`, repository PostgreSQL, application service/route Fastify, dispatcher email con lease token, BFF Next same-origin e form shadcn. I test mirati e la vertical slice PostgreSQL reale sono verdi; delivery remota, SMTP reale e full gate restano distinti e non vengono implicati da questo stato.
 
 ## Obiettivi e confini
 
@@ -135,9 +150,9 @@ Session ID, challenge, password e idempotency key non appaiono in URL, local/ses
 
 ## Contratti HTTP
 
-Tutti i body sono Zod strict e tutte le mutazioni richiedono `Idempotency-Key` di 16–128 caratteri nell'allowlist `[A-Za-z0-9._:-]`, `Origin` same-origin e `Sec-Fetch-Site` coerente quando presente. La key e il payload vengono fingerprintati con HMAC domain-separated usando la subject hash key; non vengono conservati key o password raw. L'IP deriva dal socket remoto o da proxy esplicitamente trusted, mai da `X-Forwarded-For` arbitrario.
+Tutti i body sono Zod strict e tutte le mutazioni richiedono `Idempotency-Key` di 16–128 caratteri nell'allowlist `[A-Za-z0-9._:-]`, `Origin` same-origin e `Sec-Fetch-Site` coerente quando presente. La key e il payload vengono fingerprintati con HMAC domain-separated usando la subject hash key; non vengono conservati key o password raw. Una chiamata API diretta usa il socket remoto. Il BFF locale accetta `x-forwarded-for` soltanto nel profilo `local`; nei profili gestiti richiede il singolo `x-vercel-forwarded-for` sovrascritto dal provider, lo trasforma in subject HMAC e inoltra subject/timestamp/firma validi per 30 secondi. L'IP raw non attraversa il confine BFF→API e un'asserzione parziale, alterata o scaduta fallisce chiusa.
 
-Il browser chiama sempre path relativi `/api/auth/*` sul dominio web. I Route Handler Next.js inoltrano verso lo stesso path Fastify usando `WEB_API_INTERNAL_ORIGIN`, variabile server-only: passano soltanto method/body bounded e header allowlisted (`content-type`, `idempotency-key`, `origin`, `sec-fetch-site`, correlation/request ID valido), non loggano il body e propagano status, envelope sicuro, `Retry-After` e request ID. Un `Set-Cookie` viene accettato soltanto se è l'unico cookie, ha nome/attributi obbligatori `__Host-dnd_ai_session; Path=/; HttpOnly; Secure; SameSite=Lax`, durata bounded non superiore alla sessione e nessun `Domain`; ogni deviazione fallisce chiusa. Il browser non conosce l'origin interno dell'API e il cookie viene quindi applicato al dominio web. Fastify resta l'autorità di validazione, rate limit e mutazione; il BFF non duplica logica identity.
+Il browser chiama sempre path relativi `/api/auth/*` sul dominio web. I Route Handler Next.js inoltrano verso lo stesso path Fastify usando `WEB_API_INTERNAL_ORIGIN`, variabile server-only: passano soltanto method/body bounded, header allowlisted (`content-type`, `idempotency-key`, `origin`, `sec-fetch-site`, correlation/request ID valido) e l'asserzione pseudonima BFF firmata; non loggano il body e propagano status, envelope sicuro, `Retry-After` e request ID. Un `Set-Cookie` viene accettato soltanto se è l'unico cookie, ha nome/attributi obbligatori `__Host-dnd_ai_session; Path=/; HttpOnly; Secure; SameSite=Lax`, durata bounded non superiore alla sessione e nessun `Domain`; ogni deviazione fallisce chiusa. Il browser non conosce l'origin interno dell'API e il cookie viene quindi applicato al dominio web. Fastify resta l'autorità di validazione, rate limit e mutazione; il BFF non duplica logica identity.
 
 ### `POST /api/auth/sign-up`
 
@@ -157,7 +172,7 @@ Errori condivisi: `400 identity.request_invalid`, `403 identity.origin_rejected`
 
 ## Delivery email e failure path
 
-La porta `VerificationEmailSender` riceve un DTO minimale e non vede password, sessione o record completi. Il dispatcher risolve user/challenge, deriva il codice in memoria appena prima dell'invio e azzera i buffer intermedi quando possibile. L'adapter reale usa `nodemailer` con TLS verificato, connection/greeting timeout 5 secondi, socket timeout 10 secondi, pool massimo 2 connessioni/20 messaggi e nessun fallback provider. Il poller usa intervallo 2 secondi, batch 25 e lease 30 secondi; l'outbox limita a cinque attempt con backoff `min(300 s, 5 s × 2^(attempt-1))` più jitter iniettato 0–1 secondo e stato terminale osservabile.
+La porta `VerificationEmailSender` riceve un DTO minimale e non vede password, sessione o record completi. Il dispatcher risolve user/challenge, deriva il codice in memoria appena prima dell'invio e azzera i buffer intermedi quando possibile. L'adapter reale usa `nodemailer` con TLS verificato, connection/greeting timeout 5 secondi, socket timeout 10 secondi, pool massimo 2 connessioni/20 messaggi e nessun fallback provider. Il poller usa intervallo 2 secondi, batch 25 e lease 30 secondi; ogni ack/fail è condizionato da un token di lease opaco, così un worker scaduto non può confermare una riga già recuperata. L'outbox limita a cinque attempt con backoff `min(300 s, 5 s × 2^(attempt-1))` più jitter iniettato 0–1 secondo e stato terminale osservabile.
 
 Un crash dopo commit e prima dell'invio lascia la riga pending; un crash dopo invio ma prima dell'ack può produrre un secondo messaggio, ma non una seconda challenge valida né una mutazione canonica duplicata. Il contenuto email espone soltanto codice, scadenza e indicazione di ignorare il messaggio; niente link autenticante.
 
@@ -172,11 +187,12 @@ La feasibility sul registry del 2026-07-16 seleziona `argon2@0.44.0` (Node ≥16
 Le variabili sono server-only, service-scoped e validate prima di listener o connessioni:
 
 - `WEB_API_INTERNAL_ORIGIN`, origin HTTP(S) assoluta usata soltanto dai Route Handler Next.js e mai esposta come `NEXT_PUBLIC_*`;
-- `API_PUBLIC_ORIGIN`;
+- `API_PUBLIC_ORIGIN`, origin pubblico del frontend web accettato dalla policy Origin dell'API (non l'indirizzo interno del listener API);
 - `API_AUTH_PASSWORD_PEPPER_BASE64` e `API_AUTH_PASSWORD_PEPPER_VERSION`;
 - `API_AUTH_CHALLENGE_HMAC_KEY_BASE64` e `API_AUTH_CHALLENGE_KEY_VERSION`;
 - `API_AUTH_SESSION_HMAC_KEY_BASE64` e `API_AUTH_SESSION_KEY_VERSION`;
 - `API_AUTH_SUBJECT_HASH_KEY_BASE64` per rate limit/audit pseudonimi;
+- `API_AUTH_BFF_ASSERTION_KEY_BASE64` e `WEB_AUTH_BFF_ASSERTION_KEY_BASE64`, stesso secret logico iniettato nei soli runtime API/web per l'asserzione client pseudonima;
 - `WORKER_AUTH_CHALLENGE_HMAC_KEY_BASE64` e `WORKER_AUTH_CHALLENGE_KEY_VERSION`, stesso secret/versione logici della challenge API ma iniettati nel solo profilo worker;
 - `WORKER_EMAIL_DELIVERY_MODE=fake|smtp`;
 - `WORKER_SMTP_HOST`, `WORKER_SMTP_PORT`, `WORKER_SMTP_SECURE`, `WORKER_SMTP_USERNAME`, `WORKER_SMTP_PASSWORD`, `WORKER_SMTP_FROM` quando la modalità è `smtp`.

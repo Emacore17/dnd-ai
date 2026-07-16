@@ -19,7 +19,7 @@ import { withPostgresTestContainer } from "../../scripts/lib/postgres-test-conta
 const { Client } = pg;
 const unknownMigrationPath = fileURLToPath(
   new URL(
-    "../../packages/persistence/dist/migrations/000003_unknown_migration.js",
+    "../../packages/persistence/dist/migrations/000004_unknown_migration.js",
     import.meta.url,
   ),
 );
@@ -73,7 +73,9 @@ test(
       );
       const baselineMigrationName =
         DATABASE_MIGRATION_MANIFEST.at(0)?.migrationName;
+      const previousMigration = DATABASE_MIGRATION_MANIFEST.at(-2);
       assert.equal(typeof baselineMigrationName, "string");
+      assert.ok(previousMigration);
 
       assert.equal(host, "127.0.0.1");
       assert.ok(Number.isInteger(port));
@@ -179,21 +181,27 @@ test(
                       superseded_at
                  FROM infra.migration_contracts`,
             );
-            assert.equal(contract.rowCount, 2);
-            assert.equal(contract.rows[1].migration_id, 2);
+            const headContract = contract.rows.at(-1);
+            assert.equal(contract.rowCount, expectedMigrationNames.length);
             assert.equal(
-              contract.rows[1].migration_name,
-              DATABASE_MIGRATION_HEAD,
+              headContract.migration_id,
+              expectedMigrationNames.length,
             );
+            assert.equal(headContract.migration_name, DATABASE_MIGRATION_HEAD);
             assert.equal(
-              contract.rows[1].contract_version,
+              headContract.contract_version,
               DATABASE_CONTRACT_VERSION,
             );
-            assert.match(contract.rows[1].checksum, /^[a-f0-9]{64}$/u);
-            assert.equal(contract.rows[1].minimum_compatible_migration_id, 1);
-            assert.equal(contract.rows[1].applied_at instanceof Date, true);
-            assert.equal(contract.rows[0].superseded_at instanceof Date, true);
-            assert.equal(contract.rows[1].superseded_at, null);
+            assert.match(headContract.checksum, /^[a-f0-9]{64}$/u);
+            assert.equal(headContract.minimum_compatible_migration_id, 1);
+            assert.equal(headContract.applied_at instanceof Date, true);
+            assert.equal(
+              contract.rows
+                .slice(0, -1)
+                .every(({ superseded_at: value }) => value instanceof Date),
+              true,
+            );
+            assert.equal(headContract.superseded_at, null);
           },
         );
 
@@ -280,8 +288,8 @@ test(
                    minimum_compatible_migration_id
                  ) VALUES ($1, $2, $3, $4, $5)`,
                 [
-                  3,
-                  "000003_future_contract",
+                  4,
+                  "000004_future_contract",
                   "future-contract-v1",
                   "a".repeat(64),
                   1,
@@ -396,11 +404,9 @@ test(
           async () => {
             await client.query(`
               CREATE TABLE app.rollback_blocker (
-                flag_key text PRIMARY KEY
-                  REFERENCES app.feature_flags (flag_key)
+                user_id uuid PRIMARY KEY
+                  REFERENCES app.users (user_id)
               );
-              INSERT INTO app.rollback_blocker (flag_key)
-              VALUES ('campaign.start');
             `);
 
             try {
@@ -459,7 +465,7 @@ test(
         );
 
         await context.test(
-          "explicit local rollback removes the feature flag head and can re-apply",
+          "explicit local rollback removes the identity head and can re-apply",
           async () => {
             const rolledBack = await runDatabaseMigrations({
               allowDestructiveRollback: true,
@@ -469,7 +475,7 @@ test(
             });
             assert.deepEqual(rolledBack, {
               applied: [DATABASE_MIGRATION_HEAD],
-              current: baselineMigrationName,
+              current: previousMigration.migrationName,
               direction: "down",
             });
 
@@ -485,8 +491,9 @@ test(
             );
             assert.equal(
               await tableExists(client, "app", "feature_flags"),
-              false,
+              true,
             );
+            assert.equal(await tableExists(client, "app", "users"), false);
 
             const extension = await client.query(
               "SELECT 1 FROM pg_extension WHERE extname = 'vector'",
@@ -496,9 +503,9 @@ test(
             assertFrozenStatus(
               await getDatabaseMigrationStatus({ databaseUrl }),
               {
-                applied: [baselineMigrationName],
-                contractVersion: "database-baseline-v1",
-                current: baselineMigrationName,
+                applied: expectedMigrationNames.slice(0, -1),
+                contractVersion: previousMigration.contractVersion,
+                current: previousMigration.migrationName,
                 pending: [DATABASE_MIGRATION_HEAD],
               },
             );
@@ -515,7 +522,7 @@ test(
 
             const rolledBackAll = await runDatabaseMigrations({
               allowDestructiveRollback: true,
-              count: 2,
+              count: expectedMigrationNames.length,
               databaseUrl,
               direction: "down",
             });

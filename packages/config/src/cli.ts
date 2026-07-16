@@ -4,13 +4,19 @@ import {
   RuntimeConfigurationError,
   parseApiRuntimeConfig,
   parseMigrationRuntimeConfig,
+  parseWebRuntimeConfig,
   parseWorkerRuntimeConfig,
   type ConfigurationService,
   type RuntimeEnvironment,
 } from "./runtime-config.js";
 
 function isConfigurationService(value: string): value is ConfigurationService {
-  return value === "api" || value === "migration" || value === "worker";
+  return (
+    value === "api" ||
+    value === "migration" ||
+    value === "web" ||
+    value === "worker"
+  );
 }
 
 function validateServiceConfiguration(
@@ -21,6 +27,8 @@ function validateServiceConfiguration(
       return parseApiRuntimeConfig(process.env).environment;
     case "migration":
       return parseMigrationRuntimeConfig(process.env).environment;
+    case "web":
+      return parseWebRuntimeConfig(process.env).environment;
     case "worker":
       return parseWorkerRuntimeConfig(process.env).environment;
   }
@@ -29,7 +37,7 @@ function validateServiceConfiguration(
 const service = process.argv[2] ?? "";
 
 if (!isConfigurationService(service)) {
-  process.stderr.write("Usage: runtime-config <api|migration|worker>\n");
+  process.stderr.write("Usage: runtime-config <api|migration|web|worker>\n");
   process.exitCode = 2;
 } else {
   try {

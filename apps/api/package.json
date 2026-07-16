@@ -18,7 +18,11 @@
   },
   "dependencies": {
     "@dnd-ai/config": "workspace:*",
+    "@dnd-ai/contracts": "workspace:*",
+    "@dnd-ai/domain": "workspace:*",
     "@dnd-ai/observability": "workspace:*",
+    "@dnd-ai/persistence": "workspace:*",
+    "argon2": "0.44.0",
     "fastify": "5.10.0"
   },
   "devDependencies": {

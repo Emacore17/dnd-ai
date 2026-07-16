@@ -25,6 +25,9 @@ test("QA-001:test-lane-catalog-is-closed-and-bounded", () => {
   ]);
   assert.equal(resolveTestLane("database").concurrency, 1);
   assert.deepEqual(resolveTestLane("unit").ownerTaskIds, ["QA-001"]);
+  assert.ok(resolveTestLane("unit").buildFilters.includes("@dnd-ai/domain"));
+  assert.ok(resolveTestLane("unit").buildFilters.includes("@dnd-ai/api"));
+  assert.ok(resolveTestLane("unit").buildFilters.includes("@dnd-ai/worker"));
   assert.equal(Object.isFrozen(TEST_LANES), true);
   assert.equal(Object.isFrozen(resolveTestLane("unit")), true);
 
