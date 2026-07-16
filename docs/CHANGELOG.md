@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
+last_verified_commit: dac74168f56a422ca36aad1a8297f447ee174c9b
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -27,6 +27,10 @@ related_tasks:
   - DOC-ARCH-001
 code_refs:
   - .github/workflows/ci.yml
+  - apps/web/components.json
+  - apps/web/app/globals.css
+  - apps/web/components/static-game-shell.tsx
+  - apps/web/components/ui
   - scripts/lib/build-artifact.mjs
   - scripts/lib/ci-workflow-policy.mjs
   - packages/config
@@ -80,6 +84,8 @@ code_refs:
   - apps/web/instrumentation-client.ts
 test_refs:
   - AGENTS_VALIDATION.txt
+  - tests/contracts/web-design-system.test.mjs
+  - tests/integration/web-game-shell.test.mjs
   - tests/contracts/ci-workflow.test.mjs
   - tests/unit/build-artifact.test.mjs
   - tests/unit/runtime-config.test.mjs
@@ -141,6 +147,9 @@ supersedes: null
 
 ### Added
 
+- Implementato il candidato BL-079: Tailwind CSS v4, shadcn/ui `new-york` su Radix, Geist locale, Lucide, token semantici e cinque primitive selettive (`Button`, `Card`, `Badge`, `Separator`, `Input`).
+- Aggiunta una shell statica server-rendered, mobile-first e conversation-like con stato essenziale, narrazione, azione giocatore, risultato regola, due scelte e composer persistente; AI Elements, Motion e Rive restano fuori scope.
+- Aggiunti contract design-system e smoke HTTP sul vero HTML Next standalone; il contratto protegge anche server boundary, assenza di trusted AI HTML e separazione feed/composer.
 - Approvata la decomposizione GOV-004: `BL-079` possiede design system core e shell statica, `BL-081` shell conversazionale/stati/Motion, `QA-002` il harness comune e `BL-080`/`GATE-M0` lo smoke remoto.
 - Aggiunti design e piano versionati GOV-004; `BL-081` è una card P0/M separatamente verificabile e senza dipendenze Vercel.
 - Approvato il design `testing-foundation-v1` per `QA-001`: runner Node nativo, primitive deterministiche, container PostgreSQL/Redis e report JUnit/coverage senza secondo runner o nuova libreria container.
@@ -151,7 +160,9 @@ supersedes: null
 
 ### Changed
 
-- Rimosso il vincolo circolare operativo `BL-079`→`BL-080`: `BL-079` è il solo P0 `READY`; `BL-005` e `BL-081` restano `BACKLOG` finché la foundation non è completata, mentre `BL-080` resta `BLOCKED/50%/PARTIAL`.
+- `BL-079` passa a `DONE/100%/PASSING` come proposta branch-local dopo mirati, matrice browser, audit, full gate, checkout pulito e self-review; `BL-005` e `BL-081` diventano `READY`, con selezione canonica `BL-005`.
+- Il composer non usa più uno sticky overlay: il viewport `100svh` conserva header e composer, mentre il feed è l'unica area scrollabile. Il finding è coperto da regressione e produce overlap `0` a 320, 390 e 1440 px.
+- La decomposizione ha rimosso il vincolo circolare operativo `BL-079`→`BL-080`: prima della chiusura della foundation, `BL-079` era il solo P0 `READY` e `BL-005`/`BL-081` restavano `BACKLOG`; `BL-080` è tuttora `BLOCKED/50%/PARTIAL`.
 - Allineati i consumer conversazionali `BL-027`, `BL-039`, `BL-040`, `BL-071` e `BL-072` a `BL-081`; form e builder continuano a dipendere soltanto da `BL-079`.
 - Aggiornata la delivery di `DOC-ARCH-001`: PR #25, merge `9132cbd24ee6a0f8b1cc6c875114d86dc70804b5` e CI post-merge `29496032461` con cinque job `SUCCESS`.
 - Corrette le dipendenze QA: `QA-001` possiede soltanto la fondazione non-browser; `QA-002` possiede browser/device matrix, reduced-motion, accessibility e visual artifact; `GATE-M0` dipende da entrambi.
@@ -163,6 +174,10 @@ supersedes: null
 
 ### Verification
 
+- BL-079 functional head `ddcbb5ead4baacda6c494e74934d2e5d5afd3fed` verificato da worktree detached: install frozen in 14,9 s; Turbo build web+dipendenze, contract 7/7, lint, typecheck e smoke HTTP 1/1 tutti exit `0`; cleanup completato e self-review senza P0/P1. Il typecheck diretto preliminare ha confermato il prerequisito `^build` dichiarato dal grafo e non ha richiesto correzioni.
+- BL-079 full `HIGH_RISK`: `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 150,6 s con lint/build 11, typecheck 13, unit 107 pass/1 skip host, integration 21, database 16, contract 80, security 32 pass/3 skip host, report 259 test e artifact 3.987 file; audit high senza vulnerabilità. Il warning reporter è stato isolato nel `node:internal/test_runner` della suite unit preesistente e non modifica l'esito né lo scope UI.
+- BL-079 mirato: contract RED `0/5`→GREEN `7/7`; smoke standalone RED `0/1`→GREEN `1/1`; lint, typecheck e build web `PASS`. `next start` verificato a 320×844, 390×844 e 1440×1000 con overflow orizzontale `0`, overlap `0`, target minimi 44 px/primari 48 px, Geist locale, reduced-motion, ordine Tab e focus ring; screenshot solo temporanei, zero azioni Vercel.
+- La CLI shadcn corrente ha esposto due failure ambientali senza contaminare il repository: preset default non compatibile con `new-york` e subprocess sul pnpm globale 10.21.0. Bootstrap e dipendenze sono stati confinati al Corepack `11.13.0` vincolato dal progetto; nessun aggiornamento globale.
 - GOV-004: `tasks:check` exit `0`; il primo gate FAST ha isolato un solo anchor BL-079 obsoleto, corretto alla causa; il rerun completo `verify:docs` è `PASS` con 8 artifact contrattuali, 46 documenti/10 modificati, task graph e secret scan verdi. La self-review ha corretto due label di stato pre-terminali e non lascia finding P0/P1.
 - Design approvato dal Product Owner e self-review completata il 2026-07-16; `verify:docs` passa con 37 documenti, 9 modificati, task graph e secret scan `PASS` prima del piano TDD.
 - TDD report/runner/container mirato `19/19 PASS`; contract CI/gate `11/11 PASS`; runner unit reale 107 pass/1 skip host con coverage testing 92,54% linee, 91,89% branch e 97,62% funzioni; due prepare consecutivi producono hash identici e verify artifact `PASS`.
