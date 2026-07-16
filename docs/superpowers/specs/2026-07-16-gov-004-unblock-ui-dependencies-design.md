@@ -1,11 +1,11 @@
 ---
-status: approved
+status: active
 owner: engineering-and-product-design
 last_reviewed: 2026-07-16
 last_verified_commit: 9132cbd24ee6a0f8b1cc6c875114d86dc70804b5
 source_refs:
-  - docs/MVP_SPEC.md#31-backlog-mvp-dettagliato
-  - docs/TASKS.md#bl-079--fondazione-design-system-e-shell-conversazionale-mobile-first
+  - docs/MVP_SPEC.md#31-backlog-iniziale
+  - docs/TASKS.md#bl-079--design-system-core-e-shell-statica-mobile-first
   - docs/product/UX_UI_DESIGN.md#14-piano-di-implementazione
   - docs/adr/0001-mobile-first-conversational-ui.md
 related_tasks:

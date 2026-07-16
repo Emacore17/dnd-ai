@@ -72,7 +72,7 @@ supersedes: null
 - Consumes: branch `codex/gov-004-unblock-ui`, base `9132cbd24ee6a0f8b1cc6c875114d86dc70804b5`, design `84357e83dbc173e9a3445b7df24a3b7e7157fbaa`.
 - Produces: card `GOV-004` e registro attivo `IN_PROGRESS/25%/PARTIAL` prima delle modifiche normative.
 
-- [ ] **Step 1: aggiungere la card GOV-004**
+- [x] **Step 1: aggiungere la card GOV-004**
 
 Inserire dopo `GOV-003`:
 
@@ -98,7 +98,7 @@ Inserire dopo `GOV-003`:
 - **Note, rischi o bloccanti:** Nessuna azione provider. BL-080 e GATE-M0 restano invariati nel loro stato remoto.
 ```
 
-- [ ] **Step 2: sostituire il registro attivo**
+- [x] **Step 2: sostituire il registro attivo**
 
 Usare:
 
@@ -124,7 +124,7 @@ test_status: PARTIAL
 
 Nel diario registrare il design approvato, la corsia FAST, l'assenza di azioni esterne e il prossimo passo “riallineare spec/ADR/UX”.
 
-- [ ] **Step 3: controllare che la branch contenga soltanto design, piano e metadata attivi**
+- [x] **Step 3: controllare che la branch contenga soltanto design, piano e metadata attivi**
 
 ```powershell
 git status --short
@@ -146,7 +146,7 @@ Expected: solo documenti GOV-004; exit `0`.
 - Consumes: decisione approvata in `docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md`.
 - Produces: definizioni normative univoche di `BL-079`, `BL-081`, `QA-002` e smoke remoto.
 
-- [ ] **Step 1: sostituire la riga BL-079 e aggiungere BL-081 nella spec**
+- [x] **Step 1: sostituire la riga BL-079 e aggiungere BL-081 nella spec**
 
 Usare queste righe in §31:
 
@@ -158,7 +158,7 @@ Usare queste righe in §31:
 
 Aggiungere `BL-081` a `related_tasks` e aggiornare `last_reviewed`/`last_verified_commit` al design head `84357e83dbc173e9a3445b7df24a3b7e7157fbaa`.
 
-- [ ] **Step 2: estendere ADR-0001 senza cambiare la decisione visuale**
+- [x] **Step 2: estendere ADR-0001 senza cambiare la decisione visuale**
 
 Aggiungere alla sezione Decisione:
 
@@ -168,7 +168,7 @@ Aggiungere alla sezione Decisione:
 
 Aggiornare `related_tasks` con `GOV-004`, `BL-081`, `QA-002`; sostituire i test ref planned con ownership coerente, senza dichiarare file già implementati.
 
-- [ ] **Step 3: dividere §14 dello studio UX/UI**
+- [x] **Step 3: dividere §14 dello studio UX/UI**
 
 Sostituire il piano monolitico con:
 
@@ -194,7 +194,7 @@ Sostituire il piano monolitico con:
 
 In §14.1 dichiarare che tutti i task UI dipendono direttamente da `BL-079`; soltanto `BL-027`, `BL-039`, `BL-040`, `BL-071`, `BL-072` e `QA-002` consumano anche `BL-081`. Spostare Motion/Rive da BL-079 a BL-081 nei paragrafi di ownership senza cambiare i requisiti visuali globali.
 
-- [ ] **Step 4: verificare coerenza testuale mirata**
+- [x] **Step 4: verificare coerenza testuale mirata**
 
 ```powershell
 rg -n "BL-079|BL-080|BL-081|QA-002|staging|Motion|Rive" docs/MVP_SPEC.md docs/adr/0001-mobile-first-conversational-ui.md docs/product/UX_UI_DESIGN.md
@@ -214,7 +214,7 @@ Expected: nessuna dipendenza BL-079→BL-080; BL-081 possiede shell/Motion; exit
 - Consumes: righe normative BL-079/BL-081 della spec.
 - Produces: task graph aciclico con solo `BL-079` READY.
 
-- [ ] **Step 1: ridurre la card BL-079**
+- [x] **Step 1: ridurre la card BL-079**
 
 Impostare:
 
@@ -231,11 +231,11 @@ Impostare:
 
 Deliverable e test coincidono con la spec: shadcn/Radix, token, font/icon/touch contract, primitive minime, shell statica, build/contract/verifica locale. Eliminare AI Elements, Motion, Rive, drawer interattivi, state fixture e smoke staging dalla card.
 
-- [ ] **Step 2: aggiungere BL-081 dopo BL-080**
+- [x] **Step 2: aggiungere BL-081 dopo BL-080**
 
 Creare card `BACKLOG/0%/NOT_RUN`, P0/M, dipendenze `BL-079, QA-001`, con deliverable e criteri della spec. Citare `MVP_SPEC` §§8, 11.4, 21, 23.1, 26.8, 31; studio UX; ADR-0001; design GOV-004. Dichiarare Vercel, REST/SSE reali, auth e provider fuori scope.
 
-- [ ] **Step 3: aggiornare i consumer**
+- [x] **Step 3: aggiornare i consumer**
 
 Applicare questa matrice:
 
@@ -251,7 +251,7 @@ GATE-M0: aggiunge BL-081 alle dipendenze esplicite
 
 Non aggiungere BL-081 a identity/builder/form che consumano soltanto BL-079.
 
-- [ ] **Step 4: aggiornare dashboard e navigazione**
+- [x] **Step 4: aggiornare dashboard e navigazione**
 
 Impostare il riepilogo:
 
@@ -262,7 +262,7 @@ Impostare il riepilogo:
 
 M0 passa da 19 a 21 task; con GOV-004 proposto DONE il progresso resta `57%` arrotondato. Aggiornare ogni conteggio totale derivato che il task graph segnala come stale.
 
-- [ ] **Step 5: eseguire il task graph**
+- [x] **Step 5: eseguire il task graph**
 
 ```powershell
 corepack pnpm@11.13.0 tasks:check
@@ -285,7 +285,7 @@ Expected: `task-graph: PASS`; nessun ciclo, ID orfano, status non valido o misma
 - Consumes: task graph valido e SHA-256 aggiornato di `docs/MVP_SPEC.md`.
 - Produces: candidato GOV-004 `DONE/100%/PASSING`, delivery PENDING e BL-079 READY.
 
-- [ ] **Step 1: calcolare fingerprint e timestamp**
+- [x] **Step 1: calcolare fingerprint e timestamp**
 
 ```powershell
 $specSha = (Get-FileHash docs/MVP_SPEC.md -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -296,7 +296,7 @@ $specSha
 
 Registrare valori reali, non esempi.
 
-- [ ] **Step 2: aggiornare CONTEXT**
+- [x] **Step 2: aggiornare CONTEXT**
 
 Registrare:
 
@@ -308,7 +308,7 @@ Registrare:
 - CTX-R11 limitato al gate remoto e non più bloccante per BL-079;
 - prossima azione: integrare GOV-004, poi selezionare BL-079 e usare skill shadcn/Next.js/React per il piano funzionale.
 
-- [ ] **Step 3: aggiornare TRACEABILITY**
+- [x] **Step 3: aggiornare TRACEABILITY**
 
 Modificare le righe UX:
 
@@ -321,11 +321,11 @@ Preview/staging -> BL-080/GATE-M0; non dichiarare più BL-079 BACKLOG
 
 Aggiungere una riga governance che collega GOV-004, design/piano e `verify:docs` alla matrice di dipendenze.
 
-- [ ] **Step 4: aggiornare CHANGELOG e README**
+- [x] **Step 4: aggiornare CHANGELOG e README**
 
 Nel changelog corrente registrare design approvato, separazione BL-079/BL-081, QA-002 e permanenza del freeze. Nell'indice collegare design e piano GOV-004 nella sezione documenti di processo, senza duplicare la specifica.
 
-- [ ] **Step 5: portare GOV-004 allo stato terminale**
+- [x] **Step 5: portare GOV-004 allo stato terminale**
 
 Nella card impostare `DONE/100%/PASSING`. Nel registro mantenere `active_task: GOV-004`, impostare `last_completed_task: GOV-004`, `next_ready_task: BL-079`, `status: DONE`, `progress: 100`, `candidate_head: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa` e `test_status: PASSING`. Assegnare a `candidate_at` l'output letterale già acquisito in `$candidateAt`, a `cycle_actual_minutes` la differenza intera fra `started_at` e `$candidateAt`, a `updated_at` lo stesso `$candidateAt` e a `spec_sha256` il valore letterale di `$specSha`.
 
@@ -343,7 +343,7 @@ Nella card: `DONE/100%/PASSING`, evidenze `verify:docs` ancora descritte solo do
 - Consumes: metadata terminali e spec fingerprint reale.
 - Produces: branch pulita pronta per una sola PR.
 
-- [ ] **Step 1: eseguire il gate FAST**
+- [x] **Step 1: eseguire il gate FAST**
 
 ```powershell
 corepack pnpm@11.13.0 verify:docs
@@ -351,7 +351,7 @@ corepack pnpm@11.13.0 verify:docs
 
 Expected: generated contract drift, metadata/freshness, link/path/anchor/section refs, ADR registry, Mermaid, task graph e secret scan tutti `PASS`; exit `0`.
 
-- [ ] **Step 2: registrare soltanto evidenze appena osservate**
+- [x] **Step 2: registrare soltanto evidenze appena osservate**
 
 Aggiornare card GOV-004, diario, changelog e chiusura con `verify:docs exit 0`, numero documenti/modificati emesso dal comando, task graph/secret scan PASS e migration/eval/trace `N/A`. Poiché cambia solo evidenza testuale, rieseguire:
 
@@ -361,7 +361,7 @@ corepack pnpm@11.13.0 verify:docs
 
 Expected: exit `0` sul contenuto finale.
 
-- [ ] **Step 3: self-review P0/P1**
+- [x] **Step 3: self-review P0/P1**
 
 ```powershell
 git diff --check
@@ -372,7 +372,7 @@ git diff origin/main -- docs/MVP_SPEC.md docs/TASKS.md docs/CONTEXT.md docs/TRAC
 
 Controllare: nessun file Vercel/runtime/workflow/lockfile; un solo READY; nessun ciclo; BL-080 invariato come BLOCKED; nessun campo incompleto, secret o PII; zero finding P0/P1.
 
-- [ ] **Step 4: committare il candidato**
+- [x] **Step 4: committare il candidato**
 
 ```powershell
 git add docs
