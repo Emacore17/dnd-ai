@@ -172,7 +172,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`; BL-079 è verificato tramite PR #27, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI post-merge `29502533089`. Il candidato branch-local `BL-005` è una proposta `DONE/100%/PASSING`: runtime identity, verticale PostgreSQL, full HIGH_RISK e checkout pulito sono verdi; la delivery resta `PENDING`. `BL-006` e `BL-081` sono `READY`, con selezione P0 canonica `BL-006` dopo il merge; `QA-002` resta `BACKLOG`, mentre `BL-080` resta congelato e bloccato.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`; BL-079 è verificato tramite PR #27, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI post-merge `29502533089`. Il candidato branch-local `BL-005` è una proposta `DONE/100%/PASSING`: runtime identity, verticale PostgreSQL, full HIGH_RISK e checkout pulito sono verdi; PR #28 resta `PENDING` dopo una prima run bloccata dal build incompleto della corsia security isolata, ora corretto e coperto da regressione/full locale. `BL-006` e `BL-081` sono `READY`, con selezione P0 canonica `BL-006` dopo il merge; `QA-002` resta `BACKLOG`, mentre `BL-080` resta congelato e bloccato.
 
 ## Governance e baseline
 

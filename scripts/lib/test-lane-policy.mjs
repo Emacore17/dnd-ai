@@ -76,10 +76,12 @@ export const TEST_LANES = Object.freeze({
   }),
   security: freezeLane({
     buildFilters: [
+      "@dnd-ai/api",
       "@dnd-ai/config",
       "@dnd-ai/observability",
       "@dnd-ai/persistence",
       "@dnd-ai/testing",
+      "@dnd-ai/worker",
     ],
     concurrency: 2,
     name: "security",

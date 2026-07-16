@@ -173,6 +173,7 @@ supersedes: null
 ### Changed
 
 - `BL-005` raggiunge la proposta branch-local `DONE/100%/PASSING`: implementazione, mirati, full HIGH_RISK e checkout pulito sono verdi; la sola delivery protetta resta `PENDING`. `BL-006` diventa il prossimo P0 `READY`, mentre `BL-081` resta READY ma non viene avviato in parallelo.
+- Resa autonoma la corsia `test:security`: compila esplicitamente API e worker prima dei test che ne importano gli artifact, evitando che cache o build precedenti mascherino dist mancanti in CI pulita.
 - Allineati overview, modello dati, catalogo API e runbook a contract `v2`, migration head candidata `000003_identity_signup`, config identity/SMTP server-only e limiti reali: nessun SMTP, provider, staging o Vercel è dichiarato verificato.
 - Corretto il metadata CI/CD che riferiva `packages/observability/dist`, output generato e non versionato: il riferimento canonico resta il package sorgente, così `verify:docs` è riproducibile in checkout pulito.
 - Allineata la delivery BL-079 a PR #27, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI post-merge `29502533089` 5/5 `SUCCESS`.
@@ -191,6 +192,7 @@ supersedes: null
 ### Verification
 
 - BL-005: lint/typecheck/build mirati `24/24`; aggregato identity `74/74 PASS` su 21 file, inclusa verticale PostgreSQL reale `2/2`; regressione BFF/config/API/security `52/52`; browser locale 320/390/1440 e `verify:docs` verdi. Full HIGH_RISK exit `0` in 176,9 s con 333 test nei report e artifact 4.178 file. Functional head `0761b18` verificato da checkout detached: install frozen 701 package/19,6 s, generated drift 23/23, database 21/21, build runtime 8/8, verticale/smoke 3/3, secret scan/docs PASS e cleanup completato.
+- Correzione CI BL-005: run PR #28 `29524998132` con Quality/Tests verdi e Security rossa esclusivamente per `apps/api/dist`/`apps/worker/dist` assenti; regressione lane RED 2/3→GREEN 3/3, security forzata 42 test e secret scan PASS, full HIGH_RISK correttivo exit `0` in 290,2 s con 333 test e artifact 4.178 file.
 - Design BL-005: `git diff --check` e `verify:docs` exit `0`; 8 artifact contrattuali, 49 documenti/13 modificati, task graph e secret scan `PASS`. Il primo gate su checkout pulito ha riprodotto il solo `code_ref` a `packages/observability/dist`; rimosso il riferimento generato, il rerun è verde senza build artifact preesistenti.
 - BL-079 functional head `ddcbb5ead4baacda6c494e74934d2e5d5afd3fed` verificato da worktree detached: install frozen in 14,9 s; Turbo build web+dipendenze, contract 7/7, lint, typecheck e smoke HTTP 1/1 tutti exit `0`; cleanup completato e self-review senza P0/P1. Il typecheck diretto preliminare ha confermato il prerequisito `^build` dichiarato dal grafo e non ha richiesto correzioni.
 - BL-079 full `HIGH_RISK`: `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 150,6 s con lint/build 11, typecheck 13, unit 107 pass/1 skip host, integration 21, database 16, contract 80, security 32 pass/3 skip host, report 259 test e artifact 3.987 file; audit high senza vulnerabilità. Il warning reporter è stato isolato nel `node:internal/test_runner` della suite unit preesistente e non modifica l'esito né lo scope UI.

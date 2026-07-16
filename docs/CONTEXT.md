@@ -186,7 +186,7 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-16 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-079` è integrato su `main` tramite [PR #27](https://github.com/Emacore17/dnd-ai/pull/27), candidate `ecfd22b77fc63ce5f57e456e85c6451dd10b068c`, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI PR/post-merge `29502311478`/`29502533089` con cinque job `SUCCESS`; i tree Git candidato/merge coincidono. `BL-005` è una proposta terminale sulla branch isolata `codex/bl-005-signup-verify`, verificata sul functional head `0761b18`; la delivery è `PENDING`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `BL-079` è integrato su `main` tramite [PR #27](https://github.com/Emacore17/dnd-ai/pull/27), candidate `ecfd22b77fc63ce5f57e456e85c6451dd10b068c`, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI PR/post-merge `29502311478`/`29502533089` con cinque job `SUCCESS`; i tree Git candidato/merge coincidono. `BL-005` è una proposta terminale sulla branch isolata `codex/bl-005-signup-verify`, verificata sul functional head `0761b18` e aperta come PR #28. La prima run ha bloccato correttamente il merge sul build incompleto della corsia security isolata; correzione TDD e full locale sono verdi, delivery ancora `PENDING`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `6f14bd0e92814500f8a9ed3a3c910a530eb3be35cd91eba8b8edd0d96fa60671` |
 | Milestone | `M0 — Fondamenta` |
@@ -323,7 +323,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 ## Prossima azione
 
-Pubblicare il solo candidato terminale BL-005 tramite una PR protetta e attendere `CI / Merge gate` senza bypass. Dopo l'integrazione selezionare `BL-006`; `BL-081` resta READY ma successivo nell'ordine P0. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
+Pubblicare la correzione della corsia security sulla PR #28 e attendere una sola nuova esecuzione di `CI / Merge gate` senza bypass. Dopo l'integrazione selezionare `BL-006`; `BL-081` resta READY ma successivo nell'ordine P0. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
 
 ## Rischi chiusi
 
