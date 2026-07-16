@@ -2,14 +2,17 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
+last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
 source_refs:
   - AGENTS.md#3-gerarchia-delle-fonti-della-verità
   - docs/TASKS.md#gov-002--validazione-automatica-della-documentazione-e-tracciabilità
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
+  - docs/adr/0010-internal-provider-neutral-identity.md
 related_tasks:
   - GOV-002
   - DOC-ARCH-001
+  - BL-005
+  - BL-006
 code_refs:
   - scripts/lib/document-integrity-policy.mjs
 test_refs:
@@ -32,3 +35,4 @@ Il registro elenca ogni ADR numerato una sola volta. Stato e target sono verific
 | [ADR-0007](0007-observability-context-and-error-reporting.md) | Contesto osservabile ed error reporting | `accepted` |
 | [ADR-0008](0008-zod-first-contract-generation.md) | Contratti Zod-first e artefatti generati | `accepted` |
 | [ADR-0009](0009-mvp-runtime-data-and-workflow-architecture.md) | Architettura runtime, dati e workflow dell'MVP | `accepted` |
+| [ADR-0010](0010-internal-provider-neutral-identity.md) | Identità interna provider-neutral | `accepted` |

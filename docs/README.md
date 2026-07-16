@@ -2,17 +2,19 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: dac74168f56a422ca36aad1a8297f447ee174c9b
+last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
+  - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/adr/README.md
   - docs/superpowers/specs/2026-07-16-doc-arch-001-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
   - docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md
   - docs/superpowers/plans/2026-07-16-bl-079-design-system-core.md
+  - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
 related_tasks:
   - GOV-001
   - GOV-004
@@ -20,6 +22,8 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-005
+  - BL-006
   - BL-008
   - BL-009
   - BL-079
@@ -119,6 +123,8 @@ supersedes: null
 | [`superpowers/plans/2026-07-15-bl-008-observability-baseline.md`](superpowers/plans/2026-07-15-bl-008-observability-baseline.md) | Piano TDD e gate HIGH_RISK di BL-008 |
 | [`adr/0008-zod-first-contract-generation.md`](adr/0008-zod-first-contract-generation.md) | Decisione accepted su fonte Zod, versioning, OpenAPI components-only e generated drift |
 | [`adr/0009-mvp-runtime-data-and-workflow-architecture.md`](adr/0009-mvp-runtime-data-and-workflow-architecture.md) | Decisione accepted su runtime, trasporti, stato autorevole e workflow MVP |
+| [`adr/0010-internal-provider-neutral-identity.md`](adr/0010-internal-provider-neutral-identity.md) | Decisione accepted su identità interna, verifica email e boundary provider-neutral |
+| [`superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`](superpowers/specs/2026-07-16-bl-005-signup-verification-design.md) | Design approvato `identity-signup-v1` per signup, verifica, prima sessione e UI mobile |
 | [`api/README.md`](api/README.md) | Catalogo `api-contract-v1`, uso runtime, artefatti e politica di versione |
 | [`superpowers/specs/2026-07-15-bl-009-contract-generation-design.md`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md) | Design della vertical slice contrattuale BL-009 |
 | [`superpowers/plans/2026-07-15-bl-009-contract-generation.md`](superpowers/plans/2026-07-15-bl-009-contract-generation.md) | Piano TDD e gate HIGH_RISK di BL-009 |

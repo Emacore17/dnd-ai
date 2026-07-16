@@ -2,9 +2,11 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: dac74168f56a422ca36aad1a8297f447ee174c9b
+last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
 source_refs:
   - docs/MVP_SPEC.md
+  - docs/adr/0010-internal-provider-neutral-identity.md
+  - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -14,6 +16,8 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-005
+  - BL-006
   - BL-008
   - BL-009
   - BL-010
@@ -157,13 +161,13 @@ supersedes: null
 > **Punto di ingresso agente:** [`AGENTS.md`](../AGENTS.md)
 > **Specifica canonica:** [`docs/MVP_SPEC.md`](MVP_SPEC.md)
 > **Studio UX/UI:** [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md)
-> **Baseline specifica:** SHA-256 `e7da3ac4d7197ac0f0e1ffc5e9fa1e4324373f521e5bf29fdf06d9603f6af920`
+> **Baseline specifica:** SHA-256 `6f14bd0e92814500f8a9ed3a3c910a530eb3be35cd91eba8b8edd0d96fa60671`
 > **Data baseline:** `2026-07-16`
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-079 — DONE/100%/PASSING` proposto sulla branch `codex/bl-079-design-system-core`; delivery `PENDING`
-> **Prossimo task READY:** `BL-005 — Signup, verify, rate limit`; `BL-081` è anch'esso `READY` ma segue la selezione canonica
+> **Task attivo:** `BL-005 — IN_PROGRESS/25%/PARTIAL` sulla branch `codex/bl-005-signup-verify`
+> **Prossimo task READY:** `BL-081 — Shell di gioco interattiva`; non avviarlo mentre `BL-005` è attivo
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -520,24 +524,24 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-005 — Signup, verify, rate limit
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Stato:** `IN_PROGRESS`
+- **Progresso:** `25%`
+- **Esito test:** `PARTIAL`
+- **Contesto verificato:** `YES` — commit/SHA: `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2`; data: `2026-07-16`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-003, BL-004, BL-079
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20 API; `docs/MVP_SPEC.md` §22.2 Autenticazione; `docs/MVP_SPEC.md` §32 AC-01; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-005`; `docs/MVP_SPEC.md` §35.1
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20 API; `docs/MVP_SPEC.md` §22.2 Autenticazione; `docs/MVP_SPEC.md` §32 AC-01; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/adr/0010-internal-provider-neutral-identity.md`; `docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`; `docs/MVP_SPEC.md` §31 `BL-005`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come utente voglio registrarmi e verificare l’email.
 - **Deliverable:** Signup, verify, rate limit.
 - **Criterio di accettazione:** Account inattivo fino a verifica; replay token non valido.
 - **Test obbligatori prima di `DONE`:**
   - [ ] Test di accettazione automatizzato: Account inattivo fino a verifica; replay token non valido.
-  - [ ] Unit e integration test di token/session lifecycle, scadenza, revoca e replay.
+  - [ ] Unit e integration test di challenge consumption/supersession, session creation/expiry e replay; login/logout/reset e revoca completa restano `BL-006`.
   - [ ] API/E2E happy path e negative path; rate-limit e cookie/security headers.
   - [ ] Component/mobile accessibility smoke delle schermate signup e verifica sulla fondazione `BL-079`.
-- **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`; `docs/security/THREAT_MODEL.md`
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+- **Documentazione e contesto:** design `identity-signup-v1`; ADR-0010; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/data/DATA_MODEL.md`; threat model proprietario di `DOC-SEC-001`
+- **Evidenze di chiusura:** design approvato il 2026-07-16; implementazione, test, migration, PR e CI non ancora eseguiti
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK`: security/auth, schema, config, dipendenze, cookie e delivery email. Nessun provider/account/deploy è autorizzato; test e sviluppo restano locali con fake SMTP deterministico. La baseline `verify:docs` ha isolato un riferimento preesistente a `packages/observability/dist`, output non versionato assente in checkout pulito; il design change set ne corregge la fonte senza ampliare il runtime scope.
 
 ### BL-006 — Sessioni, reset, revoca
 
@@ -547,7 +551,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-005, BL-079
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20 API; `docs/MVP_SPEC.md` §22.2 Autenticazione; `docs/MVP_SPEC.md` §32 AC-01; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/MVP_SPEC.md` §31 `BL-006`; `docs/MVP_SPEC.md` §35.1
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20 API; `docs/MVP_SPEC.md` §22.2 Autenticazione; `docs/MVP_SPEC.md` §32 AC-01; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/adr/0010-internal-provider-neutral-identity.md`; `docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`; `docs/MVP_SPEC.md` §31 `BL-006`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come utente voglio login/logout/reset sicuri.
 - **Deliverable:** Sessioni, reset, revoca.
 - **Criterio di accettazione:** Cookie sicuri; logout revoca; reset one-time e rate-limited.
@@ -2667,23 +2671,23 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: BL-079
+active_task: BL-005
 last_completed_task: BL-079
-next_ready_task: BL-005
-status: DONE
-progress: 100
-started_at: 2026-07-16T14:41:15+02:00
-candidate_at: 2026-07-16T15:24:58+02:00
+next_ready_task: BL-081
+status: IN_PROGRESS
+progress: 25
+started_at: 2026-07-16T16:16:04+02:00
+candidate_at: pending
 cycle_target_minutes: 120
-cycle_actual_minutes: 44
-updated_at: 2026-07-16T15:24:58+02:00
+cycle_actual_minutes: 6
+updated_at: 2026-07-16T16:21:45+02:00
 agent: Codex development agent
-git_branch: codex/bl-079-design-system-core
-base_commit: dac74168f56a422ca36aad1a8297f447ee174c9b
-candidate_head: ddcbb5ead4baacda6c494e74934d2e5d5afd3fed
-spec_sha256: e7da3ac4d7197ac0f0e1ffc5e9fa1e4324373f521e5bf29fdf06d9603f6af920
+git_branch: codex/bl-005-signup-verify
+base_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
+candidate_head: pending
+spec_sha256: 6f14bd0e92814500f8a9ed3a3c910a530eb3be35cd91eba8b8edd0d96fa60671
 context_verified: true
-test_status: PASSING
+test_status: PARTIAL
 ```
 
 ## Contesto letto
@@ -2692,24 +2696,26 @@ test_status: PASSING
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti BL-079 — `docs/MVP_SPEC.md` §§8, 11.4, 21, 23.1, 26.8, 31, 32.2 e 35.1; studio UX/UI §§2–10 e 12–14.1; ADR-0001; design GOV-004
-- [x] documentazione corrente — task graph, contesto e baseline post PR #26/merge `dac7416`
-- [x] codice/test interessati — workspace Next.js web, test contract/integration, package manifest e lockfile
+- [x] riferimenti BL-005 — `docs/MVP_SPEC.md` §§20, 22.2, 22.8–22.10, 31, 32 AC-01 e 35.1; studio UX/UI; ADR-0001/0004/0006/0007/0008
+- [x] documentazione corrente — task graph, contesto e baseline post PR #27/merge `a9a2e4b`
+- [x] codice/test interessati — API Fastify, config, contratti, dominio, persistence/migration e route/componenti Next.js auth
 
 ## Piano e scope
 
-- **Corsia:** `HIGH_RISK` perché cambiano dipendenze e lockfile; target 120 minuti.
-- **Obiettivo verificabile:** design system shadcn/Radix e shell statica premium buildano, rendono HTML semantico e superano contract, smoke locale e viewport 320/390/1440.
-- **File/moduli previsti:** `apps/web` config/layout/CSS/componenti/fixture; manifest e lockfile; test contract/integration; living docs e piano BL-079.
-- **Azioni esterne:** consultazione documentazione ufficiale e registry npm/shadcn; nessun provider, account, deploy, release o modifica Vercel.
-- **Test previsti:** contract RED/GREEN, smoke HTTP RED/GREEN, lint/typecheck/build web, browser locale, unico full `verify` finale e clean checkout con install frozen.
-- **Rischi/failure path:** CLI interattiva o overwrite, Base UI incompatibile, font remoto, dipendenze e componenti inutilizzati, overflow 320 px, focus invisibile, touch target insufficiente, shell troppo densa o confine BL-081 violato.
-- **Fuori scope:** AI Elements, Motion, Rive, interazione/state machine, drawer, API/auth, browser harness condiviso, provider e Vercel.
+- **Corsia:** `HIGH_RISK` perché cambieranno auth/security, migration, config, dipendenze, cookie e side effect email; target 120 minuti per slice, con decomposizione se il piano supera il budget.
+- **Obiettivo verificabile:** signup pending, verifica one-time e prima sessione sicura convergono senza duplicazioni; rate limit/idempotenza/privacy e UI shadcn mobile superano i gate definiti da `identity-signup-v1`.
+- **File/moduli previsti:** contratti/domain/persistence/config; route/application service API; pagine e componenti auth web; test unit/database/integration/contract/security/UI; living docs e piano BL-005.
+- **Azioni esterne:** sola consultazione di standard/documentazione ufficiale e registry npm; nessun provider auth/email, account, secret reale, deploy, release o modifica Vercel.
+- **Test previsti:** TDD RED/GREEN per policy/crypto, migration PostgreSQL reale, concorrenza/idempotenza, API/security/redaction, component/accessibility e browser locale; unico full `verify` finale e clean checkout.
+- **Rischi/failure path:** enumeration, Argon2 DoS, challenge replay/race, cookie leakage, config secret errata, outbox crash/retry, timeout SMTP, duplicate delivery, PII nei log, Origin/CSRF e overflow/tastiera mobile.
+- **Fuori scope:** login/logout/reset e revoca completa (`BL-006`), social/MFA, provider gestiti, account SMTP reali, campagne, AI Elements/Motion/Rive e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-16 16:21 +02:00 | 25% | Versionati `identity-signup-v1`, ADR-0010 e allineamento normativo/task/UX. La self-review non trova placeholder nella spec, scope remoto accidentale o stato identity presentato come implementato. Corretto alla causa il `code_ref` generato della baseline pulita. | `git diff --check` exit `0`; `verify:docs` exit `0`: 8 artifact, 49 documenti/13 modificati, task graph e secret scan `PASS`; spec SHA `6f14bd0e…`. | Committare la specifica e ottenere review utente; soltanto dopo invocare la skill di pianificazione TDD. |
+| 2026-07-16 16:16 +02:00 | 25% | Selezionato BL-005 dal merge verificato di BL-079; design approvato: identità interna provider-neutral, Argon2id, codice one-time, outbox SMTP e UI shadcn mobile. Worktree isolata per preservare il bump locale inatteso di `packageManager` su `main`. | Base `a9a2e4b`; PR #27 e CI PR/post-merge `29502311478`/`29502533089` 5/5 `SUCCESS`; tree candidato/merge BL-079 identici. Install frozen completata. Baseline docs ha isolato il solo `code_ref` generato `packages/observability/dist`; nessuna azione Vercel. | Versionare design/ADR e correzione del riferimento sorgente, eseguire `verify:docs`, self-review e ottenere review utente prima del piano TDD. |
 | 2026-07-16 15:24 +02:00 | 100% | Functional head verificato da checkout pulito e self-review terminale senza P0/P1. Il primo typecheck diretto ha provato il prerequisito `^build` già espresso in Turbo; dopo il build previsto è passato senza modifiche. BL-005 e BL-081 sono sbloccati, con selezione canonica BL-005. | Head `ddcbb5e`: install frozen 14,9 s; build web+dipendenze exit `0`; contract `7/7`, lint, typecheck e smoke `1/1` verdi; cleanup completato. Full gate e audit già verdi; zero azioni Vercel. | Amend del solo candidato con evidenze terminali, push e PR protetta; attendere `CI / Merge gate` senza bypass. |
 | 2026-07-16 15:18 +02:00 | 90% | Chiuso l'unico full gate HIGH_RISK e l'audit dipendenze. Il warning Node dei reporter è non bloccante, riproducibile sulla suite unit preesistente e interno alla composizione `TestsStream`; nessun cambio al runner viene incluso nella slice UI. | `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 150,6 s: lint/build 11, typecheck 13, report 259 test su 5 corsie, artifact 3.987 file; audit high senza vulnerabilità. | Congelare il commit funzionale, install frozen e build/smoke da checkout pulito, quindi self-review terminale. |
 | 2026-07-16 15:08 +02:00 | 90% | Fondazione e shell completate in TDD. La verifica browser ha riprodotto e chiuso l'overlap del composer: viewport `100svh`, feed come sola area scrollabile e footer flex persistente. Il runtime standalone grezzo non copia gli asset statici Next e non è stato usato come prova visuale; `next start` ha verificato la build completa. | RED iniziale contract `0/5` e smoke `0/1`; GREEN contract `7/7`, smoke `1/1`, lint/typecheck/build web. Browser 320/390/1440: overflow `0`, overlap `0`, target minimo `44 px`, primarie `48 px`, Geist locale, reduced-motion, Tab order e ring 3 px; nessun errore. Screenshot solo temporanei, nessuna azione Vercel. | Allineare living docs, eseguire l'unico full gate HIGH_RISK, clean checkout e self-review finale. |
@@ -2786,16 +2792,16 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/bl-079-design-system-core` su base `dac74168f56a422ca36aad1a8297f447ee174c9b`; functional head clean-verificato `ddcbb5ead4baacda6c494e74934d2e5d5afd3fed`; PR/CI `PENDING`.
-- **Comandi eseguiti:** preflight; skill shadcn/Next.js/Geist/TDD/React/browser; bootstrap Tailwind/shadcn tramite Corepack; contract e smoke RED→GREEN; lint/typecheck/build web; browser locale production-like con `next start`; audit high; full gate senza cache; worktree detached con install frozen, build e smoke.
-- **Exit code:** preflight `0`; contract `7/7`, smoke `1/1`, lint/typecheck/build web e browser matrix `PASS`; audit high pulito; full gate exit `0` in 150,6 s con 259 test/report e artifact 3.987 file. Clean head `ddcbb5e`: install frozen, Turbo build, contract, lint, typecheck e smoke tutti exit `0`; cleanup `PASS`.
-- **Report/CI URL o path:** piano BL-079; PR/CI `PENDING`.
+- **Commit/PR:** branch `codex/bl-005-signup-verify` su base `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2`; fase design in review, nessun candidato implementativo o PR.
+- **Comandi eseguiti:** preflight Git/worktree; install frozen con Corepack; verifica tree BL-079 candidato/merge; registry read-only per `argon2`/`nodemailer`; `git diff --check`; `verify:docs`; self-review di placeholder, contraddizioni, scope e stato implementato/pianificato.
+- **Exit code:** preflight/tree/registry/diff `0`; install frozen `0`; prima baseline docs `1` sul riferimento generato preesistente; correzione alla causa e rerun `verify:docs` `0` con 49 documenti/13 modificati, task graph e secret scan `PASS`.
+- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md` e ADR-0010; CI non applicabile prima del candidato implementativo.
 - **Migration head:** `000002_feature_flags` invariato.
-- **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`, invariati.
-- **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
-- **Documenti aggiornati:** piano BL-079, task/contesto/tracciabilità/changelog/indice e metadata terminali.
-- **Rischi residui/TODO tracciati:** delivery GitHub pendente; warning reporter Node preesistente/non bloccante; freeze BL-080 invariato e nessuna azione provider o Vercel.
-- **Task successivo reso READY:** `BL-005` e `BL-081`; selezione canonica successiva `BL-005`.
+- **Contract/schema/event version:** `identity-signup-v1` approvato ma non implementato; `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1` invariati.
+- **Prompt/model/eval version:** nessuna modifica AI; non applicabile a BL-005.
+- **Documenti aggiornati:** specifica BL-005, ADR-0010, MVP spec, task/contesto/tracciabilità, modello dati, overview, UX/UI, indice, changelog e metadata CI/CD.
+- **Rischi residui tracciati:** superficie auth HIGH_RISK ancora da implementare e testare; review utente e piano TDD obbligatori; freeze BL-080 invariato e nessuna azione provider o Vercel.
+- **Task successivo reso READY:** nessuno; BL-081 era già READY e resta non selezionato mentre BL-005 è attivo.
 
 
 ## 21. Context Sync Log
@@ -2804,6 +2810,8 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 
 | Data | Commit | Task | Documento/componente | Modifica | Task da riesaminare |
 |---|---|---|---|---|---|
+| 2026-07-16 | `a9a2e4b` + design branch | BL-005 | Spec, ADR-0010, backlog, dati e UX/UI | Chiusa OD-07 con identità interna provider-neutral; definiti `identity-signup-v1`, migration target, contratti HTTP, security policy, outbox SMTP e form shadcn mobile. Spec SHA `6f14bd0e92814500f8a9ed3a3c910a530eb3be35cd91eba8b8edd0d96fa60671`. | BL-005, BL-006, DOC-SEC-001 |
+| 2026-07-16 | `a9a2e4b` | BL-079 delivery | Fondazione UX/UI | PR #27 e CI post-merge `29502533089` integrano la shell statica e sbloccano BL-005/BL-081 senza azioni Vercel. | BL-005, BL-006, BL-081, QA-002 |
 | 2026-07-16 | `ddcbb5e` + candidate docs | BL-079 | `apps/web` design system e shell statica | Aggiunti Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first, cinque primitive e shell server-rendered; full/clean gate e browser locale 320/390/1440 chiudono build, overlap, overflow, target e focus. | BL-005, BL-006, BL-012–BL-014, BL-016, BL-017, BL-019, BL-081, QA-002 |
 | 2026-07-16 | `84357e8` + candidate docs | GOV-004 | Spec, backlog e contratto UX/UI | Separati design system/statico (`BL-079`), shell interattiva/Motion (`BL-081`), harness (`QA-002`) e smoke remoto (`BL-080`/`GATE-M0`). Spec SHA `e7da3ac4d7197ac0f0e1ffc5e9fa1e4324373f521e5bf29fdf06d9603f6af920`; task graph PASS e `BL-079` unico P0 READY. | BL-005, BL-006, BL-012–BL-014, BL-016, BL-017, BL-019, BL-027, BL-039, BL-040, BL-071, BL-072, QA-002, GATE-M0 |
 | 2026-07-13 | `N/A` | Creazione `TASKS.md` | Baseline | Derivato il piano operativo dalla spec SHA `f6692930e752108b8ddba52867679514e1fd14e6343ba7b6736d9d6b61cb71b1`. | Tutti, alla prima esecuzione |

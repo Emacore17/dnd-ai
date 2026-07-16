@@ -2,16 +2,20 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
+last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
 source_refs:
   - docs/MVP_SPEC.md#19-modello-dati
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilit%C3%A0
   - docs/MVP_SPEC.md#196-decisione-eventi-pi%C3%B9-proiezioni-transazionali
   - docs/adr/0006-postgresql-migration-foundation.md
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
+  - docs/adr/0010-internal-provider-neutral-identity.md
+  - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
 related_tasks:
   - DOC-ARCH-001
   - BL-004
+  - BL-005
+  - BL-006
   - BL-010
   - BL-025
   - BL-028
@@ -151,7 +155,7 @@ erDiagram
 
 ## Modello logico pianificato
 
-Questo diagramma è concettuale. Ogni nodo è **Pianificato** e non autorizza query, tabelle o migration con questi nomi.
+Questo diagramma è concettuale. Ogni nodo è **Pianificato** e non autorizza query, tabelle o migration con questi nomi. Il sotto-modello identity è invece nominato dal design approvato `identity-signup-v1`, ma resta pianificato finché `BL-005` non integra e verifica la migration `000003_identity_signup`.
 
 ```mermaid
 flowchart LR
@@ -165,11 +169,15 @@ flowchart LR
     TURN --> AI_REQUEST["AI request/usage · Pianificato"]
 ```
 
+### Identity signup pianificata
+
+ADR-0010 e il design BL-005 approvano come target `users`, `user_credentials`, `email_verification_challenges`, `user_sessions`, `identity_email_outbox`, `identity_rate_limits`, `identity_idempotency` e `identity_audit_events`. Le invarianti normative sono: email normalizzata univoca; utente pending fino alla verifica; challenge one-time con scadenza/tentativi/supersession; token sessione e codice conservati soltanto come digest; audit append-only; signup+outbox e challenge consumption+attivazione atomici. Nessuna di queste tabelle è ancora implementata sul migration head `000002_feature_flags`.
+
 ## Ownership dei task
 
 | Area concettuale | Task proprietario | Regola per la migration futura |
 |---|---|---|
-| Utente, verifica, sessione e ownership | `BL-005`–`BL-007` | Il primo task che persiste l'area aggiunge migration, constraint tenant-safe e test negativi. |
+| Utente, verifica, sessione e ownership | `BL-005`–`BL-007` | `BL-005` possiede `000003_identity_signup`, constraint, concorrenza e test negativi; `BL-006` estende il lifecycle senza riscrivere la migration condivisa. |
 | Personaggio e cataloghi | `BL-011`, `BL-015`–`BL-017` | Nessuna tabella è nominata in anticipo; aggregate e autosave definiscono il contratto. |
 | Campagna, Bible, scena, location, quest e clock | `BL-018`, `BL-022`–`BL-025` | Persistenza soltanto dopo schema e validazione della Bible. |
 | NPC e knowledge state | `BL-025`, `BL-052`, `BL-053` | Knowledge boundary e ownership precedono qualsiasi indice di retrieval. |

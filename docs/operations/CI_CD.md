@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-security
 last_reviewed: 2026-07-16
-last_verified_commit: 7f2d4d0f360e83baf31404266df47cbee060be0d
+last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -26,7 +26,6 @@ code_refs:
   - .github/actions/setup-workspace/action.yml
   - packages/config
   - packages/observability
-  - packages/observability/dist
   - packages/contracts/src
   - packages/contracts/generated/v1
   - scripts/generate-contracts.mjs

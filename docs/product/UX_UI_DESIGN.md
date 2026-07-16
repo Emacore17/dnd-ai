@@ -2,12 +2,14 @@
 status: active
 owner: product-design-and-frontend
 last_reviewed: 2026-07-16
-last_verified_commit: 84357e83dbc173e9a3445b7df24a3b7e7157fbaa
+last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
 source_refs:
   - docs/MVP_SPEC.md#8-esperienza-utente
   - docs/MVP_SPEC.md#21-interfaccia-utente
   - docs/MVP_SPEC.md#23-requisiti-non-funzionali
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
+  - docs/adr/0010-internal-provider-neutral-identity.md
+  - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
 related_tasks:
   - GOV-001
   - GOV-004
@@ -115,6 +117,16 @@ Conseguenza progettuale: la schermata non deve sembrare un character sheet perma
 - trace, costi, schema, prompt e payload.
 
 Regola: se una superficie contiene più di un’azione primaria o più di tre gruppi informativi concorrenti su mobile, va ridotta o spostata al livello successivo.
+
+### Percorso auth P0
+
+Signup e verifica non usano la shell di gioco: sono due superfici a compito singolo, coerenti con il linguaggio premium contemporaneo ma prive di HUD, lore decorativa e pannelli secondari.
+
+- `/sign-up`: una `Card` shadcn con email, nome visibile, password, controllo mostra/nascondi e una sola CTA primaria da 48 px; autofill, password manager e incolla restano supportati.
+- `/verify-email`: codice numerico come unico focus, tastiera mobile numerica, scadenza e cooldown leggibili, verifica primaria e resend secondario.
+- Errori inline e summary portano il focus al primo campo invalido; pending/success/error hanno live region e copy che non rivela se un account esiste.
+- Viewport 320/390/1440, safe area, zoom, touch target ≥44 px, contrasto e reduced-motion appartengono allo stesso gate dei percorsi di gioco.
+- La verifica non usa link autenticanti; codice, password e sessione non vengono conservati nello storage browser.
 
 ## 5. Shell mobile
 
@@ -337,6 +349,8 @@ Con un prototipo e cinque utenti interni non coinvolti nell’implementazione, v
 Gli errori osservati diventano finding con severità e task, non note informali.
 
 ## 14. Piano di implementazione
+
+`BL-005` usa la foundation shadcn di `BL-079` per implementare `/sign-up` e `/verify-email` come form mobile a colonna singola, con component/accessibility test e smoke browser locale. AI Elements, Motion e Rive non sono necessari al percorso auth.
 
 `BL-079` deve produrre, nell’ordine:
 

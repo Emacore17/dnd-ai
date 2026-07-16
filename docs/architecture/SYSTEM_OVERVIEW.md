@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
+last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#19-modello-dati
@@ -14,6 +14,8 @@ source_refs:
   - docs/adr/0007-observability-context-and-error-reporting.md
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
+  - docs/adr/0010-internal-provider-neutral-identity.md
+  - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/data/DATA_MODEL.md
   - docs/operations/LOCAL_DEVELOPMENT.md
 related_tasks:
@@ -21,6 +23,8 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-005
+  - BL-006
   - BL-008
   - BL-009
   - BL-010
@@ -130,9 +134,10 @@ Il contratto completo e le condizioni di revisione sono in [`ADR-0009`](../adr/0
 - **BullMQ:** Pianificato
 - **Redis locale:** Pianificato
 - **API di dominio:** Pianificata
+- **Identity signup e sessione:** design approvato, runtime Pianificato
 - **Staging:** non disponibile
 
-I task proprietari sono rispettivamente `BL-030`, `BL-029`, `BL-028`/`BL-038` e `BL-080`. Lo stato bloccato di `BL-080` non autorizza deploy, release, Production o modifiche all'account Vercel.
+I task proprietari sono rispettivamente `BL-030`, `BL-029`, `BL-028`/`BL-038`, `BL-005`/`BL-006` e `BL-080`. Identity segue ADR-0010 e `identity-signup-v1`, ma resta non disponibile finché migration, route e UI di BL-005 non superano i gate. Lo stato bloccato di `BL-080` non autorizza deploy, release, Production o modifiche all'account Vercel.
 
 ## Fondazioni implementate
 

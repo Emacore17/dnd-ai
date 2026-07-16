@@ -2,11 +2,13 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: dac74168f56a422ca36aad1a8297f447ee174c9b
+last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
+  - docs/adr/0010-internal-provider-neutral-identity.md
+  - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -16,6 +18,8 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-005
+  - BL-006
   - BL-008
   - BL-009
   - BL-010
@@ -147,6 +151,8 @@ supersedes: null
 
 ### Added
 
+- Approvato il design `identity-signup-v1` di BL-005: identità interna provider-neutral, Argon2id con pepper versionato, codice email one-time, transactional outbox SMTP, prima sessione post-verifica e UI shadcn mobile-first.
+- Accettato [`ADR-0010`](adr/0010-internal-provider-neutral-identity.md), che chiude `OD-07` senza introdurre provider, account o deploy remoti.
 - Implementato il candidato BL-079: Tailwind CSS v4, shadcn/ui `new-york` su Radix, Geist locale, Lucide, token semantici e cinque primitive selettive (`Button`, `Card`, `Badge`, `Separator`, `Input`).
 - Aggiunta una shell statica server-rendered, mobile-first e conversation-like con stato essenziale, narrazione, azione giocatore, risultato regola, due scelte e composer persistente; AI Elements, Motion e Rive restano fuori scope.
 - Aggiunti contract design-system e smoke HTTP sul vero HTML Next standalone; il contratto protegge anche server boundary, assenza di trusted AI HTML e separazione feed/composer.
@@ -160,7 +166,10 @@ supersedes: null
 
 ### Changed
 
-- `BL-079` passa a `DONE/100%/PASSING` come proposta branch-local dopo mirati, matrice browser, audit, full gate, checkout pulito e self-review; `BL-005` e `BL-081` diventano `READY`, con selezione canonica `BL-005`.
+- `BL-005` passa a `IN_PROGRESS/25%/PARTIAL`; `BL-081` resta il prossimo task READY e non viene avviato in parallelo.
+- Corretto il metadata CI/CD che riferiva `packages/observability/dist`, output generato e non versionato: il riferimento canonico resta il package sorgente, così `verify:docs` è riproducibile in checkout pulito.
+- Allineata la delivery BL-079 a PR #27, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI post-merge `29502533089` 5/5 `SUCCESS`.
+- `BL-079` ha raggiunto `DONE/100%/PASSING` dopo mirati, matrice browser, audit, full gate, checkout pulito e self-review; la delivery protetta ha poi sbloccato `BL-005` e `BL-081`, con selezione canonica `BL-005`.
 - Il composer non usa più uno sticky overlay: il viewport `100svh` conserva header e composer, mentre il feed è l'unica area scrollabile. Il finding è coperto da regressione e produce overlap `0` a 320, 390 e 1440 px.
 - La decomposizione ha rimosso il vincolo circolare operativo `BL-079`→`BL-080`: prima della chiusura della foundation, `BL-079` era il solo P0 `READY` e `BL-005`/`BL-081` restavano `BACKLOG`; `BL-080` è tuttora `BLOCKED/50%/PARTIAL`.
 - Allineati i consumer conversazionali `BL-027`, `BL-039`, `BL-040`, `BL-071` e `BL-072` a `BL-081`; form e builder continuano a dipendere soltanto da `BL-079`.
@@ -174,6 +183,7 @@ supersedes: null
 
 ### Verification
 
+- Design BL-005: `git diff --check` e `verify:docs` exit `0`; 8 artifact contrattuali, 49 documenti/13 modificati, task graph e secret scan `PASS`. Il primo gate su checkout pulito ha riprodotto il solo `code_ref` a `packages/observability/dist`; rimosso il riferimento generato, il rerun è verde senza build artifact preesistenti.
 - BL-079 functional head `ddcbb5ead4baacda6c494e74934d2e5d5afd3fed` verificato da worktree detached: install frozen in 14,9 s; Turbo build web+dipendenze, contract 7/7, lint, typecheck e smoke HTTP 1/1 tutti exit `0`; cleanup completato e self-review senza P0/P1. Il typecheck diretto preliminare ha confermato il prerequisito `^build` dichiarato dal grafo e non ha richiesto correzioni.
 - BL-079 full `HIGH_RISK`: `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 150,6 s con lint/build 11, typecheck 13, unit 107 pass/1 skip host, integration 21, database 16, contract 80, security 32 pass/3 skip host, report 259 test e artifact 3.987 file; audit high senza vulnerabilità. Il warning reporter è stato isolato nel `node:internal/test_runner` della suite unit preesistente e non modifica l'esito né lo scope UI.
 - BL-079 mirato: contract RED `0/5`→GREEN `7/7`; smoke standalone RED `0/1`→GREEN `1/1`; lint, typecheck e build web `PASS`. `next start` verificato a 320×844, 390×844 e 1440×1000 con overflow orizzontale `0`, overlap `0`, target minimi 44 px/primari 48 px, Geist locale, reduced-motion, ordine Tab e focus ring; screenshot solo temporanei, zero azioni Vercel.

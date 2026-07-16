@@ -2,19 +2,21 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: dac74168f56a422ca36aad1a8297f447ee174c9b
+last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
   - docs/adr/0007-observability-context-and-error-reporting.md
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
+  - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md
   - docs/superpowers/specs/2026-07-15-bl-009-contract-generation-design.md
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
   - docs/superpowers/specs/2026-07-16-doc-arch-001-design.md
   - docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md
+  - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -24,6 +26,8 @@ related_tasks:
   - BL-002
   - BL-003
   - BL-004
+  - BL-005
+  - BL-006
   - BL-008
   - BL-009
   - BL-010
@@ -169,19 +173,19 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-16 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `GOV-004` è integrato su `main` tramite [PR #26](https://github.com/Emacore17/dnd-ai/pull/26), candidate `0efee4c9e585a7b2cf4f84cdbd5902467c023f9b`, merge `dac74168f56a422ca36aad1a8297f447ee174c9b` e CI PR/post-merge `29498563965`/`29498770278` con cinque job `SUCCESS`; i tree Git candidato/merge coincidono. `BL-079` è un candidato branch-local terminale sulla branch `codex/bl-079-design-system-core`; functional head `ddcbb5ead4baacda6c494e74934d2e5d5afd3fed` verificato da checkout pulito, delivery `PENDING`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `BL-079` è integrato su `main` tramite [PR #27](https://github.com/Emacore17/dnd-ai/pull/27), candidate `ecfd22b77fc63ce5f57e456e85c6451dd10b068c`, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI PR/post-merge `29502311478`/`29502533089` con cinque job `SUCCESS`; i tree Git candidato/merge coincidono. `BL-005` è attivo sulla branch isolata `codex/bl-005-signup-verify`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
-| SHA-256 specifica | `e7da3ac4d7197ac0f0e1ffc5e9fa1e4324373f521e5bf29fdf06d9603f6af920` |
+| SHA-256 specifica | `6f14bd0e92814500f8a9ed3a3c910a530eb3be35cd91eba8b8edd0d96fa60671` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-079 — DONE/100%/PASSING` proposto sul branch `codex/bl-079-design-system-core`; delivery `PENDING` |
-| Ultimo task completato | `BL-079 — DONE/100%/PASSING` branch-local; ultimo integrato: `GOV-004` tramite PR #26 e CI post-merge `29498770278` |
-| Prossimo task READY | `BL-005`; anche `BL-081` è sbloccato ma segue la selezione canonica |
+| Task attivo | `BL-005 — IN_PROGRESS/25%/PARTIAL` sulla branch `codex/bl-005-signup-verify` |
+| Ultimo task completato | `BL-079 — DONE/100%/PASSING`, integrato tramite PR #27 e CI post-merge `29502533089` |
+| Prossimo task READY | `BL-081`; non avviarlo mentre `BL-005` è attivo |
 | Migration head | `000002_feature_flags` / `database-feature-flags-v1` |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-008`, `BL-009`, `BL-010`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` ha ora un candidato branch-local con Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first e shell statica server-rendered verificata localmente; `BL-081` resta owner di AI Elements, interazione e Motion. Redis locale applicativo, BullMQ, route API di dominio, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` fornisce Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first e shell statica server-rendered; `BL-081` resta owner di AI Elements, interazione e Motion. `BL-005` ha design `identity-signup-v1` approvato ma nessun runtime identity è ancora implementato. Redis locale applicativo, BullMQ, route API di dominio, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
 
 ## Decisioni operative vigenti
 
@@ -197,9 +201,10 @@ supersedes: null
 - Fondazione database secondo ADR-0006: migration forward-only negli ambienti gestiti, `down` soltanto local/disposable con conferma, manifest/checksum immutabili, transazione singola e advisory lock fail-fast.
 - Contratti Zod-first secondo ADR-0008: JSON Schema 2020-12 e OpenAPI 3.1.1 vengono generati dallo stesso catalogo; OpenAPI resta components-only finché i task proprietari non implementano le route e la CI rifiuta drift o modifiche a major già pubblicati rispetto alla base protetta.
 - Architettura runtime/data/workflow secondo ADR-0009: processi separabili dello stesso modular monolith, Fastify, REST+SSE, PostgreSQL autorevole, Redis non autorevole, eventi+proiezioni atomici e BullMQ/outbox come target. L'ADR espone lo stato di adozione e non trasforma capability pianificate in runtime disponibile.
+- Identità P0 interna provider-neutral secondo ADR-0010: PostgreSQL autorevole, password Argon2id con pepper versionato, codice email one-time, prima sessione solo dopo verifica e SMTP dietro adapter/outbox. Login/logout/reset restano `BL-006`; nessun provider o account remoto è richiesto.
 - Preview/staging web non disponibile su Vercel Hobby. Root Directory, regione, Production Branch riservata e Trusted Source sono configurate, ma il grant condiviso `41079282` non viene ristretto per decisione PO ed è un rischio residuo accettato. Vercel CLI `55.0.0` elimina il target Preview dal body e il provider ha restituito Production; l'applicazione della regola first-deployment, coerente con `vercel/vercel#17069`, resta un'ipotesi non confermata. Finché non esiste un fix/workaround supportato, Git auto-deploy e creazione manuale approvata restano disabilitati. Sono ammessi solo dry-run/readback/contenimento; `--archive`, `--prebuilt`, `--prod`, `promote`, `redeploy`, `--cwd apps/web` e override dei metadata sono vietati. ADR-0005 resta proposed.
 
-Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md), [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md), [`ADR-0004`](adr/0004-runtime-configuration-and-secret-injection.md), [`ADR-0006`](adr/0006-postgresql-migration-foundation.md), [`ADR-0007`](adr/0007-observability-context-and-error-reporting.md), [`ADR-0008`](adr/0008-zod-first-contract-generation.md) e [`ADR-0009`](adr/0009-mvp-runtime-data-and-workflow-architecture.md). ADR-0005 è [`proposed`](adr/0005-vercel-web-preview-and-staging.md). Contratto di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md). Configurazione operativa: [`CONFIGURATION.md`](operations/CONFIGURATION.md), [`DATABASE_MIGRATIONS.md`](operations/DATABASE_MIGRATIONS.md), [`LOCAL_DEVELOPMENT.md`](operations/LOCAL_DEVELOPMENT.md), [`PREVIEW_STAGING.md`](operations/PREVIEW_STAGING.md) e [`api/README.md`](api/README.md). Stato architetturale e dati: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) e [`DATA_MODEL.md`](data/DATA_MODEL.md).
+Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`ADR-0002`](adr/0002-monorepo-package-boundaries.md), [`ADR-0003`](adr/0003-ci-trust-boundary-and-artifacts.md), [`ADR-0004`](adr/0004-runtime-configuration-and-secret-injection.md), [`ADR-0006`](adr/0006-postgresql-migration-foundation.md), [`ADR-0007`](adr/0007-observability-context-and-error-reporting.md), [`ADR-0008`](adr/0008-zod-first-contract-generation.md), [`ADR-0009`](adr/0009-mvp-runtime-data-and-workflow-architecture.md) e [`ADR-0010`](adr/0010-internal-provider-neutral-identity.md). ADR-0005 è [`proposed`](adr/0005-vercel-web-preview-and-staging.md). Contratti di design: [`UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md) e [`identity-signup-v1`](superpowers/specs/2026-07-16-bl-005-signup-verification-design.md). Configurazione operativa: [`CONFIGURATION.md`](operations/CONFIGURATION.md), [`DATABASE_MIGRATIONS.md`](operations/DATABASE_MIGRATIONS.md), [`LOCAL_DEVELOPMENT.md`](operations/LOCAL_DEVELOPMENT.md), [`PREVIEW_STAGING.md`](operations/PREVIEW_STAGING.md) e [`api/README.md`](api/README.md). Stato architetturale e dati: [`SYSTEM_OVERVIEW.md`](architecture/SYSTEM_OVERVIEW.md) e [`DATA_MODEL.md`](data/DATA_MODEL.md).
 
 ## Versioni e head
 
@@ -213,6 +218,7 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Test foundation contract | `testing-foundation-v1` | integrato su `main` tramite PR #24: runner isolato, primitive deterministiche, container PostgreSQL/Redis, JUnit/LCOV e manifest |
 | Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
 | Observability contract | `observability-baseline-v1` | implementato e integrato tramite PR #20; run post-merge `29415397361` 5/5 `SUCCESS`; provider remoti assenti |
+| Identity contract | `identity-signup-v1` | design approvato; implementazione BL-005 non ancora avviata, provider/account remoti assenti |
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
 | Design contract | `ux-ui-2026-07-13` | documentato, non implementato |
 | ADR UI | `ADR-0001 accepted` | vigente |
@@ -282,10 +288,7 @@ Il report riproducibile di `GOV-001` è `AGENTS_VALIDATION.txt`.
 
 ## Decisioni aperte
 
-Le decisioni `OD-01..OD-20` restano in `docs/MVP_SPEC.md` §34. Quelle che possono bloccare M0 sono soprattutto:
-
-- `OD-07` auth build vs managed;
-- `OD-08` regione dati/telemetry.
+Le decisioni ancora aperte restano in `docs/MVP_SPEC.md` §34. `OD-07` è chiusa da ADR-0010; quella che può ancora bloccare M0 è soprattutto `OD-08` su regione dati/telemetry.
 - Il target provider effettivo blocca `BL-080`: il client Vercel `17.6.4` omette intenzionalmente il target Preview dalla POST e il provider ha restituito Production. L'issue pubblica `vercel/vercel#17069` conferma una riproduzione CLI indipendente, ma non contiene ancora risposta/fix del maintainer né prova la causa server. Nessuna riattivazione Git o manuale è ammessa finché **non** esiste un percorso Preview-only supportato e verificabile in PR separata. Il piano/account Hobby resta vincolato all'identità esclusiva e l'installazione condivisa non viene ristretta per decisione PO.
 
 Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce token e contrasto; l’eventuale uso di Rive resta fuori dal bundle iniziale e può essere valutato soltanto nel performance gate di `BL-081`.
@@ -294,7 +297,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 | ID | Rischio | Mitigazione/owner |
 |---|---|---|
-| CTX-R03 | App e package di dominio restano scaffold; la foundation UX/UI web è statica e in delivery branch-local | non inferire loop applicativo, API o stato canonico dalla shell fixture; integrare BL-079 tramite gate protetto |
+| CTX-R03 | App e package di dominio restano in gran parte scaffold; la foundation UX/UI web è statica | non inferire loop applicativo, API o stato canonico dalla shell fixture; BL-079 è integrato, BL-005 introduce soltanto il primo verticale identity |
 | CTX-R04 | La shell interattiva e il browser harness comune restano successivi alla foundation | `BL-081` è ora READY per stati/interazione/Motion; `QA-002` consolida il browser gate dopo la shell interattiva |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive assente dal bundle iniziale in `BL-081`; `QA-002` verifica reduced-motion e visual/performance regression |
 | CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | `BL-080` è `BLOCKED/50%/PARTIAL` sull'assenza di un percorso first-deployment Preview-only supportato; freeze e `GATE-M0` restano chiusi, mentre i slice UI locali avanzano senza deploy |
@@ -303,10 +306,11 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 | CTX-R16 | Il client Vercel omette il target Preview e il provider ha restituito due record Production; la causa server resta non confermata | Entrambi rimossi; freeze PR #16 integrato; riapertura solo con fix/workaround provider supportato, containment testato e PR separata |
 | CTX-R17 | Il CLI dalla root può includere cache/output ignorati da Git e superare limiti o ampliare il payload | `.vercelignore` root-only e dry-run JSON fail-closed con budget/path/input obbligatori; contratto integrato in PR #15 e dry-run corrente PASS |
 | CTX-R20 | La nuova baseline può causare context bleed, leakage di PII/secret, doppia autorità trace o dipendenze Node nel bundle client | `BL-008` applica OTel come unica autorità trace, redazione allowlisted, Sentry error-only, test concorrenti/security e contract test del bundle prima della delivery |
+| CTX-R22 | L'identità interna amplia la superficie security con hashing costoso, challenge replay, session cookie, email side effect ed enumeration | `BL-005` usa porte provider-neutral, rate limit pre-hash persistente, Argon2id/pepper, digest HMAC, outbox/idempotenza, PostgreSQL reale e gate HIGH_RISK; nessun provider o secret reale nei test |
 
 ## Prossima azione
 
-Pubblicare il candidato BL-079 già passato nei gate full e clean, attendere `CI / Merge gate` e integrare senza bypass o azioni Vercel. Dopo il merge selezionare canonicamente `BL-005`; `BL-081` resta READY e `BL-080` congelato.
+Completare la review utente della specifica scritta `identity-signup-v1`, quindi produrre il piano TDD di BL-005 e implementare la slice HIGH_RISK nella worktree isolata. `BL-081` resta READY ma non attivo; `BL-080` resta congelato e non sono autorizzate azioni Vercel.
 
 ## Rischi chiusi
 
