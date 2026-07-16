@@ -4,6 +4,8 @@ import { lstat, realpath } from "node:fs/promises";
 import path from "node:path";
 import { clearTimeout, setTimeout } from "node:timers";
 
+import { assertOwnedPathChain } from "./owned-path-policy.mjs";
+
 const MAX_CAPTURE_BYTES = 1024 * 1024;
 
 function isInside(parent, candidate) {
@@ -135,10 +137,93 @@ async function validateTestFiles(repositoryRoot, files) {
   }
 }
 
+async function buildReporterArguments(repositoryRoot, reporters) {
+  if (reporters === undefined) {
+    return [];
+  }
+  if (
+    !Array.isArray(reporters) ||
+    reporters.length === 0 ||
+    reporters.length > 3
+  ) {
+    throw new Error("test-runner: invalid-reporter-options");
+  }
+
+  const names = new Set();
+  const destinations = new Set();
+  const testResultsRoot = path.join(repositoryRoot, "test-results");
+  const arguments_ = [];
+
+  for (const reporter of reporters) {
+    if (
+      reporter === null ||
+      typeof reporter !== "object" ||
+      !["junit", "lcov", "spec"].includes(reporter.name) ||
+      typeof reporter.destination !== "string" ||
+      reporter.destination.length === 0 ||
+      names.has(reporter.name) ||
+      destinations.has(reporter.destination)
+    ) {
+      throw new Error("test-runner: invalid-reporter-options");
+    }
+
+    if (!["stdout", "stderr"].includes(reporter.destination)) {
+      const destination = path.resolve(reporter.destination);
+      if (!isInside(path.resolve(testResultsRoot), destination)) {
+        throw new Error("test-runner: invalid-reporter-options");
+      }
+      try {
+        await assertOwnedPathChain(repositoryRoot, destination, {
+          allowMissing: true,
+          finalType: "file",
+        });
+      } catch {
+        throw new Error("test-runner: invalid-reporter-options");
+      }
+    }
+
+    names.add(reporter.name);
+    destinations.add(reporter.destination);
+    arguments_.push(
+      `--test-reporter=${reporter.name}`,
+      `--test-reporter-destination=${reporter.destination}`,
+    );
+  }
+
+  return arguments_;
+}
+
+function buildCoverageArguments(coverage) {
+  if (coverage === undefined) {
+    return [];
+  }
+  if (
+    coverage === null ||
+    typeof coverage !== "object" ||
+    coverage.include !== "packages/testing/dist/**/*.js" ||
+    ![coverage.branches, coverage.functions, coverage.lines].every(
+      (threshold) =>
+        Number.isSafeInteger(threshold) && threshold >= 0 && threshold <= 100,
+    )
+  ) {
+    throw new Error("test-runner: invalid-coverage-options");
+  }
+
+  return [
+    "--experimental-test-coverage",
+    `--test-coverage-include=${coverage.include}`,
+    `--test-coverage-branches=${coverage.branches}`,
+    `--test-coverage-functions=${coverage.functions}`,
+    `--test-coverage-lines=${coverage.lines}`,
+  ];
+}
+
 export async function runTestProcess({
   concurrency,
+  coverage,
   environment,
   files,
+  reporters,
   repositoryRoot,
   timeoutMs,
 }) {
@@ -151,12 +236,19 @@ export async function runTestProcess({
   }
 
   await validateTestFiles(repositoryRoot, files);
+  const reporterArguments = await buildReporterArguments(
+    repositoryRoot,
+    reporters,
+  );
+  const coverageArguments = buildCoverageArguments(coverage);
 
   return runCommandProcess({
     arguments_: [
       "--test",
       `--test-concurrency=${concurrency}`,
       "--test-isolation=process",
+      ...coverageArguments,
+      ...reporterArguments,
       ...files,
     ],
     command: process.execPath,

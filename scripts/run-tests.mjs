@@ -1,6 +1,8 @@
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, URL } from "node:url";
 
+import { assertOwnedPathChain } from "./lib/owned-path-policy.mjs";
 import {
   TEST_LANES,
   createChildEnvironment,
@@ -8,6 +10,10 @@ import {
   resolveTestLane,
 } from "./lib/test-lane-policy.mjs";
 import { runCommandProcess, runTestProcess } from "./lib/test-process.mjs";
+import {
+  normalizeJUnitReport,
+  normalizeLcovReport,
+} from "./lib/test-report-policy.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 const turboEntry = path.join(
@@ -27,8 +33,62 @@ function forward(result) {
   }
 }
 
+async function createReportWorkspace(lane) {
+  const laneDirectory = path.join(
+    repositoryRoot,
+    "test-results",
+    "testing-foundation-v1",
+    lane.name,
+  );
+  await assertOwnedPathChain(repositoryRoot, laneDirectory);
+  await rm(laneDirectory, { force: true, recursive: true });
+  const rawDirectory = path.join(laneDirectory, "raw");
+  await mkdir(rawDirectory, { recursive: true });
+  await assertOwnedPathChain(repositoryRoot, rawDirectory, {
+    allowMissing: false,
+  });
+
+  return Object.freeze({
+    coverage: path.join(rawDirectory, "coverage.lcov"),
+    junit: path.join(rawDirectory, "junit.xml"),
+    laneDirectory,
+    rawDirectory,
+  });
+}
+
+async function finalizeReports(lane, workspace) {
+  try {
+    const junit = normalizeJUnitReport(
+      await readFile(workspace.junit, "utf8"),
+      { knownTaskIds: lane.ownerTaskIds, lane: lane.name },
+    );
+    await writeFile(
+      path.join(workspace.laneDirectory, "junit.xml"),
+      junit,
+      "utf8",
+    );
+
+    if (lane.name === "unit") {
+      const coverage = normalizeLcovReport(
+        await readFile(workspace.coverage, "utf8"),
+        { repositoryRoot },
+      );
+      await writeFile(
+        path.join(workspace.laneDirectory, "coverage.lcov"),
+        coverage,
+        "utf8",
+      );
+    }
+
+    await rm(workspace.rawDirectory, { recursive: true });
+  } catch {
+    throw new Error("test-runner: report-failed");
+  }
+}
+
 async function executeLane(laneName, environment) {
   const lane = resolveTestLane(laneName);
+  const reportWorkspace = await createReportWorkspace(lane);
   const build = await runCommandProcess({
     arguments_: [
       turboEntry,
@@ -47,14 +107,32 @@ async function executeLane(laneName, environment) {
   }
 
   const files = await discoverLaneFiles(repositoryRoot, lane);
+  const reporters = [
+    { destination: "stdout", name: "spec" },
+    { destination: reportWorkspace.junit, name: "junit" },
+  ];
+  if (lane.name === "unit") {
+    reporters.push({ destination: reportWorkspace.coverage, name: "lcov" });
+  }
   const result = await runTestProcess({
     concurrency: lane.concurrency,
+    coverage:
+      lane.name === "unit"
+        ? {
+            branches: 80,
+            functions: 80,
+            include: "packages/testing/dist/**/*.js",
+            lines: 80,
+          }
+        : undefined,
     environment,
     files,
+    reporters,
     repositoryRoot,
     timeoutMs: lane.timeoutMs,
   });
   forward(result);
+  await finalizeReports(lane, reportWorkspace);
   return result.code;
 }
 

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath, URL } from "node:url";
@@ -97,4 +98,38 @@ test("QA-001:test-process-rejects-files-outside-the-tests-root", async () => {
     }),
     /test-runner: invalid-test-path/u,
   );
+});
+
+test("QA-001:test-process-emits-junit-to-an-owned-destination", async () => {
+  const rawDirectory = path.join(
+    repositoryRoot,
+    "test-results",
+    "testing-foundation-v1",
+    "integration",
+    "raw",
+  );
+  const junitPath = path.join(rawDirectory, "runner-fixture.xml");
+  await mkdir(rawDirectory, { recursive: true });
+
+  try {
+    const result = await runTestProcess({
+      concurrency: 1,
+      environment: createChildEnvironment(process.env),
+      files: [fixture("passing.test.mjs")],
+      reporters: [
+        { destination: "stdout", name: "spec" },
+        { destination: junitPath, name: "junit" },
+      ],
+      repositoryRoot,
+      timeoutMs: 5_000,
+    });
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(
+      await readFile(junitPath, "utf8"),
+      /QA-001:runner-passing-fixture/u,
+    );
+  } finally {
+    await rm(junitPath, { force: true });
+  }
 });

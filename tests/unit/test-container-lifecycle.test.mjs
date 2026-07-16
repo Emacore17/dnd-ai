@@ -6,6 +6,8 @@ import {
   REDIS_TEST_IMAGE,
   createDockerContainerLifecycle,
 } from "../../packages/testing/dist/node/index.js";
+import { createPostgresTestContainerHarness } from "../../packages/testing/dist/node/postgres-container.js";
+import { createRedisTestContainerHarness } from "../../packages/testing/dist/node/redis-container.js";
 
 const CONTAINER_ID = "a".repeat(64);
 const REDIS_SPEC = Object.freeze({
@@ -171,5 +173,95 @@ test("QA-001:container-images-are-immutable-digests", () => {
   assert.equal(
     REDIS_TEST_IMAGE,
     "redis:7.4.7-alpine3.21@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf",
+  );
+});
+
+test("QA-001:postgres-adapter-maps-lifecycle-and-redacts-failures", async () => {
+  const stopped = [];
+  const lifecycle = {
+    async start(spec) {
+      assert.equal(spec.kind, "postgres");
+      return Object.freeze({
+        containerId: CONTAINER_ID,
+        host: "127.0.0.1",
+        image: POSTGRES_TEST_IMAGE,
+        port: 54321,
+        stop: async () => {},
+      });
+    },
+    async stop(containerId) {
+      stopped.push(containerId);
+    },
+  };
+  const postgres = createPostgresTestContainerHarness(lifecycle);
+  const container = await postgres.start();
+
+  assert.match(container.databaseUrl, /127\.0\.0\.1:54321/u);
+  assert.equal(Object.isFrozen(container), true);
+  await container.stop();
+  assert.deepEqual(stopped, [CONTAINER_ID]);
+  assert.equal(await postgres.withContainer(async ({ port }) => port), 54321);
+  assert.deepEqual(stopped, [CONTAINER_ID, CONTAINER_ID]);
+
+  const failing = createPostgresTestContainerHarness({
+    async start() {
+      throw new Error("postgresql://user:secret@example.invalid/database");
+    },
+    async stop() {
+      throw new Error("secret cleanup cause");
+    },
+  });
+  await assert.rejects(
+    failing.start(),
+    /^Error: postgres-test-container: start-failed$/u,
+  );
+  await assert.rejects(
+    failing.stop("not-an-id"),
+    /^Error: postgres-test-container: teardown-failed$/u,
+  );
+});
+
+test("QA-001:redis-adapter-maps-lifecycle-and-redacts-failures", async () => {
+  const stopped = [];
+  const lifecycle = {
+    async start(spec) {
+      assert.equal(spec.kind, "redis");
+      return Object.freeze({
+        containerId: CONTAINER_ID,
+        host: "127.0.0.1",
+        image: REDIS_TEST_IMAGE,
+        port: 54322,
+        stop: async () => {},
+      });
+    },
+    async stop(containerId) {
+      stopped.push(containerId);
+    },
+  };
+  const redis = createRedisTestContainerHarness(lifecycle);
+  const container = await redis.start();
+
+  assert.equal(container.redisUrl, "redis://127.0.0.1:54322/0");
+  assert.equal(Object.isFrozen(container), true);
+  await container.stop();
+  assert.deepEqual(stopped, [CONTAINER_ID]);
+  assert.equal(await redis.withContainer(async ({ port }) => port), 54322);
+  assert.deepEqual(stopped, [CONTAINER_ID, CONTAINER_ID]);
+
+  const failing = createRedisTestContainerHarness({
+    async start() {
+      throw new Error("redis://user:secret@example.invalid/0");
+    },
+    async stop() {
+      throw new Error("secret cleanup cause");
+    },
+  });
+  await assert.rejects(
+    failing.start(),
+    /^Error: redis-test-container: start-failed$/u,
+  );
+  await assert.rejects(
+    failing.stop("not-an-id"),
+    /^Error: redis-test-container: teardown-failed$/u,
   );
 });
