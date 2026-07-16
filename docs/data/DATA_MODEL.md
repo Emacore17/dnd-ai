@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 3fa72610fcb7a874d368a12682d3c8d0e48e89a1
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - docs/MVP_SPEC.md#19-modello-dati
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilit%C3%A0

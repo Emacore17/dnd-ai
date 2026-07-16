@@ -2,7 +2,7 @@
 status: accepted
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 3e9c6d5b088825066fedab4163c8482d391ab543
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - docs/MVP_SPEC.md#11-architettura-generale
   - docs/MVP_SPEC.md#115-event-sourcing-pragmatico

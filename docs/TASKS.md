@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 70eff10dab107fd6082df3a7aa1f77f2fac5d5bf
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - docs/MVP_SPEC.md
 related_tasks:
@@ -775,10 +775,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale
 
-- **Stato:** `IN_PROGRESS`
-- **Progresso:** `75%`
-- **Esito test:** `PARTIAL`
-- **Contesto verificato:** `YES` — commit/SHA: `3e9c6d5b088825066fedab4163c8482d391ab543`; data: `2026-07-16`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — commit/SHA: `30f611e8e874b9c87d20d50c4c5f45528e1083a5`; data: `2026-07-16`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** GOV-002, BL-001, BL-003, BL-004, BL-008, BL-009, BL-010
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §11, §19, §24, §29; `docs/MVP_SPEC.md` decisioni architetturali
@@ -787,11 +787,11 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Criterio di accettazione:** Diagrammi, package boundaries, topologia, migration head, comandi local/staging e decisioni coincidono con codice/IaC; ogni divergenza dalla spec ha ADR e aggiornamento della spec.
 - **Test obbligatori prima di `DONE`:**
   - [x] `pnpm docs:check` passa e i diagrammi Mermaid sono renderizzabili.
-  - [ ] Cold-start setup seguito da ambiente pulito porta a health check verdi.
+  - [x] Cold-start setup seguito da ambiente pulito porta a health check verdi.
   - [x] Controllo automatico o review registrata dei code path citati.
 - **Documentazione e contesto:** Tutti i deliverable del task; aggiornare `docs/CONTEXT.md` e registro ADR
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** Corsia elevata a `HIGH_RISK` dal cold check: il comando composto `config:check` perdeva il pin Corepack nei subprocess e invocava pnpm globale `10.21.0`. La correzione limita `package.json` al pin esplicito `pnpm@11.13.0` e aggiunge regressioni contrattuali; lockfile, dipendenze, runtime di dominio, CI, provider e Vercel restano invariati.
+- **Evidenze di chiusura:** functional head `30f611e8e874b9c87d20d50c4c5f45528e1083a5`; contract architettura `3/3` e regressione config `6/6` `PASS`; `verify:docs` e `verify:affected` exit `0`; unico full HIGH_RISK senza cache exit `0` in 143,4 s con 11 lint/build, 13 typecheck, 251 test nei report e artifact 3.982 file; clean checkout: install frozen, `config:check`, PostgreSQL head `000002_feature_flags`, build 11/11, integration 20/20 e `web-health-v1` reale exit `0`; worktree/Compose rimossi; PR/CI `PENDING`; migration/eval/trace ID `000002_feature_flags` / `N/A` / `N/A`; docs aggiornati nello stesso change set.
+- **Note, rischi o bloccanti:** Proposta branch-local terminale in corsia `HIGH_RISK`. Il primo cold check ha rilevato che `config:check` perdeva il pin Corepack nei subprocess e invocava pnpm globale `10.21.0`; la regressione e il secondo checkout provano il pin esplicito `pnpm@11.13.0`. Il cleanup Windows usa `core.longpaths=true`. Lockfile, dipendenze, runtime di dominio, CI, provider e Vercel restano invariati; delivery `PENDING` finché la PR protetta non raggiunge `main`.
 
 ### GATE-M0 — Exit gate Milestone 0 — Fondamenta
 
@@ -2630,20 +2630,20 @@ Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il t
 active_task: DOC-ARCH-001
 last_completed_task: QA-001
 next_ready_task: none
-status: IN_PROGRESS
-progress: 75
+status: DONE
+progress: 100
 started_at: 2026-07-16T13:12:53+02:00
-candidate_at: null
+candidate_at: 2026-07-16T13:48:09+02:00
 cycle_target_minutes: 120
-cycle_actual_minutes: null
-updated_at: 2026-07-16T13:36:00+02:00
+cycle_actual_minutes: 35
+updated_at: 2026-07-16T13:48:09+02:00
 agent: Codex development agent
 git_branch: codex/doc-arch-001
 base_commit: 3e9c6d5b088825066fedab4163c8482d391ab543
-candidate_head: null
+candidate_head: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 spec_sha256: d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329
 context_verified: true
-test_status: PARTIAL
+test_status: PASSING
 ```
 
 ## Contesto letto
@@ -2670,6 +2670,7 @@ test_status: PARTIAL
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-16 13:48 +02:00 | 100% | Candidato branch-local terminale dopo il rerun pulito, l'unico full gate HIGH_RISK e la self-review inline senza P0/P1. La review delegata prevista dalla skill non è autorizzata in questa sessione; sono stati controllati diff completo, contratti, stato implementato/pianificato, dipendenze, secret/PII, Vercel e audit. Nessun task P0 successivo è `READY`: `BL-079` resta dipendente da `BL-080` bloccato e `BL-005` resta quindi non eseguibile. | Functional head `30f611e`: clean frozen/config/migration/build/integration/health tutti exit `0`; full senza cache exit `0` in 143,4 s, 251 test/report e artifact 3.982 file; metadata finali `verify:docs` exit `0`; audit high pulito. Compose e worktree rimossi; nessuna azione Vercel. | Committare il candidato e pubblicare una sola PR protetta. |
 | 2026-07-16 13:36 +02:00 | 75% | Il primo cold checkout ha trovato due failure path reali: `config:check` usava pnpm globale `10.21.0` nei subprocess e `git clean` senza long-path lasciava file pnpm/Next. Cleanup completato sul solo worktree verificato con `core.longpaths=true`; corsia elevata a HIGH_RISK. | Install frozen e PostgreSQL health PASS; `config:check` exit `1` per engine mismatch. Regressione runtime-config RED 5/6→GREEN 6/6; contract guida reso boundary-safe e GREEN 3/3. Nessuna risorsa Compose residua. | Committare la correzione pin/guide, ripetere cold checkout sul nuovo head e poi eseguire l'unico full gate. |
 | 2026-07-16 13:27 +02:00 | 75% | ADR-0009 accepted; overview, modello dati e guida locale distinguono in modo esplicito implementato/pianificato e mantengono `BL-080` congelato. Nessun task dipendente viene reso READY. | Commit `3fa7261`, `70eff10`; contract architetturale 3/3 e `verify:docs` 44 documenti/8 modificati `PASS`; migration head `000002_feature_flags` rilevato dal codice. | Allineare indice/contesto/tracciabilità, quindi eseguire gate mirati e cold checkout con health web reale. |
 | 2026-07-16 13:12 +02:00 | 25% | Selezionato DOC-ARCH-001 dalla default branch dopo la delivery QA-001; approvata documentazione stratificata con ADR unico e marker implementato/pianificato. | Base `3e9c6d5`; design `9274bb4`, piano `64fec8a`; baseline contract 69/69 e `verify:docs` PASS; nessuna azione Vercel. | Scrivere il contract anti-drift, osservarlo rosso, poi creare ADR-0009 e consolidare l'overview. |
@@ -2738,15 +2739,15 @@ test_status: PARTIAL
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/doc-arch-001` su base `3e9c6d5b088825066fedab4163c8482d391ab543`; design `9274bb4`, piano `64fec8a`, architettura `3fa7261`, dati/setup `70eff10`; PR non ancora disponibile.
-- **Comandi eseguiti:** cold start mirata, review design/piano, contract architetturale e `verify:docs`; cold checkout e `verify:affected` ancora aperti.
-- **Exit code:** contract architetturale 3/3 e gate documentale su 44 documenti `0`; gate candidato finale non ancora eseguito.
-- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-doc-arch-001-design.md`, `docs/superpowers/plans/2026-07-16-doc-arch-001.md`; CI task `N/A — implementazione in corso`.
+- **Commit/PR:** branch `codex/doc-arch-001` su base `3e9c6d5b088825066fedab4163c8482d391ab543`; design `9274bb4`, piano `64fec8a`, architettura `3fa7261`, dati/setup `70eff10`, governance `f77b346`, regressione config `30f611e`; PR non ancora disponibile.
+- **Comandi eseguiti:** contract architettura/config, `verify:docs`, `verify:affected`, audit high, full HIGH_RISK senza cache e cold checkout con install/config/PostgreSQL/migration/build/integration/health reali.
+- **Exit code:** contract architettura 3/3 e config 6/6 `PASS`; docs/affected/audit/full/cold exit `0`; full 143,4 s con 251 test/report e artifact 3.982 file; clean integration 20/20 e head `000002_feature_flags`.
+- **Report/CI URL o path:** `docs/superpowers/specs/2026-07-16-doc-arch-001-design.md`, `docs/superpowers/plans/2026-07-16-doc-arch-001.md`; CI `PENDING` fino alla PR protetta.
 - **Migration head:** `000002_feature_flags` invariato.
 - **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`, invariati.
 - **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
-- **Documenti aggiornati:** design/piano, ADR-0009, overview, modello dati, guida locale e record di governo in allineamento.
-- **Rischi residui/TODO tracciati:** rerun cold checkout dopo il pin Corepack, unico gate HIGH_RISK, self-review e delivery protetta; freeze Vercel invariato.
+- **Documenti aggiornati:** design/piano, ADR-0009, overview, modello dati, guida locale e record di governo allineati.
+- **Rischi residui/TODO tracciati:** sola delivery protetta; freeze Vercel invariato e nessuna capability pianificata presentata come implementata.
 - **Task successivo reso READY:** nessuno; `BL-079` resta dipendente da `BL-080` bloccato e `BL-005` dipende da `BL-079`.
 
 
@@ -2797,6 +2798,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 | 2026-07-15 | `ccecd683` + working tree | BL-009 implementation | `api-contract-v1` e compatibility boundary | Aggiunti Zod strict, UUIDv7/version gate, JSON Schema/OpenAPI components-only, generator deterministic, freeze Git dei major pubblicati e root guard junction; TDD mirato verde, full/clean/CI pendenti. | GOV-002, BL-021, BL-022, BL-028, QA-001 |
 | 2026-07-15 | candidate head derivato da Git | BL-009 candidate | Full gate e review indipendente | Quattro P1 chiusi e re-check senza P0/P1; full finale exit `0` in 86,8 s dopo regressioni su ownership generated e pnpm annidato. Proposta `DONE/100%/PASSING`; clean checkout e delivery protetta restano gate esterni immediati. | GOV-002, BL-021, BL-022, BL-028, QA-001 |
 | 2026-07-15 | candidate head derivato da Git | BL-010 candidate | Feature flag e kill switch server-side | Aggiunti `database-feature-flags-v1`, migration `000002_feature_flags`, store PostgreSQL con audit atomico, CAS, idempotenza/replay stabile e CLI operatore redatta. Tre review subagent sono andate in timeout; il pass manuale P0/P1 ha corretto il replay idempotente dopo toggle successivo. Mirati verdi e full gate finale exit `0`; proposta `DONE/100%/PASSING`. | BL-005, BL-007, BL-015, BL-021, BL-022, BL-028, QA-001 |
+| 2026-07-16 | `30f611e` + candidate docs | DOC-ARCH-001 candidate | Architettura living, dati e cold start | Accettato ADR-0009; overview, schema fisico/conceptual e guida locale distinguono implementato/pianificato. Il cold checkout ha trovato e corretto la perdita del pin pnpm, poi ha verificato frozen install, migration head, build, integration e health reale; full HIGH_RISK e review P0/P1 verdi. Delivery `PENDING`, freeze Vercel invariato. | BL-005, BL-028, BL-029, BL-030, BL-036, BL-038, BL-079, BL-080, GATE-M0 |
 
 
 ## 22. Checklist di fine sessione dell’agente

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: f77b34668e4f79731db4e03d1787f21a8ddb3375
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - AGENTS.md#6-ciclo-operativo-standard
   - docs/MVP_SPEC.md#291-topologia-mvp

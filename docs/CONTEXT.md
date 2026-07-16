@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 70eff10dab107fd6082df3a7aa1f77f2fac5d5bf
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -166,11 +166,11 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-16 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `QA-001` è integrato su `main` tramite [PR #24](https://github.com/Emacore17/dnd-ai/pull/24), merge `3e9c6d5b088825066fedab4163c8482d391ab543`, con `CI / Merge gate` verde. `DOC-ARCH-001` è in sviluppo sulla branch `codex/doc-arch-001`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `QA-001` è integrato su `main` tramite [PR #24](https://github.com/Emacore17/dnd-ai/pull/24), merge `3e9c6d5b088825066fedab4163c8482d391ab543`, con `CI / Merge gate` verde. `DOC-ARCH-001` è una proposta branch-local terminale sulla branch `codex/doc-arch-001`, functional head `30f611e8e874b9c87d20d50c4c5f45528e1083a5`, con delivery `PENDING`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `d07620bb477a50bf8309c6c24729baaaa45a4a29499e624741a5fcdaa514a329` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `DOC-ARCH-001 — IN_PROGRESS/75%/PARTIAL` sul branch `codex/doc-arch-001` |
+| Task attivo | `DOC-ARCH-001 — DONE/100%/PASSING` proposto sul branch `codex/doc-arch-001`; delivery `PENDING` fino a integrazione protetta |
 | Ultimo task completato | `QA-001 — DONE/100%/PASSING`, delivery verificata su `main` tramite PR #24 |
 | Prossimo task READY | Nessuno; `BL-079` resta `BACKLOG` mentre `BL-080` è bloccato, quindi anche `QA-002` resta `BACKLOG` |
 | Migration head | `000002_feature_flags` / `database-feature-flags-v1` |
@@ -178,7 +178,7 @@ supersedes: null
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `BL-008`, `BL-009`, `BL-010` e `QA-001` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`; `BL-010` fornisce `database-feature-flags-v1` con migration `000002_feature_flags`; `QA-001` fornisce `testing-foundation-v1`; `GOV-002` compone generated drift, metadata/link/anchor/section refs, registro ADR, Mermaid bounded e task graph in `docs:check`. Sul branch attivo `DOC-ARCH-001` aggiunge ADR-0009, overview stratificata, modello dati fisico/conceptual e guida locale con contract anti-drift. Redis locale applicativo, BullMQ, route API di dominio, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy. `BL-079` resta `BACKLOG` finché `BL-080` è bloccato.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `BL-008`, `BL-009`, `BL-010` e `QA-001` sono integrati e verificati su `main`. `BL-009` fornisce `api-contract-v1`; `BL-010` fornisce `database-feature-flags-v1` con migration `000002_feature_flags`; `QA-001` fornisce `testing-foundation-v1`; `GOV-002` compone generated drift, metadata/link/anchor/section refs, registro ADR, Mermaid bounded e task graph in `docs:check`. La proposta branch-local `DOC-ARCH-001` aggiunge ADR-0009, overview stratificata, modello dati fisico/conceptual e guida locale con contract anti-drift, verificati anche da checkout pulito. Redis locale applicativo, BullMQ, route API di dominio, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy. `BL-079` resta `BACKLOG` finché `BL-080` è bloccato.
 
 ## Decisioni operative vigenti
 
@@ -303,7 +303,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Ripetere il cold checkout di `DOC-ARCH-001` dopo la regressione che conserva `pnpm@11.13.0` nel comando composto; verificare install frozen, PostgreSQL/migration, build, integration test e `web-health-v1`, poi eseguire l'unico full gate HIGH_RISK e la self-review. Nessuna azione Vercel. Dopo il task non esiste un altro P0 `READY`: `BL-079` resta dipendente da `BL-080` bloccato.
+Completare la self-review P0/P1 e integrare `DOC-ARCH-001` tramite un'unica PR con `CI / Merge gate`, senza bypass e senza azioni Vercel. Dopo il task non esiste un altro P0 `READY`: `BL-079` resta dipendente da `BL-080`, `BL-080` è congelato/bloccato sul provider e `BL-005` dipende da `BL-079`. Un riordino richiede una decisione separata del Product Owner e un aggiornamento coordinato del backlog.
 
 ## Rischi chiusi
 
@@ -318,3 +318,4 @@ Ripetere il cold checkout di `DOC-ARCH-001` dopo la regressione che conserva `pn
 | CTX-R19 | Duplicazione del ciclo agente contenuta con corsie, budget, candidato unico, delivery derivata e gate fail-closed | Audit 60,7% docs-only; candidate `GOV-003` in 43 minuti; `verify:docs` 2,65 s, `verify:affected` 6,96 s, full gate unico 72,70 s; review senza P0/P1 |
 | CTX-R02 | Drift documentale residuo coperto senza duplicare i checker canonici | `docs:check` compone 8 artifact contrattuali, document integrity e task graph; 11 test policy/document integrity e 9 workflow/generated verdi; budget 3,136 s / 3,130 s |
 | CTX-R18 | Upgrade database precedente→head ora rappresentato da `000001`→`000002` | `BL-010`: suite PostgreSQL reale copre zero→head, previous→head, replay, rollback e re-apply; migration head `000002_feature_flags` |
+| CTX-R21 | Cold start documentale e pin del package manager verificati da checkout pulito | Functional head `30f611e`: install frozen, config, migration head, build 11/11, integration 20/20 e `web-health-v1` reali `PASS`; full HIGH_RISK senza cache exit `0` in 143,4 s; worktree e Compose rimossi |

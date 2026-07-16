@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 70eff10dab107fd6082df3a7aa1f77f2fac5d5bf
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - AGENTS.md#3-gerarchia-delle-fonti-della-verità
   - docs/TASKS.md#gov-002--validazione-automatica-della-documentazione-e-tracciabilità

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 70eff10dab107fd6082df3a7aa1f77f2fac5d5bf
+last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -160,8 +160,9 @@ supersedes: null
 - TDD report/runner/container mirato `19/19 PASS`; contract CI/gate `11/11 PASS`; runner unit reale 107 pass/1 skip host con coverage testing 92,54% linee, 91,89% branch e 97,62% funzioni; due prepare consecutivi producono hash identici e verify artifact `PASS`.
 - Full finale senza cache `PASS` in 141,8 s: lint/build 11 workspace, typecheck 13 task, unit 107 pass/1 skip host, integration 20, database 16, contract 69, security 32 pass/3 skip host, manifest report per 247 test e build artifact 3.982 file. Il gate ha prima esposto e chiuso formattazione, risoluzione pnpm nel subprocess forzato e tre contract test obsoleti.
 - Candidate implementation head `7f2d4d0` verificato da worktree detached: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con gli stessi test/report e build artifact 4.003 file. Self-review senza P0/P1; delivery poi verificata tramite PR #24/merge `3e9c6d5`.
-- `DOC-ARCH-001`: contract architetturale 3/3 e `verify:docs` verdi su 44 documenti; cold checkout e gate candidato restano nel batch finale.
-- Il primo cold checkout ha rilevato correttamente pnpm globale `10.21.0` nel comando composto e il limite Windows long-path del cleanup; regressione config 5/6 RED→6/6 GREEN, risorse Compose rimosse e rerun del nuovo candidato ancora aperto.
+- `DOC-ARCH-001`: contract architetturale 3/3 e regressione config 6/6 verdi; `verify:docs` su 44 documenti e `verify:affected` exit `0`.
+- Il primo cold checkout ha rilevato correttamente pnpm globale `10.21.0` nel comando composto e il limite Windows long-path del cleanup; regressione config 5/6 RED→6/6 GREEN. Il rerun del functional head `30f611e` ha chiuso frozen install, config, PostgreSQL head `000002_feature_flags`, build 11/11, integration 20/20 e `web-health-v1`; risorse Compose e worktree rimossi.
+- Unico full gate HIGH_RISK senza cache exit `0` in 143,4 s: lint/build 11, typecheck 13, report verificati per 251 test, contract 73, security 32 pass/3 skip host e artifact 3.982 file. Delivery DOC-ARCH-001 ancora `PENDING` fino alla PR protetta; nessuna azione Vercel.
 
 ## 2026-07-15
 
