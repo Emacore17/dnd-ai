@@ -99,6 +99,7 @@ test("local development guide exposes only existing commands and readiness", asy
   const scripts = JSON.parse(rootManifestSource).scripts ?? {};
   const requiredScripts = [
     "db:local:up",
+    "config:check",
     "config:check:migration",
     "db:migrate:local",
     "db:migrate:status:local",
@@ -111,7 +112,7 @@ test("local development guide exposes only existing commands and readiness", asy
     assert.equal(typeof scripts[scriptName], "string");
     assert.match(
       guide,
-      new RegExp(`pnpm@11\\.13\\.0 ${escapeRegExp(scriptName)}`, "u"),
+      new RegExp(`pnpm@11\\.13\\.0 ${escapeRegExp(scriptName)}(?:\\s|$)`, "mu"),
     );
   }
 

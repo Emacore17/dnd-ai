@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-16
-last_verified_commit: 3fa72610fcb7a874d368a12682d3c8d0e48e89a1
+last_verified_commit: f77b34668e4f79731db4e03d1787f21a8ddb3375
 source_refs:
   - AGENTS.md#6-ciclo-operativo-standard
   - docs/MVP_SPEC.md#291-topologia-mvp
@@ -89,9 +89,10 @@ $env:API_DATABASE_URL = "postgresql://dnd_migration_local:dnd_migration_local@12
 $env:API_REDIS_URL = "redis://127.0.0.1:6379"
 $env:WORKER_DATABASE_URL = "postgresql://dnd_migration_local:dnd_migration_local@127.0.0.1:55432/dnd_ai_local"
 $env:WORKER_REDIS_URL = "redis://127.0.0.1:6379"
+corepack pnpm@11.13.0 config:check
 ```
 
-Le URL Redis provano soltanto la validazione sintattica: questa baseline non avvia Redis e non deve essere interpretata come readiness del servizio. Le DSN Sentry possono restare vuote.
+Il comando composto conserva il pin `pnpm@11.13.0` anche nei tre check annidati. Le URL Redis provano soltanto la validazione sintattica: questa baseline non avvia Redis e non deve essere interpretata come readiness del servizio. Le DSN Sentry possono restare vuote.
 
 ## Database locale
 

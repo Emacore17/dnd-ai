@@ -152,6 +152,7 @@ supersedes: null
 - Confermato il freeze Vercel: la decomposizione QA non abilita deploy, provider o Production.
 - Unificati `test:unit`, `test:integration`, `db:migrate:test`, `test:contract` e `test:security` sul runner versionato; la CI prepara, verifica e carica soltanto `artifacts/testing` dopo le quattro suite del job Tests.
 - `SYSTEM_OVERVIEW.md` separa inventario/dipendenze implementate dalla topologia pianificata; [`DATA_MODEL.md`](data/DATA_MODEL.md) passa da planned ad active senza presentare lo schema concettuale come SQL esistente.
+- Il comando composto `config:check` conserva ora `corepack pnpm@11.13.0` nei subprocess; una regressione impedisce il fallback al pnpm globale durante un cold checkout.
 
 ### Verification
 
@@ -160,6 +161,7 @@ supersedes: null
 - Full finale senza cache `PASS` in 141,8 s: lint/build 11 workspace, typecheck 13 task, unit 107 pass/1 skip host, integration 20, database 16, contract 69, security 32 pass/3 skip host, manifest report per 247 test e build artifact 3.982 file. Il gate ha prima esposto e chiuso formattazione, risoluzione pnpm nel subprocess forzato e tre contract test obsoleti.
 - Candidate implementation head `7f2d4d0` verificato da worktree detached: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con gli stessi test/report e build artifact 4.003 file. Self-review senza P0/P1; delivery poi verificata tramite PR #24/merge `3e9c6d5`.
 - `DOC-ARCH-001`: contract architetturale 3/3 e `verify:docs` verdi su 44 documenti; cold checkout e gate candidato restano nel batch finale.
+- Il primo cold checkout ha rilevato correttamente pnpm globale `10.21.0` nel comando composto e il limite Windows long-path del cleanup; regressione config 5/6 RED→6/6 GREEN, risorse Compose rimosse e rerun del nuovo candidato ancora aperto.
 
 ## 2026-07-15
 

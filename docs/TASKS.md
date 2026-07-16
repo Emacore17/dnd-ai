@@ -791,7 +791,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Controllo automatico o review registrata dei code path citati.
 - **Documentazione e contesto:** Tutti i deliverable del task; aggiornare `docs/CONTEXT.md` e registro ADR
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** Corsia `STANDARD`; documenti living e contract test read-only. Fuori scope runtime, CI, provider e Vercel.
+- **Note, rischi o bloccanti:** Corsia elevata a `HIGH_RISK` dal cold check: il comando composto `config:check` perdeva il pin Corepack nei subprocess e invocava pnpm globale `10.21.0`. La correzione limita `package.json` al pin esplicito `pnpm@11.13.0` e aggiunge regressioni contrattuali; lockfile, dipendenze, runtime di dominio, CI, provider e Vercel restano invariati.
 
 ### GATE-M0 — Exit gate Milestone 0 — Fondamenta
 
@@ -2634,9 +2634,9 @@ status: IN_PROGRESS
 progress: 75
 started_at: 2026-07-16T13:12:53+02:00
 candidate_at: null
-cycle_target_minutes: 60
+cycle_target_minutes: 120
 cycle_actual_minutes: null
-updated_at: 2026-07-16T13:27:00+02:00
+updated_at: 2026-07-16T13:36:00+02:00
 agent: Codex development agent
 git_branch: codex/doc-arch-001
 base_commit: 3e9c6d5b088825066fedab4163c8482d391ab543
@@ -2658,18 +2658,19 @@ test_status: PARTIAL
 
 ## Piano e scope
 
-- **Corsia:** `STANDARD` perché il candidato aggiunge un contract test read-only e documentazione, senza runtime, workflow, dipendenze o deploy.
+- **Corsia:** `HIGH_RISK`, elevata da `STANDARD` quando il cold checkout ha provato che `config:check` invocava il pnpm globale anziché il pin Corepack.
 - **Obiettivo verificabile:** overview, modello dati e setup locale distinguono stato implementato e target pianificato e restano allineati tramite contract test.
-- **File/moduli previsti:** ADR-0009, overview, `DATA_MODEL.md`, `LOCAL_DEVELOPMENT.md`, contract test e soli documenti di governo semanticamente interessati.
+- **File/moduli previsti:** ADR-0009, overview, `DATA_MODEL.md`, `LOCAL_DEVELOPMENT.md`, contract test, pin del solo script composto in `package.json` e documenti di governo semanticamente interessati.
 - **Azioni esterne:** nessun provider, account, deploy o modifica Vercel; il solo side effect previsto è il Compose PostgreSQL locale durante il cold-check.
-- **Test previsti:** contract TDD, `verify:docs`, `verify:affected`, clean checkout con migration head, runtime integration e `web-health-v1` reale.
-- **Rischi/failure path:** drift package/migration/comandi, capability pianificate descritte come presenti, Docker/porta/config/health e cleanup incompleto.
+- **Test previsti:** contract TDD architettura/config, `verify:docs`, unico `verify` HIGH_RISK, clean checkout con migration head, runtime integration e `web-health-v1` reale.
+- **Rischi/failure path:** drift package/migration/comandi, pin pnpm perso nei subprocess, capability pianificate descritte come presenti, Docker/porta/config/health e cleanup Windows long-path incompleto.
 - **Fuori scope:** Redis locale, BullMQ, API di dominio, SSE, nuove migration, UI, provider, staging e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-16 13:36 +02:00 | 75% | Il primo cold checkout ha trovato due failure path reali: `config:check` usava pnpm globale `10.21.0` nei subprocess e `git clean` senza long-path lasciava file pnpm/Next. Cleanup completato sul solo worktree verificato con `core.longpaths=true`; corsia elevata a HIGH_RISK. | Install frozen e PostgreSQL health PASS; `config:check` exit `1` per engine mismatch. Regressione runtime-config RED 5/6→GREEN 6/6; contract guida reso boundary-safe e GREEN 3/3. Nessuna risorsa Compose residua. | Committare la correzione pin/guide, ripetere cold checkout sul nuovo head e poi eseguire l'unico full gate. |
 | 2026-07-16 13:27 +02:00 | 75% | ADR-0009 accepted; overview, modello dati e guida locale distinguono in modo esplicito implementato/pianificato e mantengono `BL-080` congelato. Nessun task dipendente viene reso READY. | Commit `3fa7261`, `70eff10`; contract architetturale 3/3 e `verify:docs` 44 documenti/8 modificati `PASS`; migration head `000002_feature_flags` rilevato dal codice. | Allineare indice/contesto/tracciabilità, quindi eseguire gate mirati e cold checkout con health web reale. |
 | 2026-07-16 13:12 +02:00 | 25% | Selezionato DOC-ARCH-001 dalla default branch dopo la delivery QA-001; approvata documentazione stratificata con ADR unico e marker implementato/pianificato. | Base `3e9c6d5`; design `9274bb4`, piano `64fec8a`; baseline contract 69/69 e `verify:docs` PASS; nessuna azione Vercel. | Scrivere il contract anti-drift, osservarlo rosso, poi creare ADR-0009 e consolidare l'overview. |
 | 2026-07-16 12:18 +02:00 | 100% | Candidato branch-local terminale; self-review completa senza P0/P1. La review sub-agent prevista dalla skill non è eseguibile perché la sessione vieta delega non richiesta. Delivery resta derivata/PENDING finché `7f2d4d0` non raggiunge `main` tramite gate protetto. | Worktree detached `7f2d4d0`: install frozen exit `0` in 19,6 s; full senza cache exit `0` in 133,3 s con 247 test/report, coverage sopra soglia e artifact 4.003 file `PASS`; worktree rimosso. | Amend dello stesso candidato con evidenze terminali, push branch e una PR; nessuna azione Vercel. |
@@ -2745,7 +2746,7 @@ test_status: PARTIAL
 - **Contract/schema/event version:** `api-contract-v1` / SemVer `1.0.0` / `schemaVersion: 1`, invariati.
 - **Prompt/model/eval version:** `N/A` — nessuna modifica AI.
 - **Documenti aggiornati:** design/piano, ADR-0009, overview, modello dati, guida locale e record di governo in allineamento.
-- **Rischi residui/TODO tracciati:** cold checkout, gate STANDARD, self-review e delivery protetta; freeze Vercel invariato.
+- **Rischi residui/TODO tracciati:** rerun cold checkout dopo il pin Corepack, unico gate HIGH_RISK, self-review e delivery protetta; freeze Vercel invariato.
 - **Task successivo reso READY:** nessuno; `BL-079` resta dipendente da `BL-080` bloccato e `BL-005` dipende da `BL-079`.
 
 

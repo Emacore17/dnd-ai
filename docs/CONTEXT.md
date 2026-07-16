@@ -303,7 +303,7 @@ Il dettaglio cromatico finale e l’eventuale uso di Rive non sono blocchi di pr
 
 ## Prossima azione
 
-Completare il cold checkout di `DOC-ARCH-001` con install frozen, PostgreSQL/migration, build, integration test e `web-health-v1`; quindi eseguire `verify:affected`, self-review e candidato documentale. Nessuna azione Vercel. Dopo il task non esiste un altro P0 `READY`: `BL-079` resta dipendente da `BL-080` bloccato.
+Ripetere il cold checkout di `DOC-ARCH-001` dopo la regressione che conserva `pnpm@11.13.0` nel comando composto; verificare install frozen, PostgreSQL/migration, build, integration test e `web-health-v1`, poi eseguire l'unico full gate HIGH_RISK e la self-review. Nessuna azione Vercel. Dopo il task non esiste un altro P0 `READY`: `BL-079` resta dipendente da `BL-080` bloccato.
 
 ## Rischi chiusi
 

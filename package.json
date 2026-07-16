@@ -27,7 +27,7 @@
     "artifact:verify": "node scripts/verify-build-artifact.mjs",
     "contracts:generate": "turbo run build --filter=@dnd-ai/contracts && node scripts/generate-contracts.mjs --write",
     "contracts:check": "turbo run build --filter=@dnd-ai/contracts && node scripts/generate-contracts.mjs --check",
-    "config:check": "pnpm config:check:api && pnpm config:check:worker && pnpm config:check:migration",
+    "config:check": "corepack pnpm@11.13.0 config:check:api && corepack pnpm@11.13.0 config:check:worker && corepack pnpm@11.13.0 config:check:migration",
     "config:check:api": "turbo run build --filter=@dnd-ai/config && node --env-file=apps/api/.env.local packages/config/dist/cli.js api",
     "config:check:worker": "turbo run build --filter=@dnd-ai/config && node --env-file=apps/worker/.env.local packages/config/dist/cli.js worker",
     "config:check:migration": "turbo run build --filter=@dnd-ai/config && node --env-file=packages/persistence/.env.local packages/config/dist/cli.js migration",

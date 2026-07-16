@@ -146,3 +146,14 @@ test("workspace typecheck builds dependency declarations on a clean checkout", a
   assert.equal(turbo.tasks.typecheck.dependsOn.includes("^build"), true);
   assert.equal(turbo.tasks.typecheck.dependsOn.includes("^typecheck"), true);
 });
+
+test("the composed config check preserves the pinned package manager", async () => {
+  const rootManifest = JSON.parse(await read("package.json"));
+
+  assert.equal(
+    rootManifest.scripts["config:check"],
+    "corepack pnpm@11.13.0 config:check:api && " +
+      "corepack pnpm@11.13.0 config:check:worker && " +
+      "corepack pnpm@11.13.0 config:check:migration",
+  );
+});
