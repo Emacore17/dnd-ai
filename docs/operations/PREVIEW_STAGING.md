@@ -1,7 +1,7 @@
 ---
 status: draft
 owner: engineering-and-operations
-last_reviewed: 2026-07-15
+last_reviewed: 2026-07-17
 last_verified_commit: b9b707f3ee6bb812114b206cda03530c33e48edb
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
@@ -58,7 +58,7 @@ Questo runbook copre soltanto la Preview/staging non-production di `apps/web`. A
 - Deployment Protection: livello `standard`, policy SSO predefinita `all_except_custom_domains`; il readback project-level è un gate pre-merge, mentre l'accesso OIDC all'origin branch esatta può essere provato soltanto dopo che il primo deploy materializza l'alias.
 - Accesso automation: Trusted Source GitHub Actions configurata e riletta con OIDC breve, repository ID immutabile e claim repository/ref/environment esatti; non esiste alcun bypass secret.
 - Web config: zero variabili applicative e zero secret; system environment variables ed emissione OIDC del progetto abilitate; system metadata Vercel soltanto nel Route Handler `/health`.
-- Fase corrente: freeze PR #16 integrato nel merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; CI PR `29343319207` e post-merge `29343526054` 5/5 verdi, zero deployment Vercel. Il dry-run resta valido, ma l'audit CLI `55.0.0` prova che `@vercel/client 17.6.4` elimina il target Preview prima della POST; il provider ha poi restituito Production. La regola first-deployment e `vercel/vercel#17069` sostengono l'ipotesi più forte, non una causa confermata. Non esiste ancora un fix/workaround maintainer. `source.manualDeployment.enabled=false` rende fail-closed il percorso approvato, ma non è enforcement provider contro un owner. Il grant condiviso resta invariato per decisione PO.
+- Fase corrente: freeze PR #16 integrato nel merge `aa9342daa63a93c6b8ff4d00963ed2ac6a6a9c9d`; CI PR `29343319207` e post-merge `29343526054` 5/5 verdi, zero deployment Vercel. Il dry-run resta valido, ma l'audit CLI `55.0.0` prova che `@vercel/client 17.6.4` elimina il target Preview prima della POST; il provider ha poi restituito Production. La regola first-deployment e `vercel/vercel#17069` sostengono l'ipotesi più forte, non una causa confermata. Readback 2026-07-17: issue ancora aperta, CLI `56.3.1` senza fix dichiarato per Preview/Production, nessuna PR collegata e custom environment non disponibili su Hobby. Non esiste ancora un fix/workaround maintainer. `source.manualDeployment.enabled=false` rende fail-closed il percorso approvato, ma non è enforcement provider contro un owner. Il grant condiviso resta invariato per decisione PO.
 
 ## Preflight
 
@@ -222,7 +222,7 @@ Il report stampa host e ID redatti. `deploy:smoke` resta disponibile per fixture
 - Target diverso da Preview: rimuovere immediatamente la sola delivery per deployment ID esatto, verificare URL/alias `404`, mantenere il job smoke rifiutato e lo stato versionato fail-closed; non passare il project name a `vercel remove` e non tentare promote/redeploy.
 - Prova negativa remota: sospesa finché non esiste prima una Preview riuscita e un percorso che richieda esplicitamente `target=preview` e lo confermi tramite inspect.
 - Smoke fallito: environment deployment GitHub rosso; non rendere `BL-079` READY.
-- Provider indisponibile o target mismatch: nessun retry manuale; non cambiare regione, provider o target silenziosamente. Monitorare `vercel/vercel#17069` e fonti ufficiali in sola lettura; mantenere il kill switch chiuso finché non esiste un workaround supportato.
+- Provider indisponibile o target mismatch: nessun retry manuale; non cambiare regione, provider, piano o target silenziosamente. Monitorare `vercel/vercel#17069`, release CLI e fonti ufficiali in sola lettura; mantenere il kill switch chiuso finché non esiste un workaround supportato e compatibile con Hobby.
 - Redeploy: vietato finché il target mismatch non è risolto oppure non esiste una Preview valida.
 - Rollback staging futuro: solo dopo riapertura del gate, revert del commit noto tramite PR, merge protetto su `main`, Preview verificata e smoke. Non usare Instant Rollback come prova di Preview.
 
@@ -237,7 +237,9 @@ Quando e solo quando una futura PR riaprirà esplicitamente il gate, registrare 
 - [Build Command](https://vercel.com/docs/builds/configure-a-build)
 - [System Environment Variables](https://vercel.com/docs/environment-variables/system-environment-variables)
 - [CLI deploy e selector `--target`](https://vercel.com/docs/cli/deploy)
+- [Vercel environments e limiti custom environment](https://vercel.com/docs/deployments/environments)
 - [Create Deployment API](https://vercel.com/docs/rest-api/deployments/create-a-new-deployment)
+- [Release CLI `vercel@56.3.1`](https://github.com/vercel/vercel/releases/tag/vercel%4056.3.1)
 - [Sorgente client: target Preview omesso prima della POST](https://github.com/vercel/vercel/blob/11f0cebacce81dfb713b3cb2d4622e49da0fb475/packages/client/src/deploy.ts#L36-L67)
 - [Regola first-deployment Vercel](https://vercel.com/blog/default-production-domain)
 - [Issue Vercel `#17069`](https://github.com/vercel/vercel/issues/17069)

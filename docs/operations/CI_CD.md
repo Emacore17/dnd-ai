@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering-and-security
-last_reviewed: 2026-07-16
+last_reviewed: 2026-07-17
 last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
 source_refs:
   - docs/MVP_SPEC.md#2612-ci-quality-gates
@@ -148,7 +148,7 @@ Non disabilitare il gate per risolvere una coda. Se un job viene cancellato o sa
 
 La build Vercel usa un entrypoint distinto e obbligatorio: `apps/web/vercel.json` imposta `buildCommand` a `node scripts/assert-vercel-preview-build.mjs && pnpm run build`; il primo controllo strict prosegue soltanto con la tripla esatta `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`. Il normale `pnpm build` locale accetta soltanto l'assenza contemporanea dei tre metadata; valori parziali, incoerenti, Production, development o custom falliscono prima di Next con errore statico redatto. `turbo.json` include i tre valori nella chiave del task build, così una cache locale non può confondere modalità local e Preview.
 
-Il guard non seleziona l'environment e non impedisce al provider di creare un record deployment: può soltanto bloccare il completamento della build dopo che Vercel ha scelto il target. Dopo policy payload e dry-run valido, il singolo retry con `--target=preview` ha creato comunque un record `target=production`, poi rimosso. L'audit del tag CLI `55.0.0` prova che il parser conserva Preview, ma `@vercel/client 17.6.4` lo imposta a `undefined` prima della POST; la regola first-deployment e `vercel/vercel#17069` sostengono l'ipotesi server più forte, senza confermarla né fornire un fix supportato. Nessun nuovo smoke è partito.
+Il guard non seleziona l'environment e non impedisce al provider di creare un record deployment: può soltanto bloccare il completamento della build dopo che Vercel ha scelto il target. Dopo policy payload e dry-run valido, il singolo retry con `--target=preview` ha creato comunque un record `target=production`, poi rimosso. L'audit del tag CLI `55.0.0` prova che il parser conserva Preview, ma `@vercel/client 17.6.4` lo imposta a `undefined` prima della POST; la regola first-deployment e `vercel/vercel#17069` sostengono l'ipotesi server più forte, senza confermarla né fornire un fix supportato. Readback 2026-07-17: issue ancora aperta, CLI `56.3.1` senza fix dichiarato per Preview/Production e custom environment Pro/Enterprise, quindi non validi sul piano Hobby. Nessun nuovo smoke è partito.
 
 La CLI ha un confine sorgenti distinto dall'artifact CI: la denylist root `.vercelignore` esclude cache e output generati, e non deve esistere un override `apps/web/.vercelignore`. Il dry-run `vercel@55.0.0 deploy . --project dnd-ai-web --scope emacore17s-projects --target=preview --dry --format=json --yes` resta ammesso senza upload/deployment e il JSON deve superare `scripts/check-vercel-deploy-dry-run.mjs`. Il checker richiede root esatta, framework `nextjs`, file indispensabili regolari con hash valido, mode file/directory zero-byte supportati, path univoci e sicuri, massimo 15.000 entry, massimo 10 MiB totali e massimo 5 MiB per file. `source.manualDeployment.enabled=false` e `deploy:bootstrap:check` rendono fail-closed il percorso operativo approvato; non sono enforcement provider contro un owner. Un exit `0` richiederebbe comunque un nuovo runbook approvato. `--cwd apps/web`, `--prebuilt`, archivi, `--prod`, `promote`, `redeploy`, `--skip-domain`, custom target e override manuali `VERCEL*` restano vietati; `git.deploymentEnabled=false` e `source.autoDeploy=false` restano invariati.
 
