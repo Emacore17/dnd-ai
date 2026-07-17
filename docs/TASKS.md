@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
+last_verified_commit: f653e63d4dc5bf7627c37622deaca64850961602
 source_refs:
   - docs/MVP_SPEC.md
   - docs/adr/0010-internal-provider-neutral-identity.md
@@ -13,6 +13,8 @@ source_refs:
   - docs/superpowers/plans/2026-07-17-bl-007-actor-context.md
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
   - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
+  - docs/superpowers/specs/2026-07-17-qa-002-browser-harness-design.md
+  - docs/superpowers/plans/2026-07-17-qa-002-browser-harness.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -188,8 +190,8 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-007 — DONE/100%/PASSING` branch-local sulla branch `codex/bl-007-actor-context`; review, full gate HIGH_RISK e checkout pulito verdi, delivery ancora aperta
-> **Prossimo task READY:** `QA-002 — Playwright, axe, visual regression`; resta indipendente e non viene avviato durante BL-007
+> **Task attivo:** `QA-002 — IN_PROGRESS/25%/PARTIAL` sulla branch `codex/qa-002-browser-harness`; design e piano inline approvati, baseline web e shell verdi
+> **Prossimo task READY:** nessun altro P0; `BL-080` resta congelato `BLOCKED` e non viene riaperto da QA-002
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -603,8 +605,8 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Matrice IDOR automatizzata su repository/API/SSE con due utenti e risorse incrociate.
   - [x] Test che gli errori non rivelino l’esistenza della risorsa altrui.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`; `docs/security/THREAT_MODEL.md`
-- **Evidenze di chiusura:** candidato implementato nei commit `9babc19`, `570c830`, `d23b520`, `df27677`, `fd90e5e`, `e516a86` e `dde888e`: contract/domain 16/16, suite migration ufficiale 25/25, store campaign + regressione identity 4/4, service/API/startup 13/13, matrice repository/API/SSE 6/6 e security source/failure guard 4/4 `PASS`; build TypeScript, lint e formatting delle aree toccate verdi. Le cinque corsie di chiusura Task 6 passano: `verify:docs` su 58 documenti/70 artifact con task graph e secret scan, contract 104/104, database 27/27, integration 41/41 e security 43 pass/3 skip host. Review inline del diff completo senza finding P0/P1. Full HIGH_RISK finale exit `0` in 395,9 s: format, lint/build 11, typecheck 16, report 396 test su cinque lane, boundary/docs/task/CI/deployment/secret policy e artifact 4.396 file `PASS`. Il primo tentativo ha trovato l'import `URL` mancante nel test security, corretto alla causa; il secondo ha osservato un readback ledger Docker non riprodotto in 10/10 esecuzioni isolate né nella lane database 27/27, prima del full finale verde. Checkout detached di `dde888e` riproducibile: install frozen 819 package, contract drift 70 file, build 7/7, migration/store/IDOR/security 9/9, secret scan e docs/task graph `PASS`; residuo Windows deregistrato e rimosso sul solo path temporaneo con `core.longPaths=true`. Artifact `v4`/SemVer `4.0.0`, migration head `000005_campaign_ownership`, contract `database-campaign-ownership-v1`, source SHA `119a102cedbad7129eb40ad7082c0c6f8a52fb3d0f0792cee305e2cf75027f0d`, checksum `e6fadbe1ed89d0ae58b6d9a14950c7d2f8928e7b4fc90f3b2700459cfd3e39fe`; eval/trace ID `N/A — slice deterministica senza AI o trace persistita`. Delivery protetta resta `PENDING`.
-- **Note, rischi o bloccanti:** Corsia `HIGH_RISK`. Implementati session resolver read-only, `ActorContext`, repository actor-scoped, `GET /api/campaigns/:campaignId` e pre-handler SSE verificato ma non registrato nel runtime fino a BL-038. Foreign/missing/soft-deleted condividono lo stesso `404`; failure PostgreSQL resta `503`; una sessione negata impedisce la query campagna. RLS, rate limit generale, turni, UI, deploy e Vercel restano fuori scope. Lo stato branch-local è `DONE/100%/PASSING`; delivery canonica `PENDING` finché la PR protetta non è integrata.
+- **Evidenze di chiusura:** candidato implementato nei commit `9babc19`, `570c830`, `d23b520`, `df27677`, `fd90e5e`, `e516a86` e `dde888e`: contract/domain 16/16, suite migration ufficiale 25/25, store campaign + regressione identity 4/4, service/API/startup 13/13, matrice repository/API/SSE 6/6 e security source/failure guard 4/4 `PASS`; build TypeScript, lint e formatting delle aree toccate verdi. Le cinque corsie di chiusura Task 6 passano: `verify:docs` su 58 documenti/70 artifact con task graph e secret scan, contract 104/104, database 27/27, integration 41/41 e security 43 pass/3 skip host. Review inline del diff completo senza finding P0/P1. Full HIGH_RISK finale exit `0` in 395,9 s: format, lint/build 11, typecheck 16, report 396 test su cinque lane, boundary/docs/task/CI/deployment/secret policy e artifact 4.396 file `PASS`. Il primo tentativo ha trovato l'import `URL` mancante nel test security, corretto alla causa; il secondo ha osservato un readback ledger Docker non riprodotto in 10/10 esecuzioni isolate né nella lane database 27/27, prima del full finale verde. Checkout detached di `dde888e` riproducibile: install frozen 819 package, contract drift 70 file, build 7/7, migration/store/IDOR/security 9/9, secret scan e docs/task graph `PASS`; residuo Windows deregistrato e rimosso sul solo path temporaneo con `core.longPaths=true`. Artifact `v4`/SemVer `4.0.0`, migration head `000005_campaign_ownership`, contract `database-campaign-ownership-v1`, source SHA `119a102cedbad7129eb40ad7082c0c6f8a52fb3d0f0792cee305e2cf75027f0d`, checksum `e6fadbe1ed89d0ae58b6d9a14950c7d2f8928e7b4fc90f3b2700459cfd3e39fe`; eval/trace ID `N/A — slice deterministica senza AI o trace persistita`. [PR #31](https://github.com/Emacore17/dnd-ai/pull/31), merge `f653e63d4dc5bf7627c37622deaca64850961602`, CI PR `29585529550` e post-merge `29585826237` cinque job `SUCCESS`.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK`. Implementati session resolver read-only, `ActorContext`, repository actor-scoped, `GET /api/campaigns/:campaignId` e pre-handler SSE verificato ma non registrato nel runtime fino a BL-038. Foreign/missing/soft-deleted condividono lo stesso `404`; failure PostgreSQL resta `503`; una sessione negata impedisce la query campagna. RLS, rate limit generale, turni, UI, deploy e Vercel restano fuori scope. Delivery canonica `VERIFIED` su `main`; nessun blocco residuo del task.
 
 ### BL-008 — OTel/log/Sentry baseline
 
@@ -820,10 +822,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### QA-002 — Browser, accessibility e visual regression harness
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Stato:** `IN_PROGRESS`
+- **Progresso:** `25%`
+- **Esito test:** `PARTIAL`
+- **Contesto verificato:** `YES` — commit/SHA: `f653e63d4dc5bf7627c37622deaca64850961602`; data: `2026-07-17`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** QA-001, BL-081
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §26.8; `docs/MVP_SPEC.md` §35.1; `docs/product/UX_UI_DESIGN.md` §13–§14.1; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`
@@ -837,7 +839,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Visual artifact stabile su due run; server failure, browser crash e snapshot drift propagano exit non-zero.
 - **Documentazione e contesto:** `docs/testing/TEST_STRATEGY.md`; `docs/product/UX_UI_DESIGN.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
 - **Evidenze di chiusura:** commit/PR `—`; comandi/report/CI `—`; migration/eval/trace ID `N/A`.
-- **Note, rischi o bloccanti:** Le dipendenze `QA-001` e `BL-081` sono `DONE`; il task è sbloccato ma resta successivo a `BL-007` nell'ordine P0. Non duplica le fixture di feature. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` perché cambiano lockfile, runner, artifact e workflow CI. Design `browser-harness-v1`: unica lane `e2e` nel runner/report QA-001, Playwright `1.61.1`, axe `4.12.1`, solo Chromium, server standalone loopback, retry zero e snapshot per piattaforma. Baseline su `main`: build web PASS e shell mirata 22/22. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`.
 
 ### DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale
 
@@ -2693,23 +2695,23 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: BL-007
-last_completed_task: BL-081
-next_ready_task: QA-002
-status: DONE
-progress: 100
-started_at: 2026-07-17T14:00:00+02:00
-candidate_at: 2026-07-17T15:46:44+02:00
+active_task: QA-002
+last_completed_task: BL-007
+next_ready_task: null
+status: IN_PROGRESS
+progress: 25
+started_at: 2026-07-17T16:10:09+02:00
+candidate_at: null
 cycle_target_minutes: 120
-cycle_actual_minutes: 106
-updated_at: 2026-07-17T15:46:44+02:00
+cycle_actual_minutes: null
+updated_at: 2026-07-17T16:10:09+02:00
 agent: Codex development agent
-git_branch: codex/bl-007-actor-context
-base_commit: 464b124d7b5182d2614703a743dffb622cc220fe
-candidate_head: dde888e4f835d25fc5d6142129394971efa90320
+git_branch: codex/qa-002-browser-harness
+base_commit: f653e63d4dc5bf7627c37622deaca64850961602
+candidate_head: f653e63d4dc5bf7627c37622deaca64850961602
 spec_sha256: 737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b
 context_verified: true
-test_status: PASSING
+test_status: PARTIAL
 ```
 
 ## Contesto letto
@@ -2718,24 +2720,25 @@ test_status: PASSING
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti BL-007 — `docs/MVP_SPEC.md` §§20.1, 22.3, 31, 32 AC-23 e 35.1; ADR-0010; design e piano `campaign-ownership-v1`
-- [x] contratti e dati interessati — artifact API `v1`–`v4`, migration `000001`–`000005`, session lifecycle e ownership campagna
-- [x] codice/test interessati — dominio, contratti, persistence PostgreSQL, application service, route HTTP, guardia SSE e matrici IDOR/security
+- [x] riferimenti QA-002 — `docs/MVP_SPEC.md` §§26.8 e 35.1; studio UX/UI §§13–14.1; ADR-0001; design QA-001
+- [x] contratti interessati — `testing-foundation-v1`, runner/report/artifact CI e shell `interactive-game-shell-v1`
+- [x] codice/test interessati — runner Node, lane/report policy, workflow Tests, shell reale, Playwright/axe e fixture browser negative
 
 ## Piano e scope
 
-- **Corsia:** `HIGH_RISK` perché cambia il confine authorization/tenant, la migration head, il contract pubblico e una guardia riusabile per SSE; target 120 minuti.
-- **Obiettivo verificabile:** sessione valida risolta in `ActorContext`, query campagna owner-scoped e matrice IDOR a due utenti con risposta indistinguibile per risorsa altrui, assente o eliminata.
-- **File/moduli previsti:** dominio/contratti, migration e store PostgreSQL, application service e route API, pre-handler SSE non registrato, test contract/database/integration/security e living docs.
-- **Azioni esterne:** nessuna; test e database sono locali, senza provider, account, secret, deploy, release o modifica Vercel.
-- **Test previsti:** contratti e compatibilità, zero/previous→head e rollback, repository/API/SSE cross-user, redazione errori, build/lint/format, full HIGH_RISK e checkout pulito.
-- **Rischi/failure path:** sessione assente/scaduta/revocata, UUID non valido, campagna altrui/assente/soft-deleted indistinguibili, errore PostgreSQL `503`, query campagna non eseguita dopo sessione negata e adapter SSE non registrato prematuramente.
-- **Fuori scope:** RLS, rate limit generale, mutation/turni, endpoint SSE pubblico, ticket/reconnect, UI campagna, staging, Production e Vercel.
+- **Corsia:** `HIGH_RISK` perché cambiano dipendenze/lockfile, runner, artifact e workflow CI; target 120 minuti.
+- **Obiettivo verificabile:** da checkout pulito una lane Playwright comune prova shell reale, viewport 320/390/1440, touch, tastiera/focus, zoom, safe-area, reduced-motion, axe e regressione visuale senza server o provider remoti.
+- **File/moduli previsti:** root package/lockfile, test lane/process/report policy, config e fixture E2E, snapshot versionati, contract/security test, workflow CI e living docs.
+- **Azioni esterne:** sola consultazione di documentazione ufficiale e download Chromium pinato; nessun account, provider, deploy, release o modifica Vercel.
+- **Test previsti:** contract/lane/report policy, shell Playwright, axe positivo/negativo, visual due run, server/browser/drift negative path, CI policy, full HIGH_RISK e checkout pulito cross-platform.
+- **Rischi/failure path:** browser assente/crash, server non pronto/collisione, snapshot mancante/drift, axe blocker, leakage in report, baseline Windows/Linux divergenti e processi non ripuliti.
+- **Fuori scope:** modifiche alla shell/shadcn/AI Elements/Motion salvo regressione P0 reale, browser cloud, Firefox/WebKit, DAST, staging, Production e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-17 16:10 +02:00 | 25% | BL-007 integrato tramite PR #31/merge `f653e63` e CI post-merge `29585826237` 5/5 `SUCCESS`. Selezionato QA-002 e adottato `browser-harness-v1`: unica lane Playwright nel runner/report comune, solo Chromium, server standalone loopback, axe e snapshot per piattaforma; esecuzione inline senza Vercel. | Base `f653e63`; spec SHA `737fcb…d80b`; build web PASS; shell unit/integration/contract 22/22. Fonti ufficiali Playwright/axe e versioni registry `1.61.1`/`4.12.1` verificate. | Versionare design/piano e avviare Task 1 TDD con catalogo lane/dipendenze RED. |
 | 2026-07-17 15:38 +02:00 | 100% | Review P0/P1 chiusa inline e candidato proposto `DONE/100%/PASSING` branch-local. Il primo full ha trovato l'import Node `URL` mancante; il secondo un transiente ledger Docker non riprodotto in 10/10 isolati né nella lane completa. Nessun gate è stato indebolito. | Full finale senza cache exit `0` in 395,9 s: format, lint/build 11, typecheck 16, report 396 test, policy boundary/docs/task/CI/deployment/secret e artifact 4.396 file `PASS`. | Incorporare stato e fix nello stesso commit, poi verificare il candidato da checkout detached pulito. |
 | 2026-07-17 15:46 +02:00 | 100% | Il candidato è riproducibile da checkout detached pulito; Git ha deregistrato il checkout ma Windows ha lasciato path pnpm lunghi, rimossi solo dopo dry-run e `core.longPaths=true` sul residuo esatto. | Head `dde888e`: install frozen 819 package; contract 70 file; build 7/7; migration/store/IDOR/security 9/9; secret scan e docs/task graph `PASS`. Worktree temporanea assente dall'elenco e dal filesystem. | Aggiornare le evidenze nello stesso commit e preparare una sola PR protetta, senza azioni Vercel. |
 | 2026-07-17 15:38 +02:00 | 100% | Review P0/P1 chiusa inline e candidato proposto `DONE/100%/PASSING` branch-local. Il primo full ha trovato l'import Node `URL` mancante; il secondo un transiente ledger Docker non riprodotto in 10/10 isolati né nella lane completa. Nessun gate è stato indebolito. | Full finale senza cache exit `0` in 395,9 s: format, lint/build 11, typecheck 16, report 396 test, policy boundary/docs/task/CI/deployment/secret e artifact 4.396 file `PASS`. | Incorporare stato e fix nello stesso commit, poi verificare il candidato da checkout detached pulito. |
@@ -2841,16 +2844,16 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/bl-007-actor-context` su base `464b124d7b5182d2614703a743dffb622cc220fe`; functional head verificato `dde888e4f835d25fc5d6142129394971efa90320`; PR e delivery protetta ancora `PENDING`.
+- **Commit/PR:** branch `codex/bl-007-actor-context` su base `464b124d7b5182d2614703a743dffb622cc220fe`; functional head verificato `dde888e4f835d25fc5d6142129394971efa90320`; PR #31, merge `f653e63d4dc5bf7627c37622deaca64850961602`, delivery `VERIFIED`.
 - **Comandi eseguiti:** TDD contract/domain, migration, store PostgreSQL, service/HTTP, IDOR repository/API/SSE, security source/failure guard, build/lint/format mirati; cinque corsie Task 6, review completa, full HIGH_RISK senza cache e checkout detached con install/contract/build/test/secret/docs.
 - **Exit code:** mirati e corsie finali `0`; full finale `0` in 395,9 s con 396 test, lint/build 11, typecheck 16, artifact 4.396 e tutte le policy `PASS`.
-- **Report/CI URL o path:** design, piano, card BL-007, threat model e traceability; CI remota non ancora disponibile e non copiata nei documenti.
-- **Migration head:** candidato `000005_campaign_ownership`; source SHA `119a102cedbad7129eb40ad7082c0c6f8a52fb3d0f0792cee305e2cf75027f0d`; checksum `e6fadbe1ed89d0ae58b6d9a14950c7d2f8928e7b4fc90f3b2700459cfd3e39fe`.
+- **Report/CI URL o path:** design, piano, card BL-007, threat model e traceability; CI PR `29585529550` e post-merge `29585826237` cinque job `SUCCESS`.
+- **Migration head:** `000005_campaign_ownership` integrato; source SHA `119a102cedbad7129eb40ad7082c0c6f8a52fb3d0f0792cee305e2cf75027f0d`; checksum `e6fadbe1ed89d0ae58b6d9a14950c7d2f8928e7b4fc90f3b2700459cfd3e39fe`.
 - **Contract/schema/event version:** API artifact `v4`/SemVer `4.0.0`, contract `database-campaign-ownership-v1`; artifact `v1`–`v3` ed event `schemaVersion: 1` immutati.
 - **Prompt/model/eval version:** nessuna modifica a prompt, modello o provider; `N/A`.
 - **Documenti aggiornati:** task/contesto/tracciabilità, indice, architettura, dati, API, migration, threat model, design e piano BL-007.
-- **Rischi residui tracciati:** delivery protetta ancora aperta; RLS e trasporto SSE pubblico hanno owner successivi. Warning `MaxListenersExceededWarning` preesistente/non bloccante del reporter Node; freeze BL-080 invariato e nessuna azione provider o Vercel.
-- **Task successivo READY:** `QA-002 — Playwright, axe, visual regression`; non viene avviato durante BL-007.
+- **Rischi residui tracciati:** RLS e trasporto SSE pubblico hanno owner successivi. Warning `MaxListenersExceededWarning` preesistente/non bloccante del reporter Node; freeze BL-080 invariato e nessuna azione provider o Vercel.
+- **Task successivo:** `QA-002 — Playwright, axe, visual regression`, ora `IN_PROGRESS/25%/PARTIAL`.
 
 
 ## 21. Context Sync Log
@@ -2859,6 +2862,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 
 | Data | Commit | Task | Documento/componente | Modifica | Task da riesaminare |
 |---|---|---|---|---|---|
+| 2026-07-17 | `f653e63` + QA-002 design | BL-007 delivery / QA-002 start | Main, browser harness e contesto | PR #31 e CI post-merge 5/5 verificano BL-007; selezionato QA-002 con `browser-harness-v1`, piano TDD inline e baseline web/shell verde. Nessuna azione Vercel. | QA-002, GATE-M0 |
 | 2026-07-17 | `dde888e` + terminal docs | BL-007 candidate | ActorContext, campaign ownership e AC-23 | Contract `v4`, migration `000005`, store/API/SSE guard e matrice IDOR hanno superato mirati, corsie, review, full HIGH_RISK e checkout pulito. Proposta `DONE/100%/PASSING`; delivery protetta `PENDING`, nessuna azione Vercel. | BL-028, BL-038, BL-065, BL-066, BL-067, QA-002 |
 | 2026-07-17 | `561dc2d` + terminal docs | BL-081 candidate | Shell conversazionale, UX/UI e task graph | Reducer fixture, AI Elements/shadcn selettivi, drawer, Motion, browser e full/clean gate propongono BL-081 `DONE/100%/PASSING`; QA-002 diventa READY, BL-007 resta il primo READY e Vercel invariato. | BL-007, BL-027, BL-039, BL-040, BL-071, BL-072, QA-002 |
 | 2026-07-17 | `c30c6db` + design branch | BL-081 | Spec, backlog e shell conversazionale | BL-006 integrato tramite PR #29/CI 5/5; selezionato BL-081 e approvato `interactive-game-shell-v1` con reducer puro, AI Elements selettivo, shadcn/Radix, Motion reduced-first e nessuna azione Vercel. BL-007 passa READY. | BL-007, BL-027, BL-039, BL-040, BL-071, BL-072, QA-002 |

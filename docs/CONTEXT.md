@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
+last_verified_commit: f653e63d4dc5bf7627c37622deaca64850961602
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -23,6 +23,8 @@ source_refs:
   - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
   - docs/superpowers/specs/2026-07-17-bl-007-actor-context-design.md
   - docs/superpowers/plans/2026-07-17-bl-007-actor-context.md
+  - docs/superpowers/specs/2026-07-17-qa-002-browser-harness-design.md
+  - docs/superpowers/plans/2026-07-17-qa-002-browser-harness.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -211,19 +213,19 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-17 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-081` è integrato su `main` tramite [PR #30](https://github.com/Emacore17/dnd-ai/pull/30), candidato `d3161c745eefd18bed01eccc6510ccdaa7edaaa6` e merge `464b124d7b5182d2614703a743dffb622cc220fe`; CI PR `29577298281` e post-merge `29577506715` hanno concluso cinque job `SUCCESS`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `BL-007` è integrato su `main` tramite [PR #31](https://github.com/Emacore17/dnd-ai/pull/31), candidato `fe060cc9bc959a135790bb12afba1747a72af992` e merge `f653e63d4dc5bf7627c37622deaca64850961602`; CI PR `29585529550` e post-merge `29585826237` hanno concluso cinque job `SUCCESS`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-007 — DONE/100%/PASSING` branch-local; review, full HIGH_RISK e clean checkout verdi, delivery `PENDING` |
-| Ultimo task completato | `BL-081 — DONE/100%/PASSING`, integrato tramite PR #30 e CI post-merge `29577506715` |
-| Prossimo task READY | `QA-002`; resta indipendente e non viene avviato durante BL-007 |
-| Migration head | candidato `000005_campaign_ownership` / `database-campaign-ownership-v1`, verificato su PostgreSQL reale; delivery su `main` ancora pendente |
+| Task attivo | `QA-002 — IN_PROGRESS/25%/PARTIAL`; `browser-harness-v1` approvato e piano TDD inline pronto |
+| Ultimo task completato | `BL-007 — DONE/100%/PASSING`, integrato tramite PR #31 e CI post-merge `29585826237` |
+| Prossimo task READY | nessun altro P0; `BL-080` resta congelato `BLOCKED` |
+| Migration head | `000005_campaign_ownership` / `database-campaign-ownership-v1`, integrato e verificato su PostgreSQL reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-006`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079`/`BL-081` forniscono foundation shadcn e shell fixture interattiva con reducer puro, subset AI Elements, drawer HUD e Motion reduced-first. `BL-005`/`BL-006` implementano l'intero lifecycle identity locale con contract `v3`, migration `000004`, API/worker/BFF e superfici shadcn mobile-first. Il candidato BL-007 aggiunge contract `v4`, migration `000005`, `ActorContext`, session resolver read-only, query campagna owner-scoped, una GET player-safe e una guardia SSE verificata ma non registrata in produzione. Redis locale applicativo, BullMQ, SSE pubblico e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-006`, `BL-007`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079`/`BL-081` forniscono foundation shadcn e shell fixture interattiva con reducer puro, subset AI Elements, drawer HUD e Motion reduced-first. `BL-005`/`BL-006` implementano l'intero lifecycle identity locale; BL-007 aggiunge contract `v4`, migration `000005`, `ActorContext`, query campagna owner-scoped, GET player-safe e guardia SSE non registrata. QA-002 è in corso per consolidare Playwright, axe e visual regression nel runner comune. Redis locale applicativo, BullMQ, SSE pubblico e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
 
 ## Decisioni operative vigenti
 
@@ -258,7 +260,7 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Observability contract | `observability-baseline-v1` | implementato e integrato tramite PR #20; run post-merge `29415397361` 5/5 `SUCCESS`; provider remoti assenti |
 | Identity contract | `identity-signup-v1` e `identity-access-v1` implementati | contract `v3`, porte/config/crypto, migration `000004`, store, runtime API/worker/web e verticale access/reset integrati tramite PR #29; SMTP/provider/account remoti assenti |
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
-| Design contract | `ux-ui-2026-07-13` / `interactive-game-shell-v1` / `campaign-ownership-v1` | shell interattiva BL-081 integrata; candidato ownership BL-007 implementato, review e full HIGH_RISK verdi |
+| Design contract | `ux-ui-2026-07-13` / `interactive-game-shell-v1` / `campaign-ownership-v1` / `browser-harness-v1` | shell e ownership integrate; browser harness QA-002 approvato e in implementazione TDD |
 | ADR UI | `ADR-0001 accepted` | vigente |
 | Toolchain | Node `24.11.0` (engine `>=22.13.0`); pnpm `11.13.0`; Turbo `2.10.4`; TypeScript `6.0.3`; Zod `4.4.3`; Ajv `8.20.0`/formats `3.0.1` test-only; github-slugger `2.0.0`; Mermaid `11.16.0`/DOMPurify `3.4.12` docs-only; Motion `12.42.2`; Streamdown `2.5.0`; use-stick-to-bottom `1.1.6`; Vaul `1.1.2`; OTel API `1.9.1`/SDK `2.9.0`; Pino `10.3.1`; Sentry `10.65.0`; Argon2 `0.44.0`; Nodemailer `9.0.3`; PostgreSQL `17`; pgvector `0.8.2`; node-pg-migrate `8.0.4`; pg `8.22.0`; Docker `29.2.1` | pinning e lockfile presenti; AI SDK chat, Rive e plugin `@streamdown/*` assenti; immagine DB pin a digest |
 | Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web integrato con shell fixture interattiva e form/BFF auth; il candidato API espone identity e la sola GET campagna player-safe; SSE pubblico assente |
@@ -336,7 +338,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 | ID | Rischio | Mitigazione/owner |
 |---|---|---|
 | CTX-R03 | App e package di gioco restano in gran parte scaffold; esiste soltanto il verticale identity oltre alla foundation UI | non inferire loop di gioco, API turni o stato campagna dalla shell fixture o dalle route auth; BL-081/BL-028 possiedono i passi successivi |
-| CTX-R04 | Il browser harness comune non è ancora disponibile | `BL-081` ha completato lo smoke browser locale di feature e sbloccato `QA-002`, ora READY per Playwright, accessibility e visual regression |
+| CTX-R04 | Il browser harness comune non è ancora disponibile | QA-002 è `IN_PROGRESS`: design `browser-harness-v1`, Playwright/axe pinati, lane/report/CI comuni e matrice cross-platform sono pianificati in TDD |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion usa `LazyMotion` strict con feature DOM asincrona da 285 byte e reduced-motion; Rive è assente. `QA-002` conserva il gate visual/performance comune |
 | CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | `BL-080` è `BLOCKED/50%/PARTIAL` sull'assenza di un percorso first-deployment Preview-only supportato; freeze e `GATE-M0` restano chiusi, mentre i slice UI locali avanzano senza deploy |
 | CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based/ignore-aware |
@@ -345,11 +347,12 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 | CTX-R17 | Il CLI dalla root può includere cache/output ignorati da Git e superare limiti o ampliare il payload | `.vercelignore` root-only e dry-run JSON fail-closed con budget/path/input obbligatori; contratto integrato in PR #15 e dry-run corrente PASS |
 | CTX-R20 | La nuova baseline può causare context bleed, leakage di PII/secret, doppia autorità trace o dipendenze Node nel bundle client | `BL-008` applica OTel come unica autorità trace, redazione allowlisted, Sentry error-only, test concorrenti/security e contract test del bundle prima della delivery |
 | CTX-R22 | L'identità interna amplia la superficie security con hashing costoso, challenge replay, session cookie, email side effect ed enumeration | BL-005 applica rate limit pre-hash, Argon2id/pepper, digest HMAC e outbox; BL-006 estende test/transaction boundary a fixation, rotazione, expiry, revoca e reset concorrente. SMTP reale resta fuori scope locale |
-| CTX-R23 | Una query campagna unscoped o un errore differenziato può causare IDOR/enumeration cross-tenant su HTTP e SSE | Mitigato nel candidato BL-007: `ActorContext` obbligatorio, ownership e soft-delete nella query, `404` uniformi, failure DB `503`, source guard, matrice PostgreSQL due utenti, review, full HIGH_RISK e clean checkout; resta la delivery protetta |
+| CTX-R23 | Una query campagna unscoped o un errore differenziato può causare IDOR/enumeration cross-tenant su HTTP e SSE | Mitigato da BL-007 integrato: `ActorContext` obbligatorio, ownership e soft-delete nella query, `404` uniformi, failure DB `503`, source guard, matrice PostgreSQL due utenti, review, full/clean e CI PR/post-merge verdi |
+| CTX-R24 | Browser binario, server locale e baseline visuali possono introdurre lentezza, process leak o drift fra Windows e Linux | QA-002 usa solo Chromium pinato, worker/retry `1/0`, server standalone loopback non riusabile, report bounded e baseline separate per piattaforma generate nella stessa versione Playwright |
 
 ## Prossima azione
 
-Preparare una sola delivery protetta BL-007 verso `main`, attendere `CI / Merge gate` e integrare senza bypass. `QA-002` resta READY e indipendente. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
+Versionare design e piano QA-002, quindi eseguire inline il Task 1 TDD: dipendenze pinate, lane `e2e` e contract fail-closed. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
 
 ## Rischi chiusi
 
