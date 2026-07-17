@@ -33,12 +33,21 @@ async function expectCoreShell(page) {
   );
 }
 
+async function expectStableScreenshot(page, name) {
+  await expect(page).toHaveScreenshot(name, {
+    animations: "disabled",
+    caret: "hide",
+    maxDiffPixels: 0,
+  });
+}
+
 test.describe("320 px compact mobile shell", () => {
   test.use({ viewport: { height: 800, width: 320 } });
 
   test("QA-002: compact mobile shell remains usable", async ({ page }) => {
     await openGameShell(page);
     await expectCoreShell(page);
+    await expectStableScreenshot(page, "game-shell-320.png");
   });
 });
 
@@ -55,6 +64,7 @@ test.describe("390 px touch shell", () => {
   }) => {
     const shell = await openGameShell(page);
     await expectCoreShell(page);
+    await expectStableScreenshot(page, "game-shell-390.png");
 
     const action = page.getByRole("button", { name: "Segui il segnale" });
     const box = await action.boundingBox();
@@ -77,6 +87,7 @@ test.describe("1440 px desktop shell", () => {
   }) => {
     await openGameShell(page);
     await expectCoreShell(page);
+    await expectStableScreenshot(page, "game-shell-1440.png");
 
     const objective = page.getByRole("button", { name: "Apri obiettivo" });
     await objective.click();

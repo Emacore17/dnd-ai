@@ -11,6 +11,7 @@ test.describe("accessible phone shell", () => {
   test.use({ viewport: { height: 844, width: 390 } });
 
   test("QA-002: shell has no automated A or AA blockers", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await openGameShell(page);
     assertNoAccessibilityBlockers(await analyzeAccessibility(page));
   });

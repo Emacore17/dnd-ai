@@ -26,6 +26,8 @@ export default defineConfig({
   ),
   reporter: [["list"], ["junit", { outputFile: junitOutputFile }]],
   retries: 0,
+  snapshotPathTemplate:
+    "{testDir}/__screenshots__/{platform}/{testFileName}/{arg}{ext}",
   testDir: ".",
   testMatch: "*.spec.mjs",
   timeout: 30_000,
