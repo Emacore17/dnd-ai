@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-17
-last_verified_commit: f653e63d4dc5bf7627c37622deaca64850961602
+last_verified_commit: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
 source_refs:
   - docs/TASKS.md#qa-002--browser-accessibility-e-visual-regression-harness
   - docs/superpowers/specs/2026-07-17-qa-002-browser-harness-design.md
@@ -64,7 +64,7 @@ supersedes: null
 - Produces: `TEST_LANES.e2e` con `executor: "playwright"`, owner `QA-002`, pattern `tests/e2e/*.spec.mjs`.
 - Produces: script pubblici `test:e2e`, `test:e2e:update`, `test:e2e:install`, `test:e2e:install:ci`.
 
-- [ ] **Step 1: scrivere i test RED del catalogo**
+- [x] **Step 1: scrivere i test RED del catalogo**
 
 ```js
 assert.deepEqual(TEST_LANES.e2e, {
@@ -80,13 +80,13 @@ assert.deepEqual(TEST_LANES.e2e, {
 
 Il contract deve inoltre richiedere versioni esatte di `@playwright/test` e `@axe-core/playwright`, vietarle nei package applicativi e controllare che non esistano browser cloud o plugin duplicati.
 
-- [ ] **Step 2: osservare il RED**
+- [x] **Step 2: osservare il RED**
 
 Run: `node --test tests/unit/test-lane-policy.test.mjs tests/contracts/browser-harness-contract.test.mjs`
 
 Expected: FAIL perché `e2e` e le due dipendenze non esistono.
 
-- [ ] **Step 3: installare i due dev dependency root e aggiungere la lane**
+- [x] **Step 3: installare i due dev dependency root e aggiungere la lane**
 
 Run: `corepack pnpm@11.13.0 add -Dw -E @playwright/test@1.61.1 @axe-core/playwright@4.12.1`
 
@@ -101,11 +101,11 @@ Aggiornare `package.json` con:
 
 In `TEST_LANES`, aggiungere `executor: "node"` alle lane esistenti e la configurazione `e2e` testata.
 
-- [ ] **Step 4: rendere la discovery extension-aware**
+- [x] **Step 4: rendere la discovery extension-aware**
 
 Per `executor === "node"` accettare soltanto `.test.mjs`; per `playwright` soltanto `.spec.mjs`. Conservare realpath, regular-file e repository confinement.
 
-- [ ] **Step 5: verificare GREEN e audit**
+- [x] **Step 5: verificare GREEN e audit**
 
 Run: `node --test tests/unit/test-lane-policy.test.mjs tests/contracts/browser-harness-contract.test.mjs`
 
@@ -115,7 +115,7 @@ Run: `corepack pnpm@11.13.0 audit --audit-level=high`
 
 Expected: exit `0`.
 
-- [ ] **Step 6: commit**
+- [x] **Step 6: commit**
 
 ```powershell
 git add package.json pnpm-lock.yaml scripts/lib/test-lane-policy.mjs tests/unit/test-lane-policy.test.mjs tests/contracts/browser-harness-contract.test.mjs
@@ -139,7 +139,7 @@ git commit -m "test: register the browser test lane"
 - Produces: update snapshot esplicito che riusa lo stesso executor e rifiuta `CI`.
 - Consumes: `TEST_LANES.e2e` del Task 1.
 
-- [ ] **Step 1: aggiungere self-test RED del runner**
+- [x] **Step 1: aggiungere self-test RED del runner**
 
 Il test deve invocare una funzione/spawn iniettato e verificare:
 
@@ -159,13 +159,13 @@ assert.equal("DATABASE_URL" in invocation.environment, false);
 
 Il report e2e normalizzato deve produrre manifest task IDs `QA-002` e nessun coverage file.
 
-- [ ] **Step 2: osservare il RED**
+- [x] **Step 2: osservare il RED**
 
 Run: `node --test tests/integration/test-runner.test.mjs tests/unit/test-report-policy.test.mjs`
 
 Expected: FAIL perché il runner prova a usare `node --test` sulla lane e2e.
 
-- [ ] **Step 3: implementare l'executor Playwright minimo**
+- [x] **Step 3: implementare l'executor Playwright minimo**
 
 Nel runner:
 
@@ -194,17 +194,17 @@ export async function runSelectedLanes({ environment, laneNames, updateSnapshots
 
 `scripts/update-browser-snapshots.mjs` invoca soltanto `runSelectedLanes({ laneNames: ["e2e"], updateSnapshots: true })`; non accetta argomenti o override di path/config.
 
-- [ ] **Step 4: provare exit/report failure**
+- [x] **Step 4: provare exit/report failure**
 
 Il self-test deve coprire exit non-zero, JUnit mancante e porta non numerica con errori statici `test-runner:*`, senza includere stdout/stderr o environment.
 
-- [ ] **Step 5: verificare GREEN**
+- [x] **Step 5: verificare GREEN**
 
 Run: `node --test tests/integration/test-runner.test.mjs tests/unit/test-report-policy.test.mjs`
 
 Expected: PASS.
 
-- [ ] **Step 6: commit**
+- [x] **Step 6: commit**
 
 ```powershell
 git add scripts/run-tests.mjs scripts/update-browser-snapshots.mjs scripts/lib/test-process.mjs scripts/lib/test-report-policy.mjs tests/integration/test-runner.test.mjs tests/unit/test-report-policy.test.mjs tests/fixtures/testing/browser-passing.spec.mjs
@@ -223,13 +223,13 @@ git commit -m "test: execute Playwright through the common runner"
 - Produces: fixture `test`/`expect` che fallisce su console error e attende font/shell readiness.
 - Produces: helper `openGameShell(page, viewport)` e `assertReachableViewport(page)`.
 
-- [ ] **Step 1: installare Chromium locale**
+- [x] **Step 1: installare Chromium locale**
 
 Run: `corepack pnpm@11.13.0 test:e2e:install`
 
 Expected: Chromium Playwright `1.61.1` disponibile; nessun altro browser installato dal comando.
 
-- [ ] **Step 2: scrivere config e spec RED**
+- [x] **Step 2: scrivere config e spec RED**
 
 La config deve usare:
 
@@ -249,23 +249,23 @@ export default defineConfig({
 
 La spec deve creare test distinti `QA-002:small-mobile-layout`, `QA-002:phone-touch-layout`, `QA-002:desktop-layout` e verificare root, composer, HUD, overflow e target.
 
-- [ ] **Step 3: osservare il RED browser**
+- [x] **Step 3: osservare il RED browser**
 
 Run: `corepack pnpm@11.13.0 test:e2e`
 
 Expected: FAIL sul primo requisito ancora non soddisfatto o su config/report non completo; non accettare test non scoperti.
 
-- [ ] **Step 4: completare helper e interazioni minime**
+- [x] **Step 4: completare helper e interazioni minime**
 
 Usare locators per ruolo/label, non selector CSS fragili, e verificare invio libero, scelta suggerita, drawer e focus restore. Il profilo touch deve creare un context con `hasTouch: true` e usare `page.touchscreen.tap()` su un target reale.
 
-- [ ] **Step 5: verificare GREEN**
+- [x] **Step 5: verificare GREEN**
 
 Run: `corepack pnpm@11.13.0 test:e2e`
 
 Expected: tutti i test layout/interazione PASS e JUnit e2e normalizzato presente.
 
-- [ ] **Step 6: commit**
+- [x] **Step 6: commit**
 
 ```powershell
 git add tests/e2e tests/contracts/browser-harness-contract.test.mjs
@@ -282,7 +282,7 @@ git commit -m "test: cover the responsive game shell in Chromium"
 **Interfaces:**
 - Produces: `analyzeAccessibility(page)` e `assertNoAccessibilityBlockers(result)`.
 
-- [ ] **Step 1: scrivere casi RED**
+- [x] **Step 1: scrivere casi RED**
 
 ```js
 test("QA-002:axe-blocks-an-intentional-violation", async ({ page }) => {
@@ -295,27 +295,27 @@ test("QA-002:axe-blocks-an-intentional-violation", async ({ page }) => {
 
 Aggiungere test per Tab/focus, Escape+restore, `zoom: 2`, `--safe-area-bottom: 34px` e media query reduced.
 
-- [ ] **Step 2: osservare il RED**
+- [x] **Step 2: osservare il RED**
 
 Run: `corepack pnpm@11.13.0 test:e2e`
 
 Expected: FAIL perché helper axe e assertion non esistono.
 
-- [ ] **Step 3: implementare fixture axe e assertion stabile**
+- [x] **Step 3: implementare fixture axe e assertion stabile**
 
 Usare `AxeBuilder.withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])`; serializzare negli errori soltanto ID/impact/target bounded, mai HTML completo.
 
-- [ ] **Step 4: completare i path manuali automatizzati**
+- [x] **Step 4: completare i path manuali automatizzati**
 
 Con locators e computed style provare CTA visibile/raggiungibile dopo zoom e safe-area; con `reducedMotion: "reduce"` provare contenuto e controlli immediatamente disponibili e nessuna informazione esclusiva dell'animazione.
 
-- [ ] **Step 5: verificare GREEN**
+- [x] **Step 5: verificare GREEN**
 
 Run: `corepack pnpm@11.13.0 test:e2e`
 
 Expected: shell senza blocker axe e negative fixture correttamente bloccante.
 
-- [ ] **Step 6: commit**
+- [x] **Step 6: commit**
 
 ```powershell
 git add tests/e2e/browser-fixture.mjs tests/e2e/game-shell.spec.mjs tests/e2e/accessibility.spec.mjs
@@ -336,7 +336,7 @@ git commit -m "test: enforce accessible mobile game interactions"
 - Produces: snapshot path `{testDir}/__screenshots__/{platform}/{testFileBaseName}/{arg}{ext}`.
 - Produces: tre fixture subprocess che devono terminare non-zero.
 
-- [ ] **Step 1: aggiungere aspettative screenshot RED**
+- [x] **Step 1: aggiungere aspettative screenshot RED**
 
 Per 320, 390 e 1440 usare:
 
@@ -352,25 +352,25 @@ Run: `corepack pnpm@11.13.0 test:e2e`
 
 Expected: FAIL `snapshot missing`; il comando normale non deve creare una baseline accettata automaticamente.
 
-- [ ] **Step 2: generare baseline Windows in modo esplicito**
+- [x] **Step 2: generare baseline Windows in modo esplicito**
 
 Usare l'entry point update locale del runner con guard `CI !== true`, poi rieseguire due volte il comando normale e confrontare SHA-256 dei PNG tra le run.
 
-- [ ] **Step 3: generare baseline Linux con container Playwright pinato**
+- [x] **Step 3: generare baseline Linux con container Playwright pinato**
 
 Usare `mcr.microsoft.com/playwright:v1.61.1-noble`, frozen install e update esplicito dentro un checkout/mount pulito. Copiare soltanto i PNG Linux versionati; rimuovere container/volume temporanei.
 
-- [ ] **Step 4: creare fixture server/crash/drift e auto-test**
+- [x] **Step 4: creare fixture server/crash/drift e auto-test**
 
 `harness-failures.spec.mjs` deve invocare Playwright su ciascuna config fixture con timeout/output bounded e asserire `code !== 0`. La fixture drift usa un non-image snapshot atteso `expected` contro valore `actual`; la regressione visuale reale resta nei PNG della shell.
 
-- [ ] **Step 5: verificare due run GREEN**
+- [x] **Step 5: verificare due run GREEN**
 
 Run due volte: `corepack pnpm@11.13.0 test:e2e`
 
 Expected: PASS identico; nessun PNG tracked cambia, le tre fixture negative sono osservate rosse dal test esterno verde.
 
-- [ ] **Step 6: commit**
+- [x] **Step 6: commit**
 
 ```powershell
 git add tests/e2e tests/fixtures/browser
@@ -394,7 +394,7 @@ git commit -m "test: add deterministic visual and failure baselines"
 - Produces: CI `Install Chromium` e `Browser tests` nel job `Tests`.
 - Produces: artifact required lanes `unit,integration,database,contract,e2e`.
 
-- [ ] **Step 1: scrivere contract/security RED**
+- [x] **Step 1: scrivere contract/security RED**
 
 Richiedere nel workflow, nell'ordine:
 
@@ -407,21 +407,21 @@ Richiedere nel workflow, nell'ordine:
 
 I comandi prepare/verify devono includere `e2e`; il security test deve vietare trace, video, raw axe, `.env`, URL remoti e artifact browser fuori allowlist.
 
-- [ ] **Step 2: osservare il RED**
+- [x] **Step 2: osservare il RED**
 
 Run: `node --test tests/contracts/ci-workflow.test.mjs tests/security/test-report-security.test.mjs tests/contracts/browser-harness-contract.test.mjs`
 
 Expected: FAIL sul workflow non ancora aggiornato.
 
-- [ ] **Step 3: aggiornare workflow e full command**
+- [x] **Step 3: aggiornare workflow e full command**
 
 Inserire l'installazione una volta dopo setup, la lane dopo contract e `e2e` nei report. `pnpm verify` eredita `e2e` da `run-tests all`; non duplicare il comando.
 
-- [ ] **Step 4: aggiornare living docs**
+- [x] **Step 4: aggiornare living docs**
 
 Registrare `browser-harness-v1`, comandi, baseline, failure policy, rischio chiuso e stato QA-002. BL-080 resta `BLOCKED` e non cambia.
 
-- [ ] **Step 5: verificare mirati e docs**
+- [x] **Step 5: verificare mirati e docs**
 
 Run: `node --test tests/contracts/ci-workflow.test.mjs tests/security/test-report-security.test.mjs tests/contracts/browser-harness-contract.test.mjs`
 
@@ -429,7 +429,7 @@ Run: `corepack pnpm@11.13.0 verify:docs`
 
 Expected: tutti PASS.
 
-- [ ] **Step 6: commit**
+- [x] **Step 6: commit**
 
 ```powershell
 git add .github/workflows/ci.yml package.json tests/contracts tests/security docs
@@ -441,7 +441,7 @@ git commit -m "ci: gate changes with the browser harness"
 **Files:**
 - Modify only if evidence changes semantics: `docs/TASKS.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, `docs/testing/TEST_STRATEGY.md`
 
-- [ ] **Step 1: eseguire le lane mirate finali**
+- [x] **Step 1: eseguire le lane mirate finali**
 
 Run: `corepack pnpm@11.13.0 test:e2e`
 
@@ -449,24 +449,24 @@ Run: `node --test tests/unit/test-lane-policy.test.mjs tests/unit/test-report-po
 
 Expected: PASS.
 
-- [ ] **Step 2: eseguire l'unico full gate**
+- [x] **Step 2: eseguire l'unico full gate**
 
 Run: `TURBO_FORCE=true corepack pnpm@11.13.0 verify`
 
 Expected: exit `0`, incluse lane `e2e`, report/artifact e guardrail root.
 
-- [ ] **Step 3: self-review P0/P1**
+- [x] **Step 3: self-review P0/P1**
 
 Rileggere diff, package/lockfile, workflow, config, report policy, snapshot e test. Correggere soltanto finding reali; P2 non bloccanti diventano backlog.
 
-- [ ] **Step 4: clean checkout cross-platform**
+- [x] **Step 4: clean checkout cross-platform**
 
 Da worktree detached pulita: frozen install, install Chromium, browser contract, `test:e2e`, report prepare/verify con e2e, build web, docs e secret scan. Su Linux usare la baseline Linux; su Windows quella win32.
 
-- [ ] **Step 5: chiudere il candidato nello stesso change set**
+- [x] **Step 5: chiudere il candidato nello stesso change set**
 
 Impostare QA-002 `DONE/100%/PASSING` branch-local, registrare comandi/exit/environment e rendere READY il successivo P0 realmente sbloccato. Nessun commit di sola evidenza dopo CI.
 
-- [ ] **Step 6: PR e main**
+- [x] **Step 6: PR e main**
 
 Push della branch, una sola PR, attendere `CI / Merge gate`, integrare senza bypass e verificare la run post-merge sul merge commit. Non eseguire azioni Vercel.

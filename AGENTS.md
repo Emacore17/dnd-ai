@@ -1,12 +1,13 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-15
-last_verified_commit: f9fbb24be26e45d00f425a762ba90bc559f038b3
+last_reviewed: 2026-07-17
+last_verified_commit: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
   - docs/product/UX_UI_DESIGN.md
+  - docs/testing/TEST_STRATEGY.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -15,12 +16,20 @@ related_tasks:
   - BL-003
   - BL-079
   - BL-080
+  - BL-081
+  - QA-001
+  - QA-002
 code_refs:
   - .github/workflows/ci.yml
   - packages/config
+  - scripts/run-tests.mjs
+  - scripts/lib/test-lane-policy.mjs
+  - scripts/lib/test-report-policy.mjs
   - scripts/lib/ci-workflow-policy.mjs
   - scripts/lib/secret-scanner.mjs
   - package.json
+  - tests/e2e/playwright.config.mjs
+  - tests/e2e/start-web-server.mjs
   - scripts/check-docs.mjs
   - scripts/lib/document-policy.mjs
   - scripts/lib/document-integrity-policy.mjs
@@ -36,6 +45,10 @@ test_refs:
   - tests/contracts/agent-workflow-contract.test.mjs
   - tests/contracts/document-policy.test.mjs
   - tests/contracts/document-integrity.test.mjs
+  - tests/contracts/browser-harness-contract.test.mjs
+  - tests/e2e/game-shell.spec.mjs
+  - tests/e2e/accessibility.spec.mjs
+  - tests/e2e/harness-failures.spec.mjs
   - tests/unit/affected-verification.test.mjs
 supersedes: null
 ---

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: 0e128767996064e6e6d700a7b8f926096a62102b
+last_verified_commit: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
 source_refs:
   - docs/MVP_SPEC.md
   - docs/adr/0010-internal-provider-neutral-identity.md
@@ -190,7 +190,7 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `QA-002 — IN_REVIEW/90%/PASSING` sulla branch `codex/qa-002-browser-harness`; harness, baseline e CI/report completati, full/clean terminali
+> **Task attivo:** `QA-002 — DONE/100%/PASSING` branch-local sulla branch `codex/qa-002-browser-harness`; full, clean checkout e review inline conclusi
 > **Prossimo task READY:** nessun altro P0; `BL-080` resta congelato `BLOCKED` e non viene riaperto da QA-002
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
@@ -425,7 +425,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | 71% | 21 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta | `IN_PROGRESS` | 76% | 21 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -822,10 +822,10 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### QA-002 — Browser, accessibility e visual regression harness
 
-- **Stato:** `IN_REVIEW`
-- **Progresso:** `90%`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
 - **Esito test:** `PASSING`
-- **Contesto verificato:** `YES` — commit/SHA: `f653e63d4dc5bf7627c37622deaca64850961602`; data: `2026-07-17`
+- **Contesto verificato:** `YES` — commit/SHA: `feaf49c3d13a5ac87544d6583fc3c8e7e0457706`; data: `2026-07-17`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** QA-001, BL-081
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §26.8; `docs/MVP_SPEC.md` §35.1; `docs/product/UX_UI_DESIGN.md` §13–§14.1; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`
@@ -838,8 +838,8 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Accessibility scan prova una fixture valida e una violazione intenzionale che blocca il gate.
   - [x] Visual artifact stabile su due run; server failure, browser crash e snapshot drift propagano exit non-zero.
 - **Documentazione e contesto:** `docs/testing/TEST_STRATEGY.md`; `docs/product/UX_UI_DESIGN.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
-- **Evidenze di chiusura:** commit branch-local `be6787d`, `f182865`, `40c643d`, `8f80202`, `8dd1050`, `f5ad6f9`, `0e12876`; E2E 12/12 su due run Windows con tre hash invariati; sei baseline pixel-exact Windows/Linux, con Linux ripetuto nel container Playwright ufficiale; CI/report/security mirati 21/21 e policy workflow `PASS`. Full HIGH_RISK, checkout pulito e PR protetta restano terminali; migration/eval/trace ID `N/A`.
-- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` perché cambiano lockfile, runner, artifact e workflow CI. Design `browser-harness-v1`: unica lane `e2e` nel runner/report QA-001, Playwright `1.61.1`, axe `4.12.1`, solo Chromium, server standalone loopback, retry zero e snapshot per piattaforma. Lo starter copia gli asset statici Next nel layout standalone; report remoti e trace/video/axe grezzi falliscono chiusi. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`.
+- **Evidenze di chiusura:** commit branch-local `be6787d`, `f182865`, `40c643d`, `8f80202`, `8dd1050`, `f5ad6f9`, `0e12876`, `2831471`, `d6dd199` e `feaf49c`; E2E 12/12 su due run Windows con tre hash invariati; sei baseline pixel-exact Windows/Linux, con Linux ripetuto nel container Playwright ufficiale; CI/report/security mirati 21/21 e policy workflow `PASS`. Due finding reali sono stati chiusi alla causa: owner QA-002 nel report security e cleanup degli asset statici copiati nello standalone. Review inline del diff completo senza P0/P1. Full HIGH_RISK finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 346 s: format, lint 11, typecheck 16, build 11, report 420 test su sei corsie, contract 110/110, database 27/27, security 44 pass/3 skip host, docs/task/CI/deployment/secret policy e artifact 4.396 file `PASS`. Checkout detached pulito su `feaf49c`: install frozen, Chromium, browser contract 6/6, E2E 12/12, report `e2e`, build web e `verify:docs` verdi in 108,2 s; residuo Windows rimosso sul solo path temporaneo verificato. Warning `MaxListenersExceededWarning` preesistente del reporter Node invariato. Migration/eval/trace ID `N/A`.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` perché cambiano lockfile, runner, artifact e workflow CI. Design `browser-harness-v1`: unica lane `e2e` nel runner/report QA-001, Playwright `1.61.1`, axe `4.12.1`, solo Chromium, server standalone loopback, retry zero e snapshot per piattaforma. Lo starter copia e ripulisce gli asset statici Next nel layout standalone in modo idempotente; report remoti e trace/video/axe grezzi falliscono chiusi. Proposta branch-local terminale: la delivery resta derivata/PENDING finché il commit non raggiunge `main` tramite PR e `CI / Merge gate`. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`.
 
 ### DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale
 
@@ -2696,19 +2696,20 @@ Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il t
 
 ```yaml
 active_task: QA-002
-last_completed_task: BL-007
+last_completed_task: QA-002
 next_ready_task: null
-status: IN_REVIEW
-progress: 90
+status: DONE
+progress: 100
 started_at: 2026-07-17T16:10:09+02:00
 candidate_at: 2026-07-17T16:54:00+02:00
+completed_at: 2026-07-17T17:37:46+02:00
 cycle_target_minutes: 120
-cycle_actual_minutes: null
-updated_at: 2026-07-17T16:54:00+02:00
+cycle_actual_minutes: 88
+updated_at: 2026-07-17T17:37:46+02:00
 agent: Codex development agent
 git_branch: codex/qa-002-browser-harness
 base_commit: f653e63d4dc5bf7627c37622deaca64850961602
-candidate_head: 0e128767996064e6e6d700a7b8f926096a62102b
+candidate_head: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
 spec_sha256: 737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b
 context_verified: true
 test_status: PASSING
@@ -2738,6 +2739,7 @@ test_status: PASSING
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-17 17:37 +02:00 | 100% | QA-002 proposto `DONE/100%/PASSING` branch-local. La review inline non lascia P0/P1; i due finding reali chiusi sono owner/report security per QA-002 e cleanup degli asset statici standalone prima/dopo E2E. Nessun gate è stato indebolito e nessuna azione Vercel è stata eseguita. | Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 346 s con 420 test/report, E2E 12/12, artifact 4.396 file e policy root `PASS`. Checkout detached pulito su `feaf49c` exit `0` in 108,2 s: install frozen, Chromium, browser contract 6/6, E2E 12/12, report `e2e`, build web, docs/task graph e secret scan verdi. | Incorporare lo snapshot terminale nello stesso commit funzionale, aprire una sola PR protetta e attendere `CI / Merge gate`; nessun altro P0 locale READY finché `BL-080` resta congelato. |
 | 2026-07-17 16:54 +02:00 | 90% | Harness browser completato in sette batch: lane comune, server standalone con asset Next, matrice responsive/accessibile, baseline Windows/Linux, failure path e CI/artifact fail-closed. Il contrasto axe transiente durante Motion è stato eliminato impostando reduced-motion prima della scansione; nessun gate è stato attenuato. | E2E 12/12 ripetuti su Windows con tre hash invariati; sei PNG cross-platform stabili su due run; Linux verificato nel container Playwright ufficiale; contract/CI/security 21/21 e policy workflow PASS. Nessun processo residuo e nessuna azione Vercel. | Allineare living docs, review inline, unico full HIGH_RISK e checkout pulito; poi una sola PR protetta. |
 | 2026-07-17 16:10 +02:00 | 25% | BL-007 integrato tramite PR #31/merge `f653e63` e CI post-merge `29585826237` 5/5 `SUCCESS`. Selezionato QA-002 e adottato `browser-harness-v1`: unica lane Playwright nel runner/report comune, solo Chromium, server standalone loopback, axe e snapshot per piattaforma; esecuzione inline senza Vercel. | Base `f653e63`; spec SHA `737fcb…d80b`; build web PASS; shell unit/integration/contract 22/22. Fonti ufficiali Playwright/axe e versioni registry `1.61.1`/`4.12.1` verificate. | Versionare design/piano e avviare Task 1 TDD con catalogo lane/dipendenze RED. |
 | 2026-07-17 15:38 +02:00 | 100% | Review P0/P1 chiusa inline e candidato proposto `DONE/100%/PASSING` branch-local. Il primo full ha trovato l'import Node `URL` mancante; il secondo un transiente ledger Docker non riprodotto in 10/10 isolati né nella lane completa. Nessun gate è stato indebolito. | Full finale senza cache exit `0` in 395,9 s: format, lint/build 11, typecheck 16, report 396 test, policy boundary/docs/task/CI/deployment/secret e artifact 4.396 file `PASS`. | Incorporare stato e fix nello stesso commit, poi verificare il candidato da checkout detached pulito. |
@@ -2854,7 +2856,7 @@ test_status: PASSING
 - **Prompt/model/eval version:** nessuna modifica a prompt, modello o provider; `N/A`.
 - **Documenti aggiornati:** task/contesto/tracciabilità, indice, architettura, dati, API, migration, threat model, design e piano BL-007.
 - **Rischi residui tracciati:** RLS e trasporto SSE pubblico hanno owner successivi. Warning `MaxListenersExceededWarning` preesistente/non bloccante del reporter Node; freeze BL-080 invariato e nessuna azione provider o Vercel.
-- **Task successivo:** `QA-002 — Playwright, axe, visual regression`, ora `IN_REVIEW/90%/PASSING`; full/clean/CI protetta terminali.
+- **Task successivo:** `QA-002 — Playwright, axe, visual regression`, ora proposto `DONE/100%/PASSING` branch-local; PR/CI protetta pending e nessun altro P0 locale `READY`.
 
 
 ## 21. Context Sync Log
@@ -2863,6 +2865,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 
 | Data | Commit | Task | Documento/componente | Modifica | Task da riesaminare |
 |---|---|---|---|---|---|
+| 2026-07-17 | `feaf49c` + terminal docs | QA-002 candidate | Browser harness, runner/report e UX/UI | QA-002 proposto `DONE/100%/PASSING` branch-local: full HIGH_RISK 420 test, clean checkout, review inline e due finding reali chiusi. La delivery resta derivata/PENDING fino a PR e `CI / Merge gate`; nessuna azione Vercel. | GATE-M0, BL-040 |
 | 2026-07-17 | `0e12876` + CI/docs candidate | QA-002 | Browser harness, artifact test e UX/UI | Lane Playwright comune, axe, matrice 320/390/1440, sei baseline Windows/Linux e failure path sono verdi; CI installa Chromium e verifica `e2e`, artifact limitato al JUnit. Proposta `IN_REVIEW/90%/PASSING`; full/clean pending, Vercel invariato. | BL-040, GATE-M0 |
 | 2026-07-17 | `f653e63` + QA-002 design | BL-007 delivery / QA-002 start | Main, browser harness e contesto | PR #31 e CI post-merge 5/5 verificano BL-007; selezionato QA-002 con `browser-harness-v1`, piano TDD inline e baseline web/shell verde. Nessuna azione Vercel. | QA-002, GATE-M0 |
 | 2026-07-17 | `dde888e` + terminal docs | BL-007 candidate | ActorContext, campaign ownership e AC-23 | Contract `v4`, migration `000005`, store/API/SSE guard e matrice IDOR hanno superato mirati, corsie, review, full HIGH_RISK e checkout pulito. Proposta `DONE/100%/PASSING`; delivery protetta `PENDING`, nessuna azione Vercel. | BL-028, BL-038, BL-065, BL-066, BL-067, QA-002 |

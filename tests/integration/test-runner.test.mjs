@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:net";
-import { mkdir, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 import test from "node:test";
 import { fileURLToPath, URL } from "node:url";
 
@@ -205,6 +206,34 @@ test("QA-002:reserved-browser-port-is-released-before-the-run", async () => {
   });
   await new Promise((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
+  });
+});
+
+test("QA-002:browser-runtime-static-copy-is-cleaned-idempotently", async (context) => {
+  const runner = await import("../../scripts/run-tests.mjs");
+  assert.equal(typeof runner.cleanupBrowserRuntimeStatic, "function");
+
+  const root = await mkdtemp(path.join(os.tmpdir(), "dnd-ai-browser-cleanup-"));
+  context.after(() => rm(root, { force: true, recursive: true }));
+  const copiedStaticFile = path.join(
+    root,
+    "apps",
+    "web",
+    ".next",
+    "standalone",
+    "apps",
+    "web",
+    ".next",
+    "static",
+    "chunk.js",
+  );
+  await mkdir(path.dirname(copiedStaticFile), { recursive: true });
+  await writeFile(copiedStaticFile, "copied", "utf8");
+
+  await runner.cleanupBrowserRuntimeStatic(root);
+  await runner.cleanupBrowserRuntimeStatic(root);
+  await assert.rejects(readFile(copiedStaticFile, "utf8"), {
+    code: "ENOENT",
   });
 });
 

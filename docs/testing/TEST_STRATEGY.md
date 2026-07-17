@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-17
-last_verified_commit: 0e128767996064e6e6d700a7b8f926096a62102b
+last_verified_commit: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
 source_refs:
   - docs/MVP_SPEC.md#26-strategia-di-testing
   - docs/MVP_SPEC.md#35-definition-of-done

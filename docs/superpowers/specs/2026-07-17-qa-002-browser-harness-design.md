@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-17
-last_verified_commit: f653e63d4dc5bf7627c37622deaca64850961602
+last_verified_commit: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
 source_refs:
   - docs/MVP_SPEC.md#268-end-to-end
   - docs/MVP_SPEC.md#351-definition-of-done-per-user-story

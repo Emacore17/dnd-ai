@@ -40,6 +40,26 @@ const packageManagerCommand =
 const packageManagerArguments =
   process.platform === "win32" ? [corepackEntry, "pnpm@11.13.0"] : [];
 
+export async function cleanupBrowserRuntimeStatic(root) {
+  if (typeof root !== "string" || root.length === 0) {
+    throw new Error("test-runner: invalid-browser-runtime-root");
+  }
+  const resolvedRoot = path.resolve(root);
+  const destinationStatic = path.join(
+    resolvedRoot,
+    "apps",
+    "web",
+    ".next",
+    "standalone",
+    "apps",
+    "web",
+    ".next",
+    "static",
+  );
+  await assertOwnedPathChain(resolvedRoot, destinationStatic);
+  await rm(destinationStatic, { force: true, recursive: true });
+}
+
 function forward(result) {
   if (result.stdout) {
     process.stdout.write(result.stdout);
@@ -105,6 +125,9 @@ async function finalizeReports(lane, workspace) {
 async function executeLane(laneName, environment, updateSnapshots) {
   const lane = resolveTestLane(laneName);
   const reportWorkspace = await createReportWorkspace(lane);
+  if (lane.executor === "playwright") {
+    await cleanupBrowserRuntimeStatic(repositoryRoot);
+  }
   const build = await runCommandProcess({
     arguments_: [
       ...packageManagerArguments,
@@ -126,19 +149,23 @@ async function executeLane(laneName, environment, updateSnapshots) {
 
   const files = await discoverLaneFiles(repositoryRoot, lane);
   if (lane.executor === "playwright") {
-    const result = await runPlaywrightProcess({
-      junitPath: reportWorkspace.junit,
-      packageManagerArguments,
-      packageManagerCommand,
-      port: await reserveLoopbackPort(),
-      repositoryRoot,
-      sourceEnvironment: environment,
-      timeoutMs: lane.timeoutMs,
-      updateSnapshots,
-    });
-    forward(result);
-    await finalizeReports(lane, reportWorkspace);
-    return result.code;
+    try {
+      const result = await runPlaywrightProcess({
+        junitPath: reportWorkspace.junit,
+        packageManagerArguments,
+        packageManagerCommand,
+        port: await reserveLoopbackPort(),
+        repositoryRoot,
+        sourceEnvironment: environment,
+        timeoutMs: lane.timeoutMs,
+        updateSnapshots,
+      });
+      forward(result);
+      await finalizeReports(lane, reportWorkspace);
+      return result.code;
+    } finally {
+      await cleanupBrowserRuntimeStatic(repositoryRoot);
+    }
   }
 
   const reporters = [
