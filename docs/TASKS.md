@@ -179,8 +179,8 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-081 — DONE/100%/PASSING` proposto sulla branch `codex/bl-081-interactive-shell`; delivery protetta `PENDING` finché il candidato non raggiunge `main`
-> **Prossimo task READY:** `BL-007 — ActorContext e query tenant-safe`; `QA-002` è anch'esso sbloccato e `READY`, ma viene dopo BL-007 nell'ordine P0
+> **Task attivo:** `BL-007 — IN_PROGRESS/25%/NOT_RUN` sulla branch `codex/bl-007-actor-context`; design `campaign-ownership-v1` approvato, implementazione TDD non ancora iniziata
+> **Prossimo task READY:** `QA-002 — Playwright, axe, visual regression`; resta indipendente e non viene avviato durante BL-007
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -579,13 +579,13 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-007 — ActorContext e query tenant-safe
 
-- **Stato:** `READY`
-- **Progresso:** `0%`
+- **Stato:** `IN_PROGRESS`
+- **Progresso:** `25%`
 - **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Contesto verificato:** `YES` — baseline integrata `464b124d7b5182d2614703a743dffb622cc220fe`; spec SHA-256 `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b`; data: `2026-07-17`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-004, BL-006
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20.1 Convenzioni REST; `docs/MVP_SPEC.md` §22.3 Autorizzazione e isolamento campagne; `docs/MVP_SPEC.md` §32 AC-23; `docs/MVP_SPEC.md` §31 `BL-007`; `docs/MVP_SPEC.md` §35.1
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20.1 Convenzioni REST; `docs/MVP_SPEC.md` §22.3 Autorizzazione e isolamento campagne; `docs/MVP_SPEC.md` §32 AC-23; `docs/MVP_SPEC.md` §31 `BL-007`; `docs/MVP_SPEC.md` §35.1; [`design campaign-ownership-v1`](superpowers/specs/2026-07-17-bl-007-actor-context-design.md)
 - **Obiettivo:** Come sistema voglio ownership scoped nei repository.
 - **Deliverable:** ActorContext e query tenant-safe.
 - **Criterio di accettazione:** IDOR matrix restituisce zero accessi; risorsa altrui 404.
@@ -594,8 +594,8 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Matrice IDOR automatizzata su repository/API/SSE con due utenti e risorse incrociate.
   - [ ] Test che gli errori non rivelino l’esistenza della risorsa altrui.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`; `docs/security/THREAT_MODEL.md`
-- **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+- **Evidenze di chiusura:** design `campaign-ownership-v1` approvato dal Product Owner il 2026-07-17; implementazione, test e delivery ancora aperti.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK`. Scope approvato: migration `000005_campaign_ownership`, contract `v4`, session resolver read-only, `ActorContext`, repository actor-scoped, `GET /api/campaigns/:campaignId` e pre-handler SSE reale ma non registrato nel runtime fino a BL-038. Matrice IDOR su due utenti/due campagne obbligatoria; RLS, rate limit generale, turni, UI, deploy e Vercel fuori scope.
 
 ### BL-008 — OTel/log/Sentry baseline
 
