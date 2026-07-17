@@ -22,9 +22,11 @@ test("QA-001:test-lane-catalog-is-closed-and-bounded", () => {
     "database",
     "contract",
     "security",
+    "e2e",
   ]);
+  assert.equal(resolveTestLane("unit").executor, "node");
   assert.equal(resolveTestLane("database").concurrency, 1);
-  assert.deepEqual(resolveTestLane("unit").ownerTaskIds, ["QA-001"]);
+  assert.deepEqual(resolveTestLane("unit").ownerTaskIds, ["QA-001", "QA-002"]);
   assert.ok(resolveTestLane("unit").buildFilters.includes("@dnd-ai/domain"));
   assert.ok(resolveTestLane("unit").buildFilters.includes("@dnd-ai/api"));
   assert.ok(resolveTestLane("unit").buildFilters.includes("@dnd-ai/worker"));
@@ -32,10 +34,19 @@ test("QA-001:test-lane-catalog-is-closed-and-bounded", () => {
   assert.ok(
     resolveTestLane("security").buildFilters.includes("@dnd-ai/worker"),
   );
+  assert.deepEqual(resolveTestLane("e2e"), {
+    buildFilters: ["@dnd-ai/web"],
+    concurrency: 1,
+    executor: "playwright",
+    name: "e2e",
+    ownerTaskIds: ["QA-002"],
+    patterns: ["tests/e2e/*.spec.mjs"],
+    timeoutMs: 300_000,
+  });
   assert.equal(Object.isFrozen(TEST_LANES), true);
   assert.equal(Object.isFrozen(resolveTestLane("unit")), true);
 
-  for (const invalidLane of ["", "all", "e2e", "../unit", "UNIT"]) {
+  for (const invalidLane of ["", "all", "../unit", "UNIT"]) {
     assert.throws(
       () => resolveTestLane(invalidLane),
       /test-runner: unknown-lane/u,

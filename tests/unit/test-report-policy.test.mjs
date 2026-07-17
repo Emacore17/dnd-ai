@@ -150,7 +150,7 @@ test("QA-001:test-report-artifact-is-hashed-reproducible-and-verifiable", async 
   assert.deepEqual(first, second);
   assert.equal(first.schemaVersion, "testing-foundation-v1");
   assert.deepEqual(first.lanes, ["unit"]);
-  assert.deepEqual(first.taskIds, ["QA-001"]);
+  assert.deepEqual(first.taskIds, ["QA-001", "QA-002"]);
   assert.deepEqual(await verifyTestReportArtifact(options), []);
 
   const persisted = JSON.parse(

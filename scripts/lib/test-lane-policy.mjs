@@ -40,8 +40,9 @@ export const TEST_LANES = Object.freeze({
       "@dnd-ai/worker",
     ],
     concurrency: 4,
+    executor: "node",
     name: "unit",
-    ownerTaskIds: ["QA-001"],
+    ownerTaskIds: ["QA-001", "QA-002"],
     patterns: ["tests/unit/*.test.mjs"],
     timeoutMs: 300_000,
   }),
@@ -53,6 +54,7 @@ export const TEST_LANES = Object.freeze({
       "@dnd-ai/testing",
     ],
     concurrency: 2,
+    executor: "node",
     name: "integration",
     ownerTaskIds: ["QA-001"],
     patterns: ["tests/integration/*.test.mjs"],
@@ -61,6 +63,7 @@ export const TEST_LANES = Object.freeze({
   database: freezeLane({
     buildFilters: ["@dnd-ai/config", "@dnd-ai/persistence", "@dnd-ai/testing"],
     concurrency: 1,
+    executor: "node",
     name: "database",
     ownerTaskIds: ["QA-001"],
     patterns: ["tests/database/*.test.mjs"],
@@ -69,8 +72,9 @@ export const TEST_LANES = Object.freeze({
   contract: freezeLane({
     buildFilters: ["@dnd-ai/contracts", "@dnd-ai/testing"],
     concurrency: 4,
+    executor: "node",
     name: "contract",
-    ownerTaskIds: ["QA-001"],
+    ownerTaskIds: ["QA-001", "QA-002"],
     patterns: ["tests/contracts/*.test.mjs"],
     timeoutMs: 300_000,
   }),
@@ -84,9 +88,19 @@ export const TEST_LANES = Object.freeze({
       "@dnd-ai/worker",
     ],
     concurrency: 2,
+    executor: "node",
     name: "security",
     ownerTaskIds: ["QA-001"],
     patterns: ["tests/security/*.test.mjs"],
+    timeoutMs: 300_000,
+  }),
+  e2e: freezeLane({
+    buildFilters: ["@dnd-ai/web"],
+    concurrency: 1,
+    executor: "playwright",
+    name: "e2e",
+    ownerTaskIds: ["QA-002"],
+    patterns: ["tests/e2e/*.spec.mjs"],
     timeoutMs: 300_000,
   }),
 });
@@ -137,7 +151,9 @@ export async function discoverLaneFiles(repositoryRoot, lane) {
         entry.isSymbolicLink() ||
         !isInside(testsRoot, actualPath) ||
         actualPath !== absolutePath ||
-        !absolutePath.endsWith(".test.mjs")
+        !absolutePath.endsWith(
+          lane.executor === "playwright" ? ".spec.mjs" : ".test.mjs",
+        )
       ) {
         throw new Error("test-runner: invalid-test-path");
       }
