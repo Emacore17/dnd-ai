@@ -10,15 +10,20 @@ export const DATABASE_FEATURE_FLAGS_MIGRATION_NAME = "000002_feature_flags";
 export const DATABASE_IDENTITY_SIGNUP_CONTRACT_VERSION =
   "database-identity-signup-v1";
 export const DATABASE_IDENTITY_SIGNUP_MIGRATION_NAME = "000003_identity_signup";
+export const DATABASE_IDENTITY_ACCESS_CONTRACT_VERSION =
+  "database-identity-access-v1";
+export const DATABASE_IDENTITY_ACCESS_MIGRATION_NAME = "000004_identity_access";
 export const DATABASE_CONTRACT_VERSION =
-  DATABASE_IDENTITY_SIGNUP_CONTRACT_VERSION;
-export const DATABASE_MIGRATION_HEAD = DATABASE_IDENTITY_SIGNUP_MIGRATION_NAME;
+  DATABASE_IDENTITY_ACCESS_CONTRACT_VERSION;
+export const DATABASE_MIGRATION_HEAD = DATABASE_IDENTITY_ACCESS_MIGRATION_NAME;
 export const DATABASE_BASELINE_MIGRATION_SOURCE_SHA256 =
   "e8543d84b9b842adf352260536dcea284c93dfb859c9ec03368f10deb9455fc7";
 export const FEATURE_FLAGS_MIGRATION_SOURCE_SHA256 =
   "6fa16b6639d20772f0260f1f39201b91c42162b73f9d716f2677fe1328ed5ec8";
 export const IDENTITY_SIGNUP_MIGRATION_SOURCE_SHA256 =
   "22821ad6cf592d99ed63cd444cf2a6b4e3ea936685c0e32b975bf71e06969d05";
+export const IDENTITY_ACCESS_MIGRATION_SOURCE_SHA256 =
+  "330164398efd1ce9bd4463753f1ca01cb5ef3eaa56a187fe10b7097f0c2385d9";
 
 // Derived from the first 32 bits of SHA-256("dnd-ai:database-migrations")
 // and kept in the signed 32-bit range for PostgreSQL advisory locking.
@@ -593,8 +598,199 @@ VALUES (
 );
 `.trim();
 
+export const DATABASE_IDENTITY_ACCESS_CREDENTIAL_VERSION_SQL = `
+ALTER TABLE app.user_credentials
+  ADD COLUMN credential_version bigint NOT NULL DEFAULT 1;
+
+ALTER TABLE app.user_credentials
+  ADD CONSTRAINT user_credentials_credential_version_positive
+  CHECK (credential_version > 0);
+`.trim();
+
+export const DATABASE_IDENTITY_ACCESS_RESET_TABLE_SQL = `
+CREATE TABLE app.password_reset_challenges (
+  challenge_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  code_digest text COLLATE "C" NOT NULL,
+  key_version integer NOT NULL,
+  attempt_count integer NOT NULL DEFAULT 0,
+  max_attempts integer NOT NULL DEFAULT 5,
+  expires_at timestamptz NOT NULL,
+  consumed_at timestamptz NULL,
+  superseded_at timestamptz NULL,
+  created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT password_reset_challenges_pkey PRIMARY KEY (challenge_id),
+  CONSTRAINT password_reset_challenges_user_fkey FOREIGN KEY (user_id)
+    REFERENCES app.users (user_id) ON DELETE RESTRICT,
+  CONSTRAINT password_reset_challenges_code_digest_sha256 CHECK (code_digest ~ '^[0-9a-f]{64}$'),
+  CONSTRAINT password_reset_challenges_key_version_positive CHECK (key_version > 0),
+  CONSTRAINT password_reset_challenges_attempts_bounded CHECK (
+    max_attempts = 5 AND attempt_count BETWEEN 0 AND max_attempts
+  ),
+  CONSTRAINT password_reset_challenges_expiry_after_creation CHECK (expires_at > created_at),
+  CONSTRAINT password_reset_challenges_terminal_state CHECK (
+    NOT (consumed_at IS NOT NULL AND superseded_at IS NOT NULL)
+    AND (consumed_at IS NULL OR consumed_at >= created_at)
+    AND (superseded_at IS NULL OR superseded_at >= created_at)
+  )
+);
+`.trim();
+
+export const DATABASE_IDENTITY_ACCESS_RESET_INDEXES_SQL = `
+CREATE UNIQUE INDEX password_reset_challenges_one_current_idx
+ON app.password_reset_challenges (user_id)
+WHERE consumed_at IS NULL AND superseded_at IS NULL;
+
+CREATE INDEX password_reset_challenges_lookup_idx
+ON app.password_reset_challenges (user_id, created_at DESC)
+INCLUDE (
+  challenge_id, code_digest, key_version, expires_at,
+  attempt_count, max_attempts
+);
+`.trim();
+
+export const DATABASE_IDENTITY_ACCESS_OUTBOX_SQL = `
+ALTER TABLE app.identity_email_outbox
+  ALTER COLUMN challenge_id DROP NOT NULL,
+  ADD COLUMN password_reset_challenge_id uuid NULL,
+  ADD CONSTRAINT identity_email_outbox_password_reset_challenge_fkey
+    FOREIGN KEY (password_reset_challenge_id)
+    REFERENCES app.password_reset_challenges (challenge_id) ON DELETE RESTRICT,
+  ADD CONSTRAINT identity_email_outbox_password_reset_challenge_key
+    UNIQUE (password_reset_challenge_id);
+`.trim();
+
+export const DATABASE_IDENTITY_ACCESS_CONSTRAINTS_SQL = `
+ALTER TABLE app.identity_email_outbox
+  DROP CONSTRAINT identity_email_outbox_template_known,
+  ADD CONSTRAINT identity_email_outbox_template_known CHECK (
+    template_key IN ('email_verification_v1', 'password_reset_v1')
+  ),
+  ADD CONSTRAINT identity_email_outbox_exactly_one_challenge CHECK (
+    num_nonnulls(challenge_id, password_reset_challenge_id) = 1
+  ),
+  ADD CONSTRAINT identity_email_outbox_template_coherent CHECK (
+    (template_key = 'email_verification_v1'
+      AND challenge_id IS NOT NULL
+      AND password_reset_challenge_id IS NULL)
+    OR
+    (template_key = 'password_reset_v1'
+      AND challenge_id IS NULL
+      AND password_reset_challenge_id IS NOT NULL)
+  );
+
+ALTER TABLE app.identity_rate_limits
+  DROP CONSTRAINT identity_rate_limits_scope_known,
+  ADD CONSTRAINT identity_rate_limits_scope_known CHECK (
+    scope IN (
+      'signup_ip', 'signup_email', 'verify_ip', 'verify_challenge',
+      'resend_ip', 'resend_email', 'sign_in_ip', 'sign_in_email',
+      'refresh_session', 'sign_out', 'revoke_all', 'reset_request_ip',
+      'reset_request_email', 'reset_confirm_ip', 'reset_challenge'
+    )
+  );
+
+ALTER TABLE app.identity_idempotency
+  DROP CONSTRAINT identity_idempotency_endpoint_known,
+  DROP CONSTRAINT identity_idempotency_response_known,
+  ADD CONSTRAINT identity_idempotency_endpoint_known CHECK (
+    endpoint IN (
+      'sign_up', 'verify_email', 'resend_verification', 'sign_in',
+      'refresh_session', 'sign_out', 'revoke_all_sessions',
+      'request_password_reset', 'confirm_password_reset'
+    )
+  ),
+  ADD CONSTRAINT identity_idempotency_response_known CHECK (
+    response_kind IN (
+      'accepted', 'verified', 'already_verified', 'invalid_code', 'expired',
+      'attempts_exhausted', 'cooldown', 'authenticated', 'signed_out',
+      'sessions_revoked', 'session_invalid', 'credentials_invalid',
+      'password_reset_requested', 'password_reset', 'password_reset_invalid'
+    )
+  );
+
+ALTER TABLE app.identity_audit_events
+  DROP CONSTRAINT identity_audit_events_type_known,
+  DROP CONSTRAINT identity_audit_events_metadata_allowlist,
+  ADD CONSTRAINT identity_audit_events_type_known CHECK (
+    event_type IN (
+      'signup_accepted', 'signup_existing', 'verification_failed',
+      'email_verified', 'verification_resent', 'resend_ignored',
+      'sign_in_succeeded', 'session_refreshed', 'session_signed_out',
+      'sessions_revoked', 'password_reset_requested',
+      'password_reset_ignored', 'password_reset_failed',
+      'password_reset_completed'
+    )
+  ),
+  ADD CONSTRAINT identity_audit_events_metadata_allowlist CHECK (
+    (metadata - ARRAY[
+      'challenge_id', 'session_id', 'reason_code', 'idempotent_replay',
+      'revoked_session_count'
+    ]::text[]) = '{}'::jsonb
+  );
+`.trim();
+
+const identityAccessContractDefinition = Object.freeze({
+  migrationId: 4,
+  migrationName: DATABASE_IDENTITY_ACCESS_MIGRATION_NAME,
+  contractVersion: DATABASE_IDENTITY_ACCESS_CONTRACT_VERSION,
+  fileName: DATABASE_IDENTITY_ACCESS_MIGRATION_NAME,
+  minimumCompatibleMigrationId: 1,
+});
+
+export const DATABASE_IDENTITY_ACCESS_SUPERSEDE_SIGNUP_CONTRACT_SQL = `
+UPDATE infra.migration_contracts
+SET superseded_at = GREATEST(CURRENT_TIMESTAMP, applied_at)
+WHERE migration_id = ${identitySignupContract.migrationId}
+  AND superseded_at IS NULL;
+`.trim();
+
+const identityAccessCanonicalDefinition = [
+  IDENTITY_ACCESS_MIGRATION_SOURCE_SHA256,
+  DATABASE_IDENTITY_ACCESS_CREDENTIAL_VERSION_SQL,
+  DATABASE_IDENTITY_ACCESS_RESET_TABLE_SQL,
+  DATABASE_IDENTITY_ACCESS_RESET_INDEXES_SQL,
+  DATABASE_IDENTITY_ACCESS_OUTBOX_SQL,
+  DATABASE_IDENTITY_ACCESS_CONSTRAINTS_SQL,
+  DATABASE_IDENTITY_ACCESS_SUPERSEDE_SIGNUP_CONTRACT_SQL,
+  JSON.stringify(identityAccessContractDefinition),
+].join("\n");
+
+const identityAccessChecksum = createHash("sha256")
+  .update(identityAccessCanonicalDefinition, "utf8")
+  .digest("hex");
+
+const identityAccessContract = Object.freeze({
+  ...identityAccessContractDefinition,
+  checksum: identityAccessChecksum,
+});
+
+export const DATABASE_IDENTITY_ACCESS_RESTORE_SIGNUP_CONTRACT_SQL = `
+UPDATE infra.migration_contracts
+SET superseded_at = NULL
+WHERE migration_id = ${identitySignupContract.migrationId};
+`.trim();
+
+export const DATABASE_IDENTITY_ACCESS_CONTRACT_INSERT_SQL = `
+INSERT INTO infra.migration_contracts (
+  migration_id,
+  migration_name,
+  contract_version,
+  checksum,
+  minimum_compatible_migration_id
+)
+VALUES (
+  ${identityAccessContract.migrationId},
+  ${quoteSqlLiteral(identityAccessContract.migrationName)},
+  ${quoteSqlLiteral(identityAccessContract.contractVersion)},
+  ${quoteSqlLiteral(identityAccessContract.checksum)},
+  ${identityAccessContract.minimumCompatibleMigrationId}
+);
+`.trim();
+
 export const DATABASE_MIGRATION_MANIFEST = Object.freeze([
   baselineContract,
   featureFlagsContract,
   identitySignupContract,
+  identityAccessContract,
 ]) satisfies readonly DatabaseMigrationManifestEntry[];

@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering-and-data
-last_reviewed: 2026-07-16
-last_verified_commit: 8e6e0d3d46daa057ba80999c58c83ad1c92471b1
+last_reviewed: 2026-07-17
+last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilità
   - docs/MVP_SPEC.md#264-integration-test-database
@@ -12,6 +12,7 @@ source_refs:
 related_tasks:
   - BL-004
   - BL-005
+  - BL-006
   - BL-010
 code_refs:
   - package.json
@@ -21,6 +22,7 @@ code_refs:
   - packages/persistence/src/migrations/000001_postgresql_foundation.ts
   - packages/persistence/src/migrations/000002_feature_flags.ts
   - packages/persistence/src/migrations/000003_identity_signup.ts
+  - packages/persistence/src/migrations/000004_identity_access.ts
   - packages/persistence/src/feature-flags.ts
   - packages/persistence/src/identity-store.ts
   - scripts/run-database-migrations.mjs
@@ -55,14 +57,14 @@ Questo runbook copre il lifecycle locale, l'applicazione delle migration, il con
 | pgvector | `0.8.2` |
 | Immagine | `pgvector/pgvector:0.8.2-pg17-trixie@sha256:5c97c57367a485a8e99389548db67d441ab1a878f5492c3df04989f34ecf3c75` |
 | Runner/driver | `node-pg-migrate@8.0.4` / `pg@8.22.0` |
-| Migration head | `000003_identity_signup` |
-| Contract | `database-identity-signup-v1` |
-| Source SHA-256 | `22821ad6cf592d99ed63cd444cf2a6b4e3ea936685c0e32b975bf71e06969d05` |
-| Contract checksum | `5890760af32ac99501ce9a5119e4e9d2b43c6687d6c4e14c5a4cf27188d35f88` |
+| Migration head | `000004_identity_access` |
+| Contract | `database-identity-access-v1` |
+| Source SHA-256 | `330164398efd1ce9bd4463753f1ca01cb5ef3eaa56a187fe10b7097f0c2385d9` |
+| Contract checksum | `73f20dd1c1791cd9b313ac4ef5355c284c11a43556abf3f6316c9bf071c22549` |
 | Namespace | `app`, `infra` |
 | Registro | `infra.migration_contracts` |
 
-La baseline `000001` abilita `vector` e crea i due namespace e il registro di integrità. `000002_feature_flags` aggiunge catalogo e audit dei kill switch. `000003_identity_signup` aggiunge utenti pending/active, credenziali Argon2id, challenge, sessioni, outbox email, rate limit, idempotenza e audit identity append-only. Non contiene campagne, turni, RLS, colonne/indici vettoriali o dati di gioco.
+La baseline `000001` abilita `vector` e crea i due namespace e il registro di integrità. `000002_feature_flags` aggiunge catalogo e audit dei kill switch. `000003_identity_signup` aggiunge utenti pending/active, credenziali Argon2id, challenge, sessioni, outbox email, rate limit, idempotenza e audit identity append-only. `000004_identity_access` aggiunge versione credenziale, challenge reset one-time, outbox verifica/reset discriminato e allowlist per sessioni/reset. Non contiene campagne, turni, RLS, colonne/indici vettoriali o dati di gioco.
 
 ## Prerequisiti e configurazione
 
@@ -140,7 +142,7 @@ Ripetere lo stesso comando su un database già all'head deve produrre un no-op e
 corepack pnpm@11.13.0 db:migrate:status:local
 ```
 
-Lo stato valido riporta `000003_identity_signup`, `database-identity-signup-v1` e nessuna migration pendente. Il report può contenere nomi e checksum delle migration, mai la URL di connessione.
+Lo stato valido riporta `000004_identity_access`, `database-identity-access-v1` e nessuna migration pendente. Il report può contenere nomi e checksum delle migration, mai la URL di connessione.
 
 ### 6. Chiusura del database locale
 
@@ -178,11 +180,11 @@ corepack pnpm@11.13.0 db:migrate:test
 
 Il comando possiede il lifecycle di un database isolato e deve verificare almeno:
 
-- database vuoto -> `000003_identity_signup`;
-- upgrade dalla versione precedente: `000002_feature_flags` -> `000003_identity_signup`;
+- database vuoto -> `000004_identity_access`;
+- upgrade dalla versione precedente: `000003_identity_signup` -> `000004_identity_access`;
 - replay all'head come no-op;
 - presenza dell'estensione `vector`, dei namespace `app`/`infra`, di `infra.migration_contracts`, di `app.feature_flags` e di `app.feature_flag_events`;
-- source SHA normalizzato, checksum canonico e compatibilità `database-identity-signup-v1`;
+- source SHA normalizzato, checksum canonico e compatibilità `database-identity-access-v1`;
 - file migration sconosciuti e symlink rifiutati prima del DDL;
 - ordine fail-closed con `checkOrder`;
 - errore DDL con rollback completo della singola transazione;
@@ -191,7 +193,7 @@ Il comando possiede il lifecycle di un database isolato e deve verificare almeno
 - override di routing PostgreSQL nella query string rifiutato per il rollback locale;
 - output e report privi di URL o credenziali.
 
-La suite `tests/database/feature-flags.test.mjs` continua a verificare lettura seed, cambio flag senza deploy, audit, CAS, idempotenza e rollback. Le suite `identity-migration`/`identity-store` aggiungono constraint, indici, zero/previous→head, signup/verify/resend atomici, race reali, rate limit, idempotenza e audit append-only.
+La suite `tests/database/feature-flags.test.mjs` continua a verificare lettura seed, cambio flag senza deploy, audit, CAS, idempotenza e rollback. `identity-migration` verifica inoltre `credential_version`, reset one-time, outbox XOR/template, allowlist, zero/previous→head e rollback/re-apply; gli store coprono transazioni e race dei flussi applicativi.
 
 Il test termina sempre il container isolato, anche dopo un failure. Nessun test usa SQLite, sleep arbitrari o dati reali.
 

@@ -116,6 +116,7 @@ Una preview non introduce il valore `preview`: usa lo schema `staging`, ma non n
 | API | `API_AUTH_PASSWORD_PEPPER_BASE64` + `API_AUTH_PASSWORD_PEPPER_VERSION` | secret + metadata | Base64 decodificato di almeno 32 byte e versione positiva per il prehash Argon2id |
 | API | `API_AUTH_CHALLENGE_HMAC_KEY_BASE64` + `API_AUTH_CHALLENGE_KEY_VERSION` | secret + metadata | chiave/versione per codice e digest challenge; distinta logicamente dalle altre chiavi |
 | API | `API_AUTH_SESSION_HMAC_KEY_BASE64` + `API_AUTH_SESSION_KEY_VERSION` | secret + metadata | chiave/versione per derivare token sessione replayable senza conservarlo raw |
+| API | `API_AUTH_RESET_HMAC_KEY_BASE64` + `API_AUTH_RESET_KEY_VERSION` | secret + metadata | chiave/versione HMAC dedicata ai codici reset; distinta da pepper, challenge, sessione, subject e BFF |
 | API | `API_AUTH_SUBJECT_HASH_KEY_BASE64` | secret | HMAC per subject rate-limit, idempotency key e fingerprint; non condivisa con challenge/sessione |
 | API | `API_AUTH_BFF_ASSERTION_KEY_BASE64` | secret | stessa chiave server-only del web per verificare il subject client pseudonimo; distinta da pepper, challenge, sessione e subject hash |
 | API | `API_SENTRY_DSN` | identificatore provider pubblico, redatto | opzionale; DSN HTTPS con host strutturale e project ID numerico |
@@ -123,6 +124,7 @@ Una preview non introduce il valore `preview`: usa lo schema `staging`, ma non n
 | worker | `WORKER_DATABASE_URL` | secret-bearing | URL PostgreSQL con credenziale worker distinta e TLS nei profili gestiti |
 | worker | `WORKER_REDIS_URL` | secret-bearing | URL Redis con credenziale worker distinta e `rediss:` nei profili gestiti |
 | worker | `WORKER_AUTH_CHALLENGE_HMAC_KEY_BASE64` + `WORKER_AUTH_CHALLENGE_KEY_VERSION` | secret + metadata | stessa versione/materiale challenge dell'API per derivare il codice in memoria; mai esposto al browser |
+| worker | `WORKER_AUTH_RESET_HMAC_KEY_BASE64` + `WORKER_AUTH_RESET_KEY_VERSION` | secret + metadata | stessa versione/materiale reset dell'API, service-scoped e distinta dalla challenge; mai esposta al browser |
 | worker | `WORKER_EMAIL_DELIVERY_MODE` | non secret | `fake` soltanto in `local`; `smtp` obbligatorio nei profili gestiti |
 | worker | `WORKER_SMTP_HOST`, `WORKER_SMTP_PORT`, `WORKER_SMTP_SECURE`, `WORKER_SMTP_FROM` | configurazione delivery | host/porta/from strutturali; TLS verificato, nessun fallback permissivo |
 | worker | `WORKER_SMTP_USERNAME`, `WORKER_SMTP_PASSWORD` | secret-bearing | credenziali SMTP obbligatorie con mode `smtp`, service-scoped e mai loggate |
@@ -225,6 +227,6 @@ Il repository ignora `.env` e `.env.*`, consentendo soltanto `.env.example`. Lo 
 - `BL-008`: baseline OTel/Pino/Sentry, redazione e propagazione implementate sul branch; nessun endpoint pubblico, account o backend remoto introdotto;
 - `BL-010`: configurazione dinamica auditata per flag e kill switch;
 - `BL-005`: chiavi identity versionate, origin pubblico/interno e delivery email server-only implementati; nessun secret reale o SMTP remoto verificato;
-- `BL-006`: design approvato per una chiave HMAC reset dedicata e durate sessione tipizzate; variabili e parser non sono ancora implementati e verranno aggiunti soltanto con test fail-fast/redaction;
+- `BL-006`: chiave HMAC reset dedicata e versionata implementata nei parser/template API e worker con controllo anti-riuso, fail-fast e test di redazione; durate sessione restano policy di dominio;
 - `BL-080`: project/provider web, Production Branch e Trusted Source configurati senza secret applicativi; freeze integrato; task bloccato finché il provider non offre un first-deployment Preview-only supportato;
 - `BL-070`: hardening, load/chaos, backup restore e go/no-go.

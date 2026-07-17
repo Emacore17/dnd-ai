@@ -19,7 +19,7 @@ import { withPostgresTestContainer } from "../../scripts/lib/postgres-test-conta
 const { Client } = pg;
 const unknownMigrationPath = fileURLToPath(
   new URL(
-    "../../packages/persistence/dist/migrations/000004_unknown_migration.js",
+    "../../packages/persistence/dist/migrations/000005_unknown_migration.js",
     import.meta.url,
   ),
 );
@@ -288,8 +288,8 @@ test(
                    minimum_compatible_migration_id
                  ) VALUES ($1, $2, $3, $4, $5)`,
                 [
-                  4,
-                  "000004_future_contract",
+                  expectedMigrationNames.length + 1,
+                  "000005_future_contract",
                   "future-contract-v1",
                   "a".repeat(64),
                   1,
@@ -413,7 +413,7 @@ test(
               await assert.rejects(
                 runDatabaseMigrations({
                   allowDestructiveRollback: true,
-                  count: 1,
+                  count: 2,
                   databaseUrl,
                   direction: "down",
                 }),
@@ -465,7 +465,7 @@ test(
         );
 
         await context.test(
-          "explicit local rollback removes the identity head and can re-apply",
+          "explicit local rollback removes the access head and can re-apply",
           async () => {
             const rolledBack = await runDatabaseMigrations({
               allowDestructiveRollback: true,
@@ -493,7 +493,11 @@ test(
               await tableExists(client, "app", "feature_flags"),
               true,
             );
-            assert.equal(await tableExists(client, "app", "users"), false);
+            assert.equal(await tableExists(client, "app", "users"), true);
+            assert.equal(
+              await tableExists(client, "app", "password_reset_challenges"),
+              false,
+            );
 
             const extension = await client.query(
               "SELECT 1 FROM pg_extension WHERE extname = 'vector'",

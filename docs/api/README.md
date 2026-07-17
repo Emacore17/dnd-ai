@@ -21,6 +21,7 @@ code_refs:
   - packages/contracts/src
   - packages/contracts/generated/v1
   - packages/contracts/generated/v2
+  - packages/contracts/generated/v3
   - scripts/generate-contracts.mjs
   - scripts/lib/contract-artifact-policy.mjs
   - scripts/lib/contract-compatibility-policy.mjs
@@ -41,11 +42,11 @@ supersedes: null
 
 ## Contratto corrente
 
-`@dnd-ai/contracts` espone schemi Zod strict e tipi inferiti. L'artifact `v1` (`1.0.0`) resta immutabile; BL-005 pubblica l'artifact `v2` (`2.0.0`) per aggiungere le operazioni identity. `schemaVersion: 1` degli envelope evento/SSE non cambia, perché il relativo wire format è invariato.
+`@dnd-ai/contracts` espone schemi Zod strict e tipi inferiti. Gli artifact `v1` (`1.0.0`) e `v2` (`2.0.0`) restano immutabili; la branch BL-006 genera il candidato `v3` (`3.0.0`) per il lifecycle identity completo. `schemaVersion: 1` degli envelope evento/SSE non cambia, perché il relativo wire format è invariato.
 
-OpenAPI `v2` descrive soltanto le route effettivamente implementate `/api/auth/sign-up`, `/api/auth/verify-email` e `/api/auth/resend-verification`, inclusi idempotency header, risposte, errori e cookie applicabili. Le route del turno restano assenti finché il task proprietario non implementa handler e comportamento.
+OpenAPI `v3` contiene le tre operazioni signup già disponibili e sei contratti access/reset: sign-in, refresh, sign-out, revoke-all, reset request e reset confirm. Tutte richiedono `Idempotency-Key`; refresh/sign-out non hanno body e i `204` non dichiarano content. Finché BL-006 resta aperto, questi sei path sono wire contract candidati e non prova che gli handler siano già registrati. Le route del turno restano assenti.
 
-`identity-access-v1` approva per BL-006 un nuovo artifact immutabile `v3` / `3.0.0` con sign-in, refresh, sign-out, revoke-all e reset password. `v3` è un target di implementazione: directory generate, export e route non esistono ancora e non devono essere presentati come runtime disponibile.
+`identity-access-v1` possiede DTO strict, error code generici e response minimali del nuovo major. Le directory generate e gli export esistono e superano drift/compatibility; store, route e UI restano tracciati separatamente fino alla chiusura della slice.
 
 | Contratto | Tipo | Responsabilità |
 |---|---|---|
@@ -61,6 +62,13 @@ OpenAPI `v2` descrive soltanto le route effettivamente implementate `/api/auth/s
 | `VerificationRequiredResponse` | response | accettazione `202`, TTL challenge e cooldown resend |
 | `VerifiedResponse` | response | attivazione completata; la sessione viaggia soltanto nel cookie |
 | `IdentityErrorResponse` | response | codici auth allowlisted e request ID redatto |
+| `SignInRequest` | request | email/password strict, senza remember-me |
+| `PasswordResetRequest` | request | email normalizzata con risposta sempre generica |
+| `PasswordResetConfirm` | request | email, codice stringa a sei cifre e nuova password |
+| `RevokeAllSessionsRequest` | request | conferma letterale chiusa `revoke_all` |
+| `AuthenticatedResponse` | response | autenticazione completata; token soltanto nel cookie |
+| `PasswordResetRequestedResponse` | response | richiesta reset accettata senza enumeration |
+| `PasswordResetCompletedResponse` | response | reset completato senza auto-login |
 
 La factory `createAIToolCallSchema` accetta uno schema tool-name allowlisted e lo schema degli argomenti. Non esiste un envelope mutante con nome tool arbitrario.
 
@@ -77,6 +85,10 @@ packages/contracts/generated/v2/
   manifest.json
   openapi.json
   schemas/*.schema.json
+packages/contracts/generated/v3/
+  manifest.json
+  openapi.json
+  schemas/*.schema.json
 ```
 
 Rigenerare soltanto dalle sorgenti:
@@ -86,7 +98,7 @@ corepack pnpm@11.13.0 contracts:generate
 corepack pnpm@11.13.0 contracts:check
 ```
 
-`contracts:generate` scrive soltanto i file posseduti dal catalogo per entrambi i major. `contracts:check` non modifica il workspace e fallisce su artifact mancanti, stale o inattesi, root collegati e cambi ai byte del major `v1` già pubblicato. In locale la base è `origin/main`; in CI è `HEAD^1`, già disponibile con checkout depth 2. Il check non esegue fetch. I file sotto `generated/` non vanno editati manualmente.
+`contracts:generate` scrive soltanto il major corrente posseduto dal catalogo e conserva i major precedenti. `contracts:check` non modifica il workspace e fallisce su artifact mancanti, stale o inattesi, root collegati e cambi ai byte dei major già pubblicati. In locale la base è `origin/main`; in CI è `HEAD^1`, già disponibile con checkout depth 2. Il check non esegue fetch. I file sotto `generated/` non vanno editati manualmente.
 
 ## Uso runtime
 
@@ -106,7 +118,7 @@ Gli output del modello sono sempre input non affidabili. La validazione di `Dung
 ## Versionamento
 
 - Patch: correzione che lascia invariati tutti i byte degli artifact pubblicati.
-- Wire change: qualsiasi variazione, anche additiva, richiede la directory major successiva (`v2`) e un piano di migrazione; `v1` resta identica in parallelo.
+- Wire change: qualsiasi variazione, anche additiva, richiede la directory major successiva e un piano di migrazione; i major precedenti restano identici in parallelo.
 - `schemaVersion` sugli eventi cambia soltanto con una nuova versione wire incompatibile.
 
-Ogni evoluzione deve modificare sorgente Zod, catalogo, generated files e test nello stesso change set. I path OpenAPI vengono aggiunti soltanto dal task che implementa il comportamento descritto.
+Ogni evoluzione deve modificare sorgente Zod, catalogo, generated files e test nello stesso change set. Se un path OpenAPI viene definito prima del relativo handler nello stesso task attivo, contesto e tracciabilità devono marcarlo esplicitamente come candidato fino al test runtime.

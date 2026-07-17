@@ -177,7 +177,7 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-006 — IN_PROGRESS/25%/PARTIAL` sulla branch `codex/bl-006-sessions-reset`; contract `v3`, config/domain e primitive reset sono verdi, migration `000004` è il prossimo batch
+> **Task attivo:** `BL-006 — IN_PROGRESS/25%/PARTIAL` sulla branch `codex/bl-006-sessions-reset`; contract `v3`, config/domain/crypto e migration `000004` sono verdi, access store è il prossimo batch
 > **Prossimo task READY:** `BL-081 — Shell conversazionale interattiva e motion layer`; non avviarlo mentre BL-006 è attivo
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
@@ -572,8 +572,8 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] API/E2E happy path e negative path; rate-limit e cookie/security headers.
   - [ ] Component/mobile accessibility smoke di login, logout e reset sulla fondazione `BL-079`.
 - **Documentazione e contesto:** design `identity-access-v1`; ADR-0010; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/data/DATA_MODEL.md`; `docs/security/THREAT_MODEL.md`
-- **Evidenze di chiusura:** parziale — artifact `v3`/SemVer `3.0.0` con 20 schema e nove operazioni auth; v1/v2 senza diff. RED mirato 7 failure attese, quindi build contratti/domain/config/API 6/6, suite contract/config/crypto/security 24 pass/1 skip host e regressione config/startup/observability 32/32 `PASS`; lint 6/6, formatting e secret scan `PASS`. Migration/eval/trace ID `N/A` per questo batch; gate terminali ancora aperti.
-- **Note, rischi o bloccanti:** Corsia `HIGH_RISK`. Design approvato: sessione idle 24 h/assoluta 30 giorni, refresh esplicito con rotazione, logout corrente idempotente, revoca globale, reset con codice email a sei cifre/TTL 10 minuti/5 tentativi e nessun auto-login. Il primo batch TDD implementa contract pubblico `v3`, porte pure, scope rate separati, secret reset service-scoped e primitive HMAC/token; route/store/UI non sono ancora disponibili. UI essenziale shadcn mobile-first, senza lista device o metadata. Nessun provider, SMTP reale, deploy o azione Vercel è autorizzato.
+- **Evidenze di chiusura:** parziale — artifact `v3`/SemVer `3.0.0` con 20 schema e nove operazioni auth; v1/v2 senza diff. RED contract/config/crypto 7 failure attese, quindi build 6/6 e regressione 56 pass/1 skip host; lint, formatting, docs e secret scan `PASS`. RED migration 3 failure attese; GREEN PostgreSQL reale: schema/upgrade/rollback 2/2, lifecycle zero→head/replay/failure/rollback 11/11, due runner e rollback DDL 2/2. Head `000004_identity_access`, source SHA `33016439…`, contract checksum `73f20dd1…`; eval/trace ID `N/A`; gate terminali ancora aperti.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK`. Design approvato: sessione idle 24 h/assoluta 30 giorni, refresh esplicito con rotazione, logout corrente idempotente, revoca globale, reset con codice email a sei cifre/TTL 10 minuti/5 tentativi e nessun auto-login. Contract pubblico `v3`, porte pure, scope rate separati, secret reset service-scoped, primitive HMAC/token e schema forward-only `000004` sono implementati. Store/API/worker/UI non sono ancora disponibili. UI essenziale shadcn mobile-first, senza lista device o metadata. Nessun provider, SMTP reale, deploy o azione Vercel è autorizzato.
 
 ### BL-007 — ActorContext e query tenant-safe
 
@@ -2690,8 +2690,8 @@ progress: 25
 started_at: 2026-07-16T21:56:29+02:00
 candidate_at: null
 cycle_target_minutes: 120
-cycle_actual_minutes: 29
-updated_at: 2026-07-17T09:25:23+02:00
+cycle_actual_minutes: 42
+updated_at: 2026-07-17T09:38:31+02:00
 agent: Codex development agent
 git_branch: codex/bl-006-sessions-reset
 base_commit: e173fd9424ad77330ae8302f68affd4832d66798
@@ -2725,6 +2725,7 @@ test_status: PARTIAL
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-17 09:38 +02:00 | 25% | Implementata forward-only `000004_identity_access`: versione credenziale, challenge reset, outbox XOR/template e allowlist rate/idempotenza/audit. Il rollback legacy è stato aggiornato a due step; il test barriera esistente resta l'autorità deterministica per runner simultanei. | RED 3 failure attese; GREEN PostgreSQL: identity migration 2/2, lifecycle 11/11 e concurrency/failure 2/2. Source SHA `33016439…`, contract checksum `73f20dd1…`; migration `000001`–`000003` senza modifiche. | Versionare migration e living docs; avviare `PostgresIdentityAccessStore` con RED per atomicità, replay e reset concorrente. |
 | 2026-07-17 09:25 +02:00 | 25% | Completato il primo batch TDD: artifact immutabile `v3`, DTO access/reset strict, porte e scope rate separati, secret reset API/worker e HMAC dedicato. Il build ha provato che un'unica union rate rompeva l'esaustività del vecchio store: parametrizzati registration/access scope alla causa. | RED 7 failure attese; GREEN build 6/6, contract/config/crypto/security 24 pass/1 skip host, config/startup/observability 32/32, lint 6/6, Prettier, generated drift/compatibility v1 e secret scan `PASS`. Nessuna azione Vercel. | Versionare il batch; scrivere migration `000004_identity_access` in TDD con zero/previous→head, vincoli e concorrenza runner. |
 | 2026-07-17 09:11 +02:00 | 25% | Il Product Owner ha approvato il design. Versionato il piano TDD inline in sette batch, con store/service/route access separati per evitare di ampliare i file signup e un solo full gate finale. Corrette freshness al nuovo giorno e due segnaposto intercettati dalla self-review. | `git diff --check` e `verify:docs` exit `0`: 23 artifact, 53 documenti/14 modificati, task graph e secret scan `PASS`; spec SHA `737fcb73…`. | Committare il piano, invocare `executing-plans` e iniziare Task 1 con test contract/config/crypto RED. |
 | 2026-07-16 22:04 +02:00 | 25% | Il gate documentale è verde. La self-review ha corretto lo SHA specifica rimasto alla baseline precedente e ha reso esplicito `credential_version` nel target migration per chiudere il race login/reset; nessun placeholder, capability futura presentata come disponibile o finding P0/P1 residuo. | `git diff --check` e `verify:docs` confermati dopo le correzioni: 23 artifact, 52 documenti/13 modificati, task graph e secret scan `PASS`. | Committare la specifica e chiedere review utente prima della skill di pianificazione TDD. |
