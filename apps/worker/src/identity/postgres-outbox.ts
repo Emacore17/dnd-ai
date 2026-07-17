@@ -24,6 +24,7 @@ interface OutboxRow {
   readonly expires_at: Date;
   readonly key_version: number;
   readonly outbox_id: string;
+  readonly template_key: string;
 }
 
 function validateClaim(command: ClaimIdentityEmailBatchCommand): void {
@@ -97,14 +98,26 @@ export function createPostgresIdentityEmailOutbox(
                   OR NOT EXISTS (
                     SELECT 1
                       FROM app.users AS u
-                      JOIN app.email_verification_challenges AS c
-                        ON c.user_id = u.user_id
+                      LEFT JOIN app.email_verification_challenges AS c
+                        ON c.challenge_id = o.challenge_id
+                       AND c.user_id = u.user_id
+                      LEFT JOIN app.password_reset_challenges AS r
+                        ON r.challenge_id = o.password_reset_challenge_id
+                       AND r.user_id = u.user_id
                      WHERE u.user_id = o.user_id
-                       AND c.challenge_id = o.challenge_id
-                       AND u.status = 'pending'
-                       AND c.consumed_at IS NULL
-                       AND c.superseded_at IS NULL
-                       AND c.expires_at > $1
+                       AND (
+                         (o.template_key = 'email_verification_v1'
+                           AND u.status = 'pending'
+                           AND c.consumed_at IS NULL
+                           AND c.superseded_at IS NULL
+                           AND c.expires_at > $1)
+                         OR
+                         (o.template_key = 'password_reset_v1'
+                           AND u.status = 'active'
+                           AND r.consumed_at IS NULL
+                           AND r.superseded_at IS NULL
+                           AND r.expires_at > $1)
+                       )
                   )
                 )
               ORDER BY o.next_attempt_at, o.created_at, o.outbox_id
@@ -119,22 +132,37 @@ export function createPostgresIdentityEmailOutbox(
           [command.occurredAt, command.limit],
         );
         const candidates = await client.query<OutboxRow>(
-          `SELECT o.outbox_id, o.challenge_id, o.attempt_count,
+          `SELECT o.outbox_id,
+                  COALESCE(o.challenge_id, o.password_reset_challenge_id) AS challenge_id,
+                  o.attempt_count, o.template_key,
                   u.delivery_email, u.display_name,
-                  c.key_version, c.expires_at
+                  COALESCE(c.key_version, r.key_version) AS key_version,
+                  COALESCE(c.expires_at, r.expires_at) AS expires_at
              FROM app.identity_email_outbox AS o
              JOIN app.users AS u ON u.user_id = o.user_id
-             JOIN app.email_verification_challenges AS c
-               ON c.challenge_id = o.challenge_id
+             LEFT JOIN app.email_verification_challenges AS c
+               ON c.challenge_id = o.challenge_id AND c.user_id = u.user_id
+             LEFT JOIN app.password_reset_challenges AS r
+               ON r.challenge_id = o.password_reset_challenge_id
+              AND r.user_id = u.user_id
             WHERE (
                     (o.status = 'pending' AND o.next_attempt_at <= $1)
                     OR (o.status = 'leased' AND o.lease_until <= $1)
                   )
               AND o.attempt_count < 5
-              AND u.status = 'pending'
-              AND c.consumed_at IS NULL
-              AND c.superseded_at IS NULL
-              AND c.expires_at > $1
+              AND (
+                (o.template_key = 'email_verification_v1'
+                  AND u.status = 'pending'
+                  AND c.consumed_at IS NULL
+                  AND c.superseded_at IS NULL
+                  AND c.expires_at > $1)
+                OR
+                (o.template_key = 'password_reset_v1'
+                  AND u.status = 'active'
+                  AND r.consumed_at IS NULL
+                  AND r.superseded_at IS NULL
+                  AND r.expires_at > $1)
+              )
             ORDER BY o.next_attempt_at, o.created_at, o.outbox_id
             FOR UPDATE OF o SKIP LOCKED
             LIMIT $2`,
@@ -157,18 +185,28 @@ export function createPostgresIdentityEmailOutbox(
               WHERE outbox_id = $1`,
             [row.outbox_id, leaseUntil, leaseToken, command.occurredAt],
           );
-          claimed.push(
-            Object.freeze({
-              attemptNumber: row.attempt_count + 1,
-              challengeId: row.challenge_id,
-              displayName: row.display_name,
-              expiresAt: row.expires_at,
-              keyVersion: row.key_version,
-              leaseToken,
-              outboxId: row.outbox_id,
-              recipient: row.delivery_email,
-            }),
-          );
+          const common = {
+            attemptNumber: row.attempt_count + 1,
+            challengeId: row.challenge_id,
+            expiresAt: row.expires_at,
+            keyVersion: row.key_version,
+            leaseToken,
+            outboxId: row.outbox_id,
+            recipient: row.delivery_email,
+          } as const;
+          if (row.template_key === "email_verification_v1") {
+            claimed.push(
+              Object.freeze({
+                ...common,
+                displayName: row.display_name,
+                kind: "verification",
+              }),
+            );
+          } else if (row.template_key === "password_reset_v1") {
+            claimed.push(Object.freeze({ ...common, kind: "password_reset" }));
+          } else {
+            throw new TypeError("identity email template is unsupported");
+          }
         }
 
         return Object.freeze(claimed);

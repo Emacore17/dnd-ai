@@ -195,11 +195,11 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-17 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-005` è integrato su `main` tramite [PR #28](https://github.com/Emacore17/dnd-ai/pull/28), candidate corretto `c2e4332b408f1cac3e2c69920cd18e5e772e87bf`, merge `e173fd9424ad77330ae8302f68affd4832d66798` e CI PR/post-merge `29525777416`/`29526030389` con cinque job `SUCCESS`. `BL-006` usa questa baseline in una worktree isolata; contract/config/domain/crypto, migration, store e API access/reset sono implementati e verificati localmente, senza delivery remota. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `BL-005` è integrato su `main` tramite [PR #28](https://github.com/Emacore17/dnd-ai/pull/28), candidate corretto `c2e4332b408f1cac3e2c69920cd18e5e772e87bf`, merge `e173fd9424ad77330ae8302f68affd4832d66798` e CI PR/post-merge `29525777416`/`29526030389` con cinque job `SUCCESS`. `BL-006` usa questa baseline in una worktree isolata; contract/config/domain/crypto, migration, store, API e worker access/reset sono implementati e verificati localmente, senza delivery remota. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-006 — IN_PROGRESS/50%/PARTIAL`; contract `v3`, config/domain/crypto, migration, store e sei route API verdi; outbox worker successivo |
+| Task attivo | `BL-006 — IN_PROGRESS/75%/PARTIAL`; contract `v3`, config/domain/crypto, migration, store, sei route API e outbox reset verdi; BFF/UI successivi |
 | Ultimo task completato | `BL-005 — DONE/100%/PASSING`, integrato tramite PR #28 e CI post-merge `29526030389` |
 | Prossimo task READY | `BL-081`; non avviarlo mentre `BL-006` è attivo |
 | Migration head | su `main`: `000003_identity_signup`; sulla branch BL-006: `000004_identity_access` / `database-identity-access-v1`, verificata su PostgreSQL reale |
@@ -207,7 +207,7 @@ supersedes: null
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` fornisce Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first e shell statica server-rendered; `BL-081` resta owner di AI Elements, interazione e Motion. `BL-005` implementa signup/verify/resend, sessione iniziale, migration PostgreSQL, outbox email, BFF e form shadcn. `BL-006` ha pubblicato sulla branch contract `v3`, porte pure, config/crypto reset, migration forward-only `000004`, store PostgreSQL transazionale e sei route Fastify per sign-in/refresh/logout/revoca/reset; outbox reset, BFF e UI restano da implementare. Redis locale applicativo, BullMQ, route di gioco, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` fornisce Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first e shell statica server-rendered; `BL-081` resta owner di AI Elements, interazione e Motion. `BL-005` implementa signup/verify/resend, sessione iniziale, migration PostgreSQL, outbox email, BFF e form shadcn. `BL-006` ha pubblicato sulla branch contract `v3`, porte pure, config/crypto reset, migration forward-only `000004`, store PostgreSQL transazionale, sei route Fastify e worker outbox discriminato per sign-in/refresh/logout/revoca/reset; BFF e UI restano da implementare. Redis locale applicativo, BullMQ, route di gioco, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
 
 ## Decisioni operative vigenti
 
@@ -332,7 +332,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 ## Prossima azione
 
-Generalizzare l'outbox worker BL-006 in TDD con claim discriminato verification/reset, derivazione codice a domain separation, template allowlisted e retry invariati; poi BFF e UI shadcn. `BL-081` resta READY ma non viene avviato in parallelo. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
+Implementare BFF BL-006 con cookie forwarding allowlisted e poi le tre superfici shadcn mobile-first per accesso, reset e sicurezza account. `BL-081` resta READY ma non viene avviato in parallelo. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
 
 ## Rischi chiusi
 

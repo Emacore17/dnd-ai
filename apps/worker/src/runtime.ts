@@ -119,6 +119,8 @@ export function createWorkerIdentityRuntime(
         clock,
         jitterMs,
         outbox,
+        resetKey: config.identity.reset.key,
+        resetKeyVersion: config.identity.reset.version,
         sender,
         ...(signal === undefined ? {} : { signal }),
       });

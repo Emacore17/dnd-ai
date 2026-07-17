@@ -5,6 +5,8 @@ import test from "node:test";
 import {
   EmailDeliveryError,
   createFakeVerificationEmailSender,
+  deriveWorkerPasswordResetCode,
+  deriveWorkerVerificationCode,
   dispatchIdentityEmailBatch,
   runIdentityEmailPoller,
   startWorker,
@@ -12,6 +14,7 @@ import {
 
 const START = new Date("2026-07-16T10:00:00.000Z");
 const CHALLENGE_KEY = Buffer.alloc(32, 7);
+const RESET_KEY = Buffer.alloc(32, 17);
 const { AbortController } = globalThis;
 
 function uuid(number) {
@@ -26,9 +29,16 @@ function claimed(number, attemptNumber = 1) {
     expiresAt: new Date(START.valueOf() + 600_000),
     keyVersion: 1,
     leaseToken: uuid(2_000 + number),
+    kind: "verification",
     outboxId: uuid(3_000 + number),
     recipient: `player${number}@example.test`,
   });
+}
+
+function claimedReset(number, attemptNumber = 1) {
+  const job = claimed(number, attemptNumber);
+  const { displayName: _displayName, ...common } = job;
+  return Object.freeze({ ...common, kind: "password_reset" });
 }
 
 function createOutbox(items) {
@@ -61,6 +71,8 @@ function dependencies(outbox, sender, overrides = {}) {
     clock: { now: () => START },
     jitterMs: () => 250,
     outbox,
+    resetKey: RESET_KEY,
+    resetKeyVersion: 1,
     sender,
     ...overrides,
   };
@@ -89,13 +101,43 @@ test("one finite tick claims 25 rows for 30 seconds and acknowledges minimal mes
     "code",
     "displayName",
     "expiresInMinutes",
+    "kind",
     "recipient",
   ]);
+  assert.equal(sender.messages[0].kind, "verification");
   assert.match(sender.messages[0].code, /^[0-9]{6}$/u);
   assert.equal(sender.messages[0].expiresInMinutes, 10);
   assert.deepEqual(
     outbox.calls.slice(1).map(([kind]) => kind),
     ["sent", "sent"],
+  );
+});
+
+test("password reset messages use their dedicated key domain and minimal payload", async () => {
+  const job = claimedReset(10);
+  const outbox = createOutbox([job]);
+  const sender = createFakeVerificationEmailSender();
+
+  assert.deepEqual(
+    await dispatchIdentityEmailBatch(dependencies(outbox, sender)),
+    { claimed: 1, dead: 0, released: 0, retried: 0, sent: 1 },
+  );
+
+  assert.equal(sender.messages.length, 1);
+  assert.deepEqual(Object.keys(sender.messages[0]).sort(), [
+    "code",
+    "expiresInMinutes",
+    "kind",
+    "recipient",
+  ]);
+  assert.equal(sender.messages[0].kind, "password_reset");
+  assert.equal(
+    sender.messages[0].code,
+    deriveWorkerPasswordResetCode(RESET_KEY, job.challengeId),
+  );
+  assert.notEqual(
+    sender.messages[0].code,
+    deriveWorkerVerificationCode(RESET_KEY, job.challengeId),
   );
 });
 
@@ -174,6 +216,24 @@ test("abort stops the tick and releases every remaining lease", async () => {
 
 test("unsupported challenge key versions fail closed", async () => {
   const outbox = createOutbox([{ ...claimed(9), keyVersion: 2 }]);
+  const sender = createFakeVerificationEmailSender();
+
+  const summary = await dispatchIdentityEmailBatch(
+    dependencies(outbox, sender),
+  );
+
+  assert.deepEqual(summary, {
+    claimed: 1,
+    dead: 1,
+    released: 0,
+    retried: 0,
+    sent: 0,
+  });
+  assert.equal(sender.messages.length, 0);
+});
+
+test("unsupported reset key versions fail closed", async () => {
+  const outbox = createOutbox([{ ...claimedReset(11), keyVersion: 2 }]);
   const sender = createFakeVerificationEmailSender();
 
   const summary = await dispatchIdentityEmailBatch(

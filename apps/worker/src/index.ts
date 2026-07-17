@@ -11,17 +11,24 @@ export {
   type WorkerIdentityRuntime,
   type WorkerPollerWait,
 } from "./runtime.js";
-export { deriveWorkerVerificationCode } from "./identity/challenge-code.js";
+export {
+  deriveWorkerPasswordResetCode,
+  deriveWorkerVerificationCode,
+} from "./identity/challenge-code.js";
 export {
   EmailDeliveryError,
   createFakeVerificationEmailSender,
   type FakeVerificationEmailSender,
+  type IdentityEmailMessage,
+  type PasswordResetEmailMessage,
   type VerificationEmailMessage,
   type VerificationEmailSender,
 } from "./identity/email-sender.js";
 export {
   dispatchIdentityEmailBatch,
   type ClaimedIdentityEmail,
+  type ClaimedPasswordResetEmail,
+  type ClaimedVerificationEmail,
   type ClaimIdentityEmailBatchCommand,
   type CompleteIdentityEmailCommand,
   type DispatchIdentityEmailBatchOptions,

@@ -22,9 +22,10 @@ function domainHmac(key: Uint8Array, ...parts: readonly string[]): Buffer {
   return hmac.digest();
 }
 
-export function deriveWorkerVerificationCode(
+function deriveWorkerCode(
   challengeKey: Uint8Array,
   challengeId: string,
+  domain: string,
 ): string {
   const key = requireKey(challengeKey);
   if (!UUID_PATTERN.test(challengeId)) {
@@ -32,12 +33,7 @@ export function deriveWorkerVerificationCode(
   }
 
   for (let counter = 0; counter < Number.MAX_SAFE_INTEGER; counter += 1) {
-    const digest = domainHmac(
-      key,
-      "identity-email-verification-code-v1",
-      challengeId,
-      String(counter),
-    );
+    const digest = domainHmac(key, domain, challengeId, String(counter));
     for (let offset = 0; offset <= digest.byteLength - 4; offset += 4) {
       const candidate = digest.readUInt32BE(offset);
       if (candidate < UINT32_ACCEPTANCE_LIMIT) {
@@ -46,5 +42,27 @@ export function deriveWorkerVerificationCode(
     }
   }
 
-  throw new Error("verification code derivation exhausted counter space");
+  throw new Error("identity code derivation exhausted counter space");
+}
+
+export function deriveWorkerVerificationCode(
+  challengeKey: Uint8Array,
+  challengeId: string,
+): string {
+  return deriveWorkerCode(
+    challengeKey,
+    challengeId,
+    "identity-email-verification-code-v1",
+  );
+}
+
+export function deriveWorkerPasswordResetCode(
+  resetKey: Uint8Array,
+  challengeId: string,
+): string {
+  return deriveWorkerCode(
+    resetKey,
+    challengeId,
+    "identity-password-reset-code-v1",
+  );
 }

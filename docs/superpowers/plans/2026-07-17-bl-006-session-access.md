@@ -474,7 +474,7 @@ supersedes: null
 - Consumes: outbox XOR verification/reset e due secret HMAC del worker.
 - Produces: job discriminato e messaggio template-aware senza code persistence.
 
-- [ ] Scrivere RED che richieda claim discriminato:
+- [x] Scrivere RED che richieda claim discriminato:
 
   ```ts
   export type ClaimedIdentityEmail =
@@ -484,36 +484,44 @@ supersedes: null
 
   Provare reset code derivato just-in-time, key mismatch → dead, SMTP/fake redatti, retry bounded e template sconosciuto fail-closed.
 
-- [ ] Eseguire il RED:
+- [x] Eseguire il RED:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/worker
   node --test tests/unit/identity-outbox-dispatcher.test.mjs tests/integration/identity-email-worker.test.mjs tests/security/identity-email-security.test.mjs
   ```
 
-- [ ] Generalizzare query outbox con `CASE`/join espliciti e verificare che ogni riga claimed abbia esattamente un kind/challenge. Non usare union SQL che possa duplicare una riga.
+- [x] Generalizzare query outbox con `CASE`/join espliciti e verificare che ogni riga claimed abbia esattamente un kind/challenge. Non usare union SQL che possa duplicare una riga.
 
-- [ ] Derivare il codice con domain HMAC separato `identity-password-reset-code-v1`; selezionare chiave/versione dal `kind`. Il messaggio sender diventa:
+- [x] Derivare il codice con domain HMAC separato `identity-password-reset-code-v1`; selezionare chiave/versione dal `kind`. Il messaggio sender diventa:
 
   ```ts
-  export interface IdentityEmailMessage {
-    readonly kind: "verification" | "password_reset";
-    readonly to: string;
-    readonly code: string;
-    readonly expiresInMinutes: 10;
-  }
+  export type IdentityEmailMessage =
+    | Readonly<{
+        kind: "verification";
+        recipient: string;
+        displayName: string;
+        code: string;
+        expiresInMinutes: 10;
+      }>
+    | Readonly<{
+        kind: "password_reset";
+        recipient: string;
+        code: string;
+        expiresInMinutes: 10;
+      }>;
   ```
 
-- [ ] Il template reset usa copy breve, nessun link e nessun dato account aggiuntivo. Fake sender conserva messaggi solo in memoria test; SMTP subject/body non includono request/user ID.
+- [x] Il template reset usa copy breve, nessun link e nessun dato account aggiuntivo. Fake sender conserva messaggi solo in memoria test; SMTP subject/body non includono request/user ID.
 
-- [ ] Eseguire GREEN:
+- [x] Eseguire GREEN:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/worker
   node --test tests/unit/identity-outbox-dispatcher.test.mjs tests/integration/identity-email-worker.test.mjs tests/security/identity-email-security.test.mjs
   ```
 
-- [ ] Commit funzionale:
+- [x] Commit funzionale:
 
   ```powershell
   git add apps/worker tests/unit/identity-outbox-dispatcher.test.mjs tests/integration/identity-email-worker.test.mjs tests/security/identity-email-security.test.mjs
