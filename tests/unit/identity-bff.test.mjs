@@ -21,7 +21,7 @@ function environment(overrides = {}) {
 
 function request(path, body, headers = {}) {
   return new Request(`${PUBLIC_ORIGIN}${path}`, {
-    body: JSON.stringify(body),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     headers: {
       authorization: "Bearer must-not-forward",
       cookie: "must-not-forward=true",
@@ -37,6 +37,12 @@ function request(path, body, headers = {}) {
     method: "POST",
   });
 }
+
+const SESSION_TOKEN = "A".repeat(43);
+const SESSION_COOKIE = `__Host-dnd_ai_session=${SESSION_TOKEN}`;
+const CREATED_COOKIE = `${SESSION_COOKIE}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=3600`;
+const CLEARED_COOKIE =
+  "__Host-dnd_ai_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0";
 
 function genericResponse() {
   return {
@@ -250,8 +256,7 @@ test("BFF bounds and validates JSON responses", async () => {
 });
 
 test("verify passes one exact host cookie and rejects missing, multiple or weak cookies", async () => {
-  const validCookie =
-    "__Host-dnd_ai_session=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=3600";
+  const validCookie = CREATED_COOKIE;
   const valid = await forwardIdentityRequest(
     request("/api/auth/verify-email", {
       code: "012345",
@@ -298,6 +303,145 @@ test("verify passes one exact host cookie and rejects missing, multiple or weak 
     assert.equal(response.status, 502);
     assert.equal(response.headers.has("set-cookie"), false);
   }
+});
+
+test("access BFF forwards only the canonical session cookie on allowlisted paths", async () => {
+  const cases = [
+    {
+      body: { email: "ada@example.test", password: "una password molto lunga" },
+      cookie: null,
+      path: "/api/auth/sign-in",
+      response: () =>
+        Response.json(
+          { status: "authenticated" },
+          { headers: { "set-cookie": CREATED_COOKIE }, status: 200 },
+        ),
+      status: 200,
+    },
+    {
+      body: undefined,
+      cookie: SESSION_COOKIE,
+      path: "/api/auth/session/refresh",
+      response: () =>
+        Response.json(
+          { status: "authenticated" },
+          { headers: { "set-cookie": CREATED_COOKIE }, status: 200 },
+        ),
+      status: 200,
+    },
+    {
+      body: undefined,
+      cookie: SESSION_COOKIE,
+      path: "/api/auth/sign-out",
+      response: () =>
+        new Response(null, {
+          headers: { "set-cookie": CLEARED_COOKIE },
+          status: 204,
+        }),
+      status: 204,
+    },
+    {
+      body: { confirmation: "revoke_all" },
+      cookie: SESSION_COOKIE,
+      path: "/api/auth/sessions/revoke-all",
+      response: () =>
+        new Response(null, {
+          headers: { "set-cookie": CLEARED_COOKIE },
+          status: 204,
+        }),
+      status: 204,
+    },
+    {
+      body: { email: "ada@example.test" },
+      cookie: null,
+      path: "/api/auth/password-reset/request",
+      response: () =>
+        Response.json({ status: "password_reset_requested" }, { status: 202 }),
+      status: 202,
+    },
+    {
+      body: {
+        code: "012345",
+        email: "ada@example.test",
+        newPassword: "una nuova password lunga",
+      },
+      cookie: null,
+      path: "/api/auth/password-reset/confirm",
+      response: () =>
+        Response.json(
+          { status: "password_reset" },
+          { headers: { "set-cookie": CLEARED_COOKIE }, status: 200 },
+        ),
+      status: 200,
+    },
+  ];
+
+  for (const scenario of cases) {
+    let forwarded;
+    const incomingCookie = `analytics=ignored; ${SESSION_COOKIE}; theme=dark`;
+    const response = await forwardIdentityRequest(
+      request(scenario.path, scenario.body, { cookie: incomingCookie }),
+      scenario.path,
+      {
+        environment: environment(),
+        async fetch(_url, init) {
+          forwarded = new Headers(init.headers);
+          if (scenario.body === undefined) {
+            assert.equal("body" in init, false);
+            assert.equal(forwarded.has("content-type"), false);
+          }
+          return scenario.response();
+        },
+      },
+    );
+
+    assert.equal(response.status, scenario.status);
+    assert.equal(forwarded.get("cookie"), scenario.cookie);
+    assert.equal(
+      response.headers.get("set-cookie"),
+      scenario.status === 202
+        ? null
+        : scenario.response().headers.get("set-cookie"),
+    );
+  }
+});
+
+test("access BFF rejects unexpected cookie contracts and malformed session input", async () => {
+  let fetches = 0;
+  const malformed = await forwardIdentityRequest(
+    request("/api/auth/session/refresh", undefined, {
+      cookie: `${SESSION_COOKIE}; ${SESSION_COOKIE}`,
+    }),
+    "/api/auth/session/refresh",
+    {
+      environment: environment(),
+      async fetch() {
+        fetches += 1;
+        return Response.json({ status: "authenticated" });
+      },
+    },
+  );
+  assert.equal(malformed.status, 400);
+  assert.equal(fetches, 0);
+
+  const unexpected = await forwardIdentityRequest(
+    request("/api/auth/password-reset/request", {
+      email: "ada@example.test",
+    }),
+    "/api/auth/password-reset/request",
+    {
+      environment: environment(),
+      async fetch() {
+        fetches += 1;
+        return Response.json(
+          { status: "password_reset_requested" },
+          { headers: { "set-cookie": CREATED_COOKIE }, status: 202 },
+        );
+      },
+    },
+  );
+  assert.equal(unexpected.status, 502);
+  assert.equal(unexpected.headers.has("set-cookie"), false);
 });
 
 test("BFF drops malformed request and response identifiers", async () => {

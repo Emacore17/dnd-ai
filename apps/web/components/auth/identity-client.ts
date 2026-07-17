@@ -9,7 +9,16 @@ export interface IdentityIdempotencyRef {
 
 export function idempotencyKeyFor(
   state: IdentityIdempotencyRef,
-  operation: "resend" | "sign-up" | "verify",
+  operation:
+    | "refresh"
+    | "resend"
+    | "reset-confirm"
+    | "reset-request"
+    | "revoke-all"
+    | "sign-in"
+    | "sign-out"
+    | "sign-up"
+    | "verify",
   payload: unknown,
 ): string {
   const fingerprint = `${operation}:${JSON.stringify(payload)}`;

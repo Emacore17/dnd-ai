@@ -158,7 +158,7 @@ flowchart LR
 - **API di dominio:** Pianificata
 - **Staging:** non disponibile
 
-I task proprietari sono rispettivamente `BL-030`, `BL-029`, `BL-028`/`BL-038` e `BL-080`. Signup, verifica e sessione iniziale sono implementati e integrati da BL-005. BL-006 ha implementato contratti, schema, persistence, service, API e worker outbox di login, refresh, logout, revoca completa e reset; BFF e UI restano in sviluppo, quindi il percorso non è ancora disponibile all'utente. Lo stato bloccato di `BL-080` non autorizza deploy, release, Production o modifiche all'account Vercel.
+I task proprietari sono rispettivamente `BL-030`, `BL-029`, `BL-028`/`BL-038` e `BL-080`. Signup, verifica e sessione iniziale sono implementati e integrati da BL-005. BL-006 ha implementato contratti, schema, persistence, service, API, worker outbox, BFF e UI di login, refresh, logout, revoca completa e reset; verticale e gate terminali restano in sviluppo. Lo stato bloccato di `BL-080` non autorizza deploy, release, Production o modifiche all'account Vercel.
 
 ## Fondazioni implementate
 
@@ -168,7 +168,7 @@ I task proprietari sono rispettivamente `BL-030`, `BL-029`, `BL-028`/`BL-038` e 
 | Migrazioni | PostgreSQL 17 + pgvector, ledger applicativo, head branch-local `000004_identity_access` con versione credenziale, reset e outbox discriminato | [`DATABASE_MIGRATIONS.md`](../operations/DATABASE_MIGRATIONS.md), [`ADR-0006`](../adr/0006-postgresql-migration-foundation.md) |
 | Feature flag | Catalogo kill switch server-side, default safe e audit append-only | [`BL-010 design`](../superpowers/specs/2026-07-15-bl-010-feature-flags-design.md) |
 | Contratti | Zod-first `v1`/`v2` immutabili + candidato `v3` con nove operazioni identity, JSON Schema/OpenAPI e drift check | [`docs/api/README.md`](../api/README.md), [`ADR-0008`](../adr/0008-zod-first-contract-generation.md) |
-| Identity | Signup/verify/resend e prima sessione integrati; contract/config/crypto, schema, store, API e worker access/reset BL-006 implementati sulla branch; BFF/UI ancora aperti | [`identity-signup-v1`](../superpowers/specs/2026-07-16-bl-005-signup-verification-design.md), [`identity-access-v1`](../superpowers/specs/2026-07-16-bl-006-session-access-design.md), [`ADR-0010`](../adr/0010-internal-provider-neutral-identity.md) |
+| Identity | Signup/verify/resend e prima sessione integrati; contract/config/crypto, schema, store e runtime API/worker/web access/reset BL-006 implementati sulla branch; verticale e gate ancora aperti | [`identity-signup-v1`](../superpowers/specs/2026-07-16-bl-005-signup-verification-design.md), [`identity-access-v1`](../superpowers/specs/2026-07-16-bl-006-session-access-design.md), [`ADR-0010`](../adr/0010-internal-provider-neutral-identity.md) |
 | Osservabilità | Correlation context, tracing in-memory, Pino redatto e Sentry error-only | [`BL-008 design`](../superpowers/specs/2026-07-15-bl-008-observability-baseline-design.md), [`ADR-0007`](../adr/0007-observability-context-and-error-reporting.md) |
 | Testing | Runner Node, fixture deterministiche, lifecycle PostgreSQL/Redis e artifact verificati | [`TEST_STRATEGY.md`](../testing/TEST_STRATEGY.md) |
 | CI e supply chain | Quality, test, security, build/artifact e `CI / Merge gate` fail-closed | [`CI_CD.md`](../operations/CI_CD.md), [`ADR-0003`](../adr/0003-ci-trust-boundary-and-artifacts.md) |

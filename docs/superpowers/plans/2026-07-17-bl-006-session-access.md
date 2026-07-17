@@ -549,18 +549,18 @@ supersedes: null
 - Consumes: contract v3, BFF assertion e foundation BL-079.
 - Produces: tre pagine, sei BFF route e conferma distruttiva Radix/shadcn.
 
-- [ ] Scrivere RED BFF per cookie forwarding allowlisted: sign-in/reset-request non inoltrano cookie; refresh/sign-out/revoke inoltrano soltanto `__Host-dnd_ai_session`; reset-confirm può eliminare il cookie ma non inoltrarlo. Validare success schema/status e Set-Cookie create/clear per ogni path.
+- [x] Scrivere RED BFF per cookie forwarding allowlisted: sign-in/reset-request non inoltrano cookie; refresh/sign-out/revoke inoltrano soltanto `__Host-dnd_ai_session`; reset-confirm può eliminare il cookie ma non inoltrarlo. Validare success schema/status e Set-Cookie create/clear per ogni path.
 
-- [ ] Scrivere RED UI per copy, relative fetch, password manager, live region, one-time-code, stato email solo React, nessun URL/storage, CTA 48 px e `AlertDialog` sulla revoca globale.
+- [x] Scrivere RED UI per copy, relative fetch, password manager, live region, one-time-code, stato email solo React, nessun URL/storage, CTA 48 px e `AlertDialog` sulla revoca globale.
 
-- [ ] Eseguire il RED:
+- [x] Eseguire il RED:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/web
   node --test tests/unit/identity-bff.test.mjs tests/unit/identity-client.test.mjs tests/contracts/web-identity-ui.test.mjs tests/integration/web-identity-pages.test.mjs
   ```
 
-- [ ] Consultare la primitive con la skill shadcn e aggiungerla senza sovrascrivere componenti esistenti:
+- [x] Consultare la primitive con la skill shadcn e aggiungerla senza sovrascrivere componenti esistenti:
 
   ```powershell
   corepack pnpm dlx shadcn@latest docs alert-dialog
@@ -569,11 +569,11 @@ supersedes: null
 
   Controllare il diff: import da `radix-ui`, token semantici, nessuna modifica a `globals.css`, `components.json`, font o primitive già possedute.
 
-- [ ] Estendere `IdentityBffPath`, request/response parser e cookie policy con mappe esaustive. Un cookie upstream inatteso o uno status/schema non previsto restituisce 502 generico.
+- [x] Estendere `IdentityBffPath`, request/response parser e cookie policy con mappe esaustive. Un cookie upstream inatteso o uno status/schema non previsto restituisce 502 generico.
 
-- [ ] Implementare `/sign-in` con `AuthShell`, email/password, toggle Lucide, CTA “Accedi” e link `/reset-password`. Errore generico credenziali; successo `router.replace("/")`.
+- [x] Implementare `/sign-in` con `AuthShell`, email/password, toggle Lucide, CTA “Accedi” e link `/reset-password`. Errore generico credenziali; successo `router.replace("/")`.
 
-- [ ] Implementare `/reset-password` con una sola card e stato:
+- [x] Implementare `/reset-password` con una sola card e stato:
 
   ```ts
   type ResetStep =
@@ -583,20 +583,20 @@ supersedes: null
 
   Step 1 invia email e passa a confirm sul 202; step 2 mostra codice/nuova password/conferma locale e torna a `/sign-in` sul successo. Email non entra in URL/storage/cookie.
 
-- [ ] Implementare `/account/security` con due azioni. “Esci” POST sign-out. “Disconnetti tutti i dispositivi” apre `AlertDialog`; conferma POST revoke-all con body `{ confirmation: "revoke_all" }`; entrambe tornano a `/sign-in`.
+- [x] Implementare `/account/security` con due azioni. “Esci” POST sign-out. “Disconnetti tutti i dispositivi” apre `AlertDialog`; conferma POST revoke-all con body `{ confirmation: "revoke_all" }`; entrambe tornano a `/sign-in`.
 
-- [ ] Usare `aria-live="polite"`, focus summary error, label visibili, `autoComplete="current-password"`/`new-password`/`one-time-code`, paste consentito e target `size="lg"`/`h-12`. Nessun gradient, HUD o device metadata.
+- [x] Usare `aria-live="polite"`, focus summary error, label visibili, `autoComplete="current-password"`/`new-password`/`one-time-code`, paste consentito e target `size="lg"`/`h-12`. Nessun gradient, HUD o device metadata.
 
-- [ ] Eseguire GREEN, lint/typecheck/build web:
+- [x] Eseguire GREEN, lint/typecheck/build web:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build lint typecheck --filter=@dnd-ai/web
   node --test tests/unit/identity-bff.test.mjs tests/unit/identity-client.test.mjs tests/contracts/web-identity-ui.test.mjs tests/integration/web-identity-pages.test.mjs
   ```
 
-- [ ] Applicare la checklist `vercel:react-best-practices` ai TSX modificati; correggere soltanto finding reali su hook, accessibilità, component boundary, performance e tipi.
+- [x] Applicare la checklist `vercel:react-best-practices` ai TSX modificati; correggere soltanto finding reali su hook, accessibilità, component boundary, performance e tipi.
 
-- [ ] Commit funzionale:
+- [x] Commit funzionale:
 
   ```powershell
   git add apps/web tests/unit/identity-bff.test.mjs tests/unit/identity-client.test.mjs tests/contracts/web-identity-ui.test.mjs tests/integration/web-identity-pages.test.mjs pnpm-lock.yaml
