@@ -585,7 +585,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Contesto verificato:** `YES` — baseline integrata `464b124d7b5182d2614703a743dffb622cc220fe`; spec SHA-256 `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b`; data: `2026-07-17`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-004, BL-006
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20.1 Convenzioni REST; `docs/MVP_SPEC.md` §22.3 Autorizzazione e isolamento campagne; `docs/MVP_SPEC.md` §32 AC-23; `docs/MVP_SPEC.md` §31 `BL-007`; `docs/MVP_SPEC.md` §35.1; [`design campaign-ownership-v1`](superpowers/specs/2026-07-17-bl-007-actor-context-design.md)
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20.1 Convenzioni REST; `docs/MVP_SPEC.md` §22.3 Autorizzazione e isolamento campagne; `docs/MVP_SPEC.md` §32 AC-23; `docs/MVP_SPEC.md` §31 `BL-007`; `docs/MVP_SPEC.md` §35.1; [`design campaign-ownership-v1`](superpowers/specs/2026-07-17-bl-007-actor-context-design.md); [`piano TDD`](superpowers/plans/2026-07-17-bl-007-actor-context.md)
 - **Obiettivo:** Come sistema voglio ownership scoped nei repository.
 - **Deliverable:** ActorContext e query tenant-safe.
 - **Criterio di accettazione:** IDOR matrix restituisce zero accessi; risorsa altrui 404.

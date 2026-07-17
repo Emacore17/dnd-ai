@@ -2,7 +2,7 @@
 status: active
 owner: engineering-security
 last_reviewed: 2026-07-17
-last_verified_commit: 464b124d7b5182d2614703a743dffb622cc220fe
+last_verified_commit: 3d0912f70d3b0ff395597853181748b0ee473adf
 source_refs:
   - docs/MVP_SPEC.md#191-convenzioni-generali
   - docs/MVP_SPEC.md#201-convenzioni-rest
@@ -80,8 +80,8 @@ Offrirebbe una superficie pubblica immediata, ma introdurrebbe un endpoint non c
 
 `app.campaigns` è l'aggregate root e l'unica fonte di ownership. La migration forward-only `000005_campaign_ownership` aggiunge i soli campi stabili necessari alla slice:
 
-- `id` UUIDv7 generato server-side;
-- `user_id` obbligatorio con foreign key verso `app.users(id)` e cancellazione `RESTRICT`;
+- `campaign_id` UUIDv7 generato server-side, esposto come `id` nel contratto HTTP;
+- `user_id` obbligatorio con foreign key verso `app.users(user_id)` e cancellazione `RESTRICT`;
 - `title` player-safe e bounded;
 - `status` allowlisted, inizialmente `draft`, `ready`, `generating`, `active`, `completed`, `abandoned`, `failed`;
 - `state_version` intero non negativo;
@@ -132,7 +132,7 @@ interface CampaignReader {
 L'implementazione PostgreSQL esegue il filtro di ownership nella stessa query:
 
 ```sql
-WHERE c.id = $campaignId
+WHERE c.campaign_id = $campaignId
   AND c.user_id = $actorUserId
   AND c.deleted_at IS NULL
 ```
@@ -203,7 +203,7 @@ BL-007 crea la baseline attiva `docs/security/THREAT_MODEL.md`, oggi registrata 
 - apertura dello stream prima dell'autorizzazione;
 - errori DB trasformati erroneamente in “not found”.
 
-Il documento riassume anche i controlli identity già implementati da BL-005/BL-006 senza duplicarne il design. `DOC-SEC-001`, se formalizzato successivamente, ne espanderà moderazione, privacy lifecycle e superfici non ancora implementate; non è una dipendenza bloccante di BL-007.
+Il documento riassume anche i controlli identity già implementati da BL-005/BL-006 senza duplicarne il design. BL-064 estenderà la policy di moderazione; i task privacy e operativi proprietari estenderanno lifecycle e superfici non ancora implementate. Nessuno di questi task è una dipendenza bloccante di BL-007.
 
 RLS non è parte della slice: la garanzia obbligatoria resta nelle firme delle porte e nelle query. Una policy RLS richiederebbe gestione per-request della connessione/transazione, pool reset e test cross-connection; sarà introdotta soltanto con ADR/task dedicato. Questa esclusione non autorizza query unscoped.
 

@@ -22,6 +22,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
   - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
   - docs/superpowers/specs/2026-07-17-bl-007-actor-context-design.md
+  - docs/superpowers/plans/2026-07-17-bl-007-actor-context.md
 related_tasks:
   - GOV-001
   - GOV-002
