@@ -10,6 +10,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
   - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
+  - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -712,7 +713,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Contesto verificato:** `YES` — base integrata `c30c6db616ebb69434e4b04dcccb97e48530f6a9`; specifica SHA `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b`; data: `2026-07-17`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-079, QA-001
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§8, 11.4, 21, 23.1, 26.8, 32.2; `docs/product/UX_UI_DESIGN.md` §§4–14.1; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md`; `docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md`; `docs/MVP_SPEC.md` §31 `BL-081`; `docs/MVP_SPEC.md` §35.1
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §§8, 11.4, 21, 23.1, 26.8, 32.2; `docs/product/UX_UI_DESIGN.md` §§4–14.1; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md`; `docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md`; `docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md`; `docs/MVP_SPEC.md` §31 `BL-081`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come giocatore voglio una shell conversazionale interattiva e affidabile, così posso leggere, decidere e agire con una mano senza una HUD densa.
 - **Deliverable:** Wrapper `GameConversation`, `NarrativeTurn`, `FreeActionComposer` e `GameDrawer`; primitive AI Elements selettive senza trasporto parallelo; fixture deterministiche per stati turno; drawer HUD; Motion lazy/reduced; progressive enhancement desktop.
 - **Criterio di accettazione:** La shell interattiva funziona a 320–430 px e desktop; composer, safe area, tastiera virtuale, due azioni suggerite, drawer, focus, overflow, stati idle/submitting/progress/completed/reconnect/error e contenuto equivalente senza motion superano smoke locale; Rive resta assente dal bundle iniziale.
@@ -721,8 +722,8 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Smoke locale 320/390/1440 px per touch target, focus, safe area, tastiera virtuale e overflow.
   - [ ] Reduced-motion mantiene contenuto, focus order e azioni; Motion usa `LazyMotion`/feature subset e transform/opacity nei percorsi frequenti.
   - [ ] Bundle check prova AI Elements selettivi, assenza di `useChat`/trasporto parallelo e assenza di Rive iniziale.
-- **Documentazione e contesto:** `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
-- **Evidenze di chiusura:** design `interactive-game-shell-v1` approvato; baseline `c30c6db`: install frozen 701 package in 9,9 s e `verify:docs` con 45 artifact/53 documenti, task graph e secret scan `PASS`. Implementazione e test runtime non ancora iniziati.
+- **Documentazione e contesto:** design e piano BL-081; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
+- **Evidenze di chiusura:** design `interactive-game-shell-v1` approvato e piano inline TDD in sette batch versionato; baseline `c30c6db`: install frozen 701 package in 9,9 s e `verify:docs` con 45 artifact/53 documenti, task graph e secret scan `PASS`. Audit registry ufficiale: AI Elements completi ampliano inutilmente il P0; subset finale previsto `motion@12.42.2`, `streamdown@2.5.0`, `use-stick-to-bottom@1.1.6`, `vaul@1.1.2`. Build baseline via grafo Turbo `PASS`; home 636.744 byte JS raw iniziali e 59.332 byte entry route. Piano: `verify:docs` con 45 artifact/55 documenti/7 modificati, task graph e secret scan `PASS`. Implementazione e test runtime non ancora iniziati.
 - **Note, rischi o bloccanti:** Corsia `HIGH_RISK` per dependency graph/lockfile, rendering AI, stato client, overlay e Motion. Selettivi `conversation`/`message`/`prompt-input`, reducer puro e `LazyMotion`; vietati `useChat`, trasporto parallelo, raw HTML, storage browser e Rive iniziale. `QA-002` consolida il browser harness comune dopo questa feature; `BL-080` e `GATE-M0` possiedono lo smoke remoto. Nessuna azione Vercel è richiesta o autorizzata.
 
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
@@ -2691,8 +2692,8 @@ progress: 25
 started_at: 2026-07-17T11:38:00+02:00
 candidate_at: null
 cycle_target_minutes: 120
-cycle_actual_minutes: 15
-updated_at: 2026-07-17T11:53:00+02:00
+cycle_actual_minutes: 35
+updated_at: 2026-07-17T12:13:08+02:00
 agent: Codex development agent
 git_branch: codex/bl-081-interactive-shell
 base_commit: c30c6db616ebb69434e4b04dcccb97e48530f6a9
@@ -2726,6 +2727,7 @@ test_status: NOT_RUN
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-17 12:13 +02:00 | 25% | Review Product Owner del design conclusa; piano TDD inline scomposto in sette batch con reducer puro prima del client, acquisizione registry seguita da pruning, un solo full gate e checkout pulito. Le skill shadcn/AI Elements hanno ristretto il risultato finale a quattro dipendenze dirette e source posseduto; QA-002 conserva il harness browser comune. | Dry-run ufficiali: AI Elements 3 item/16 file e overwrite non accettabili grezzi; shadcn `drawer`/`textarea`/`progress`/`collapsible` selettivi. Build baseline tramite Turbo 3/3 PASS; home 636.744 byte JS raw iniziali, entry route 59.332. `verify:docs` PASS: 45 artifact, 55 documenti/7 modificati, task graph e secret scan. Nessun runtime source, lockfile o Vercel modificato. | Committare il piano, poi invocare `executing-plans` e iniziare Task 1 con inventory contract RED. |
 | 2026-07-17 11:53 +02:00 | 25% | Selezionato BL-081 dopo merge/CI post-merge BL-006. Approvato `interactive-game-shell-v1`: wrapper di dominio, reducer puro, fixture event-driven senza timer, AI Elements selettivo senza `useChat`, shadcn/Radix e `LazyMotion` reduced-first. BL-007 passa READY perché BL-004/BL-006 sono DONE. | Base `c30c6db`; install frozen 701 package in 9,9 s; baseline `verify:docs` PASS con 45 artifact, 53 documenti, task graph e secret scan. Spec SHA `737fcb…d80b`; nessun codice runtime o Vercel modificato. | Self-review e gate documentale del design, commit della spec, quindi review Product Owner prima del piano TDD. |
 | 2026-07-17 11:29 +02:00 | 100% | Il functional head è riproducibile da checkout detached pulito e la review terminale non lascia finding P0/P1. BL-006 diventa proposta branch-local `DONE/100%/PASSING`; la delivery resta derivata `PENDING`. | Head `df7f868`: install frozen 701 package/13,3 s; generated drift 45 file; build runtime 8/8; migration 13/13; verticale access + smoke web 2/2; secret scan e `verify:docs` PASS. Worktree Git temporaneo deregistrato e pruned; la policy terminale ha impedito soltanto la cancellazione della directory locale residua già ignorata. | Incorporare lo snapshot terminale nello stesso commit funzionale, push e una sola PR protetta; attendere `CI / Merge gate` senza azioni Vercel. |
 | 2026-07-17 11:19 +02:00 | 90% | Il full ha chiuso due classi di regressione preesistenti nei batch BL-006: lint non esercitato dai mirati e contract generali ancora ancorati a `v2`/head `000003`. Aggiornate solo fixture/aspettative correnti; compatibilità e artifact v1/v2 restano immutabili e testati offline. | Primo tentativo: 2 lint; secondo: 6 contract. Regressioni 14/14 e contract lane 94/94. Full finale senza cache exit `0` in 250,3 s: lint 11, typecheck 16, build 11, report 355 test (351 pass/4 skip host), artifact 4.332 file e tutte le policy `PASS`. | Congelare il functional head, eseguire checkout detached pulito e review terminale; poi aggiornare lo stesso commit candidato. |

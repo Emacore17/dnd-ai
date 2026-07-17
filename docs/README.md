@@ -18,6 +18,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
   - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
+  - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
 related_tasks:
   - GOV-001
   - GOV-004
@@ -139,6 +140,7 @@ supersedes: null
 | [`superpowers/specs/2026-07-16-bl-006-session-access-design.md`](superpowers/specs/2026-07-16-bl-006-session-access-design.md) | Contratto approvato `identity-access-v1` per login, sessioni, revoca e recupero password |
 | [`superpowers/plans/2026-07-17-bl-006-session-access.md`](superpowers/plans/2026-07-17-bl-006-session-access.md) | Piano TDD inline in sette batch per implementare e verificare BL-006 |
 | [`superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md`](superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md) | Contratto `interactive-game-shell-v1` per wrapper conversazionali, fixture deterministiche, drawer e Motion reduced-first |
+| [`superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md`](superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md) | Piano TDD inline in sette batch per reducer, AI Elements selettivi, shell, drawer, Motion e gate HIGH_RISK |
 | [`api/README.md`](api/README.md) | Catalogo artifact `v1` immutabile + `v2` identity, uso runtime e politica di versione |
 | [`superpowers/specs/2026-07-15-bl-009-contract-generation-design.md`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md) | Design della vertical slice contrattuale BL-009 |
 | [`superpowers/plans/2026-07-15-bl-009-contract-generation.md`](superpowers/plans/2026-07-15-bl-009-contract-generation.md) | Piano TDD e gate HIGH_RISK di BL-009 |

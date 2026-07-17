@@ -20,6 +20,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md
   - docs/superpowers/plans/2026-07-16-bl-079-design-system-core.md
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
+  - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
   - docs/testing/TEST_STRATEGY.md
   - docs/adr/README.md
 related_tasks:
@@ -176,7 +177,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. BL-006 è verificato tramite PR #29, candidato `31d5cb3`, merge `c30c6db` e CI PR/post-merge `29570461340`/`29570669866`, entrambe 5/5 `SUCCESS`. `BL-081` è `IN_PROGRESS/25%/NOT_RUN` con design `interactive-game-shell-v1` approvato; `BL-007` è ora `READY`, `QA-002` `BACKLOG` e `BL-080` congelato/bloccato.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. BL-006 è verificato tramite PR #29, candidato `31d5cb3`, merge `c30c6db` e CI PR/post-merge `29570461340`/`29570669866`, entrambe 5/5 `SUCCESS`. `BL-081` è `IN_PROGRESS/25%/NOT_RUN` con design `interactive-game-shell-v1` approvato e piano TDD inline versionato; `BL-007` è ora `READY`, `QA-002` `BACKLOG` e `BL-080` congelato/bloccato.
 
 ## Governance e baseline
 

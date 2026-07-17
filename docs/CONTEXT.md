@@ -20,6 +20,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
   - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
+  - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -200,7 +201,7 @@ supersedes: null
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-081 — IN_PROGRESS/25%/NOT_RUN`; design `interactive-game-shell-v1` approvato, implementazione non iniziata |
+| Task attivo | `BL-081 — IN_PROGRESS/25%/NOT_RUN`; design `interactive-game-shell-v1` approvato e piano TDD inline versionato, implementazione non iniziata |
 | Ultimo task completato | `BL-006 — DONE/100%/PASSING`, integrato tramite PR #29 e CI post-merge `29570669866` |
 | Prossimo task READY | `BL-007`; dipendenze BL-004/BL-006 integrate, resta non avviato mentre BL-081 è attivo |
 | Migration head | `000004_identity_access` / `database-identity-access-v1`, integrata e verificata su PostgreSQL reale |
@@ -333,7 +334,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 ## Prossima azione
 
-Completare self-review e gate documentale di `interactive-game-shell-v1`, committare la spec e attendere la review Product Owner. Soltanto dopo l'approvazione del documento scritto creare il piano TDD BL-081; `BL-007` resta READY e non avviato. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
+Completare self-review e gate documentale del piano TDD BL-081, committarlo e proseguire inline con `superpowers:executing-plans`: Task 1 crea l'inventory contract RED prima di ogni modifica runtime. `BL-007` resta READY e non avviato. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
 
 ## Rischi chiusi
 
