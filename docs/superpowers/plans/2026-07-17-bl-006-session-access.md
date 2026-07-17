@@ -106,7 +106,7 @@ supersedes: null
 - Consumes: `IdentityEmailSchema`, `IdentityPasswordSchema`, `IdempotencyKeySchema`, `IdentityMutationResult`, `PasswordHash`, `IdentitySessionMaterial`.
 - Produces: `SignInRequestSchema`, `PasswordResetRequestSchema`, `PasswordResetConfirmSchema`, `RevokeAllSessionsRequestSchema`, `AuthenticatedResponseSchema`, `PasswordResetRequestedResponseSchema`, `PasswordResetCompletedResponseSchema`, `IdentityAccessStore`, reset crypto/config.
 
-- [ ] Scrivere test contract RED che richiedano body strict, codice stringa con leading zero, `confirmation: "revoke_all"`, nuovi error code e i sei path OpenAPI.
+- [x] Scrivere test contract RED che richiedano body strict, codice stringa con leading zero, `confirmation: "revoke_all"`, nuovi error code e i sei path OpenAPI.
 
   ```js
   const signIn = requireSchema("SignInRequestSchema");
@@ -119,7 +119,7 @@ supersedes: null
   assert.equal(reset.safeParse({ email: "player@example.test", code: 12345, newPassword: "b".repeat(15) }).success, false);
   ```
 
-- [ ] Eseguire il RED:
+- [x] Eseguire il RED:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/contracts --filter=@dnd-ai/domain --filter=@dnd-ai/config --filter=@dnd-ai/api
@@ -128,7 +128,7 @@ supersedes: null
 
   Atteso: fallimento per schema/export/config reset e metodi crypto mancanti.
 
-- [ ] Implementare i contratti wire in `identity-access.ts`:
+- [x] Implementare i contratti wire in `identity-access.ts`:
 
   ```ts
   export const SignInRequestSchema = z.strictObject({
@@ -157,9 +157,9 @@ supersedes: null
   });
   ```
 
-- [ ] Estendere catalogo/OpenAPI a `v3` mantenendo le directory precedenti immutabili. I path refresh/sign-out non hanno request body; revoke-all usa `RevokeAllSessionsRequest`; successi 204 non dichiarano content.
+- [x] Estendere catalogo/OpenAPI a `v3` mantenendo le directory precedenti immutabili. I path refresh/sign-out non hanno request body; revoke-all usa `RevokeAllSessionsRequest`; successi 204 non dichiarano content.
 
-- [ ] Definire le porte pure BL-006:
+- [x] Definire le porte pure BL-006:
 
   ```ts
   export interface IdentityAccessCredential {
@@ -192,13 +192,13 @@ supersedes: null
   }
   ```
 
-- [ ] Aggiungere scope rate `sign_in_ip`, `sign_in_email`, `refresh_session`, `sign_out`, `revoke_all`, `reset_request_ip`, `reset_request_email`, `reset_confirm_ip`, `reset_challenge`.
+- [x] Aggiungere scope rate `sign_in_ip`, `sign_in_email`, `refresh_session`, `sign_out`, `revoke_all`, `reset_request_ip`, `reset_request_email`, `reset_confirm_ip`, `reset_challenge`.
 
-- [ ] Aggiungere secret distinti e obbligatori `API_AUTH_RESET_HMAC_KEY_BASE64`/`API_AUTH_RESET_KEY_VERSION` e `WORKER_AUTH_RESET_HMAC_KEY_BASE64`/`WORKER_AUTH_RESET_KEY_VERSION`; includere reset nel controllo di non riuso chiavi.
+- [x] Aggiungere secret distinti e obbligatori `API_AUTH_RESET_HMAC_KEY_BASE64`/`API_AUTH_RESET_KEY_VERSION` e `WORKER_AUTH_RESET_HMAC_KEY_BASE64`/`WORKER_AUTH_RESET_KEY_VERSION`; includere reset nel controllo di non riuso chiavi.
 
-- [ ] Estendere l'adapter crypto con `createPasswordResetChallenge`, `derivePasswordResetCodeDigest`, `matchesPasswordResetCode`, `sessionTokenDigest`; usare `timingSafeEqual` soltanto dopo validazione di due digest SHA-256 canonici.
+- [x] Estendere l'adapter crypto con `createPasswordResetChallenge`, `derivePasswordResetCodeDigest`, `matchesPasswordResetCode`, `sessionTokenDigest`; usare `timingSafeEqual` soltanto dopo validazione di due digest SHA-256 canonici.
 
-- [ ] Rigenerare `v3`, osservare GREEN e verificare compatibilità:
+- [x] Rigenerare `v3`, osservare GREEN e verificare compatibilità:
 
   ```powershell
   corepack pnpm@11.13.0 contracts:generate
@@ -206,11 +206,11 @@ supersedes: null
   node --test tests/contracts/identity-contracts.test.mjs tests/contracts/contracts-generated.test.mjs tests/contracts/contracts-compatibility.test.mjs tests/unit/identity-policy.test.mjs tests/unit/identity-runtime-config.test.mjs tests/unit/identity-crypto.test.mjs tests/security/environment-file-policy.test.mjs
   ```
 
-- [ ] Commit funzionale:
+- [x] Commit funzionale:
 
   ```powershell
   git add packages/contracts packages/domain packages/config apps/api/.env.example apps/worker/.env.example apps/api/src/identity/identity-crypto.ts tests/contracts tests/unit tests/security/environment-file-policy.test.mjs
-  git commit -m "feat(identity): define BL-006 access contracts"
+  git commit -m "feat(identity): define session access contracts"
   ```
 
 ---
@@ -230,7 +230,7 @@ supersedes: null
 - Consumes: head `000003_identity_signup`, migration ledger e SQL identity esistenti.
 - Produces: head `000004_identity_access`, contract `database-identity-access-v1`, schema necessario a store/worker.
 
-- [ ] Scrivere test RED per zero→head, `000003`→`000004`, rollback/reapply disposable, constraint e due runner simultanei. Richiedere:
+- [x] Scrivere test RED per zero→head, `000003`→`000004`, rollback/reapply disposable, constraint e due runner simultanei. Richiedere:
 
   ```sql
   ALTER TABLE app.user_credentials ADD COLUMN credential_version bigint NOT NULL DEFAULT 1;
@@ -251,7 +251,7 @@ supersedes: null
 
   I test devono provare `credential_version > 0`, una sola reset challenge corrente, XOR fra challenge verifica/reset, template coerente, scope/endpoint/event allowlisted e nessuna riscrittura delle migration precedenti.
 
-- [ ] Eseguire il RED:
+- [x] Eseguire il RED:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/persistence --filter=@dnd-ai/testing
@@ -260,7 +260,7 @@ supersedes: null
 
   Atteso: head/contract/schema `000004` mancanti.
 
-- [ ] Implementare la migration con DDL forward-only:
+- [x] Implementare la migration con DDL forward-only:
 
   ```ts
   export function up(pgm: MigrationBuilder): void {
@@ -276,16 +276,16 @@ supersedes: null
 
   `down` è solo per database locale disposable e ripristina esattamente constraint/outbox/head `000003` prima di eliminare reset/credential version.
 
-- [ ] Calcolare `IDENTITY_ACCESS_MIGRATION_SOURCE_SHA256` sul file normalizzato LF, aggiungere il quarto record al manifest e mantenere `minimumCompatibleMigrationId: 1`.
+- [x] Calcolare `IDENTITY_ACCESS_MIGRATION_SOURCE_SHA256` sul file normalizzato LF, aggiungere il quarto record al manifest e mantenere `minimumCompatibleMigrationId: 1`.
 
-- [ ] Eseguire GREEN e regressione migration completa:
+- [x] Eseguire GREEN e regressione migration completa:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/persistence --filter=@dnd-ai/testing
   node --test tests/contracts/database-migration-contract.test.mjs tests/database/identity-migration.test.mjs tests/database/database-migrations.test.mjs tests/security/database-migration-security.test.mjs
   ```
 
-- [ ] Commit funzionale:
+- [x] Commit funzionale:
 
   ```powershell
   git add packages/persistence/src/migration-manifest.ts packages/persistence/src/migrations/000004_identity_access.ts tests/contracts/database-migration-contract.test.mjs tests/database tests/security/database-migration-security.test.mjs
@@ -308,7 +308,7 @@ supersedes: null
 - Consumes: `IdentityAccessStore` e schema `000004`.
 - Produces: `createPostgresIdentityAccessStore({ databaseUrl })` con `close()` idempotente.
 
-- [ ] Scrivere RED per credenziali generiche, rate policy, sign-in/replay, refresh rotation/idle/absolute, logout idempotente, revoke-all, reset request/supersession, invalid attempts e reset atomico.
+- [x] Scrivere RED per credenziali generiche, rate policy, sign-in/replay, refresh rotation/idle/absolute, logout idempotente, revoke-all, reset request/supersession, invalid attempts e reset atomico.
 
   ```js
   const [first, second] = await Promise.allSettled([
@@ -320,7 +320,7 @@ supersedes: null
   assert.equal(await credentialVersion(email), 2);
   ```
 
-- [ ] Eseguire il RED:
+- [x] Eseguire il RED:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/domain --filter=@dnd-ai/persistence --filter=@dnd-ai/testing
@@ -329,11 +329,11 @@ supersedes: null
 
   Atteso: export/store mancante.
 
-- [ ] Implementare validazione fail-closed e policy rate con i valori del design. Creare un pool dedicato con gli stessi timeout bounded di `identity-store.ts`.
+- [x] Implementare validazione fail-closed e policy rate con i valori del design. Creare un pool dedicato con gli stessi timeout bounded di `identity-store.ts`.
 
-- [ ] Implementare sign-in atomico: lock utente/credenziale, recheck `active` + `credential_version`, insert session/audit/idempotency. Un mismatch restituisce `credentials_invalid`; il replay deriva dalla session ID originale.
+- [x] Implementare sign-in atomico: lock utente/credenziale, recheck `active` + `credential_version`, insert session/audit/idempotency. Un mismatch restituisce `credentials_invalid`; il replay deriva dalla session ID originale.
 
-- [ ] Implementare refresh atomico: idempotency lookup prima dello stato sessione, lock per token digest, check `revoked_at`, idle e absolute; revoca vecchia riga e inserimento nuova con:
+- [x] Implementare refresh atomico: idempotency lookup prima dello stato sessione, lock per token digest, check `revoked_at`, idle e absolute; revoca vecchia riga e inserimento nuova con:
 
   ```ts
   const idleExpiresAt = new Date(
@@ -344,22 +344,22 @@ supersedes: null
   );
   ```
 
-- [ ] Implementare logout corrente come successo anche con token assente/scaduto; audit soltanto quando una sessione viene effettivamente revocata. Revoke-all richiede sessione valida e aggiorna tutte le righe attive + un solo audit nella stessa transazione.
+- [x] Implementare logout corrente come successo anche con token assente/scaduto; audit soltanto quando una sessione viene effettivamente revocata. Revoke-all richiede sessione valida e aggiorna tutte le righe attive + un solo audit nella stessa transazione.
 
-- [ ] Implementare reset request generico: per utente non active nessuna challenge/outbox ma stesso risultato/idempotenza; per active supersede corrente e inserisce challenge + outbox atomici.
+- [x] Implementare reset request generico: per utente non active nessuna challenge/outbox ma stesso risultato/idempotenza; per active supersede corrente e inserisce challenge + outbox atomici.
 
-- [ ] Implementare reset invalid/confirm. `rejectPasswordReset` incrementa al massimo una volta per idempotency key; `confirmPasswordReset` blocca challenge/credential, ricontrolla digest/versione, aggiorna hash e `credential_version + 1`, consuma challenge, revoca tutte le sessioni e appende audit nella stessa transazione.
+- [x] Implementare reset invalid/confirm. `rejectPasswordReset` incrementa al massimo una volta per idempotency key; `confirmPasswordReset` blocca challenge/credential, ricontrolla digest/versione, aggiorna hash e `credential_version + 1`, consuma challenge, revoca tutte le sessioni e appende audit nella stessa transazione.
 
-- [ ] Verificare che tutte le query selezionino colonne esplicite, nessun `SELECT *`, nessuna email/token/password/digest nei messaggi errore.
+- [x] Verificare che tutte le query selezionino colonne esplicite, nessun `SELECT *`, nessuna email/token/password/digest nei messaggi errore.
 
-- [ ] Eseguire GREEN e security regression:
+- [x] Eseguire GREEN e security regression:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/domain --filter=@dnd-ai/persistence --filter=@dnd-ai/testing
   node --test tests/database/identity-access-store.test.mjs tests/database/identity-store.test.mjs tests/security/identity-persistence-security.test.mjs
   ```
 
-- [ ] Commit funzionale:
+- [x] Commit funzionale:
 
   ```powershell
   git add packages/persistence/src/identity-access-store.ts packages/persistence/src/index.ts tests/database/identity-access-store.test.mjs tests/security/identity-persistence-security.test.mjs

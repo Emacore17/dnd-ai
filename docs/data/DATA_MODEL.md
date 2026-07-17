@@ -34,6 +34,7 @@ code_refs:
   - packages/persistence/src/migrations/000004_identity_access.ts
   - packages/persistence/src/feature-flags.ts
   - packages/persistence/src/identity-store.ts
+  - packages/persistence/src/identity-access-store.ts
   - infra/local/postgres.compose.yml
 test_refs:
   - tests/contracts/architecture-documentation.test.mjs
@@ -42,7 +43,9 @@ test_refs:
   - tests/database/feature-flags.test.mjs
   - tests/database/identity-migration.test.mjs
   - tests/database/identity-store.test.mjs
+  - tests/database/identity-access-store.test.mjs
   - tests/integration/identity-signup-flow.test.mjs
+  - tests/security/identity-persistence-security.test.mjs
   - tests/security/database-migration-security.test.mjs
   - tests/security/feature-flags-security.test.mjs
 supersedes: null
@@ -139,7 +142,7 @@ L'indice `feature_flag_events_flag_key_created_at_idx` ordina la lettura audit p
 | `app.identity_idempotency` | Unique su endpoint + actor hash + key digest, fingerprint della richiesta, risultato minimo e TTL; endpoint/risultati access/reset sono allowlisted e nessuna chiave raw è persistita. |
 | `app.identity_audit_events` | Event type signup/access/reset chiuso, request/correlation ID bounded e metadata JSONB allowlisted; trigger vieta `UPDATE` e `DELETE`. |
 
-Signup persiste utente pending, credenziale, challenge, outbox, idempotenza e audit nella stessa transazione. Verify consuma la challenge, attiva l'utente e inserisce una sola sessione atomicamente. Lock advisory su email, idempotenza e bucket rate-limit chiudono i race testati; Redis non partecipa a questi invarianti.
+Signup persiste utente pending, credenziale, challenge, outbox, idempotenza e audit nella stessa transazione. Verify consuma la challenge, attiva l'utente e inserisce una sola sessione atomicamente. Lo store BL-006 applica sign-in, refresh con rotazione, logout, revoca globale e reset nella stessa transaction boundary di audit/idempotenza; il reset incrementa la versione credenziale, consuma una sola challenge e revoca tutte le sessioni. Lock advisory su email, idempotenza e bucket rate-limit, più lock di riga su credenziali/sessioni/challenge, chiudono i race testati; Redis non partecipa a questi invarianti.
 
 ## Relazioni implementate
 
@@ -205,9 +208,9 @@ flowchart LR
     TURN --> AI_REQUEST["AI request/usage · Pianificato"]
 ```
 
-### Identity signup e schema access implementati
+### Identity signup e persistence access implementati
 
-ADR-0010 e `identity-signup-v1` sono materializzati dalla migration `000003_identity_signup` e dal repository PostgreSQL. `000004_identity_access` implementa la parte fisica di `identity-access-v1`: `credential_version`, challenge reset, outbox discriminato e allowlist access/reset. Constraint, upgrade `000003`→head, rollback/re-apply locale e runner simultanei sono verificati su PostgreSQL reale. Lo store session/reset e le route restano in sviluppo; la presenza dello schema non implica disponibilità runtime. Ownership delle risorse resta BL-007.
+ADR-0010 e `identity-signup-v1` sono materializzati dalla migration `000003_identity_signup` e dal repository PostgreSQL. `000004_identity_access` implementa la parte fisica di `identity-access-v1`: `credential_version`, challenge reset, outbox discriminato e allowlist access/reset. Constraint, upgrade `000003`→head, rollback/re-apply locale e runner simultanei sono verificati su PostgreSQL reale. `PostgresIdentityAccessStore` materializza session lifecycle, rate limit e reset atomico con replay e race concorrente verificati; route API, dispatcher reset e superfici web restano in sviluppo, quindi la capability non è ancora esposta end-to-end. Ownership delle risorse resta BL-007.
 
 ## Ownership dei task
 
