@@ -396,7 +396,7 @@ Aggiungere nello stesso file test per UUID non-v7, titolo blank/>80, status scon
 Run:
 
 ```powershell
-corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/persistence
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/persistence --filter=@dnd-ai/testing
 node --test tests/database/campaign-ownership-migration.test.mjs
 ```
 
@@ -461,8 +461,12 @@ Normalizzare CRLF→LF e calcolare il source SHA con:
 ```powershell
 $source = (Get-Content -Raw packages/persistence/src/migrations/000005_campaign_ownership.ts) -replace "`r`n?", "`n"
 $bytes = [Text.Encoding]::UTF8.GetBytes($source)
-$sha = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()
-$sha
+$algorithm = [Security.Cryptography.SHA256]::Create()
+try {
+  ([BitConverter]::ToString($algorithm.ComputeHash($bytes)) -replace '-', '').ToLowerInvariant()
+} finally {
+  $algorithm.Dispose()
+}
 ```
 
 Inserire quel valore esatto in `CAMPAIGN_OWNERSHIP_MIGRATION_SOURCE_SHA256`; costruire checksum canonico con source SHA, SQL tabella/indice/supersede e definizione migration ID 5. Aggiornare `DATABASE_CONTRACT_VERSION`, `DATABASE_MIGRATION_HEAD` e `DATABASE_MIGRATION_MANIFEST` al nuovo contract.
@@ -476,8 +480,8 @@ In `identity-migration.test.mjs` far applicare `count: 4` al test identity princ
 Run:
 
 ```powershell
-corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/persistence
-node --test tests/database/campaign-ownership-migration.test.mjs tests/database/identity-migration.test.mjs tests/database/database-migrations.test.mjs tests/contracts/database-migration-contract.test.mjs
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/persistence --filter=@dnd-ai/testing
+node --test --test-concurrency=1 tests/database/campaign-ownership-migration.test.mjs tests/database/identity-migration.test.mjs tests/database/database-migrations.test.mjs tests/contracts/database-migration-contract.test.mjs
 ```
 
 Expected: zero→`000005`, `000004`→`000005`, replay e rollback/re-apply `PASS`; test unknown migration usa `000006` e continua a fallire chiuso.
@@ -525,7 +529,7 @@ Nello stesso test: sessione attiva risolta; token sconosciuto/revocato/idle-expi
 Run:
 
 ```powershell
-corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/domain --filter=@dnd-ai/persistence
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/domain --filter=@dnd-ai/persistence --filter=@dnd-ai/testing
 node --test tests/database/campaign-access-store.test.mjs
 ```
 
@@ -563,7 +567,7 @@ Validare digest SHA-256 lowercase, data valida e UUIDv7 prima della query. Conve
 Run:
 
 ```powershell
-corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/persistence
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/persistence --filter=@dnd-ai/testing
 node --test tests/database/campaign-access-store.test.mjs tests/database/identity-access-store.test.mjs
 ```
 
@@ -624,7 +628,7 @@ Il test unit service copre token malformato→`SESSION_INVALID`, session reader 
 Run:
 
 ```powershell
-corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/testing
 node --test tests/unit/campaign-access-service.test.mjs tests/integration/campaign-api.test.mjs
 ```
 
@@ -709,7 +713,7 @@ Aggiungere `campaign?: RegisterCampaignRoutesOptions` a `ApiAppDependencies`. Ag
 Run:
 
 ```powershell
-corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/testing
 node --test tests/unit/campaign-access-service.test.mjs tests/integration/campaign-api.test.mjs tests/integration/runtime-startup.test.mjs
 ```
 
@@ -877,7 +881,7 @@ Aggiungere test che i body 404 foreign/missing/deleted siano deep-equal, che can
 Run:
 
 ```powershell
-corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/persistence
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/persistence --filter=@dnd-ai/testing
 node --test tests/security/campaign-access-security.test.mjs
 ```
 
@@ -1007,7 +1011,7 @@ Creare una worktree detached temporanea dal nuovo `HEAD`, eseguire install froze
 ```powershell
 corepack pnpm@11.13.0 install --frozen-lockfile
 corepack pnpm@11.13.0 contracts:check
-corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/persistence
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/persistence --filter=@dnd-ai/testing
 node --test tests/database/campaign-ownership-migration.test.mjs tests/database/campaign-access-store.test.mjs tests/integration/campaign-idor-flow.test.mjs tests/security/campaign-access-security.test.mjs
 corepack pnpm@11.13.0 scan:secrets
 corepack pnpm@11.13.0 verify:docs

@@ -51,6 +51,7 @@ test("database migration commands use the versioned composition root", async () 
     featureFlagsMigration,
     identityMigration,
     identityAccessMigration,
+    campaignOwnershipMigration,
     persistenceManifestSource,
     runner,
   ] = await Promise.all([
@@ -60,6 +61,7 @@ test("database migration commands use the versioned composition root", async () 
     read("packages/persistence/src/migrations/000002_feature_flags.ts"),
     read("packages/persistence/src/migrations/000003_identity_signup.ts"),
     read("packages/persistence/src/migrations/000004_identity_access.ts"),
+    read("packages/persistence/src/migrations/000005_campaign_ownership.ts"),
     read("packages/persistence/src/migration-manifest.ts"),
     read("packages/persistence/src/migration-runner.ts"),
   ]);
@@ -84,6 +86,16 @@ test("database migration commands use the versioned composition root", async () 
   assert.match(identityAccessMigration, /credential_version/u);
   assert.match(persistenceManifestSource, /000004_identity_access/u);
   assert.match(persistenceManifestSource, /database-identity-access-v1/u);
+  assert.match(
+    campaignOwnershipMigration,
+    /DATABASE_CAMPAIGN_OWNERSHIP_TABLE_SQL/u,
+  );
+  assert.match(
+    campaignOwnershipMigration,
+    /DATABASE_CAMPAIGN_OWNERSHIP_INDEX_SQL/u,
+  );
+  assert.match(persistenceManifestSource, /000005_campaign_ownership/u);
+  assert.match(persistenceManifestSource, /database-campaign-ownership-v1/u);
   assert.match(runner, /const MIGRATIONS_SCHEMA = "infra"/u);
   assert.match(runner, /const MIGRATIONS_TABLE = "schema_migrations"/u);
   assert.match(runner, /validateMigrationDirectory/u);
@@ -145,6 +157,19 @@ test("database migration commands use the versioned composition root", async () 
       .update(normalizedIdentityAccessMigrationSource)
       .digest("hex"),
     identityAccessSourceChecksumMatch[1],
+  );
+
+  const normalizedCampaignOwnershipMigrationSource =
+    campaignOwnershipMigration.replace(/\r\n?/gu, "\n");
+  const campaignOwnershipSourceChecksumMatch = persistenceManifestSource.match(
+    /CAMPAIGN_OWNERSHIP_MIGRATION_SOURCE_SHA256 =\s+"([0-9a-f]{64})"/u,
+  );
+  assert.ok(campaignOwnershipSourceChecksumMatch);
+  assert.equal(
+    createHash("sha256")
+      .update(normalizedCampaignOwnershipMigrationSource)
+      .digest("hex"),
+    campaignOwnershipSourceChecksumMatch[1],
   );
 });
 
