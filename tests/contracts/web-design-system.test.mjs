@@ -160,11 +160,15 @@ test("the home page keeps an explicit server-to-client game boundary", async () 
 });
 
 test("the game feed scrolls without letting the persistent composer cover decisions", async () => {
-  const shell = await read("apps/web/components/game/interactive-game-shell.tsx");
+  const [shell, conversation] = await Promise.all([
+    read("apps/web/components/game/interactive-game-shell.tsx"),
+    read("apps/web/components/game/game-conversation.tsx"),
+  ]);
 
   assert.notEqual(shell, null, "the interactive shell should exist");
+  assert.notEqual(conversation, null, "the game conversation should exist");
   assert.match(shell, /h-svh[^"\n]*overflow-hidden/u);
-  assert.match(shell, /min-h-0/u);
+  assert.match(conversation, /min-h-0/u);
   assert.match(shell, /<footer className="shrink-0/u);
-  assert.doesNotMatch(shell, /sticky bottom-0/u);
+  assert.doesNotMatch(`${shell}\n${conversation}`, /sticky bottom-0/u);
 });

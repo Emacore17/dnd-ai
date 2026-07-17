@@ -6,6 +6,7 @@ import {
   FIXTURE_POST_APPLY_FAILURE,
   FIXTURE_PROGRESS,
   FIXTURE_RETRYABLE_FAILURE,
+  FIXTURE_TURN_SOURCE,
   createInitialGameShellState,
 } from "../../apps/web/lib/game-shell/game-shell-fixtures.ts";
 import { reduceGameShell } from "../../apps/web/lib/game-shell/game-shell-reducer.ts";
@@ -150,6 +151,24 @@ test("a post-apply failure refuses retry", () => {
   assert.equal(reduceGameShell(failed, { type: "retry_requested" }), failed);
 });
 
+test("a post-apply failure can close a completed turn without losing its feed", () => {
+  const completed = reduceGameShell(
+    submit(createInitialGameShellState()),
+    FIXTURE_COMPLETED_TURN,
+  );
+
+  const failed = reduceGameShell(completed, FIXTURE_POST_APPLY_FAILURE);
+
+  assert.equal(failed.status, "error");
+  assert.equal(failed.turns, completed.turns);
+  assert.equal(failed.failure?.stateApplied, true);
+  assert.equal(reduceGameShell(failed, { type: "retry_requested" }), failed);
+
+  const recovered = reduceGameShell(failed, { type: "turn_ready" });
+  assert.equal(recovered.status, "idle");
+  assert.equal(recovered.pendingAction, null);
+});
+
 test("incompatible events fail closed without cloning state", () => {
   const initial = createInitialGameShellState();
 
@@ -196,4 +215,18 @@ test("a completed turn becomes idle only after turn_ready", () => {
   assert.equal(ready.status, "idle");
   assert.equal(ready.pendingAction, null);
   assert.equal(ready.stateDiff, null);
+});
+
+test("the fixture source reflects the submitted action in the completed feed", () => {
+  const action = "Ascolto oltre la paratia";
+  const events = FIXTURE_TURN_SOURCE.eventsFor(action);
+  const completed = events.find((event) => event.type === "turn_completed");
+
+  assert.notEqual(completed, undefined);
+  assert.equal(
+    completed.turns.some(
+      (turn) => turn.kind === "player_action" && turn.text === action,
+    ),
+    true,
+  );
 });

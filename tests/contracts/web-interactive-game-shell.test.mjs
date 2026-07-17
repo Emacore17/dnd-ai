@@ -177,14 +177,13 @@ test("the game drawer remains a dedicated domain wrapper", async () => {
   );
 });
 
-test("the game feature boundary forbids trusted AI HTML, browser persistence, and fake latency", async () => {
+test("the interactive game boundary forbids trusted AI HTML, browser persistence, and fake latency", async () => {
   const boundaryPaths = [
     "apps/web/components/ai-elements/conversation.tsx",
     "apps/web/components/ai-elements/message.tsx",
     "apps/web/components/ai-elements/prompt-input.tsx",
     "apps/web/components/game/free-action-composer.tsx",
     "apps/web/components/game/game-conversation.tsx",
-    "apps/web/components/game/game-drawer.tsx",
     "apps/web/components/game/interactive-game-shell.tsx",
     "apps/web/components/game/narrative-turn.tsx",
     "apps/web/components/game/suggested-actions.tsx",

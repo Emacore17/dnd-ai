@@ -45,30 +45,32 @@ const INITIAL_HUD = {
   inventory: ["Lampada stagna", "Corda leggera", "2 kit medici"],
 } as const satisfies GameHudView;
 
-const COMPLETED_TURNS = [
-  ...INITIAL_TURNS,
-  {
-    id: "turn-player-2",
-    kind: "player_action",
-    text: "Seguo il segnale restando al riparo.",
-  },
-  {
-    id: "turn-narration-2",
-    kind: "narration",
-    authorLabel: "DM",
-    markdown:
-      "Avanzi lungo il passaggio di servizio. Il segnale si ferma dietro una paratia socchiusa, mentre Mara copre le tue spalle.",
-  },
-  {
-    id: "turn-rule-2",
-    kind: "rule_result",
-    label: "Movimento prudente",
-    formula: "16 vs 13",
-    outcome: "success",
-    detail: "Raggiungi la paratia senza attirare attenzione.",
-    stateDiff: "Posizione aggiornata: paratia di servizio.",
-  },
-] as const satisfies readonly NarrativeTurnView[];
+function createCompletedTurns(action: string): readonly NarrativeTurnView[] {
+  return [
+    ...INITIAL_TURNS,
+    {
+      id: "turn-player-2",
+      kind: "player_action",
+      text: action,
+    },
+    {
+      id: "turn-narration-2",
+      kind: "narration",
+      authorLabel: "DM",
+      markdown:
+        "Avanzi lungo il passaggio di servizio. Il segnale si ferma dietro una paratia socchiusa, mentre Mara copre le tue spalle.",
+    },
+    {
+      id: "turn-rule-2",
+      kind: "rule_result",
+      label: "Movimento prudente",
+      formula: "16 vs 13",
+      outcome: "success",
+      detail: "Raggiungi la paratia senza attirare attenzione.",
+      stateDiff: "Posizione aggiornata: paratia di servizio.",
+    },
+  ];
+}
 
 const COMPLETED_SUGGESTED_ACTIONS = [
   { id: "open-hatch", label: "Apri la paratia" },
@@ -106,21 +108,29 @@ export const FIXTURE_POST_APPLY_FAILURE = {
   },
 } as const satisfies GameShellEvent;
 
-export const FIXTURE_COMPLETED_TURN = {
-  type: "turn_completed",
-  turns: COMPLETED_TURNS,
-  suggestedActions: COMPLETED_SUGGESTED_ACTIONS,
-  hud: COMPLETED_HUD,
-  stateDiff: "Obiettivo e posizione aggiornati.",
+function createCompletedTurn(action: string): GameShellEvent {
+  return {
+    type: "turn_completed",
+    turns: createCompletedTurns(action),
+    suggestedActions: COMPLETED_SUGGESTED_ACTIONS,
+    hud: COMPLETED_HUD,
+    stateDiff: "Obiettivo e posizione aggiornati.",
+  };
+}
+
+export const FIXTURE_COMPLETED_TURN = createCompletedTurn(
+  "Seguo il segnale restando al riparo.",
+);
+
+const FIXTURE_ADVANCED_PROGRESS = {
+  type: "progress_received",
+  progress: { label: "Applico le conseguenze", value: 80 },
 } as const satisfies GameShellEvent;
 
 export const FIXTURE_HAPPY_PATH_EVENTS = [
   { type: "command_acknowledged" },
   FIXTURE_PROGRESS,
-  {
-    type: "progress_received",
-    progress: { label: "Applico le conseguenze", value: 80 },
-  },
+  FIXTURE_ADVANCED_PROGRESS,
   FIXTURE_COMPLETED_TURN,
 ] as const satisfies readonly GameShellEvent[];
 
@@ -147,8 +157,17 @@ export const FIXTURE_POST_APPLY_FAILURE_EVENTS = [
 ] as const satisfies readonly GameShellEvent[];
 
 export const FIXTURE_TURN_SOURCE: FixtureTurnSource = {
-  eventsFor: () => FIXTURE_HAPPY_PATH_EVENTS,
-  retryEventsFor: () => FIXTURE_HAPPY_PATH_EVENTS,
+  eventsFor: (action) => [
+    { type: "command_acknowledged" },
+    FIXTURE_PROGRESS,
+    FIXTURE_ADVANCED_PROGRESS,
+    createCompletedTurn(action),
+  ],
+  retryEventsFor: (action) => [
+    FIXTURE_PROGRESS,
+    FIXTURE_ADVANCED_PROGRESS,
+    createCompletedTurn(action),
+  ],
 };
 
 export function createInitialGameShellState(): GameShellViewModel {

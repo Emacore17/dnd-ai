@@ -86,7 +86,10 @@ export function reduceGameShell(
       return { ...state, status: "reconnect" };
 
     case "turn_failed":
-      if (!hasStatus(state, ["submitting", "progress", "reconnect"])) {
+      if (
+        !hasStatus(state, ["submitting", "progress", "reconnect"]) &&
+        !(state.status === "completed" && event.failure.stateApplied)
+      ) {
         return state;
       }
       return {
@@ -130,7 +133,10 @@ export function reduceGameShell(
       };
 
     case "turn_ready":
-      if (state.status !== "completed") {
+      if (
+        state.status !== "completed" &&
+        !(state.status === "error" && state.failure?.stateApplied === true)
+      ) {
         return state;
       }
       return {

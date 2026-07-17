@@ -20,6 +20,7 @@ export interface FreeActionComposerProps {
   readonly progress: TurnProgressView | null;
   readonly failure: SafeTurnFailureView | null;
   readonly onDraftChange: (draft: string) => void;
+  readonly onContinue: () => void;
   readonly onRetry: () => void;
   readonly onSubmitAction: (action: string) => void;
 }
@@ -51,6 +52,7 @@ export function FreeActionComposer({
   progress,
   failure,
   onDraftChange,
+  onContinue,
   onRetry,
   onSubmitAction,
 }: FreeActionComposerProps) {
@@ -87,6 +89,12 @@ export function FreeActionComposer({
       {canRetry ? (
         <Button className="w-full" onClick={onRetry} type="button" variant="outline">
           Riprova la stessa azione
+        </Button>
+      ) : null}
+      {status === "completed" ||
+      (status === "error" && failure?.stateApplied === true) ? (
+        <Button className="w-full" onClick={onContinue} type="button">
+          {status === "completed" ? "Continua" : "Continua dalla scena aggiornata"}
         </Button>
       ) : null}
       <PromptInput onSubmit={handleSubmit}>
