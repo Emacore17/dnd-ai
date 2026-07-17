@@ -2,7 +2,7 @@
 status: active
 owner: engineering-security
 last_reviewed: 2026-07-17
-last_verified_commit: 3d0912f70d3b0ff395597853181748b0ee473adf
+last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
 source_refs:
   - docs/MVP_SPEC.md#191-convenzioni-generali
   - docs/MVP_SPEC.md#201-convenzioni-rest
@@ -990,7 +990,7 @@ Expected: exit `0` per format, lint, typecheck, build, generated drift, unit/int
 
 - [ ] **Step 3: Registrare evidenze reali senza inventare valori**
 
-In `TASKS.md` impostare `DONE/100%/PASSING` e riportare test/count/durate realmente emessi dal full, migration head/checksum/source SHA, spec SHA `96905284cea5cc79df452cfd29a527336969b213479b0ce3da45825283ca4381`, e `eval/trace ID: N/A — slice deterministica senza AI o trace persistita`. In `CONTEXT.md` indicare candidato branch-local e prossimo task `QA-002`; delivery resta `PENDING` finché non è integrata da PR protetta.
+In `TASKS.md` impostare `DONE/100%/PASSING` e riportare test/count/durate realmente emessi dal full, migration head/checksum/source SHA, spec SHA `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b`, e `eval/trace ID: N/A — slice deterministica senza AI o trace persistita`. In `CONTEXT.md` indicare candidato branch-local e prossimo task `QA-002`; delivery resta `PENDING` finché non è integrata da PR protetta.
 
 - [ ] **Step 4: Validare e incorporare lo stato nel commit funzionale precedente**
 

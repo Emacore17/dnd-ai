@@ -2,17 +2,19 @@
 status: active
 owner: engineering-and-data
 last_reviewed: 2026-07-17
-last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
+last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
 source_refs:
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilità
   - docs/MVP_SPEC.md#264-integration-test-database
   - docs/MVP_SPEC.md#295-migrazioni-zero-downtime
   - docs/adr/0006-postgresql-migration-foundation.md
   - docs/adr/0010-internal-provider-neutral-identity.md
+  - docs/superpowers/specs/2026-07-17-bl-007-actor-context-design.md
 related_tasks:
   - BL-004
   - BL-005
   - BL-006
+  - BL-007
   - BL-010
 code_refs:
   - package.json
@@ -23,8 +25,10 @@ code_refs:
   - packages/persistence/src/migrations/000002_feature_flags.ts
   - packages/persistence/src/migrations/000003_identity_signup.ts
   - packages/persistence/src/migrations/000004_identity_access.ts
+  - packages/persistence/src/migrations/000005_campaign_ownership.ts
   - packages/persistence/src/feature-flags.ts
   - packages/persistence/src/identity-store.ts
+  - packages/persistence/src/campaign-access-store.ts
   - scripts/run-database-migrations.mjs
   - scripts/manage-feature-flag.mjs
   - scripts/lib/database-migration-policy.mjs
@@ -39,6 +43,8 @@ test_refs:
   - tests/database/feature-flags.test.mjs
   - tests/database/identity-migration.test.mjs
   - tests/database/identity-store.test.mjs
+  - tests/database/campaign-ownership-migration.test.mjs
+  - tests/database/campaign-access-store.test.mjs
   - tests/security/database-migration-security.test.mjs
   - tests/security/feature-flags-security.test.mjs
   - docs/testing/BL-004_VERIFICATION.md
@@ -57,14 +63,14 @@ Questo runbook copre il lifecycle locale, l'applicazione delle migration, il con
 | pgvector | `0.8.2` |
 | Immagine | `pgvector/pgvector:0.8.2-pg17-trixie@sha256:5c97c57367a485a8e99389548db67d441ab1a878f5492c3df04989f34ecf3c75` |
 | Runner/driver | `node-pg-migrate@8.0.4` / `pg@8.22.0` |
-| Migration head | `000004_identity_access` |
-| Contract | `database-identity-access-v1` |
-| Source SHA-256 | `330164398efd1ce9bd4463753f1ca01cb5ef3eaa56a187fe10b7097f0c2385d9` |
-| Contract checksum | `73f20dd1c1791cd9b313ac4ef5355c284c11a43556abf3f6316c9bf071c22549` |
+| Migration head | `000005_campaign_ownership` |
+| Contract | `database-campaign-ownership-v1` |
+| Source SHA-256 | `119a102cedbad7129eb40ad7082c0c6f8a52fb3d0f0792cee305e2cf75027f0d` |
+| Contract checksum | `e6fadbe1ed89d0ae58b6d9a14950c7d2f8928e7b4fc90f3b2700459cfd3e39fe` |
 | Namespace | `app`, `infra` |
 | Registro | `infra.migration_contracts` |
 
-La baseline `000001` abilita `vector` e crea i due namespace e il registro di integrità. `000002_feature_flags` aggiunge catalogo e audit dei kill switch. `000003_identity_signup` aggiunge utenti pending/active, credenziali Argon2id, challenge, sessioni, outbox email, rate limit, idempotenza e audit identity append-only. `000004_identity_access` aggiunge versione credenziale, challenge reset one-time, outbox verifica/reset discriminato e allowlist per sessioni/reset. Non contiene campagne, turni, RLS, colonne/indici vettoriali o dati di gioco.
+La baseline `000001` abilita `vector` e crea i due namespace e il registro di integrità. `000002_feature_flags` aggiunge catalogo e audit dei kill switch. `000003_identity_signup` aggiunge utenti e signup; `000004_identity_access` aggiunge lifecycle sessione/reset. `000005_campaign_ownership` aggiunge `app.campaigns`, foreign key owner, vincoli UUIDv7/status/version/timestamp e indice parziale owner lookup. Non contiene personaggi, turni, Bible, RLS, colonne/indici vettoriali applicativi o stato narrativo.
 
 ## Prerequisiti e configurazione
 
@@ -142,7 +148,7 @@ Ripetere lo stesso comando su un database già all'head deve produrre un no-op e
 corepack pnpm@11.13.0 db:migrate:status:local
 ```
 
-Lo stato valido riporta `000004_identity_access`, `database-identity-access-v1` e nessuna migration pendente. Il report può contenere nomi e checksum delle migration, mai la URL di connessione.
+Lo stato valido riporta `000005_campaign_ownership`, `database-campaign-ownership-v1` e nessuna migration pendente. Il report può contenere nomi e checksum delle migration, mai la URL di connessione.
 
 ### 6. Chiusura del database locale
 
@@ -180,11 +186,11 @@ corepack pnpm@11.13.0 db:migrate:test
 
 Il comando possiede il lifecycle di un database isolato e deve verificare almeno:
 
-- database vuoto -> `000004_identity_access`;
-- upgrade dalla versione precedente: `000003_identity_signup` -> `000004_identity_access`;
+- database vuoto -> `000005_campaign_ownership`;
+- upgrade dalla versione precedente: `000004_identity_access` -> `000005_campaign_ownership`;
 - replay all'head come no-op;
 - presenza dell'estensione `vector`, dei namespace `app`/`infra`, di `infra.migration_contracts`, di `app.feature_flags` e di `app.feature_flag_events`;
-- source SHA normalizzato, checksum canonico e compatibilità `database-identity-access-v1`;
+- source SHA normalizzato, checksum canonico e compatibilità `database-campaign-ownership-v1`;
 - file migration sconosciuti e symlink rifiutati prima del DDL;
 - ordine fail-closed con `checkOrder`;
 - errore DDL con rollback completo della singola transazione;
@@ -193,7 +199,7 @@ Il comando possiede il lifecycle di un database isolato e deve verificare almeno
 - override di routing PostgreSQL nella query string rifiutato per il rollback locale;
 - output e report privi di URL o credenziali.
 
-La suite `tests/database/feature-flags.test.mjs` continua a verificare lettura seed, cambio flag senza deploy, audit, CAS, idempotenza e rollback. `identity-migration` verifica inoltre `credential_version`, reset one-time, outbox XOR/template, allowlist, zero/previous→head e rollback/re-apply; gli store coprono transazioni e race dei flussi applicativi.
+La suite `tests/database/feature-flags.test.mjs` continua a verificare lettura seed, cambio flag senza deploy, audit, CAS, idempotenza e rollback. `identity-migration` verifica `credential_version`, reset one-time, outbox XOR/template e allowlist. `campaign-ownership-migration` copre zero/`000004`→head, vincoli, indice e rollback/re-apply; `campaign-access-store` copre sessione read-only, ownership e soft-delete su PostgreSQL reale.
 
 Il test termina sempre il container isolato, anche dopo un failure. Nessun test usa SQLite, sleep arbitrari o dati reali.
 

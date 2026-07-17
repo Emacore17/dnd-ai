@@ -2,13 +2,15 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: c30c6db616ebb69434e4b04dcccb97e48530f6a9
+last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
 source_refs:
   - docs/MVP_SPEC.md
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
   - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
+  - docs/superpowers/specs/2026-07-17-bl-007-actor-context-design.md
+  - docs/superpowers/plans/2026-07-17-bl-007-actor-context.md
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
   - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
 related_tasks:
@@ -22,6 +24,7 @@ related_tasks:
   - BL-004
   - BL-005
   - BL-006
+  - BL-007
   - BL-008
   - BL-009
   - BL-010
@@ -38,6 +41,10 @@ code_refs:
   - packages/config
   - packages/observability/src/node.ts
   - packages/observability/src/tracing.ts
+  - apps/api/src/campaign
+  - packages/persistence/src/campaign-access-store.ts
+  - packages/persistence/src/migrations/000005_campaign_ownership.ts
+  - packages/contracts/generated/v4
   - packages/observability/src/logger.ts
   - packages/observability/src/redaction.ts
   - packages/contracts/src
@@ -165,6 +172,8 @@ test_refs:
   - tests/contracts/testing-package-contract.test.mjs
   - tests/security/test-report-security.test.mjs
   - tests/contracts/architecture-documentation.test.mjs
+  - tests/integration/campaign-idor-flow.test.mjs
+  - tests/security/campaign-access-security.test.mjs
 supersedes: null
 ---
 
@@ -179,7 +188,7 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-007 — IN_PROGRESS/25%/NOT_RUN` sulla branch `codex/bl-007-actor-context`; design `campaign-ownership-v1` approvato, implementazione TDD non ancora iniziata
+> **Task attivo:** `BL-007 — DONE/100%/PASSING` branch-local sulla branch `codex/bl-007-actor-context`; review, full gate HIGH_RISK e checkout pulito verdi, delivery ancora aperta
 > **Prossimo task READY:** `QA-002 — Playwright, axe, visual regression`; resta indipendente e non viene avviato durante BL-007
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
@@ -353,8 +362,8 @@ Corsie: `FAST` usa `verify:docs`; `STANDARD` usa test mirati + `verify:affected`
 | `docs/features/PROGRESSION_ENDINGS.md` | Planned (`DOC-END-001`) | Pacing/finali/epilogo | Ogni predicate/gate change. |
 | [`docs/api/README.md`](api/README.md) | Esistente, `active` | Contratti runtime/generated e version policy | Ogni endpoint/schema version. |
 | `docs/events/EVENT_CATALOG.md` | Planned | Eventi e payload | Ogni nuovo evento/versione. |
-| `docs/security/THREAT_MODEL.md` | Planned (`DOC-SEC-001`) | Threat/controls | Ogni trust boundary/dato/endpoint. |
-| `docs/security/MODERATION_POLICY.md` | Planned (`DOC-SEC-001`) | Policy safety | Ogni policy/provider/category change. |
+| [`docs/security/THREAT_MODEL.md`](security/THREAT_MODEL.md) | Esistente, `active` (`BL-007`) | Threat/controls identity e campaign ownership | Ogni trust boundary/dato/endpoint. |
+| `docs/security/MODERATION_POLICY.md` | Planned (`BL-064`) | Policy safety | Ogni policy/provider/category change. |
 | `docs/operations/RUNBOOK.md` | Planned (`DOC-OPS-001`) | Operazioni/incidenti | Ogni deploy, alert, recovery o kill switch. |
 | [`docs/testing/TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) | Esistente, `active`; baseline `QA-001` | Suite, fixture, container e report | Ogni nuovo livello/gate di test; browser in `QA-002`. |
 | `docs/testing/AI_EVALS.md` | Planned (`DOC-TEST-001`) | Evals/rubriche/versioni | Ogni prompt/model/schema/eval change. |
@@ -552,7 +561,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Unit e integration test di challenge consumption/supersession, session creation/expiry e replay; login/logout/reset e revoca completa restano `BL-006`.
   - [x] API/E2E happy path e negative path; rate-limit e cookie/security headers.
   - [x] Component/mobile accessibility smoke delle schermate signup e verifica sulla fondazione `BL-079`.
-- **Documentazione e contesto:** design `identity-signup-v1`; ADR-0010; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/data/DATA_MODEL.md`; threat model proprietario di `DOC-SEC-001`
+- **Documentazione e contesto:** design `identity-signup-v1`; ADR-0010; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/data/DATA_MODEL.md`; baseline threat model attiva introdotta da BL-007
 - **Evidenze di chiusura:** contract `2.0.0`/artifact `v2`, migration head `000003_identity_signup` e contract `database-identity-signup-v1`; aggregato identity `74/74 PASS` su 21 file e browser locale 320/390/1440. Full HIGH_RISK iniziale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 176,9 s: lint `11/11`, typecheck `16/16`, build `11/11`, unit `148` (147 pass/1 skip host), integration `32/32`, database `21/21`, contract `91/91`, security `42` (39 pass/3 skip host), report `333` test e artifact `4.178` file `PASS`. Il functional head `0761b18` è stato poi verificato da checkout detached pulito: install frozen `701` package in 19,6 s, generated drift `23/23`, database `21/21`, build API/worker/web `8/8`, vertical identity + smoke web `3/3`, secret scan e `verify:docs` `PASS`; worktree temporanea rimossa. La prima run PR #28 ha rilevato che la corsia security isolata non compilava API/worker; la regressione TDD ha esteso i filtri senza modificare runtime di prodotto. Full correttivo forzato exit `0` in 290,2 s con gli stessi 333 test/artifact e corsia security autonoma `42` test `PASS`. Il candidato corretto `c2e4332b408f1cac3e2c69920cd18e5e772e87bf` è stato integrato tramite [PR #28](https://github.com/Emacore17/dnd-ai/pull/28), merge `e173fd9424ad77330ae8302f68affd4832d66798`; CI PR `29525777416` e post-merge `29526030389` hanno concluso tutti e cinque i job con `SUCCESS`.
 - **Note, rischi o bloccanti:** Corsia `HIGH_RISK`: security/auth, schema, config, dipendenze, cookie e delivery email. Nessun provider/account/deploy è autorizzato; i test usano fake email deterministico e simulano timeout senza rete. SMTP reale, staging e Vercel non sono stati verificati. Il target di 120 minuti è stato superato perché la card M accorpa schema, crypto nativa, tre runtime e UI browser; i gate candidati hanno inoltre trovato formattazione/lint, clock skew PostgreSQL e un test documentale fermo a `000002`, tutti corretti alla causa senza ampliare lo scope. Il warning `MaxListenersExceededWarning` del reporter resta non bloccante e preesistente alla slice.
 
@@ -573,16 +582,16 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Unit e integration test di token/session lifecycle, scadenza, revoca e replay.
   - [x] API/E2E happy path e negative path; rate-limit e cookie/security headers.
   - [x] Component/mobile accessibility smoke di login, logout e reset sulla fondazione `BL-079`.
-- **Documentazione e contesto:** design `identity-access-v1`; ADR-0010; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/data/DATA_MODEL.md`; threat model proprietario di `DOC-SEC-001` (non ancora disponibile)
+- **Documentazione e contesto:** design `identity-access-v1`; ADR-0010; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/data/DATA_MODEL.md`; baseline threat model attiva introdotta da BL-007
 - **Evidenze di chiusura:** candidato poi integrato — artifact `v3`/SemVer `3.0.0` con 20 schema e nove operazioni auth; v1/v2 senza diff. RED contract/config/crypto 7 failure attese, quindi build 6/6 e regressione 56 pass/1 skip host; lint, formatting, docs e secret scan `PASS`. RED migration 3 failure attese; GREEN PostgreSQL reale: schema/upgrade/rollback 2/2, lifecycle zero→head/replay/failure/rollback 11/11, due runner e rollback DDL 2/2. Lo store access/reset è passato da RED su export/file mancanti a build 3/3, integration PostgreSQL 2/2, regressione store precedente 3/3, security 2/2 e lint; il test concorrente consente un solo reset canonico, incrementa una sola volta i tentativi e revoca tutte le sessioni. Service/cookie/route sono passati da RED su export/file/404 mancanti a build API 6/6 e 20/20 mirati: rate pre-Argon2, hash dummy uniforme, Origin/CSRF, fixation, rotazione, clear cookie anche su failure, reset generico e confronto HMAC dummy; regressioni BL-005/startup/config 23/23 e lint puliti. Worker reset RED su export/domain/template, poi build e 12/12 unit/security più 6/6 integrazione PostgreSQL: claim discriminato, chiavi HMAC separate, template senza link/dati account, lease/retry/key mismatch e crash-after-send chiusi. BFF/UI RED su sei path/tre pagine/primitive assenti, poi web build/lint/typecheck e 19/19 mirati: cookie request/response allowlisted, 204 bodyless, schema/status fail-closed, `AlertDialog` shadcn e form mobile con password manager, live region e stato reset solo React. Il verticale `identity-access-flow` passa 1/1 su PostgreSQL reale: signup/verify, sign-in, refresh con replay negato, logout, due sessioni/revoca, reset concorrente one-time e race login/reset con `credential_version` vincolano un solo esito canonico. Aggregato identity deterministico 96/96; browser locale 320×800, 390×844 e 1440×900 senza overflow orizzontale, overlay o log warn/error, con target minimi 44 px e CTA 48 px. Il full gate finale senza cache passa in 250,3 s: lint 11, typecheck 16, build 11, report 355 test (351 pass/4 skip host: unit 160, integration 37, database 22, contract 94, security 42), artifact 4.332 file e policy docs/task graph/CI/deployment/secret `PASS`. I due tentativi precedenti hanno trovato e chiuso alla causa due lint test e sei contract test fermi a `v2`/`000003`, con regressioni 14/14 e contract lane 94/94 prima del rerun. Il functional head `df7f8688d5455b97e91325cf85bb2330738745b2` è stato quindi verificato da checkout detached pulito: install frozen 701 package in 13,3 s, generated drift di 45 file, build API/worker/web 8/8, migration identity/access 13/13, verticale access + smoke web 2/2, secret scan e `verify:docs` `PASS`. Il runner diretto ha richiesto il build esplicito del test harness `@dnd-ai/testing`, prerequisito già eseguito dalle corsie ufficiali; dopo il build la matrice è passata senza modifiche. Review finale e `git diff --check` non lasciano finding P0/P1. Head `000004_identity_access`, source SHA `330164398efd1ce9bd4463753f1ca01cb5ef3eaa56a187fe10b7097f0c2385d9`, contract checksum `73f20dd1c1791cd9b313ac4ef5355c284c11a43556abf3f6316c9bf071c22549`; eval/trace ID `N/A`. PR #29/merge `c30c6db`; CI PR/post-merge `29570461340`/`29570669866` 5/5 `SUCCESS`.
 - **Note, rischi o bloccanti:** Corsia `HIGH_RISK`. Design approvato: sessione idle 24 h/assoluta 30 giorni, refresh esplicito con rotazione, logout corrente idempotente, revoca globale, reset con codice email a sei cifre/TTL 10 minuti/5 tentativi e nessun auto-login. Contract pubblico `v3`, porte pure, scope rate separati, secret reset service-scoped, primitive HMAC/token, schema forward-only `000004`, `PostgresIdentityAccessStore`, sei route Fastify, outbox worker discriminato, sei route BFF e tre superfici shadcn mobile-first sono implementati, verificati e integrati tramite [PR #29](https://github.com/Emacore17/dnd-ai/pull/29), merge `c30c6db616ebb69434e4b04dcccb97e48530f6a9`; CI PR `29570461340` e post-merge `29570669866` hanno concluso cinque job `SUCCESS`. SMTP reale e staging restano fuori scope. Nessun provider, deploy o azione Vercel è stato eseguito.
 
 ### BL-007 — ActorContext e query tenant-safe
 
-- **Stato:** `IN_PROGRESS`
-- **Progresso:** `25%`
-- **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `YES` — baseline integrata `464b124d7b5182d2614703a743dffb622cc220fe`; spec SHA-256 `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b`; data: `2026-07-17`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — candidato `dde888e4f835d25fc5d6142129394971efa90320` riprodotto da checkout detached pulito; base integrata `464b124d7b5182d2614703a743dffb622cc220fe`; spec SHA-256 `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b`; data: `2026-07-17`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-004, BL-006
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20.1 Convenzioni REST; `docs/MVP_SPEC.md` §22.3 Autorizzazione e isolamento campagne; `docs/MVP_SPEC.md` §32 AC-23; `docs/MVP_SPEC.md` §31 `BL-007`; `docs/MVP_SPEC.md` §35.1; [`design campaign-ownership-v1`](superpowers/specs/2026-07-17-bl-007-actor-context-design.md); [`piano TDD`](superpowers/plans/2026-07-17-bl-007-actor-context.md)
@@ -590,12 +599,12 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Deliverable:** ActorContext e query tenant-safe.
 - **Criterio di accettazione:** IDOR matrix restituisce zero accessi; risorsa altrui 404.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Test di accettazione automatizzato: IDOR matrix restituisce zero accessi; risorsa altrui 404.
-  - [ ] Matrice IDOR automatizzata su repository/API/SSE con due utenti e risorse incrociate.
-  - [ ] Test che gli errori non rivelino l’esistenza della risorsa altrui.
+  - [x] Test di accettazione automatizzato: IDOR matrix restituisce zero accessi; risorsa altrui 404.
+  - [x] Matrice IDOR automatizzata su repository/API/SSE con due utenti e risorse incrociate.
+  - [x] Test che gli errori non rivelino l’esistenza della risorsa altrui.
 - **Documentazione e contesto:** `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/architecture/SYSTEM_OVERVIEW.md`; `docs/adr/`; `docs/security/THREAT_MODEL.md`
-- **Evidenze di chiusura:** design `campaign-ownership-v1` approvato dal Product Owner il 2026-07-17; implementazione, test e delivery ancora aperti.
-- **Note, rischi o bloccanti:** Corsia `HIGH_RISK`. Scope approvato: migration `000005_campaign_ownership`, contract `v4`, session resolver read-only, `ActorContext`, repository actor-scoped, `GET /api/campaigns/:campaignId` e pre-handler SSE reale ma non registrato nel runtime fino a BL-038. Matrice IDOR su due utenti/due campagne obbligatoria; RLS, rate limit generale, turni, UI, deploy e Vercel fuori scope.
+- **Evidenze di chiusura:** candidato implementato nei commit `9babc19`, `570c830`, `d23b520`, `df27677`, `fd90e5e`, `e516a86` e `dde888e`: contract/domain 16/16, suite migration ufficiale 25/25, store campaign + regressione identity 4/4, service/API/startup 13/13, matrice repository/API/SSE 6/6 e security source/failure guard 4/4 `PASS`; build TypeScript, lint e formatting delle aree toccate verdi. Le cinque corsie di chiusura Task 6 passano: `verify:docs` su 58 documenti/70 artifact con task graph e secret scan, contract 104/104, database 27/27, integration 41/41 e security 43 pass/3 skip host. Review inline del diff completo senza finding P0/P1. Full HIGH_RISK finale exit `0` in 395,9 s: format, lint/build 11, typecheck 16, report 396 test su cinque lane, boundary/docs/task/CI/deployment/secret policy e artifact 4.396 file `PASS`. Il primo tentativo ha trovato l'import `URL` mancante nel test security, corretto alla causa; il secondo ha osservato un readback ledger Docker non riprodotto in 10/10 esecuzioni isolate né nella lane database 27/27, prima del full finale verde. Checkout detached di `dde888e` riproducibile: install frozen 819 package, contract drift 70 file, build 7/7, migration/store/IDOR/security 9/9, secret scan e docs/task graph `PASS`; residuo Windows deregistrato e rimosso sul solo path temporaneo con `core.longPaths=true`. Artifact `v4`/SemVer `4.0.0`, migration head `000005_campaign_ownership`, contract `database-campaign-ownership-v1`, source SHA `119a102cedbad7129eb40ad7082c0c6f8a52fb3d0f0792cee305e2cf75027f0d`, checksum `e6fadbe1ed89d0ae58b6d9a14950c7d2f8928e7b4fc90f3b2700459cfd3e39fe`; eval/trace ID `N/A — slice deterministica senza AI o trace persistita`. Delivery protetta resta `PENDING`.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK`. Implementati session resolver read-only, `ActorContext`, repository actor-scoped, `GET /api/campaigns/:campaignId` e pre-handler SSE verificato ma non registrato nel runtime fino a BL-038. Foreign/missing/soft-deleted condividono lo stesso `404`; failure PostgreSQL resta `503`; una sessione negata impedisce la query campagna. RLS, rate limit generale, turni, UI, deploy e Vercel restano fuori scope. Lo stato branch-local è `DONE/100%/PASSING`; delivery canonica `PENDING` finché la PR protetta non è integrata.
 
 ### BL-008 — OTel/log/Sentry baseline
 
@@ -2365,18 +2374,18 @@ Completare safety, cost control, admin, privacy, eval, bot, load/chaos/restore e
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
 - **Note, rischi o bloccanti:** `—`
 
-### DOC-SEC-001 — Threat model e policy di moderazione operative
+### DOC-SEC-001 — Consolidamento finale security, privacy e moderazione
 
 - **Stato:** `BACKLOG`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
 - **Priorità / stima:** `P0` / `L`
-- **Dipendenze:** BL-063, BL-065, BL-066, BL-067
+- **Dipendenze:** BL-063, BL-064, BL-065, BL-066, BL-067
 - **Dipendenze operative aggiuntive:** GOV-002
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §22; `docs/MVP_SPEC.md` AC-22/AC-23
-- **Obiettivo:** Documentare asset, trust boundary, abuse cases, policy, response e controlli verificabili.
-- **Deliverable:** `docs/security/THREAT_MODEL.md`, `docs/security/MODERATION_POLICY.md`, security test matrix, incident escalation e data handling.
+- **Obiettivo:** Consolidare asset, trust boundary, abuse cases, moderazione, privacy, response e controlli verificabili sull'intero MVP.
+- **Deliverable:** Estensione della baseline `docs/security/THREAT_MODEL.md` introdotta da BL-007, `docs/security/MODERATION_POLICY.md` posseduta da BL-064, security test matrix finale, incident escalation e data handling.
 - **Criterio di accettazione:** Ogni minaccia P0 ha controllo, test, owner e residual risk; input/output critical falliscono in modo sicuro e l’accesso cross-tenant resta impossibile.
 - **Test obbligatori prima di `DONE`:**
   - [ ] Threat-model review con STRIDE/abuse cases e mapping a test.
@@ -2684,20 +2693,20 @@ Questa matrice è un indice iniziale. `GOV-002` deve trasformarla in `docs/TRACE
 Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il task attivo. Alla chiusura, trasferire le informazioni sintetiche nella card del task e conservare qui l’ultima esecuzione finché non viene selezionato il task successivo.
 
 ```yaml
-active_task: BL-081
-last_completed_task: BL-006
-next_ready_task: BL-007
+active_task: BL-007
+last_completed_task: BL-081
+next_ready_task: QA-002
 status: DONE
 progress: 100
-started_at: 2026-07-17T11:38:00+02:00
-candidate_at: 2026-07-17T13:25:00+02:00
+started_at: 2026-07-17T14:00:00+02:00
+candidate_at: 2026-07-17T15:46:44+02:00
 cycle_target_minutes: 120
-cycle_actual_minutes: 113
-updated_at: 2026-07-17T13:31:00+02:00
+cycle_actual_minutes: 106
+updated_at: 2026-07-17T15:46:44+02:00
 agent: Codex development agent
-git_branch: codex/bl-081-interactive-shell
-base_commit: c30c6db616ebb69434e4b04dcccb97e48530f6a9
-candidate_head: 561dc2d2b69f4a9a4cbb4b136687d39ceb42f7ae
+git_branch: codex/bl-007-actor-context
+base_commit: 464b124d7b5182d2614703a743dffb622cc220fe
+candidate_head: dde888e4f835d25fc5d6142129394971efa90320
 spec_sha256: 737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b
 context_verified: true
 test_status: PASSING
@@ -2709,24 +2718,29 @@ test_status: PASSING
 - [x] `docs/TASKS.md`
 - [x] `AGENTS.md`
 - [x] `docs/CONTEXT.md`
-- [x] riferimenti BL-081 — `docs/MVP_SPEC.md` §§8, 11.4, 21, 23.1, 26.8, 31, 32.2 e 35.1; studio UX/UI §§4–14.1; ADR-0001; design GOV-004 e BL-081
-- [x] documentazione ufficiale corrente — AI Elements `Conversation`/`Message`/`Prompt Input`; Motion `LazyMotion`/`useReducedMotion`; shadcn registry/Radix
-- [x] codice/test interessati — shell statica, fixture, primitive shadcn, CSS/Tailwind, route home e test web design system/game shell
+- [x] riferimenti BL-007 — `docs/MVP_SPEC.md` §§20.1, 22.3, 31, 32 AC-23 e 35.1; ADR-0010; design e piano `campaign-ownership-v1`
+- [x] contratti e dati interessati — artifact API `v1`–`v4`, migration `000001`–`000005`, session lifecycle e ownership campagna
+- [x] codice/test interessati — dominio, contratti, persistence PostgreSQL, application service, route HTTP, guardia SSE e matrici IDOR/security
 
 ## Piano e scope
 
-- **Corsia:** `HIGH_RISK` perché cambieranno dependency graph/lockfile, rendering AI, stato client, overlay accessibili e motion layer; target 120 minuti, con decomposizione se registry o bundle ampliano lo scope.
-- **Obiettivo verificabile:** shell conversazionale interattiva a 320–430 px e desktop con feed dominante, composer, due suggerimenti, drawer HUD e sei stati fixture deterministici; AI Elements resta presentational e Motion non altera contenuto o focus.
-- **File/moduli previsti:** wrapper in `apps/web/components/game`, model/reducer/fixture in `apps/web/lib/game-shell`, primitive AI Elements/shadcn selettive, motion boundary, route home, contract/unit/integration/browser smoke e living docs.
-- **Azioni esterne:** sola consultazione di documentazione ufficiale e registry/readback npm; nessun endpoint AI, provider, account, secret, deploy, release o modifica Vercel.
-- **Test previsti:** TDD RED/GREEN per inventory/bundle, reducer/transizioni, wrapper/composer/drawer, Markdown sicuro e reduced-motion; build/lint/typecheck, smoke locale 320/390/1440, audit, full HIGH_RISK e checkout pulito.
-- **Rischi/failure path:** scroll jump, focus perso, tastiera/safe-area, duplicate submit, draft perso, retry dopo state apply, raw HTML/link non sicuri, bundle AI/Motion eccessivo, layout jank e contenuto diverso con reduced-motion.
-- **Fuori scope:** API turno/SSE, `useChat`, `UIMessage` dominio, optimistic state canonico, persistenza draft, attachment/model/voice, dadi interattivi, Rive, Playwright comune, staging, Production e Vercel.
+- **Corsia:** `HIGH_RISK` perché cambia il confine authorization/tenant, la migration head, il contract pubblico e una guardia riusabile per SSE; target 120 minuti.
+- **Obiettivo verificabile:** sessione valida risolta in `ActorContext`, query campagna owner-scoped e matrice IDOR a due utenti con risposta indistinguibile per risorsa altrui, assente o eliminata.
+- **File/moduli previsti:** dominio/contratti, migration e store PostgreSQL, application service e route API, pre-handler SSE non registrato, test contract/database/integration/security e living docs.
+- **Azioni esterne:** nessuna; test e database sono locali, senza provider, account, secret, deploy, release o modifica Vercel.
+- **Test previsti:** contratti e compatibilità, zero/previous→head e rollback, repository/API/SSE cross-user, redazione errori, build/lint/format, full HIGH_RISK e checkout pulito.
+- **Rischi/failure path:** sessione assente/scaduta/revocata, UUID non valido, campagna altrui/assente/soft-deleted indistinguibili, errore PostgreSQL `503`, query campagna non eseguita dopo sessione negata e adapter SSE non registrato prematuramente.
+- **Fuori scope:** RLS, rate limit generale, mutation/turni, endpoint SSE pubblico, ticket/reconnect, UI campagna, staging, Production e Vercel.
 
 ## Diario sintetico
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-17 15:38 +02:00 | 100% | Review P0/P1 chiusa inline e candidato proposto `DONE/100%/PASSING` branch-local. Il primo full ha trovato l'import Node `URL` mancante; il secondo un transiente ledger Docker non riprodotto in 10/10 isolati né nella lane completa. Nessun gate è stato indebolito. | Full finale senza cache exit `0` in 395,9 s: format, lint/build 11, typecheck 16, report 396 test, policy boundary/docs/task/CI/deployment/secret e artifact 4.396 file `PASS`. | Incorporare stato e fix nello stesso commit, poi verificare il candidato da checkout detached pulito. |
+| 2026-07-17 15:46 +02:00 | 100% | Il candidato è riproducibile da checkout detached pulito; Git ha deregistrato il checkout ma Windows ha lasciato path pnpm lunghi, rimossi solo dopo dry-run e `core.longPaths=true` sul residuo esatto. | Head `dde888e`: install frozen 819 package; contract 70 file; build 7/7; migration/store/IDOR/security 9/9; secret scan e docs/task graph `PASS`. Worktree temporanea assente dall'elenco e dal filesystem. | Aggiornare le evidenze nello stesso commit e preparare una sola PR protetta, senza azioni Vercel. |
+| 2026-07-17 15:38 +02:00 | 100% | Review P0/P1 chiusa inline e candidato proposto `DONE/100%/PASSING` branch-local. Il primo full ha trovato l'import Node `URL` mancante; il secondo un transiente ledger Docker non riprodotto in 10/10 isolati né nella lane completa. Nessun gate è stato indebolito. | Full finale senza cache exit `0` in 395,9 s: format, lint/build 11, typecheck 16, report 396 test, policy boundary/docs/task/CI/deployment/secret e artifact 4.396 file `PASS`. | Incorporare stato e fix nello stesso commit, poi verificare il candidato da checkout detached pulito. |
+| 2026-07-17 15:15 +02:00 | 90% | Threat model attivo e living docs allineati al boundary implementato; la moderazione resta correttamente assegnata a BL-064. | Cinque corsie exit `0`: docs 58 documenti/70 artifact, contract 104/104, database 27/27, integration 41/41, security 43 pass/3 skip host; task graph e secret scan `PASS`. | Versionare Task 6; review inline, unico full HIGH_RISK e checkout pulito del candidato. |
+| 2026-07-17 15:10 +02:00 | 90% | Candidato BL-007 completo nei batch contract/domain, migration, store, service/HTTP e matrice repository/API/SSE. La guardia SSE resta intenzionalmente non registrata finché BL-038 non possiede trasporto e lifecycle. | Mirati verdi: contract/domain 16/16, migration ufficiale 25/25, store 4/4, service/API/startup 13/13, IDOR 6/6 e security 4/4; build/lint/format verdi. | Chiudere living docs e corsie contract/database/integration/security; poi full gate, review e checkout pulito. |
 | 2026-07-17 13:31 +02:00 | 100% | Il functional head è riproducibile da checkout detached pulito. `git worktree remove` ha deregistrato il checkout ma lasciato output Windows non vuoto; il residuo è stato verificato come unico path sotto la `.worktrees` locale e rimosso con pathspec esatto, senza toccare altri worktree. | Head `561dc2d`: install frozen 819 package/11,9 s; build web 3/3; reducer 14/14; contract 14/14; smoke standalone 1/1; `verify:docs` con 45 artifact/55 documenti, task graph e secret scan `PASS`. Worktree list finale contiene solo main, BL-006 e BL-081. | Aggiornare le evidenze nello stesso commit funzionale, eseguire verifica finale/status/diff e pubblicare una sola PR protetta senza azioni Vercel. |
 | 2026-07-17 13:25 +02:00 | 100% | Candidato branch-local proposto `DONE/100%/PASSING`; BL-081 chiude il verticale UI fixture senza fingere API turno/SSE. QA-002 diventa READY, mentre BL-007 resta il primo P0 READY. Il primo full ha trovato soltanto 14 file non formattati e si è fermato prima delle lane; il batch Prettier mirato è stato verificato prima del rerun. | Full HIGH_RISK finale exit `0` in 209,3 s: lint/build 11, typecheck 16, report 376 test, security 39 pass/3 skip host, documentazione/task graph/CI/deployment/secret scan e artifact 4.344 file `PASS`. Nessuna azione Vercel. | Incorporare codice/test/docs nell'ultimo commit funzionale, eseguire checkout detached pulito e review terminale; poi unica PR protetta con merge gate verde. |
 | 2026-07-17 13:16 +02:00 | 90% | Shell interattiva completata inline: reducer/event source deterministici, AI Elements/shadcn selettivi, composer e HUD accessibili, `LazyMotion` strict e Rive assente. L'audit React ha stabilizzato gli oggetti Motion; l'entrypoint alternativo `motion/react-m` è stato scartato dopo typecheck/build perché la versione pin non esporta `m`. | Reducer 14/14, contract UI 14/14, lint/typecheck 8/8 e build web 3/3 `PASS`. Browser locale 320×568, 390×844 e 1440×900: overflow 0, CTA 48 px, multilinea/submit/continue e focus drawer verificati, console pulita. Bundle 1.328.006 byte iniziali e 750.594 byte pagina (`+691.262`); Motion DOM asincrono 285 byte; `why` esclusi vuoti. | Allineare living docs, eseguire l'unico full gate HIGH_RISK, incorporare tutto nell'ultimo commit funzionale e verificare il candidato da checkout pulito. |
@@ -2827,16 +2841,16 @@ test_status: PASSING
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/bl-081-interactive-shell` su base `c30c6db616ebb69434e4b04dcccb97e48530f6a9`; functional head verificato `561dc2d2b69f4a9a4cbb4b136687d39ceb42f7ae`; PR e delivery protetta ancora `PENDING`.
-- **Comandi eseguiti:** TDD reducer/contract/wrapper, lint/typecheck/build web, smoke standalone e browser locale 320/390/1440; audit React/diff/bundle; `verify:docs`; full `TURBO_FORCE=true corepack pnpm@11.13.0 verify`; checkout detached con install frozen, build, reducer, contract, smoke e docs gate; review completa.
-- **Exit code:** full HIGH_RISK finale `0` in 209,3 s con lint/build 11, typecheck 16, report 376 test, security 39 pass/3 skip host e artifact 4.344 file `PASS`; checkout pulito `0` su install/build/test/docs.
-- **Report/CI URL o path:** design e piano BL-081, card, studio UX/UI e traceability; CI remota non ancora disponibile e non copiata nei documenti.
-- **Migration head:** `000004_identity_access` invariata; migration/eval/trace ID `N/A` per questa slice UI fixture.
-- **Contract/schema/event version:** `interactive-game-shell-v1`; contract API/evento e `schemaVersion: 1` invariati; la shell non introduce un trasporto chat parallelo.
+- **Commit/PR:** branch `codex/bl-007-actor-context` su base `464b124d7b5182d2614703a743dffb622cc220fe`; functional head verificato `dde888e4f835d25fc5d6142129394971efa90320`; PR e delivery protetta ancora `PENDING`.
+- **Comandi eseguiti:** TDD contract/domain, migration, store PostgreSQL, service/HTTP, IDOR repository/API/SSE, security source/failure guard, build/lint/format mirati; cinque corsie Task 6, review completa, full HIGH_RISK senza cache e checkout detached con install/contract/build/test/secret/docs.
+- **Exit code:** mirati e corsie finali `0`; full finale `0` in 395,9 s con 396 test, lint/build 11, typecheck 16, artifact 4.396 e tutte le policy `PASS`.
+- **Report/CI URL o path:** design, piano, card BL-007, threat model e traceability; CI remota non ancora disponibile e non copiata nei documenti.
+- **Migration head:** candidato `000005_campaign_ownership`; source SHA `119a102cedbad7129eb40ad7082c0c6f8a52fb3d0f0792cee305e2cf75027f0d`; checksum `e6fadbe1ed89d0ae58b6d9a14950c7d2f8928e7b4fc90f3b2700459cfd3e39fe`.
+- **Contract/schema/event version:** API artifact `v4`/SemVer `4.0.0`, contract `database-campaign-ownership-v1`; artifact `v1`–`v3` ed event `schemaVersion: 1` immutati.
 - **Prompt/model/eval version:** nessuna modifica a prompt, modello o provider; `N/A`.
-- **Documenti aggiornati:** task/contesto/tracciabilità, changelog, indice, studio UX/UI, design e piano BL-081.
-- **Rischi residui tracciati:** Streamdown spiega il delta bundle raw; `QA-002` possiede il gate browser/accessibility/visuale comune. Warning `MaxListenersExceededWarning` preesistente/non bloccante del reporter Node; freeze BL-080 invariato e nessuna azione provider o Vercel.
-- **Task successivo READY:** `BL-007 — ActorContext e query tenant-safe`; `QA-002` è anch'esso READY ma successivo nell'ordine P0.
+- **Documenti aggiornati:** task/contesto/tracciabilità, indice, architettura, dati, API, migration, threat model, design e piano BL-007.
+- **Rischi residui tracciati:** delivery protetta ancora aperta; RLS e trasporto SSE pubblico hanno owner successivi. Warning `MaxListenersExceededWarning` preesistente/non bloccante del reporter Node; freeze BL-080 invariato e nessuna azione provider o Vercel.
+- **Task successivo READY:** `QA-002 — Playwright, axe, visual regression`; non viene avviato durante BL-007.
 
 
 ## 21. Context Sync Log
@@ -2845,6 +2859,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 
 | Data | Commit | Task | Documento/componente | Modifica | Task da riesaminare |
 |---|---|---|---|---|---|
+| 2026-07-17 | `dde888e` + terminal docs | BL-007 candidate | ActorContext, campaign ownership e AC-23 | Contract `v4`, migration `000005`, store/API/SSE guard e matrice IDOR hanno superato mirati, corsie, review, full HIGH_RISK e checkout pulito. Proposta `DONE/100%/PASSING`; delivery protetta `PENDING`, nessuna azione Vercel. | BL-028, BL-038, BL-065, BL-066, BL-067, QA-002 |
 | 2026-07-17 | `561dc2d` + terminal docs | BL-081 candidate | Shell conversazionale, UX/UI e task graph | Reducer fixture, AI Elements/shadcn selettivi, drawer, Motion, browser e full/clean gate propongono BL-081 `DONE/100%/PASSING`; QA-002 diventa READY, BL-007 resta il primo READY e Vercel invariato. | BL-007, BL-027, BL-039, BL-040, BL-071, BL-072, QA-002 |
 | 2026-07-17 | `c30c6db` + design branch | BL-081 | Spec, backlog e shell conversazionale | BL-006 integrato tramite PR #29/CI 5/5; selezionato BL-081 e approvato `interactive-game-shell-v1` con reducer puro, AI Elements selettivo, shadcn/Radix, Motion reduced-first e nessuna azione Vercel. BL-007 passa READY. | BL-007, BL-027, BL-039, BL-040, BL-071, BL-072, QA-002 |
 | 2026-07-17 | `df7f868` + candidate docs | BL-006 candidate | Identity access/reset e superfici auth mobile | Contract `v3`, migration `000004`, API/worker/BFF/UI e verticale PostgreSQL hanno superato mirati, browser, full HIGH_RISK, checkout pulito e review P0/P1. Proposta `DONE/100%/PASSING`; delivery protetta `PENDING`, nessuna azione Vercel. | BL-007, BL-065, BL-067, BL-081, QA-002 |

@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
+last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
 source_refs:
   - docs/MVP_SPEC.md#126-schema-del-turno
   - docs/MVP_SPEC.md#128-schemi-separati
@@ -10,20 +10,24 @@ source_refs:
   - docs/adr/0008-zod-first-contract-generation.md
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
+  - docs/superpowers/specs/2026-07-17-bl-007-actor-context-design.md
 related_tasks:
   - BL-009
   - BL-005
   - BL-006
+  - BL-007
   - BL-021
   - BL-022
   - BL-028
 code_refs:
   - apps/api/src/identity/access-routes.ts
   - apps/api/src/identity/identity-access-service.ts
+  - apps/api/src/campaign
   - packages/contracts/src
   - packages/contracts/generated/v1
   - packages/contracts/generated/v2
   - packages/contracts/generated/v3
+  - packages/contracts/generated/v4
   - scripts/generate-contracts.mjs
   - scripts/lib/contract-artifact-policy.mjs
   - scripts/lib/contract-compatibility-policy.mjs
@@ -40,6 +44,9 @@ test_refs:
   - tests/contracts/identity-contracts.test.mjs
   - tests/unit/identity-access-service.test.mjs
   - tests/unit/owned-path-policy.test.mjs
+  - tests/contracts/campaign-contracts.test.mjs
+  - tests/integration/campaign-api.test.mjs
+  - tests/integration/campaign-idor-flow.test.mjs
 supersedes: null
 ---
 
@@ -47,11 +54,11 @@ supersedes: null
 
 ## Contratto corrente
 
-`@dnd-ai/contracts` espone schemi Zod strict e tipi inferiti. Gli artifact `v1` (`1.0.0`) e `v2` (`2.0.0`) restano immutabili; la branch BL-006 genera il candidato `v3` (`3.0.0`) per il lifecycle identity completo. `schemaVersion: 1` degli envelope evento/SSE non cambia, perché il relativo wire format è invariato.
+`@dnd-ai/contracts` espone schemi Zod strict e tipi inferiti. Gli artifact `v1` (`1.0.0`), `v2` (`2.0.0`) e `v3` (`3.0.0`) restano immutabili; BL-007 genera il candidato `v4` (`4.0.0`) che conserva identity e aggiunge la lettura campagna player-safe. `schemaVersion: 1` degli envelope evento/SSE non cambia, perché il relativo wire format è invariato.
 
-OpenAPI `v3` contiene le tre operazioni signup già disponibili e sei contratti access/reset: sign-in, refresh, sign-out, revoke-all, reset request e reset confirm. Tutte richiedono `Idempotency-Key`; refresh/sign-out non hanno body e i `204` non dichiarano content. I sei handler Fastify sono registrati sulla branch BL-006 con Origin/CSRF, rate limit pre-Argon2, cookie host-only e mapping errori generico; il BFF same-origin implementa gli stessi sei path con cookie allowlisted e le tre superfici web sono disponibili localmente. Le route del turno restano assenti.
+OpenAPI `v4` contiene le tre operazioni signup, sei operazioni access/reset e `GET /api/campaigns/{campaignId}`. I POST mutanti identity richiedono `Idempotency-Key`; la GET campagna è read-only, usa il cookie host-only e restituisce soltanto `id`, `title`, `status`, `stateVersion` e `updatedAt`. ID inesistente, altrui e soft-deleted condividono `404 campaign.not_found`; errori storage producono `503 campaign.unavailable`. Le route del turno e lo stream SSE pubblico restano assenti.
 
-`identity-access-v1` possiede DTO strict, error code generici e response minimali del nuovo major. Le directory generate e gli export esistono e superano drift/compatibility; store, route API, outbox reset, BFF e UI sono implementati. Il verticale PostgreSQL reale prova l'intero lifecycle e le race reset/login; la capability resta branch-local finché il candidato non supera full gate, checkout pulito e delivery protetta.
+`identity-access-v1` continua a possedere DTO strict, error code generici e response minimali. `campaign-ownership-v1` aggiunge `CampaignId`, `CampaignDetailResponse`, `CampaignErrorResponse` e classification `campaign.read`. Le directory generate e gli export superano drift/compatibility; il verticale PostgreSQL prova cookie→sessione→ActorContext→query owner-scoped sia per HTTP sia per la guardia SSE fixture. Full gate e checkout pulito sono verdi; il candidato resta branch-local fino alla delivery protetta.
 
 | Contratto | Tipo | Responsabilità |
 |---|---|---|
@@ -74,6 +81,9 @@ OpenAPI `v3` contiene le tre operazioni signup già disponibili e sei contratti 
 | `AuthenticatedResponse` | response | autenticazione completata; token soltanto nel cookie |
 | `PasswordResetRequestedResponse` | response | richiesta reset accettata senza enumeration |
 | `PasswordResetCompletedResponse` | response | reset completato senza auto-login |
+| `CampaignId` | request | UUIDv7 canonico della campagna |
+| `CampaignDetailResponse` | response | projection player-safe owner-scoped |
+| `CampaignErrorResponse` | response | envelope uniforme `400/401/404/503` senza dettagli tenant-sensitive |
 
 La factory `createAIToolCallSchema` accetta uno schema tool-name allowlisted e lo schema degli argomenti. Non esiste un envelope mutante con nome tool arbitrario.
 
@@ -91,6 +101,10 @@ packages/contracts/generated/v2/
   openapi.json
   schemas/*.schema.json
 packages/contracts/generated/v3/
+  manifest.json
+  openapi.json
+  schemas/*.schema.json
+packages/contracts/generated/v4/
   manifest.json
   openapi.json
   schemas/*.schema.json

@@ -2,7 +2,7 @@
 status: active
 owner: engineering-security
 last_reviewed: 2026-07-17
-last_verified_commit: 3d0912f70d3b0ff395597853181748b0ee473adf
+last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
 source_refs:
   - docs/MVP_SPEC.md#191-convenzioni-generali
   - docs/MVP_SPEC.md#201-convenzioni-rest
@@ -23,17 +23,22 @@ related_tasks:
   - BL-066
   - QA-002
 code_refs:
-  - apps/api/src/identity
-  - packages/contracts/src
-  - packages/domain/src/identity
-  - packages/persistence/src
-  - packages/persistence/src/migrations
+  - apps/api/src/campaign
+  - apps/api/src/access/owned-sse-authorization.ts
+  - packages/contracts/src/campaign.ts
+  - packages/contracts/generated/v4
+  - packages/domain/src/access/actor-context.ts
+  - packages/domain/src/campaign
+  - packages/persistence/src/campaign-access-store.ts
+  - packages/persistence/src/migrations/000005_campaign_ownership.ts
 test_refs:
-  - tests/contracts
-  - tests/database
-  - tests/integration
-  - tests/security
-  - tests/unit
+  - tests/contracts/campaign-contracts.test.mjs
+  - tests/database/campaign-ownership-migration.test.mjs
+  - tests/database/campaign-access-store.test.mjs
+  - tests/integration/campaign-api.test.mjs
+  - tests/integration/campaign-idor-flow.test.mjs
+  - tests/security/campaign-access-security.test.mjs
+  - tests/unit/campaign-access-service.test.mjs
 supersedes: null
 ---
 
@@ -41,9 +46,9 @@ supersedes: null
 
 ## 1. Stato della decisione
 
-Questo documento è il contratto di design `campaign-ownership-v1`, approvato dal Product Owner il 2026-07-17. Introduce il primo confine di autorizzazione delle risorse di gioco senza anticipare creazione campagna, orchestrazione turno o streaming pubblico.
+Questo documento è il contratto di design `campaign-ownership-v1`, approvato dal Product Owner il 2026-07-17 e implementato nel candidato BL-007. Introduce il primo confine di autorizzazione delle risorse di gioco senza anticipare creazione campagna, orchestrazione turno o streaming pubblico.
 
-La slice è `HIGH_RISK`: modifica autenticazione read-only, schema PostgreSQL, contratto HTTP pubblico e autorizzazione di API/SSE. L'implementazione può iniziare soltanto dopo la review di questo documento e un piano TDD versionato.
+La slice è `HIGH_RISK`: modifica autenticazione read-only, schema PostgreSQL, contratto HTTP pubblico e autorizzazione di API/SSE. Tipi, migration, store, GET, guardia SSE, test mirati, corsie contract/database/integration/security, full gate, review e checkout pulito sono verdi; resta aperta soltanto la delivery protetta.
 
 ## 2. Obiettivo e confini
 
@@ -85,9 +90,9 @@ Offrirebbe una superficie pubblica immediata, ma introdurrebbe un endpoint non c
 - `title` player-safe e bounded;
 - `status` allowlisted, inizialmente `draft`, `ready`, `generating`, `active`, `completed`, `abandoned`, `failed`;
 - `state_version` intero non negativo;
-- `created_at`, `updated_at` e `deleted_at` nullable per il recovery previsto dalla specifica.
+- `created_at` e `updated_at` obbligatori; `deleted_at` nullable per il recovery previsto dalla specifica.
 
-L'indice player-facing è `(user_id, id)` con predicato `deleted_at IS NULL`; un indice aggiuntivo su `(user_id, status, updated_at DESC)` viene introdotto soltanto se la query di lista entra nella stessa slice, cosa esclusa dal design corrente. Le colonne per scena, atto, Bible, snapshot e progressione appartengono alle migration dei task proprietari e non vengono simulate con JSONB.
+L'indice player-facing è `(user_id, campaign_id)` con predicato `deleted_at IS NULL`; un indice aggiuntivo su `(user_id, status, updated_at DESC)` viene introdotto soltanto se la query di lista entra nella stessa slice, cosa esclusa dal design corrente. Le colonne per scena, atto, Bible, snapshot e progressione appartengono alle migration dei task proprietari e non vengono simulate con JSONB.
 
 Il contract database diventa `database-campaign-ownership-v1`. La suite copre database vuoto→head, `000004`→`000005`, replay, rollback locale/re-apply, constraint UUIDv7/status/version/timestamp, foreign key, indici e isolamento a due tenant.
 
@@ -209,7 +214,7 @@ RLS non è parte della slice: la garanzia obbligatoria resta nelle firme delle p
 
 ## 12. Strategia TDD e gate
 
-L'implementazione procede in batch con test fallenti osservati prima del codice:
+L'implementazione è stata eseguita in batch con test fallenti osservati prima del codice:
 
 1. tipi `ActorContext`/`CampaignId`, contract `v4` e freeze di `v1`–`v3`;
 2. migration `000005`, manifest/checksum e matrice constraint/upgrade;
@@ -222,7 +227,7 @@ L'implementazione procede in batch con test fallenti osservati prima del codice:
 
 La matrice minima verifica per ciascun utente: propria campagna accessibile; campagna incrociata, inesistente e soft-deleted non accessibili. Gli stessi casi attraversano repository, HTTP e SSE. Test strutturali impediscono l'esportazione di un metodo player `findById`, il trust di header subject e la registrazione della route SSE fixture nel runtime.
 
-Provider, rete esterna e account reali sono vietati nei test. Nessun deploy o azione Vercel è necessario o autorizzato.
+Provider, rete esterna e account reali sono vietati nei test. I test mirati usano esclusivamente fixture deterministiche e PostgreSQL effimero; nessun deploy o azione Vercel è stato necessario o eseguito.
 
 ## 13. Documentazione e tracciabilità
 
