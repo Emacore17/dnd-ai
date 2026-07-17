@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-16
-last_verified_commit: 0761b18d5b910c309e763774749b5bf1352b1d6c
+last_reviewed: 2026-07-17
+last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -10,6 +10,8 @@ source_refs:
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/plans/2026-07-16-bl-005-signup-verification.md
+  - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
+  - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -87,6 +89,13 @@ code_refs:
   - apps/worker/src/observability.ts
   - apps/web/instrumentation.ts
   - apps/web/instrumentation-client.ts
+  - apps/api/src/identity
+  - apps/worker/src/identity
+  - apps/web/components/auth
+  - apps/web/lib/server
+  - packages/contracts/src/identity-access.ts
+  - packages/domain/src/identity
+  - packages/persistence/src/identity-access-store.ts
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/web-design-system.test.mjs
@@ -128,6 +137,7 @@ test_refs:
   - tests/integration/observability-flow.test.mjs
   - tests/contracts/observability-contract.test.mjs
   - tests/security/observability-security.test.mjs
+  - tests/integration/identity-access-flow.test.mjs
   - tests/contracts/contracts-foundation.test.mjs
   - tests/contracts/contracts-runtime.test.mjs
   - tests/contracts/contracts-artifacts.test.mjs
@@ -148,6 +158,25 @@ supersedes: null
 
 # Changelog documentale e contrattuale
 
+## 2026-07-17
+
+### Added
+
+- Implementato il lifecycle branch-local `identity-access-v1`: contract artifact `v3`, secret e HMAC reset dedicati, migration `000004_identity_access`, store PostgreSQL transazionale, sei route Fastify, outbox verifica/reset discriminato, sei route BFF e superfici shadcn `/sign-in`, `/reset-password`, `/account/security`.
+- Aggiunta la vertical slice PostgreSQL reale `identity-access-flow`: signup/verify, sign-in, refresh con rotazione, logout, revoca globale, reset one-time e nuovo login; doppia conferma e login concorrente al reset convergono tramite lock e `credential_version`.
+
+### Changed
+
+- `BL-006` passa a proposta branch-local `DONE/100%/PASSING`: runtime, verticale, browser, full gate HIGH_RISK, checkout pulito e review terminale sono verdi sul functional head `df7f868`; la delivery protetta resta `PENDING`. `BL-081` resta READY ma non viene avviato prima dell'integrazione.
+- Allineati catalogo API, overview, modello dati, UX/UI, contesto e tracciabilità alla capability realmente implementata. SMTP reale, provider, deploy, release, Production e azioni Vercel restano esclusi.
+
+### Verification
+
+- Verticale PostgreSQL `1/1 PASS` in 4,6 s; aggregato identity serializzato per le suite database `96/96 PASS` in 53,6 s. La serializzazione evita contesa fra container Docker indipendenti senza ritentare asserzioni o indebolire test.
+- Browser locale su 320×800, 390×844 e 1440×900: contenuto presente, overflow orizzontale `0`, target minimi 44 px, CTA 48 px, focus visibile, zero overlay e zero log warn/error. Il browser integrato non attiva eventi React sintetici, verificato anche sul toggle password; component/BFF test restano l'evidenza delle interazioni.
+- Full HIGH_RISK finale senza cache `PASS` in 250,3 s: lint 11, typecheck 16, build 11, report 355 test (351 pass/4 skip host), artifact 4.332 file e policy documentazione, task graph, CI, deployment e secret scan verdi. Due tentativi precedenti hanno trovato e chiuso due lint test e sei contract test fermi a `v2`/`000003`; regressioni mirate 14/14 e contract lane 94/94 precedono il rerun completo.
+- Checkout detached pulito del functional head `df7f868`: install frozen 701 package/13,3 s, generated drift 45 file, build API/worker/web 8/8, migration 13/13, verticale access + smoke web 2/2, secret scan e `verify:docs` `PASS`; review finale senza finding P0/P1.
+
 ## 2026-07-16
 
 ### Added
@@ -158,6 +187,8 @@ supersedes: null
 - Reso monotono il supersede del contract migration identity con `GREATEST(CURRENT_TIMESTAMP, applied_at)`: l'upgrade da `000002` resta valido anche con clock di transazione arretrato; il failure path è coperto da una regressione PostgreSQL deterministica e dal checksum canonico aggiornato.
 - Aggiunta la vertical slice PostgreSQL reale `identity-signup-flow`: pending→delivery→active/session, replay cookie, concorrenza senza duplicati e failure path per codice errato/scaduto, supersession, abuso, conflitto, Origin e timeout email.
 - Approvato il design `identity-signup-v1` di BL-005: identità interna provider-neutral, Argon2id con pepper versionato, codice email one-time, transactional outbox SMTP, prima sessione post-verifica e UI shadcn mobile-first.
+- Approvato il design `identity-access-v1` di BL-006: login generico anti-enumeration, sessioni idle 24 h/absolute 30 giorni con rotazione, logout/revoca globale, reset a sei cifre senza auto-login e UI shadcn mobile-first essenziale.
+- Versionato il piano TDD inline BL-006 in sette batch: contract/config/crypto, migration, store, API, worker, UI shadcn e candidato verificato.
 - Accettato [`ADR-0010`](adr/0010-internal-provider-neutral-identity.md), che chiude `OD-07` senza introdurre provider, account o deploy remoti.
 - Implementato il candidato BL-079: Tailwind CSS v4, shadcn/ui `new-york` su Radix, Geist locale, Lucide, token semantici e cinque primitive selettive (`Button`, `Card`, `Badge`, `Separator`, `Input`).
 - Aggiunta una shell statica server-rendered, mobile-first e conversation-like con stato essenziale, narrazione, azione giocatore, risultato regola, due scelte e composer persistente; AI Elements, Motion e Rive restano fuori scope.
@@ -172,9 +203,9 @@ supersedes: null
 
 ### Changed
 
-- `BL-005` raggiunge la proposta branch-local `DONE/100%/PASSING`: implementazione, mirati, full HIGH_RISK e checkout pulito sono verdi; la sola delivery protetta resta `PENDING`. `BL-006` diventa il prossimo P0 `READY`, mentre `BL-081` resta READY ma non viene avviato in parallelo.
+- `BL-005` è integrato tramite PR #28, candidate corretto `c2e4332`, merge `e173fd9` e CI PR/post-merge 5/5 `SUCCESS`. `BL-006` passa `IN_PROGRESS/25%/PARTIAL` con design approvato; `BL-081` resta READY ma non viene avviato in parallelo.
 - Resa autonoma la corsia `test:security`: compila esplicitamente API e worker prima dei test che ne importano gli artifact, evitando che cache o build precedenti mascherino dist mancanti in CI pulita.
-- Allineati overview, modello dati, catalogo API e runbook a contract `v2`, migration head candidata `000003_identity_signup`, config identity/SMTP server-only e limiti reali: nessun SMTP, provider, staging o Vercel è dichiarato verificato.
+- Allineati overview, modello dati, catalogo API e runbook a contract `v2`, migration head integrata `000003_identity_signup`, config identity/SMTP server-only e limiti reali: nessun SMTP, provider, staging o Vercel è dichiarato verificato.
 - Corretto il metadata CI/CD che riferiva `packages/observability/dist`, output generato e non versionato: il riferimento canonico resta il package sorgente, così `verify:docs` è riproducibile in checkout pulito.
 - Allineata la delivery BL-079 a PR #27, merge `a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2` e CI post-merge `29502533089` 5/5 `SUCCESS`.
 - `BL-079` ha raggiunto `DONE/100%/PASSING` dopo mirati, matrice browser, audit, full gate, checkout pulito e self-review; la delivery protetta ha poi sbloccato `BL-005` e `BL-081`, con selezione canonica `BL-005`.
@@ -193,6 +224,10 @@ supersedes: null
 
 - BL-005: lint/typecheck/build mirati `24/24`; aggregato identity `74/74 PASS` su 21 file, inclusa verticale PostgreSQL reale `2/2`; regressione BFF/config/API/security `52/52`; browser locale 320/390/1440 e `verify:docs` verdi. Full HIGH_RISK exit `0` in 176,9 s con 333 test nei report e artifact 4.178 file. Functional head `0761b18` verificato da checkout detached: install frozen 701 package/19,6 s, generated drift 23/23, database 21/21, build runtime 8/8, verticale/smoke 3/3, secret scan/docs PASS e cleanup completato.
 - Correzione CI BL-005: run PR #28 `29524998132` con Quality/Tests verdi e Security rossa esclusivamente per `apps/api/dist`/`apps/worker/dist` assenti; regressione lane RED 2/3→GREEN 3/3, security forzata 42 test e secret scan PASS, full HIGH_RISK correttivo exit `0` in 290,2 s con 333 test e artifact 4.178 file.
+- Delivery BL-005: CI PR corretta `29525777416` e post-merge `29526030389` hanno concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`; merge `e173fd9` su `main`.
+- Baseline BL-006: install frozen 701 package, build API/worker/web 8 task e suite identity esistente 16/16 `PASS`; nessuna azione provider o Vercel.
+- Design BL-006: `git diff --check` e `verify:docs` confermati dopo self-review, con 23 artifact, 52 documenti/13 modificati, task graph e secret scan `PASS`; corretto lo SHA living e definito `credential_version` senza anticipare runtime.
+- Piano BL-006: gate documentale `PASS` con 23 artifact e 53 documenti/14 modificati; freshness aggiornata al 2026-07-17, task graph e secret scan verdi.
 - Design BL-005: `git diff --check` e `verify:docs` exit `0`; 8 artifact contrattuali, 49 documenti/13 modificati, task graph e secret scan `PASS`. Il primo gate su checkout pulito ha riprodotto il solo `code_ref` a `packages/observability/dist`; rimosso il riferimento generato, il rerun è verde senza build artifact preesistenti.
 - BL-079 functional head `ddcbb5ead4baacda6c494e74934d2e5d5afd3fed` verificato da worktree detached: install frozen in 14,9 s; Turbo build web+dipendenze, contract 7/7, lint, typecheck e smoke HTTP 1/1 tutti exit `0`; cleanup completato e self-review senza P0/P1. Il typecheck diretto preliminare ha confermato il prerequisito `^build` dichiarato dal grafo e non ha richiesto correzioni.
 - BL-079 full `HIGH_RISK`: `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 150,6 s con lint/build 11, typecheck 13, unit 107 pass/1 skip host, integration 21, database 16, contract 80, security 32 pass/3 skip host, report 259 test e artifact 3.987 file; audit high senza vulnerabilità. Il warning reporter è stato isolato nel `node:internal/test_runner` della suite unit preesistente e non modifica l'esito né lo scope UI.

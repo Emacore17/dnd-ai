@@ -59,6 +59,22 @@ function successResponse(
   };
 }
 
+function noContentResponse(description: string, setCookie = false): JsonRecord {
+  return {
+    description,
+    ...(setCookie
+      ? {
+          headers: {
+            "Set-Cookie": {
+              description: "Cookie di sessione eliminato.",
+              schema: { type: "string" },
+            },
+          },
+        }
+      : {}),
+  };
+}
+
 function idempotencyHeader(): JsonRecord {
   return {
     name: "Idempotency-Key",
@@ -123,6 +139,98 @@ export function createIdentityOpenApiPaths(): JsonRecord {
             "VerificationRequiredResponse",
           ),
           ...commonResponses,
+        },
+      },
+    },
+    "/api/auth/sign-in": {
+      post: {
+        operationId: "signIn",
+        summary: "Autentica credenziali e crea una nuova sessione.",
+        parameters: [idempotencyHeader()],
+        requestBody: requestBody("SignInRequest"),
+        responses: {
+          "200": successResponse(
+            "Credenziali valide e nuova sessione creata.",
+            "AuthenticatedResponse",
+            true,
+          ),
+          ...commonResponses,
+          "401": errorResponse("Credenziali non valide."),
+        },
+      },
+    },
+    "/api/auth/session/refresh": {
+      post: {
+        operationId: "refreshSession",
+        summary: "Ruota esplicitamente la sessione corrente.",
+        parameters: [idempotencyHeader()],
+        responses: {
+          "200": successResponse(
+            "Sessione ruotata.",
+            "AuthenticatedResponse",
+            true,
+          ),
+          ...commonResponses,
+          "401": errorResponse("Sessione non valida."),
+        },
+      },
+    },
+    "/api/auth/sign-out": {
+      post: {
+        operationId: "signOut",
+        summary: "Revoca, se presente, la sessione corrente.",
+        parameters: [idempotencyHeader()],
+        responses: {
+          "204": noContentResponse("Sessione terminata.", true),
+          ...commonResponses,
+        },
+      },
+    },
+    "/api/auth/sessions/revoke-all": {
+      post: {
+        operationId: "revokeAllSessions",
+        summary: "Revoca tutte le sessioni dell'account autenticato.",
+        parameters: [idempotencyHeader()],
+        requestBody: requestBody("RevokeAllSessionsRequest"),
+        responses: {
+          "204": noContentResponse(
+            "Tutte le sessioni sono state revocate.",
+            true,
+          ),
+          ...commonResponses,
+          "401": errorResponse("Sessione non valida."),
+        },
+      },
+    },
+    "/api/auth/password-reset/request": {
+      post: {
+        operationId: "requestPasswordReset",
+        summary: "Richiede un codice one-time senza rivelare lo stato account.",
+        parameters: [idempotencyHeader()],
+        requestBody: requestBody("PasswordResetRequest"),
+        responses: {
+          "202": successResponse(
+            "Richiesta accettata con risposta generica.",
+            "PasswordResetRequestedResponse",
+          ),
+          ...commonResponses,
+        },
+      },
+    },
+    "/api/auth/password-reset/confirm": {
+      post: {
+        operationId: "confirmPasswordReset",
+        summary: "Conferma il codice one-time e sostituisce la password.",
+        parameters: [idempotencyHeader()],
+        requestBody: requestBody("PasswordResetConfirm"),
+        responses: {
+          "200": successResponse(
+            "Password sostituita e sessioni revocate.",
+            "PasswordResetCompletedResponse",
+            true,
+          ),
+          ...commonResponses,
+          "422": errorResponse("Codice di recupero non valido."),
         },
       },
     },

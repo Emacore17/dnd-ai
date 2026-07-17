@@ -40,12 +40,18 @@ test("identity cryptography creates deterministic challenge, session and pseudon
   const randomValues = [
     fixture.challengeRandomHex,
     fixture.sessionRandomHex,
+    "00112233445566778899aabbccddeeff",
   ].map((value) => Buffer.from(value, "hex"));
   const cryptography = createNodeIdentityCryptography({
     challengeKey: decodeBase64(fixture.challengeKeyBase64),
     challengeKeyVersion: fixture.challengeKeyVersion,
     sessionKey: decodeBase64(fixture.sessionKeyBase64),
     sessionKeyVersion: fixture.sessionKeyVersion,
+    resetChallengeKey: Buffer.from(
+      "a0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+      "hex",
+    ),
+    resetChallengeKeyVersion: 11,
     subjectHashKey: decodeBase64(fixture.subjectKeyBase64),
     randomBytes(length) {
       const value = randomValues.shift();
@@ -67,6 +73,52 @@ test("identity cryptography creates deterministic challenge, session and pseudon
     tokenDigest: fixture.tokenDigest,
     keyVersion: fixture.sessionKeyVersion,
   });
+  const reset = cryptography.createPasswordResetChallenge();
+  assert.equal(reset.keyVersion, 11);
+  assert.match(reset.code, /^[0-9]{6}$/u);
+  assert.equal(
+    cryptography.derivePasswordResetCodeDigest(
+      reset.challengeId,
+      reset.code,
+      reset.keyVersion,
+    ),
+    reset.codeDigest,
+  );
+  assert.equal(
+    cryptography.matchesPasswordResetCode(
+      reset.challengeId,
+      reset.code,
+      reset.codeDigest,
+      reset.keyVersion,
+    ),
+    true,
+  );
+  assert.equal(
+    cryptography.matchesPasswordResetCode(
+      reset.challengeId,
+      "000000",
+      reset.codeDigest,
+      reset.keyVersion,
+    ),
+    false,
+  );
+  assert.equal(
+    cryptography.sessionTokenDigest(fixture.token),
+    fixture.tokenDigest,
+  );
+  assert.throws(
+    () => cryptography.sessionTokenDigest("not-a-session-token"),
+    /session token is invalid/u,
+  );
+  assert.throws(
+    () =>
+      cryptography.derivePasswordResetCodeDigest(
+        reset.challengeId,
+        reset.code,
+        reset.keyVersion + 1,
+      ),
+    /password reset key version is unavailable/u,
+  );
   assert.equal(
     cryptography.deriveChallengeCodeDigest(
       fixture.challengeId,

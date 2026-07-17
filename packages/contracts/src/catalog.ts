@@ -9,6 +9,15 @@ import {
 import { TurnStreamEventSchema } from "./events.js";
 import { GameEventSchema } from "./game-event.js";
 import {
+  AuthenticatedResponseSchema,
+  PasswordResetCompletedResponseSchema,
+  PasswordResetConfirmSchema,
+  PasswordResetRequestedResponseSchema,
+  PasswordResetRequestSchema,
+  RevokeAllSessionsRequestSchema,
+  SignInRequestSchema,
+} from "./identity-access.js";
+import {
   IdempotencyKeySchema,
   IdentityErrorResponseSchema,
   ResendVerificationRequestSchema,
@@ -38,6 +47,12 @@ function contract(
 
 export const CONTRACT_CATALOG: readonly ContractCatalogEntry[] = Object.freeze([
   contract(
+    "AuthenticatedResponse",
+    "response",
+    "authenticated-response.schema.json",
+    AuthenticatedResponseSchema,
+  ),
+  contract(
     "ApiErrorResponse",
     "response",
     "api-error-response.schema.json",
@@ -62,10 +77,46 @@ export const CONTRACT_CATALOG: readonly ContractCatalogEntry[] = Object.freeze([
     IdentityErrorResponseSchema,
   ),
   contract(
+    "PasswordResetCompletedResponse",
+    "response",
+    "password-reset-completed-response.schema.json",
+    PasswordResetCompletedResponseSchema,
+  ),
+  contract(
+    "PasswordResetConfirm",
+    "request",
+    "password-reset-confirm.schema.json",
+    PasswordResetConfirmSchema,
+  ),
+  contract(
+    "PasswordResetRequestedResponse",
+    "response",
+    "password-reset-requested-response.schema.json",
+    PasswordResetRequestedResponseSchema,
+  ),
+  contract(
+    "PasswordResetRequest",
+    "request",
+    "password-reset-request.schema.json",
+    PasswordResetRequestSchema,
+  ),
+  contract(
     "ResendVerificationRequest",
     "request",
     "resend-verification-request.schema.json",
     ResendVerificationRequestSchema,
+  ),
+  contract(
+    "RevokeAllSessionsRequest",
+    "request",
+    "revoke-all-sessions-request.schema.json",
+    RevokeAllSessionsRequestSchema,
+  ),
+  contract(
+    "SignInRequest",
+    "request",
+    "sign-in-request.schema.json",
+    SignInRequestSchema,
   ),
   contract(
     "SignUpRequest",

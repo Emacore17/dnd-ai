@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  clearIdentitySessionCookie,
   createIdentitySessionCookie,
   parseIdentitySessionCookie,
+  readIdentitySessionToken,
 } from "../../apps/api/dist/index.js";
 
 const NOW = new Date("2026-07-16T12:00:00.000Z");
@@ -56,4 +58,30 @@ test("identity cookie factory and parser reject malformed or expired values", ()
   ]) {
     assert.equal(parseIdentitySessionCookie(cookie), null);
   }
+});
+
+test("identity request cookie parser accepts one canonical session only", () => {
+  assert.equal(
+    readIdentitySessionToken(`theme=dark; __Host-dnd_ai_session=${TOKEN}`),
+    TOKEN,
+  );
+  assert.equal(readIdentitySessionToken(undefined), null);
+  assert.equal(readIdentitySessionToken("theme=dark"), null);
+  assert.equal(
+    readIdentitySessionToken(
+      `__Host-dnd_ai_session=${TOKEN}; __Host-dnd_ai_session=${TOKEN}`,
+    ),
+    null,
+  );
+  assert.equal(
+    readIdentitySessionToken("__Host-dnd_ai_session=not-canonical"),
+    null,
+  );
+});
+
+test("identity cookie clear contract is exact and host-only", () => {
+  assert.equal(
+    clearIdentitySessionCookie(),
+    "__Host-dnd_ai_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0",
+  );
 });

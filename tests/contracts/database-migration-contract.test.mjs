@@ -50,6 +50,7 @@ test("database migration commands use the versioned composition root", async () 
     baselineMigration,
     featureFlagsMigration,
     identityMigration,
+    identityAccessMigration,
     persistenceManifestSource,
     runner,
   ] = await Promise.all([
@@ -58,6 +59,7 @@ test("database migration commands use the versioned composition root", async () 
     read("packages/persistence/src/migrations/000001_postgresql_foundation.ts"),
     read("packages/persistence/src/migrations/000002_feature_flags.ts"),
     read("packages/persistence/src/migrations/000003_identity_signup.ts"),
+    read("packages/persistence/src/migrations/000004_identity_access.ts"),
     read("packages/persistence/src/migration-manifest.ts"),
     read("packages/persistence/src/migration-runner.ts"),
   ]);
@@ -78,6 +80,10 @@ test("database migration commands use the versioned composition root", async () 
   assert.match(identityMigration, /email_verification_challenges/u);
   assert.match(persistenceManifestSource, /000003_identity_signup/u);
   assert.match(persistenceManifestSource, /database-identity-signup-v1/u);
+  assert.match(identityAccessMigration, /password_reset_challenges/u);
+  assert.match(identityAccessMigration, /credential_version/u);
+  assert.match(persistenceManifestSource, /000004_identity_access/u);
+  assert.match(persistenceManifestSource, /database-identity-access-v1/u);
   assert.match(runner, /const MIGRATIONS_SCHEMA = "infra"/u);
   assert.match(runner, /const MIGRATIONS_TABLE = "schema_migrations"/u);
   assert.match(runner, /validateMigrationDirectory/u);
@@ -126,6 +132,19 @@ test("database migration commands use the versioned composition root", async () 
       .update(normalizedIdentityMigrationSource)
       .digest("hex"),
     identitySourceChecksumMatch[1],
+  );
+
+  const normalizedIdentityAccessMigrationSource =
+    identityAccessMigration.replace(/\r\n?/gu, "\n");
+  const identityAccessSourceChecksumMatch = persistenceManifestSource.match(
+    /IDENTITY_ACCESS_MIGRATION_SOURCE_SHA256 =\s+"([0-9a-f]{64})"/u,
+  );
+  assert.ok(identityAccessSourceChecksumMatch);
+  assert.equal(
+    createHash("sha256")
+      .update(normalizedIdentityAccessMigrationSource)
+      .digest("hex"),
+    identityAccessSourceChecksumMatch[1],
   );
 });
 

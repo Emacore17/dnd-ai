@@ -1,0 +1,18 @@
+{
+  "$id": "urn:dnd-ai:contracts:v3:ResendVerificationRequest",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "email": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "email"
+  ],
+  "title": "ResendVerificationRequest",
+  "type": "object",
+  "x-dnd-ai-contract-kind": "request",
+  "x-dnd-ai-contract-version": "3.0.0"
+}

@@ -10,11 +10,18 @@ import {
   type NodeObservability,
   type NodeObservabilityOptions,
 } from "@dnd-ai/observability/node";
-import { createPostgresIdentityStore } from "@dnd-ai/persistence";
+import {
+  createPostgresIdentityAccessStore,
+  createPostgresIdentityStore,
+} from "@dnd-ai/persistence";
 import type { FastifyInstance, FastifyServerOptions } from "fastify";
 
 import { createApiApp, type ApiAppDependencies } from "./app.js";
 import { createNodeIdentityCryptography } from "./identity/identity-crypto.js";
+import {
+  createIdentityAccessService,
+  type IdentityAccessService,
+} from "./identity/identity-access-service.js";
 import {
   verifyIdentityClientSubjectAssertion,
   type IdentityClientSubjectAssertion,
@@ -26,6 +33,10 @@ import {
   registerIdentityRoutes,
   type RegisterIdentityRoutesOptions,
 } from "./identity/routes.js";
+import {
+  registerIdentityAccessRoutes,
+  type RegisterIdentityAccessRoutesOptions,
+} from "./identity/access-routes.js";
 import { registerApiObservability } from "./observability.js";
 
 type ApiAppFactory = (
@@ -38,6 +49,7 @@ type ApiObservabilityFactory = (
 
 export interface ApiIdentityRuntime {
   readonly routes: RegisterIdentityRoutesOptions;
+  readonly accessRoutes?: RegisterIdentityAccessRoutesOptions;
   close(): Promise<void>;
 }
 
@@ -71,9 +83,14 @@ export async function createApiIdentityRuntime(
   const store = createPostgresIdentityStore({
     databaseUrl: config.databaseUrl,
   });
+  const accessStore = createPostgresIdentityAccessStore({
+    databaseUrl: config.databaseUrl,
+  });
   let closePromise: Promise<void> | undefined;
   const close = (): Promise<void> => {
-    closePromise ??= store.close();
+    closePromise ??= Promise.all([store.close(), accessStore.close()]).then(
+      () => undefined,
+    );
     return closePromise;
   };
   try {
@@ -82,34 +99,54 @@ export async function createApiIdentityRuntime(
       challengeKey: config.identity.challenge.key,
       challengeKeyVersion: config.identity.challenge.version,
       randomBytes: (length) => randomBytes(length),
+      resetChallengeKey: config.identity.reset.key,
+      resetChallengeKeyVersion: config.identity.reset.version,
       sessionKey: config.identity.session.key,
       sessionKeyVersion: config.identity.session.version,
       subjectHashKey: config.identity.subjectHashKey,
+    });
+    const passwordHasher = createArgon2PasswordHasher({
+      pepper: config.identity.passwordPepper.key,
+      pepperVersion: config.identity.passwordPepper.version,
     });
     const service = createIdentityService({
       blocklist,
       clock: Object.freeze({ now: () => new Date() }),
       cryptography,
-      passwordHasher: createArgon2PasswordHasher({
-        pepper: config.identity.passwordPepper.key,
-        pepperVersion: config.identity.passwordPepper.version,
-      }),
+      passwordHasher,
       store,
     });
+    const accessService: IdentityAccessService = createIdentityAccessService({
+      blocklist,
+      clock: Object.freeze({ now: () => new Date() }),
+      cryptography,
+      dummyPasswordHash: await passwordHasher.hash(
+        "dnd-ai-uniform-dummy-credential-v1",
+      ),
+      passwordHasher,
+      store: accessStore,
+    });
+    const verifyClientSubject = (
+      assertion: IdentityClientSubjectAssertion,
+      now: Date,
+    ): string | null =>
+      verifyIdentityClientSubjectAssertion(assertion, {
+        key: config.identity.bffAssertionKey,
+        now,
+      });
     return Object.freeze({
+      accessRoutes: Object.freeze({
+        clock: Object.freeze({ now: () => new Date() }),
+        publicOrigin: config.publicOrigin,
+        service: accessService,
+        verifyClientSubjectAssertion: verifyClientSubject,
+      }),
       close,
       routes: Object.freeze({
         clock: Object.freeze({ now: () => new Date() }),
         publicOrigin: config.publicOrigin,
         service,
-        verifyClientSubjectAssertion: (
-          assertion: IdentityClientSubjectAssertion,
-          now: Date,
-        ) =>
-          verifyIdentityClientSubjectAssertion(assertion, {
-            key: config.identity.bffAssertionKey,
-            now,
-          }),
+        verifyClientSubjectAssertion: verifyClientSubject,
       }),
     });
   } catch (error) {
@@ -143,6 +180,9 @@ export function createConfiguredApiApp(
     });
     if (options.identityRuntime !== undefined) {
       registerIdentityRoutes(app, options.identityRuntime.routes);
+      if (options.identityRuntime.accessRoutes !== undefined) {
+        registerIdentityAccessRoutes(app, options.identityRuntime.accessRoutes);
+      }
       app.addHook("onClose", async () => options.identityRuntime?.close());
     }
   } catch (error) {

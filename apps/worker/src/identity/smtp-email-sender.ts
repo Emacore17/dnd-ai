@@ -3,7 +3,7 @@ import type SMTPPool from "nodemailer/lib/smtp-pool/index.js";
 
 import {
   EmailDeliveryError,
-  type VerificationEmailMessage,
+  type IdentityEmailMessage,
   type VerificationEmailSender,
 } from "./email-sender.js";
 
@@ -25,7 +25,17 @@ interface SmtpVerificationEmailDependencies {
   readonly createTransport?: (options: SMTPPool.Options) => MailTransport;
 }
 
-function renderMessage(message: VerificationEmailMessage): string {
+function renderMessage(message: IdentityEmailMessage): string {
+  if (message.kind === "password_reset") {
+    return [
+      "Hai richiesto di reimpostare la password.",
+      "",
+      `Il tuo codice è ${message.code}.`,
+      `Scade tra ${message.expiresInMinutes} minuti.`,
+      "",
+      "Se non hai fatto tu questa richiesta, ignora questa email.",
+    ].join("\n");
+  }
   return [
     `Ciao ${message.displayName},`,
     "",
@@ -71,11 +81,14 @@ export function createSmtpVerificationEmailSender(
   let closed = false;
 
   return Object.freeze({
-    async send(message: VerificationEmailMessage): Promise<void> {
+    async send(message: IdentityEmailMessage): Promise<void> {
       try {
         await transport.sendMail({
           from: config.from,
-          subject: "Il tuo codice di verifica DND AI",
+          subject:
+            message.kind === "password_reset"
+              ? "Il tuo codice per reimpostare la password"
+              : "Il tuo codice di verifica DND AI",
           text: renderMessage(message),
           to: message.recipient,
         });

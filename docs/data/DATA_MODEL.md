@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-16
-last_verified_commit: a9a2e4ba3f53db1d3b9a1d1011f745f7ba50fdf2
+last_reviewed: 2026-07-17
+last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md#19-modello-dati
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilit%C3%A0
@@ -11,6 +11,7 @@ source_refs:
   - docs/adr/0009-mvp-runtime-data-and-workflow-architecture.md
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
+  - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
 related_tasks:
   - DOC-ARCH-001
   - BL-004
@@ -30,8 +31,10 @@ code_refs:
   - packages/persistence/src/migrations/000001_postgresql_foundation.ts
   - packages/persistence/src/migrations/000002_feature_flags.ts
   - packages/persistence/src/migrations/000003_identity_signup.ts
+  - packages/persistence/src/migrations/000004_identity_access.ts
   - packages/persistence/src/feature-flags.ts
   - packages/persistence/src/identity-store.ts
+  - packages/persistence/src/identity-access-store.ts
   - infra/local/postgres.compose.yml
 test_refs:
   - tests/contracts/architecture-documentation.test.mjs
@@ -40,7 +43,10 @@ test_refs:
   - tests/database/feature-flags.test.mjs
   - tests/database/identity-migration.test.mjs
   - tests/database/identity-store.test.mjs
+  - tests/database/identity-access-store.test.mjs
+  - tests/integration/identity-access-flow.test.mjs
   - tests/integration/identity-signup-flow.test.mjs
+  - tests/security/identity-persistence-security.test.mjs
   - tests/security/database-migration-security.test.mjs
   - tests/security/feature-flags-security.test.mjs
 supersedes: null
@@ -60,8 +66,8 @@ supersedes: null
 | PostgreSQL | `17` | `infra/local/postgres.compose.yml` |
 | pgvector | `0.8.2` | immagine Compose pin a digest |
 | Migration runner | `node-pg-migrate 8.0.4` | `packages/persistence/package.json` |
-| Migration head | `000003_identity_signup` | `DATABASE_MIGRATION_HEAD` |
-| Contract attivo | `database-identity-signup-v1` | `DATABASE_CONTRACT_VERSION` |
+| Migration head | `000004_identity_access` | `DATABASE_MIGRATION_HEAD` |
+| Contract attivo | `database-identity-access-v1` | `DATABASE_CONTRACT_VERSION` |
 | Compatibilità minima | migration `000001_postgresql_foundation` | manifest versionato |
 
 Le migration sono eseguite in ordine, sotto advisory lock, con singola transazione per run. Il runner rifiuta file sconosciuti, ledger non ordinati, contract/checksum inattesi e oggetti di fondazione presenti senza migration applicata.
@@ -123,20 +129,21 @@ La migration inserisce esclusivamente le chiavi chiuse `campaign.start`, `turn.n
 
 L'indice `feature_flag_events_flag_key_created_at_idx` ordina la lettura audit per `(flag_key, created_at, event_id)`. Gli eventi di flag sono append-only per contratto applicativo; la baseline non attribuisce loro i futuri vincoli del log di gioco.
 
-### Tabelle identity di `000003_identity_signup`
+### Tabelle identity di `000003_identity_signup` + `000004_identity_access`
 
 | Tabella | Responsabilità e vincoli principali |
 |---|---|
 | `app.users` | Email canonica lowercase univoca, email di consegna e display name bounded; stato esclusivamente `pending`/`active`, coerente con `activated_at`. |
-| `app.user_credentials` | Una credenziale per utente; solo PHC Argon2id e `pepper_version` positivo, senza password o prehash in chiaro. |
+| `app.user_credentials` | Una credenziale per utente; solo PHC Argon2id, `pepper_version` e `credential_version` positivi, senza password o prehash in chiaro. La versione chiude il race login/reset. |
 | `app.email_verification_challenges` | Digest SHA-256/HMAC, versione chiave, TTL, massimo cinque tentativi e stati consumed/superseded mutuamente esclusivi; indice parziale garantisce una sola challenge corrente per utente. |
+| `app.password_reset_challenges` | Digest HMAC con chiave/versione reset dedicate, TTL, massimo cinque tentativi e stati consumed/superseded mutuamente esclusivi; indice parziale garantisce una sola challenge corrente per utente. |
 | `app.user_sessions` | Digest token univoco, versione chiave, idle/absolute expiry e revoca; il token raw non è persistito. |
-| `app.identity_email_outbox` | Una consegna per challenge, stati `pending/leased/sent/dead`, massimo cinque tentativi e lease coerente composto da `lease_until` + `lease_token`; indice parziale serve il dispatcher. |
-| `app.identity_rate_limits` | Bucket atomico per scope e subject HMAC; hit bounded e finestra temporale coerente. |
-| `app.identity_idempotency` | Unique su endpoint + actor hash + key digest, fingerprint della richiesta, risultato minimo e TTL; nessuna chiave raw. |
-| `app.identity_audit_events` | Event type chiuso, request/correlation ID bounded e metadata JSONB allowlisted; trigger vieta `UPDATE` e `DELETE`. |
+| `app.identity_email_outbox` | Una consegna per challenge verifica **oppure** reset; XOR e template coerente sono vincoli SQL. Stati `pending/leased/sent/dead`, massimo cinque tentativi e lease composto da `lease_until` + `lease_token`; indice parziale serve il dispatcher. |
+| `app.identity_rate_limits` | Bucket atomico per scope e subject HMAC; include scope signup/verify e access/reset allowlisted, hit bounded e finestra temporale coerente. |
+| `app.identity_idempotency` | Unique su endpoint + actor hash + key digest, fingerprint della richiesta, risultato minimo e TTL; endpoint/risultati access/reset sono allowlisted e nessuna chiave raw è persistita. |
+| `app.identity_audit_events` | Event type signup/access/reset chiuso, request/correlation ID bounded e metadata JSONB allowlisted; trigger vieta `UPDATE` e `DELETE`. |
 
-Signup persiste utente pending, credenziale, challenge, outbox, idempotenza e audit nella stessa transazione. Verify consuma la challenge, attiva l'utente e inserisce una sola sessione atomicamente. Lock advisory su email, idempotenza e bucket rate-limit chiudono i race testati; Redis non partecipa a questi invarianti.
+Signup persiste utente pending, credenziale, challenge, outbox, idempotenza e audit nella stessa transazione. Verify consuma la challenge, attiva l'utente e inserisce una sola sessione atomicamente. Lo store BL-006 applica sign-in, refresh con rotazione, logout, revoca globale e reset nella stessa transaction boundary di audit/idempotenza; il reset incrementa la versione credenziale, consuma una sola challenge e revoca tutte le sessioni. Lock advisory su email, idempotenza e bucket rate-limit, più lock di riga su credenziali/sessioni/challenge, chiudono i race testati; Redis non partecipa a questi invarianti.
 
 ## Relazioni implementate
 
@@ -176,10 +183,12 @@ erDiagram
     }
     USERS ||--|| USER_CREDENTIALS : owns
     USERS ||--o{ EMAIL_VERIFICATION_CHALLENGES : receives
+    USERS ||--o{ PASSWORD_RESET_CHALLENGES : recovers
     USERS ||--o{ USER_SESSIONS : authenticates
     USERS ||--o{ IDENTITY_EMAIL_OUTBOX : dispatches
     USERS ||--o{ IDENTITY_AUDIT_EVENTS : records
     EMAIL_VERIFICATION_CHALLENGES ||--|| IDENTITY_EMAIL_OUTBOX : delivers
+    PASSWORD_RESET_CHALLENGES ||--|| IDENTITY_EMAIL_OUTBOX : delivers
 ```
 
 `SCHEMA_MIGRATIONS` e `MIGRATION_CONTRACTS` descrivono due viste complementari dello stesso avanzamento, ma non hanno una foreign key fisica fra loro.
@@ -200,15 +209,15 @@ flowchart LR
     TURN --> AI_REQUEST["AI request/usage · Pianificato"]
 ```
 
-### Identity signup implementata
+### Identity signup e persistence access implementati
 
-ADR-0010 e `identity-signup-v1` sono materializzati dalla migration `000003_identity_signup` e dal repository PostgreSQL. Email normalizzata univoca, utente pending fino alla verifica, challenge one-time, digest-only, audit append-only e transazioni atomiche sono protetti sia da constraint/indici sia dai test concorrenti. Login, logout, reset, rinnovo/revoca completa e ownership delle risorse restano estensioni forward-only di `BL-006`/`BL-007`.
+ADR-0010 e `identity-signup-v1` sono materializzati dalla migration `000003_identity_signup` e dal repository PostgreSQL. `000004_identity_access` implementa la parte fisica di `identity-access-v1`: `credential_version`, challenge reset, outbox discriminato e allowlist access/reset. Constraint, upgrade `000003`→head, rollback/re-apply locale e runner simultanei sono verificati su PostgreSQL reale. `PostgresIdentityAccessStore` materializza session lifecycle, rate limit e reset atomico con replay e race concorrente verificati; route API, dispatcher reset, BFF e superfici web completano il verticale branch-local. `identity-access-flow` prova che reset e login concorrenti convergono attraverso il recheck di `credential_version`, senza lasciare sessioni basate sulla credenziale precedente. Ownership delle risorse resta BL-007.
 
 ## Ownership dei task
 
 | Area concettuale | Task proprietario | Regola per la migration futura |
 |---|---|---|
-| Utente, verifica, sessione e ownership | `BL-005`–`BL-007` | `BL-005` ha introdotto `000003_identity_signup`, constraint, concorrenza e test negativi; `BL-006` estende il lifecycle con una nuova migration senza riscrivere la head condivisa. |
+| Utente, verifica, sessione e ownership | `BL-005`–`BL-007` | `BL-005` ha introdotto `000003_identity_signup`; BL-006 aggiunge forward-only `000004_identity_access` per login, refresh, revoca e reset senza riscrivere le migration condivise; BL-007 aggiunge ownership. |
 | Personaggio e cataloghi | `BL-011`, `BL-015`–`BL-017` | Nessuna tabella è nominata in anticipo; aggregate e autosave definiscono il contratto. |
 | Campagna, Bible, scena, location, quest e clock | `BL-018`, `BL-022`–`BL-025` | Persistenza soltanto dopo schema e validazione della Bible. |
 | NPC e knowledge state | `BL-025`, `BL-052`, `BL-053` | Knowledge boundary e ownership precedono qualsiasi indice di retrieval. |

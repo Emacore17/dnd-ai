@@ -3,6 +3,7 @@ import type {
   IdentityMutationResult,
   IdentityRateLimitCommand,
   IdentityRateLimitDecision,
+  IdentityRegistrationRateLimitScope,
   IdentityResendVerificationCommand,
   IdentitySignUpCommand,
   IdentityStore,
@@ -33,7 +34,7 @@ const RATE_LIMIT_POLICIES = Object.freeze({
   resend_ip: Object.freeze({ limit: 10, windowMs: 900_000 }),
   resend_email: Object.freeze({ limit: 5, windowMs: 86_400_000 }),
 } satisfies Record<
-  IdentityRateLimitCommand["scope"],
+  IdentityRegistrationRateLimitScope,
   Readonly<{ limit: number; windowMs: number }>
 >);
 
@@ -479,7 +480,7 @@ export function createPostgresIdentityStore(
 
   return Object.freeze({
     async consumeRateLimit(
-      command: IdentityRateLimitCommand,
+      command: IdentityRateLimitCommand<IdentityRegistrationRateLimitScope>,
     ): Promise<IdentityRateLimitDecision> {
       const policy = RATE_LIMIT_POLICIES[command.scope];
       if (

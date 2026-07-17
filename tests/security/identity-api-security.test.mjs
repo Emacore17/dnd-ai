@@ -60,15 +60,28 @@ test("identity routes never trust forwarded IP or reflect request canaries", asy
 });
 
 test("identity route source has fixed paths, bounded bodies and no body logging", async () => {
-  const source = await readFile(
-    path.join(repositoryRoot, "apps/api/src/identity/routes.ts"),
-    "utf8",
-  );
+  const [registrationSource, accessSource] = await Promise.all([
+    readFile(
+      path.join(repositoryRoot, "apps/api/src/identity/routes.ts"),
+      "utf8",
+    ),
+    readFile(
+      path.join(repositoryRoot, "apps/api/src/identity/access-routes.ts"),
+      "utf8",
+    ),
+  ]);
+  const source = `${registrationSource}\n${accessSource}`;
   assert.match(source, /\/api\/auth\/sign-up/u);
   assert.match(source, /\/api\/auth\/verify-email/u);
   assert.match(source, /\/api\/auth\/resend-verification/u);
+  assert.match(source, /\/api\/auth\/sign-in/u);
+  assert.match(source, /\/api\/auth\/session\/refresh/u);
+  assert.match(source, /\/api\/auth\/sign-out/u);
+  assert.match(source, /\/api\/auth\/sessions\/revoke-all/u);
+  assert.match(source, /\/api\/auth\/password-reset\/request/u);
+  assert.match(source, /\/api\/auth\/password-reset\/confirm/u);
   assert.match(source, /const BODY_LIMIT_BYTES = 4_096/u);
-  assert.equal((source.match(/bodyLimit: BODY_LIMIT_BYTES/gu) ?? []).length, 3);
+  assert.equal((source.match(/bodyLimit: BODY_LIMIT_BYTES/gu) ?? []).length, 9);
   assert.doesNotMatch(
     source,
     /request\.body.*(?:log|capture)|(?:log|capture).*request\.body/isu,

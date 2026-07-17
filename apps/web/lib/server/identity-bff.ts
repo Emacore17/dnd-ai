@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
+import { Buffer } from "node:buffer";
 
 import {
+  AuthenticatedResponseSchema,
   IdentityErrorResponseSchema,
+  PasswordResetCompletedResponseSchema,
+  PasswordResetRequestedResponseSchema,
   VerificationRequiredResponseSchema,
   VerifiedResponseSchema,
 } from "@dnd-ai/contracts";
@@ -23,11 +27,19 @@ const CORRELATION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u;
 const RETRY_AFTER_PATTERN = /^[1-9][0-9]{0,4}$/u;
 const SESSION_COOKIE_PATTERN =
   /^__Host-dnd_ai_session=([A-Za-z0-9_-]{43}); Path=\/; HttpOnly; Secure; SameSite=Lax; Max-Age=([1-9][0-9]{0,6})$/u;
+const SESSION_COOKIE_NAME = "__Host-dnd_ai_session";
+const CLEARED_SESSION_COOKIE = `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
 
 export const IDENTITY_BFF_PATHS = [
   "/api/auth/sign-up",
   "/api/auth/verify-email",
   "/api/auth/resend-verification",
+  "/api/auth/sign-in",
+  "/api/auth/session/refresh",
+  "/api/auth/sign-out",
+  "/api/auth/sessions/revoke-all",
+  "/api/auth/password-reset/request",
+  "/api/auth/password-reset/confirm",
 ] as const;
 
 export type IdentityBffPath = (typeof IDENTITY_BFF_PATHS)[number];
@@ -45,9 +57,9 @@ export interface ForwardIdentityRequestOptions {
 }
 
 class BffBoundaryError extends Error {
-  readonly status: 413 | 502 | 503;
+  readonly status: 400 | 413 | 502 | 503;
 
-  constructor(status: 413 | 502 | 503) {
+  constructor(status: 400 | 413 | 502 | 503) {
     super("Identity BFF boundary rejected a request.");
     this.name = "BffBoundaryError";
     this.status = status;
@@ -61,8 +73,11 @@ function requestIdFrom(headers: Headers): string {
     : randomUUID();
 }
 
-function errorResponse(status: 413 | 502 | 503, requestId: string): Response {
-  const requestInvalid = status === 413;
+function errorResponse(
+  status: 400 | 413 | 502 | 503,
+  requestId: string,
+): Response {
+  const requestInvalid = status === 400 || status === 413;
   return Response.json(
     {
       error: {
@@ -71,7 +86,7 @@ function errorResponse(status: 413 | 502 | 503, requestId: string): Response {
           : "identity.delivery_unavailable",
         message: requestInvalid
           ? "Richiesta non valida."
-          : "Servizio di verifica temporaneamente non disponibile.",
+          : "Servizio account temporaneamente non disponibile.",
         requestId,
         retryable: !requestInvalid,
       },
@@ -131,6 +146,7 @@ function trustedClientIp(
 
 function forwardedHeaders(
   request: Request,
+  path: IdentityBffPath,
   config: WebIdentityRuntimeConfig,
   now: Date,
 ): Headers {
@@ -141,6 +157,7 @@ function forwardedHeaders(
     "origin",
     "sec-fetch-site",
   ]) {
+    if (name === "content-type" && expectsEmptyRequest(path)) continue;
     const value = request.headers.get(name);
     if (value !== null) headers.set(name, value);
   }
@@ -160,7 +177,45 @@ function forwardedHeaders(
   headers.set("x-dnd-ai-client-issued-at", assertion.issuedAt);
   headers.set("x-dnd-ai-client-signature", assertion.signature);
   headers.set("x-dnd-ai-client-subject", assertion.subject);
+  const sessionCookie = forwardedSessionCookie(request, path);
+  if (sessionCookie !== null) headers.set("cookie", sessionCookie);
   return headers;
+}
+
+function isSessionForwardingPath(path: IdentityBffPath): boolean {
+  return (
+    path === "/api/auth/session/refresh" ||
+    path === "/api/auth/sign-out" ||
+    path === "/api/auth/sessions/revoke-all"
+  );
+}
+
+function validSessionToken(token: string): boolean {
+  if (!/^[A-Za-z0-9_-]{43}$/u.test(token)) return false;
+  try {
+    const decoded = Buffer.from(token, "base64url");
+    return decoded.byteLength === 32 && decoded.toString("base64url") === token;
+  } catch {
+    return false;
+  }
+}
+
+function forwardedSessionCookie(
+  request: Request,
+  path: IdentityBffPath,
+): string | null {
+  if (!isSessionForwardingPath(path)) return null;
+  const source = request.headers.get("cookie");
+  if (source === null) return null;
+  const prefix = `${SESSION_COOKIE_NAME}=`;
+  const matches = source
+    .split(/;\s*/u)
+    .filter((candidate) => candidate.startsWith(prefix));
+  if (matches.length === 0) return null;
+  if (matches.length !== 1) throw new BffBoundaryError(400);
+  const token = matches[0]?.slice(prefix.length) ?? "";
+  if (!validSessionToken(token)) throw new BffBoundaryError(400);
+  return `${prefix}${token}`;
 }
 
 function getSetCookies(headers: Headers): readonly string[] {
@@ -178,17 +233,47 @@ function validSessionCookie(cookie: string): boolean {
   const match = SESSION_COOKIE_PATTERN.exec(cookie);
   if (match === null) return false;
   const maxAge = Number(match[2]);
-  return Number.isSafeInteger(maxAge) && maxAge <= MAX_SESSION_AGE_SECONDS;
+  return (
+    validSessionToken(match[1] ?? "") &&
+    Number.isSafeInteger(maxAge) &&
+    maxAge <= MAX_SESSION_AGE_SECONDS
+  );
+}
+
+type CookiePolicy = "clear" | "create" | "none" | "optional-clear";
+
+function cookiePolicy(path: IdentityBffPath, status: number): CookiePolicy {
+  if (status >= 400) {
+    return path === "/api/auth/sign-out" ||
+      path === "/api/auth/sessions/revoke-all" ||
+      path === "/api/auth/password-reset/confirm"
+      ? "optional-clear"
+      : "none";
+  }
+  if (
+    path === "/api/auth/verify-email" ||
+    path === "/api/auth/sign-in" ||
+    path === "/api/auth/session/refresh"
+  ) {
+    return "create";
+  }
+  if (
+    path === "/api/auth/sign-out" ||
+    path === "/api/auth/sessions/revoke-all" ||
+    path === "/api/auth/password-reset/confirm"
+  ) {
+    return "clear";
+  }
+  return "none";
 }
 
 function outputHeaders(
   upstream: Response,
   path: IdentityBffPath,
+  json: boolean,
 ): Headers | null {
-  const headers = new Headers({
-    "cache-control": "no-store",
-    "content-type": "application/json; charset=utf-8",
-  });
+  const headers = new Headers({ "cache-control": "no-store" });
+  if (json) headers.set("content-type", "application/json; charset=utf-8");
   const requestId = upstream.headers.get("x-request-id");
   if (requestId !== null && REQUEST_ID_PATTERN.test(requestId)) {
     headers.set("x-request-id", requestId);
@@ -200,17 +285,49 @@ function outputHeaders(
   }
 
   const cookies = getSetCookies(upstream.headers);
-  const expectsCookie =
-    path === "/api/auth/verify-email" && upstream.status === 200;
-  if (expectsCookie) {
+  const policy = cookiePolicy(path, upstream.status);
+  if (policy === "create") {
     if (cookies.length !== 1 || !validSessionCookie(cookies[0] ?? "")) {
       return null;
     }
     headers.set("set-cookie", cookies[0] ?? "");
+  } else if (policy === "clear") {
+    if (cookies.length !== 1 || cookies[0] !== CLEARED_SESSION_COOKIE) {
+      return null;
+    }
+    headers.set("set-cookie", CLEARED_SESSION_COOKIE);
+  } else if (policy === "optional-clear") {
+    if (
+      cookies.length > 1 ||
+      (cookies.length === 1 && cookies[0] !== CLEARED_SESSION_COOKIE)
+    ) {
+      return null;
+    }
+    if (cookies.length === 1) headers.set("set-cookie", CLEARED_SESSION_COOKIE);
   } else if (cookies.length !== 0) {
     return null;
   }
   return headers;
+}
+
+const COMMON_ERROR_STATUSES = [400, 403, 409, 429, 503] as const;
+
+function allowedErrorStatus(path: IdentityBffPath, status: number): boolean {
+  if (COMMON_ERROR_STATUSES.some((candidate) => candidate === status)) {
+    return true;
+  }
+  if (
+    status === 401 &&
+    (path === "/api/auth/sign-in" ||
+      path === "/api/auth/session/refresh" ||
+      path === "/api/auth/sessions/revoke-all")
+  ) {
+    return true;
+  }
+  return (
+    ((status === 410 || status === 422) && path === "/api/auth/verify-email") ||
+    (status === 422 && path === "/api/auth/password-reset/confirm")
+  );
 }
 
 function parseUpstreamBody(
@@ -225,7 +342,7 @@ function parseUpstreamBody(
     return null;
   }
 
-  if (status >= 400) {
+  if (status >= 400 && allowedErrorStatus(path, status)) {
     const result = IdentityErrorResponseSchema.safeParse(parsed);
     return result.success ? result.data : null;
   }
@@ -240,7 +357,33 @@ function parseUpstreamBody(
     const result = VerifiedResponseSchema.safeParse(parsed);
     return result.success ? result.data : null;
   }
+  if (
+    status === 200 &&
+    (path === "/api/auth/sign-in" || path === "/api/auth/session/refresh")
+  ) {
+    const result = AuthenticatedResponseSchema.safeParse(parsed);
+    return result.success ? result.data : null;
+  }
+  if (status === 202 && path === "/api/auth/password-reset/request") {
+    const result = PasswordResetRequestedResponseSchema.safeParse(parsed);
+    return result.success ? result.data : null;
+  }
+  if (status === 200 && path === "/api/auth/password-reset/confirm") {
+    const result = PasswordResetCompletedResponseSchema.safeParse(parsed);
+    return result.success ? result.data : null;
+  }
   return null;
+}
+
+function expectsEmptyRequest(path: IdentityBffPath): boolean {
+  return path === "/api/auth/session/refresh" || path === "/api/auth/sign-out";
+}
+
+function isNoContentSuccess(path: IdentityBffPath, status: number): boolean {
+  return (
+    status === 204 &&
+    (path === "/api/auth/sign-out" || path === "/api/auth/sessions/revoke-all")
+  );
 }
 
 function timeoutFor(options: ForwardIdentityRequestOptions): number {
@@ -271,7 +414,7 @@ export async function forwardIdentityRequest(
     return errorResponse(503, requestId);
   }
 
-  let body: string;
+  let body: string | undefined;
   try {
     const contentLength = request.headers.get("content-length");
     if (
@@ -280,7 +423,12 @@ export async function forwardIdentityRequest(
     ) {
       throw new BffBoundaryError(413);
     }
-    body = await readBoundedBody(request.body, REQUEST_BODY_LIMIT_BYTES, 413);
+    if (expectsEmptyRequest(path)) {
+      if (request.body !== null) throw new BffBoundaryError(413);
+      body = undefined;
+    } else {
+      body = await readBoundedBody(request.body, REQUEST_BODY_LIMIT_BYTES, 413);
+    }
   } catch {
     return errorResponse(413, requestId);
   }
@@ -293,25 +441,37 @@ export async function forwardIdentityRequest(
   try {
     const headers = forwardedHeaders(
       request,
+      path,
       config,
       (options.now ?? (() => new Date()))(),
     );
+    const init: RequestInit = {
+      cache: "no-store",
+      headers,
+      method: "POST",
+      redirect: "manual",
+      signal: controller.signal,
+      ...(body === undefined ? {} : { body }),
+    };
     upstream = await (options.fetch ?? globalThis.fetch)(
       new URL(path, config.apiInternalOrigin),
-      {
-        body,
-        cache: "no-store",
-        headers,
-        method: "POST",
-        redirect: "manual",
-        signal: controller.signal,
-      },
+      init,
     );
-  } catch {
-    return errorResponse(503, requestId);
+  } catch (error) {
+    return errorResponse(
+      error instanceof BffBoundaryError ? error.status : 503,
+      requestId,
+    );
   } finally {
     clearTimeout(timeout);
     request.signal.removeEventListener("abort", abort);
+  }
+
+  if (isNoContentSuccess(path, upstream.status)) {
+    const headers = outputHeaders(upstream, path, false);
+    return headers === null
+      ? errorResponse(502, requestId)
+      : new Response(null, { headers, status: 204 });
   }
 
   const contentType = upstream.headers.get("content-type");
@@ -332,7 +492,7 @@ export async function forwardIdentityRequest(
     return errorResponse(502, requestId);
   }
   const payload = parseUpstreamBody(serialized, path, upstream.status);
-  const headers = outputHeaders(upstream, path);
+  const headers = outputHeaders(upstream, path, true);
   if (payload === null || headers === null) {
     return errorResponse(502, requestId);
   }

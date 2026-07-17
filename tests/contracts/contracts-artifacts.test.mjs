@@ -13,6 +13,7 @@ const requireFromContracts = createRequire(
 const { z } = requireFromContracts("zod");
 
 const expectedCatalog = [
+  ["AuthenticatedResponse", "response", "authenticated-response.schema.json"],
   ["ApiErrorResponse", "response", "api-error-response.schema.json"],
   [
     "DungeonMasterTurnResult",
@@ -22,10 +23,28 @@ const expectedCatalog = [
   ["IdempotencyKey", "request", "idempotency-key.schema.json"],
   ["IdentityErrorResponse", "response", "identity-error-response.schema.json"],
   [
+    "PasswordResetCompletedResponse",
+    "response",
+    "password-reset-completed-response.schema.json",
+  ],
+  ["PasswordResetConfirm", "request", "password-reset-confirm.schema.json"],
+  [
+    "PasswordResetRequestedResponse",
+    "response",
+    "password-reset-requested-response.schema.json",
+  ],
+  ["PasswordResetRequest", "request", "password-reset-request.schema.json"],
+  [
     "ResendVerificationRequest",
     "request",
     "resend-verification-request.schema.json",
   ],
+  [
+    "RevokeAllSessionsRequest",
+    "request",
+    "revoke-all-sessions-request.schema.json",
+  ],
+  ["SignInRequest", "request", "sign-in-request.schema.json"],
   ["SignUpRequest", "request", "sign-up-request.schema.json"],
   ["GameEvent", "event", "game-event.schema.json"],
   [
@@ -51,6 +70,7 @@ const EVENT_ID = "018f47a0-7b5c-7a21-8c1e-0d4f78000103";
 const PLAYER_ENTITY_ID = "018f47a0-7b5c-7a21-8c1e-0d4f78000111";
 
 const validFixtureByContract = {
+  AuthenticatedResponse: { status: "authenticated" },
   ApiErrorResponse: {
     error: {
       code: "STATE_VERSION_CONFLICT",
@@ -89,7 +109,20 @@ const validFixtureByContract = {
       retryable: false,
     },
   },
+  PasswordResetCompletedResponse: { status: "password_reset" },
+  PasswordResetConfirm: {
+    email: "player@example.com",
+    code: "012345",
+    newPassword: "new correct horse battery staple",
+  },
+  PasswordResetRequestedResponse: { status: "password_reset_requested" },
+  PasswordResetRequest: { email: "player@example.com" },
   ResendVerificationRequest: { email: "player@example.com" },
+  RevokeAllSessionsRequest: { confirmation: "revoke_all" },
+  SignInRequest: {
+    email: "player@example.com",
+    password: "correct horse battery staple",
+  },
   SignUpRequest: {
     email: "player@example.com",
     password: "correct horse battery staple",
@@ -173,7 +206,7 @@ function collectReferences(value, references = []) {
   return references;
 }
 
-test("the v2 contract catalog has stable unique names, kinds and filenames", () => {
+test("the v3 contract catalog has stable unique names, kinds and filenames", () => {
   assert.deepEqual(
     contracts.CONTRACT_CATALOG.map(({ fileName, kind, name }) => [
       name,
@@ -192,16 +225,16 @@ test("the v2 contract catalog has stable unique names, kinds and filenames", () 
 test("contract artifacts contain versioned JSON Schema and owned identity operations", () => {
   const artifacts = contracts.createContractArtifacts();
   const expectedArtifactPaths = [
-    "v2/manifest.json",
-    "v2/openapi.json",
-    ...expectedCatalog.map(([, , fileName]) => `v2/schemas/${fileName}`),
+    "v3/manifest.json",
+    "v3/openapi.json",
+    ...expectedCatalog.map(([, , fileName]) => `v3/schemas/${fileName}`),
   ].sort();
 
   assert.deepEqual(Object.keys(artifacts).sort(), expectedArtifactPaths);
 
-  const manifest = artifacts["v2/manifest.json"];
+  const manifest = artifacts["v3/manifest.json"];
   assert.equal(manifest.schemaVersion, "contract-artifact-manifest-v1");
-  assert.equal(manifest.contractVersion, "2.0.0");
+  assert.equal(manifest.contractVersion, "3.0.0");
   assert.equal(
     manifest.jsonSchemaDialect,
     "https://json-schema.org/draft/2020-12/schema",
@@ -216,27 +249,33 @@ test("contract artifacts contain versioned JSON Schema and owned identity operat
   );
 
   for (const [name, kind, fileName] of expectedCatalog) {
-    const schema = artifacts[`v2/schemas/${fileName}`];
+    const schema = artifacts[`v3/schemas/${fileName}`];
 
     assert.equal(
       schema.$schema,
       "https://json-schema.org/draft/2020-12/schema",
     );
-    assert.equal(schema.$id, `urn:dnd-ai:contracts:v2:${name}`);
+    assert.equal(schema.$id, `urn:dnd-ai:contracts:v3:${name}`);
     assert.equal(schema.title, name);
-    assert.equal(schema["x-dnd-ai-contract-version"], "2.0.0");
+    assert.equal(schema["x-dnd-ai-contract-version"], "3.0.0");
     assert.equal(schema["x-dnd-ai-contract-kind"], kind);
   }
 
-  const openapi = artifacts["v2/openapi.json"];
+  const openapi = artifacts["v3/openapi.json"];
   assert.equal(openapi.openapi, "3.1.1");
-  assert.equal(openapi.info.version, "2.0.0");
+  assert.equal(openapi.info.version, "3.0.0");
   assert.equal(
     openapi.jsonSchemaDialect,
     "https://spec.openapis.org/oas/3.1/dialect/base",
   );
   assert.deepEqual(Object.keys(openapi.paths).sort(), [
+    "/api/auth/password-reset/confirm",
+    "/api/auth/password-reset/request",
     "/api/auth/resend-verification",
+    "/api/auth/session/refresh",
+    "/api/auth/sessions/revoke-all",
+    "/api/auth/sign-in",
+    "/api/auth/sign-out",
     "/api/auth/sign-up",
     "/api/auth/verify-email",
   ]);
@@ -252,7 +291,7 @@ test("artifact creation fails closed on duplicate names and unrepresentable Zod"
 
   assert.throws(
     () => contracts.createContractArtifacts([first, { ...first }]),
-    /duplicate contract name: ApiErrorResponse/u,
+    /duplicate contract name: AuthenticatedResponse/u,
   );
   assert.throws(
     () =>
@@ -276,7 +315,7 @@ test("artifact creation returns isolated immutable snapshots", () => {
   assert.deepEqual(first, second);
   assert.equal(Object.isFrozen(first), true);
   assert.throws(() => {
-    first["v2/openapi.json"].paths.extra = {};
+    first["v3/openapi.json"].paths.extra = {};
   }, TypeError);
 });
 
@@ -296,7 +335,7 @@ test("generated JSON Schema agrees with Zod on valid and unknown-field fixtures"
 
   for (const entry of contracts.CONTRACT_CATALOG) {
     const fixture = validFixtureByContract[entry.name];
-    const schema = artifacts[`v2/schemas/${entry.fileName}`];
+    const schema = artifacts[`v3/schemas/${entry.fileName}`];
     const validate = ajv.compile(schema);
 
     assert.equal(entry.schema.safeParse(fixture).success, true, entry.name);
@@ -313,7 +352,7 @@ test("generated JSON Schema agrees with Zod on valid and unknown-field fixtures"
 });
 
 test("OpenAPI component-local references are rebased to their component root", () => {
-  const openapi = contracts.createContractArtifacts()["v2/openapi.json"];
+  const openapi = contracts.createContractArtifacts()["v3/openapi.json"];
 
   for (const [name, schema] of Object.entries(openapi.components.schemas)) {
     for (const reference of collectReferences(schema)) {

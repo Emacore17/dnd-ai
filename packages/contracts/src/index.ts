@@ -6,6 +6,7 @@ export * from "./events.js";
 export * from "./game-event.js";
 export * from "./identifiers.js";
 export * from "./identity.js";
+export * from "./identity-access.js";
 export * from "./operations.js";
 export * from "./tool-envelope.js";
 export * from "./version.js";

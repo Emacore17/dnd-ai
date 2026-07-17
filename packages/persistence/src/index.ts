@@ -40,3 +40,4 @@ export {
   createPostgresIdentityStore,
   type IdentityPersistenceErrorCode,
 } from "./identity-store.js";
+export { createPostgresIdentityAccessStore } from "./identity-access-store.js";

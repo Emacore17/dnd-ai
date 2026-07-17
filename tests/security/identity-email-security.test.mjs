@@ -55,6 +55,7 @@ test("SMTP uses a small TLS-verified pool, bounded timeouts and no authenticatin
     code: "123456",
     displayName: "Ada",
     expiresInMinutes: 10,
+    kind: "verification",
     recipient: "ada@example.test",
   });
   assert.equal(sentMail.to, "ada@example.test");
@@ -63,6 +64,17 @@ test("SMTP uses a small TLS-verified pool, bounded timeouts and no authenticatin
   assert.match(sentMail.text, /10 minuti/u);
   assert.doesNotMatch(sentMail.text, /https?:\/\//iu);
   assert.doesNotMatch(sentMail.text, /password|session|token/iu);
+  assert.equal("html" in sentMail, false);
+
+  await sender.send({
+    code: "654321",
+    expiresInMinutes: 10,
+    kind: "password_reset",
+    recipient: "ada@example.test",
+  });
+  assert.match(sentMail.subject, /password/iu);
+  assert.match(sentMail.text, /654321/u);
+  assert.doesNotMatch(sentMail.text, /Ada|https?:\/\/|session|token/iu);
   assert.equal("html" in sentMail, false);
 
   await sender.close();
@@ -99,6 +111,7 @@ test("SMTP classifies permanent server rejection as non-retryable", async () => 
       code: "123456",
       displayName: "Ada",
       expiresInMinutes: 10,
+      kind: "verification",
       recipient: "ada@example.test",
     }),
     (error) => {

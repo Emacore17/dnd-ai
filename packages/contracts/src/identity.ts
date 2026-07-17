@@ -110,6 +110,9 @@ export const IdentityErrorCodeSchema = z.enum([
   "identity.verification_rate_limited",
   "identity.rate_limited",
   "identity.delivery_unavailable",
+  "identity.credentials_invalid",
+  "identity.session_invalid",
+  "identity.password_reset_code_invalid",
 ]);
 
 export const IdentityErrorResponseSchema = z.strictObject({

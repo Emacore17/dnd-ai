@@ -17,6 +17,7 @@ import { withPostgresTestContainer } from "../../scripts/lib/postgres-test-conta
 
 const START = new Date("2026-07-16T10:00:00.000Z");
 const CHALLENGE_KEY = Buffer.alloc(32, 7);
+const RESET_KEY = Buffer.alloc(32, 17);
 const PHC = `$argon2id$v=19$m=19456,t=2,p=1$${"c2FsdA".repeat(4)}$${"aGFzaA".repeat(8)}`;
 const { Client } = pg;
 
@@ -62,8 +63,64 @@ function dispatcher(outbox, sender, now) {
     clock: { now: () => now },
     jitterMs: () => 0,
     outbox,
+    resetKey: RESET_KEY,
+    resetKeyVersion: 1,
     sender,
   });
+}
+
+async function replaceVerificationWithReset(databaseUrl, command, number) {
+  const client = new Client({ connectionString: databaseUrl });
+  const challengeId = uuid(80_000 + number);
+  const outboxId = uuid(90_000 + number);
+  await client.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `UPDATE app.users
+          SET status = 'active', activated_at = $2, updated_at = $2
+        WHERE user_id = $1`,
+      [command.userId, START],
+    );
+    await client.query(
+      `UPDATE app.email_verification_challenges
+          SET consumed_at = $2
+        WHERE challenge_id = $1`,
+      [command.challenge.challengeId, START],
+    );
+    await client.query(
+      `UPDATE app.identity_email_outbox
+          SET status = 'dead', updated_at = $2
+        WHERE outbox_id = $1`,
+      [command.outboxId, START],
+    );
+    await client.query(
+      `INSERT INTO app.password_reset_challenges (
+         challenge_id, user_id, code_digest, key_version, expires_at, created_at
+       ) VALUES ($1, $2, $3, 1, $4, $5)`,
+      [
+        challengeId,
+        command.userId,
+        hex("e"),
+        new Date(START.valueOf() + 600_000),
+        START,
+      ],
+    );
+    await client.query(
+      `INSERT INTO app.identity_email_outbox (
+         outbox_id, user_id, password_reset_challenge_id, template_key,
+         next_attempt_at, created_at, updated_at
+       ) VALUES ($1, $2, $3, 'password_reset_v1', $4, $4, $4)`,
+      [outboxId, command.userId, challengeId, START],
+    );
+    await client.query("COMMIT");
+    return { challengeId, outboxId };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    await client.end();
+  }
 }
 
 async function inspectOutbox(databaseUrl, outboxId) {
@@ -185,6 +242,57 @@ test(
 );
 
 test(
+  "password reset rows are discriminated and delivered with the reset key",
+  { timeout: 240_000 },
+  async () => {
+    await withPostgresTestContainer(async ({ databaseUrl }) => {
+      await runDatabaseMigrations({ databaseUrl, direction: "up" });
+      const identity = createPostgresIdentityStore({ databaseUrl });
+      const outbox = createPostgresIdentityEmailOutbox({
+        createLeaseToken: () => uuid(55_001),
+        databaseUrl,
+      });
+      const sender = createFakeVerificationEmailSender();
+
+      try {
+        const command = signUp(5);
+        await identity.signUp(command);
+        const reset = await replaceVerificationWithReset(
+          databaseUrl,
+          command,
+          5,
+        );
+        const [claimed] = await outbox.claimBatch({
+          leaseDurationMs: 30_000,
+          limit: 25,
+          occurredAt: START,
+        });
+        assert.equal(claimed.kind, "password_reset");
+        assert.equal(claimed.challengeId, reset.challengeId);
+        await outbox.release({
+          leaseToken: claimed.leaseToken,
+          occurredAt: START,
+          outboxId: claimed.outboxId,
+        });
+
+        const summary = await dispatcher(outbox, sender, START);
+        assert.equal(summary.sent, 1);
+        assert.deepEqual(
+          sender.messages.map(({ kind, recipient }) => ({ kind, recipient })),
+          [{ kind: "password_reset", recipient: command.deliveryEmail }],
+        );
+        assert.deepEqual(await inspectOutbox(databaseUrl, reset.outboxId), {
+          attemptCount: 1,
+          status: "sent",
+        });
+      } finally {
+        await Promise.all([identity.close(), outbox.close()]);
+      }
+    });
+  },
+);
+
+test(
   "dispatcher retries bounded failures to dead without creating canonical identity mutations",
   { timeout: 240_000 },
   async () => {
@@ -263,6 +371,7 @@ test(
           code: "123456",
           displayName: crashedJob.displayName,
           expiresInMinutes: 10,
+          kind: "verification",
           recipient: crashedJob.recipient,
         });
 

@@ -12,14 +12,32 @@ import type {
   PasswordHash,
 } from "./types.js";
 
-export interface IdentityRateLimitCommand {
-  readonly scope:
-    | "signup_ip"
-    | "signup_email"
-    | "verify_ip"
-    | "verify_challenge"
-    | "resend_ip"
-    | "resend_email";
+export type IdentityRegistrationRateLimitScope =
+  | "signup_ip"
+  | "signup_email"
+  | "verify_ip"
+  | "verify_challenge"
+  | "resend_ip"
+  | "resend_email";
+
+export type IdentityAccessRateLimitScope =
+  | "sign_in_ip"
+  | "sign_in_email"
+  | "refresh_session"
+  | "sign_out"
+  | "revoke_all"
+  | "reset_request_ip"
+  | "reset_request_email"
+  | "reset_confirm_ip"
+  | "reset_challenge";
+
+export type IdentityRateLimitScope =
+  IdentityRegistrationRateLimitScope | IdentityAccessRateLimitScope;
+
+export interface IdentityRateLimitCommand<
+  Scope extends IdentityRateLimitScope = IdentityRateLimitScope,
+> {
+  readonly scope: Scope;
   readonly subjectHash: string;
   readonly occurredAt: Date;
 }
@@ -57,7 +75,7 @@ export interface IdentityVerificationChallengeReference {
 
 export interface IdentityStore {
   consumeRateLimit(
-    command: IdentityRateLimitCommand,
+    command: IdentityRateLimitCommand<IdentityRegistrationRateLimitScope>,
   ): Promise<IdentityRateLimitDecision>;
   findVerificationChallenge(
     email: IdentityEmail,
@@ -104,13 +122,34 @@ export interface IdentityCryptography {
     tokenDigest: string;
     keyVersion: number;
   }>;
+  createPasswordResetChallenge(): Readonly<{
+    challengeId: IdentityChallengeId;
+    code: string;
+    codeDigest: string;
+    keyVersion: number;
+  }>;
   deriveChallengeCodeDigest(
     challengeId: IdentityChallengeId,
     code: string,
     keyVersion: number,
   ): string;
   deriveSessionToken(sessionId: IdentitySessionId, keyVersion: number): string;
-  subjectHash(kind: "challenge" | "email" | "ip", value: string): string;
+  derivePasswordResetCodeDigest(
+    challengeId: IdentityChallengeId,
+    code: string,
+    keyVersion: number,
+  ): string;
+  matchesPasswordResetCode(
+    challengeId: IdentityChallengeId,
+    code: string,
+    expectedDigest: string,
+    keyVersion: number,
+  ): boolean;
+  sessionTokenDigest(token: string): string;
+  subjectHash(
+    kind: "challenge" | "email" | "ip" | "session",
+    value: string,
+  ): string;
   requestFingerprint(endpoint: string, canonicalPayload: string): string;
   idempotencyKeyDigest(key: string): string;
 }

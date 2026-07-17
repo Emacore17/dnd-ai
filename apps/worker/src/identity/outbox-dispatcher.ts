@@ -1,4 +1,7 @@
-import { deriveWorkerVerificationCode } from "./challenge-code.js";
+import {
+  deriveWorkerPasswordResetCode,
+  deriveWorkerVerificationCode,
+} from "./challenge-code.js";
 import {
   EmailDeliveryError,
   type VerificationEmailSender,
@@ -10,16 +13,27 @@ const BASE_BACKOFF_MS = 5_000;
 const MAX_BACKOFF_MS = 300_000;
 const MAX_ATTEMPTS = 5;
 
-export interface ClaimedIdentityEmail {
+interface ClaimedIdentityEmailCommon {
   readonly attemptNumber: number;
   readonly challengeId: string;
-  readonly displayName: string;
   readonly expiresAt: Date;
   readonly keyVersion: number;
   readonly leaseToken: string;
   readonly outboxId: string;
   readonly recipient: string;
 }
+
+export interface ClaimedVerificationEmail extends ClaimedIdentityEmailCommon {
+  readonly displayName: string;
+  readonly kind: "verification";
+}
+
+export interface ClaimedPasswordResetEmail extends ClaimedIdentityEmailCommon {
+  readonly kind: "password_reset";
+}
+
+export type ClaimedIdentityEmail =
+  ClaimedVerificationEmail | ClaimedPasswordResetEmail;
 
 export interface ClaimIdentityEmailBatchCommand {
   readonly leaseDurationMs: 30_000;
@@ -58,6 +72,8 @@ export interface DispatchIdentityEmailBatchOptions {
   readonly clock: IdentityEmailDispatcherClock;
   readonly jitterMs: () => number;
   readonly outbox: IdentityEmailOutbox;
+  readonly resetKey: Uint8Array;
+  readonly resetKeyVersion: number;
   readonly sender: VerificationEmailSender;
   readonly signal?: AbortSignal;
 }
@@ -92,6 +108,36 @@ function emptySummary(): DispatchSummary {
     released: 0,
     retried: 0,
     sent: 0,
+  });
+}
+
+function supportsKeyVersion(
+  job: ClaimedIdentityEmail,
+  options: DispatchIdentityEmailBatchOptions,
+): boolean {
+  return job.kind === "verification"
+    ? job.keyVersion === options.challengeKeyVersion
+    : job.keyVersion === options.resetKeyVersion;
+}
+
+function createDeliveryMessage(
+  job: ClaimedIdentityEmail,
+  options: DispatchIdentityEmailBatchOptions,
+) {
+  if (job.kind === "verification") {
+    return Object.freeze({
+      code: deriveWorkerVerificationCode(options.challengeKey, job.challengeId),
+      displayName: job.displayName,
+      expiresInMinutes: 10 as const,
+      kind: "verification" as const,
+      recipient: job.recipient,
+    });
+  }
+  return Object.freeze({
+    code: deriveWorkerPasswordResetCode(options.resetKey, job.challengeId),
+    expiresInMinutes: 10 as const,
+    kind: "password_reset" as const,
+    recipient: job.recipient,
   });
 }
 
@@ -131,7 +177,7 @@ export async function dispatchIdentityEmailBatch(
     };
 
     if (
-      job.keyVersion !== options.challengeKeyVersion ||
+      !supportsKeyVersion(job, options) ||
       job.expiresAt <= completion.occurredAt
     ) {
       if (
@@ -147,16 +193,7 @@ export async function dispatchIdentityEmailBatch(
     }
 
     try {
-      const code = deriveWorkerVerificationCode(
-        options.challengeKey,
-        job.challengeId,
-      );
-      await options.sender.send({
-        code,
-        displayName: job.displayName,
-        expiresInMinutes: 10,
-        recipient: job.recipient,
-      });
+      await options.sender.send(createDeliveryMessage(job, options));
       if (await options.outbox.markSent(completion)) counts.sent += 1;
     } catch (error) {
       const terminal = !isRetryable(error) || job.attemptNumber >= MAX_ATTEMPTS;

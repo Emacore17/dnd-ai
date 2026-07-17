@@ -15,6 +15,9 @@ test("identity pages compose the approved focused shadcn auth surface", async ()
     read("apps/web/components/auth/auth-shell.tsx"),
     read("apps/web/components/auth/sign-up-form.tsx"),
     read("apps/web/components/auth/verify-email-form.tsx"),
+    read("apps/web/components/auth/sign-in-form.tsx"),
+    read("apps/web/components/auth/password-reset-form.tsx"),
+    read("apps/web/components/auth/account-security-panel.tsx"),
     read("apps/web/app/sign-up/page.tsx"),
     read("apps/web/app/verify-email/page.tsx"),
     read("apps/web/components/ui/label.tsx"),
@@ -25,12 +28,54 @@ test("identity pages compose the approved focused shadcn auth surface", async ()
   for (const primitive of ["Card", "Label", "Input", "Button", "Alert"]) {
     assert.match(combined, new RegExp(`\\b${primitive}\\b`, "u"));
   }
-  assert.equal((combined.match(/type="submit"/gu) ?? []).length, 2);
+  assert.ok((combined.match(/type="submit"/gu) ?? []).length >= 4);
   assert.doesNotMatch(
     combined,
     /StaticGameShell|HUD|Dungeon Master|pergamena|araldic/iu,
   );
   assert.doesNotMatch(combined, /motion|rive|ai-elements/iu);
+});
+
+test("access surfaces keep each mobile screen focused and password-manager friendly", async () => {
+  const [signIn, reset, security, dialog] = await Promise.all([
+    read("apps/web/components/auth/sign-in-form.tsx"),
+    read("apps/web/components/auth/password-reset-form.tsx"),
+    read("apps/web/components/auth/account-security-panel.tsx"),
+    read("apps/web/components/ui/alert-dialog.tsx"),
+  ]);
+  const combined = [signIn, reset, security].join("\n");
+
+  assert.match(signIn, /autoComplete="current-password"/u);
+  assert.match(signIn, /fetch\("\/api\/auth\/sign-in/u);
+  assert.match(signIn, /href="\/reset-password"/u);
+  assert.match(reset, /type ResetStep/u);
+  assert.match(reset, /autoComplete="one-time-code"/u);
+  assert.ok((reset.match(/autoComplete="new-password"/gu) ?? []).length >= 2);
+  assert.match(reset, /fetch\("\/api\/auth\/password-reset\/request/u);
+  assert.match(reset, /fetch\("\/api\/auth\/password-reset\/confirm/u);
+  assert.match(security, /fetch\("\/api\/auth\/sign-out/u);
+  assert.match(security, /fetch\("\/api\/auth\/sessions\/revoke-all/u);
+  assert.match(dialog, /AlertDialogPrimitive/u);
+  assert.match(security, /AlertDialog/u);
+  assert.match(combined, /aria-live="polite"/u);
+  assert.match(combined, /size="lg"/u);
+  assert.doesNotMatch(combined, /device|dispositivo connesso|ultimo accesso/iu);
+  assert.doesNotMatch(
+    combined,
+    /onPaste|clipboardData|dangerouslySetInnerHTML/u,
+  );
+});
+
+test("reset identity remains only in React state and never enters navigation or storage", async () => {
+  const reset = await read("apps/web/components/auth/password-reset-form.tsx");
+
+  assert.match(reset, /kind: "confirm"; email: string/u);
+  assert.doesNotMatch(
+    reset,
+    /localStorage|sessionStorage|indexedDB|document\.cookie|URLSearchParams/u,
+  );
+  assert.doesNotMatch(reset, /router\.(?:push|replace)\([^)]*email/u);
+  assert.doesNotMatch(reset, /[?&](?:email|code|session)=/u);
 });
 
 test("signup keeps password managers, paste and stable accessible errors", async () => {
@@ -50,6 +95,9 @@ test("verification is numeric, keeps resend secondary and stores no identity dat
   const sources = await Promise.all([
     read("apps/web/components/auth/sign-up-form.tsx"),
     read("apps/web/components/auth/verify-email-form.tsx"),
+    read("apps/web/components/auth/sign-in-form.tsx"),
+    read("apps/web/components/auth/password-reset-form.tsx"),
+    read("apps/web/components/auth/account-security-panel.tsx"),
   ]);
   const verification = sources[1];
   const combined = sources.join("\n");
@@ -85,6 +133,9 @@ test("the browser uses only relative identity endpoints", async () => {
   const sources = await Promise.all([
     read("apps/web/components/auth/sign-up-form.tsx"),
     read("apps/web/components/auth/verify-email-form.tsx"),
+    read("apps/web/components/auth/sign-in-form.tsx"),
+    read("apps/web/components/auth/password-reset-form.tsx"),
+    read("apps/web/components/auth/account-security-panel.tsx"),
   ]);
   const combined = sources.join("\n");
 
@@ -92,6 +143,11 @@ test("the browser uses only relative identity endpoints", async () => {
     "/api/auth/sign-up",
     "/api/auth/verify-email",
     "/api/auth/resend-verification",
+    "/api/auth/sign-in",
+    "/api/auth/password-reset/request",
+    "/api/auth/password-reset/confirm",
+    "/api/auth/sign-out",
+    "/api/auth/sessions/revoke-all",
   ]) {
     assert.match(combined, new RegExp(`fetch\\("${endpoint}`, "u"));
   }
