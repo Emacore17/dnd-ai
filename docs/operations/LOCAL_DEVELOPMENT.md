@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-16
-last_verified_commit: 30f611e8e874b9c87d20d50c4c5f45528e1083a5
+last_reviewed: 2026-07-17
+last_verified_commit: d475389b11765f17276bb0a0efd7500a5e6f66a4
 source_refs:
   - AGENTS.md#6-ciclo-operativo-standard
   - docs/MVP_SPEC.md#291-topologia-mvp
@@ -14,14 +14,19 @@ source_refs:
   - docs/operations/CONFIGURATION.md
   - docs/operations/DATABASE_MIGRATIONS.md
 related_tasks:
+  - GOV-005
   - DOC-ARCH-001
   - BL-001
   - BL-003
   - BL-004
   - BL-005
+  - BL-006
+  - BL-007
   - BL-079
   - BL-080
+  - BL-081
   - QA-001
+  - QA-002
 code_refs:
   - package.json
   - pnpm-lock.yaml
@@ -42,6 +47,10 @@ test_refs:
   - tests/database/database-migrations.test.mjs
   - tests/integration/testing-containers.test.mjs
   - tests/integration/identity-signup-flow.test.mjs
+  - tests/integration/identity-access-api.test.mjs
+  - tests/integration/campaign-api.test.mjs
+  - tests/contracts/browser-harness-contract.test.mjs
+  - tests/e2e/game-shell.spec.mjs
 supersedes: null
 ---
 
@@ -49,8 +58,9 @@ supersedes: null
 
 ## Stato delle capability
 
-- **Implementato**: installazione frozen, build, validazione config, PostgreSQL/pgvector locale, migration, health HTTP, verticale identity API/BFF/UI e dispatcher email fake locale.
-- **Pianificato**: Redis locale applicativo, BullMQ, API di gioco, SSE e orchestrazione turni worker.
+- **Obiettivo operativo corrente**: rendere l'intero progetto funzionante in locale, fino al playable loop con AI integrata dietro adapter. I test e le suite riproducibili usano fake provider deterministico; l'adapter reale verrà configurato localmente nei task AI senza introdurre SDK nel dominio.
+- **Implementato**: installazione frozen, build, validazione config, PostgreSQL/pgvector locale, migration, health HTTP, verticale identity API/BFF/UI con access/reset/revoca, ownership campagne player-safe, shell conversazionale fixture, browser/accessibility harness e dispatcher email fake locale.
+- **Pianificato**: Redis locale applicativo, BullMQ, API di gioco mutanti, SSE pubblico, Campaign Bible, Turn Orchestrator, Rules Engine e provider AI.
 
 Questa guida verifica la fondazione corrente da checkout pulito. Non simula come disponibili i servizi posseduti dai task futuri.
 
@@ -106,7 +116,7 @@ corepack pnpm@11.13.0 db:migrate:local
 corepack pnpm@11.13.0 db:migrate:status:local
 ```
 
-Lo status terminale deve indicare head `000003_identity_signup`, contract `database-identity-signup-v1` e nessuna migration pending. La struttura fisica risultante è descritta in [`DATA_MODEL.md`](../data/DATA_MODEL.md).
+Lo status terminale deve indicare head `000005_campaign_ownership`, contract `database-campaign-ownership-v1` e nessuna migration pending. La struttura fisica risultante è descritta in [`DATA_MODEL.md`](../data/DATA_MODEL.md).
 
 ## Build e readiness
 
@@ -144,7 +154,7 @@ if ($null -eq $health -or $health.contract -ne "web-health-v1" -or $health.statu
 }
 ```
 
-API non espone ancora un endpoint health e non ha route di gioco. Il worker non è ancora un daemon BullMQ; può eseguire soltanto il poller dell'outbox identity. `test:integration` verifica composition root, vertical slice e failure path senza sostenere il contrario.
+API non espone ancora un endpoint health e non ha route mutanti di gioco; espone identity e la GET campagna player-safe. Il worker non è ancora un daemon BullMQ; può eseguire soltanto il poller dell'outbox identity. `test:integration` verifica composition root, vertical slice e failure path senza sostenere il contrario.
 
 ## Arresto e cleanup
 
@@ -182,4 +192,4 @@ Non usare kill per nome processo e non rimuovere container/volumi di altri proge
 
 ## Ambienti remoti
 
-Lo staging non è disponibile. Nessun comando Vercel, deploy, release o Production appartiene al percorso locale; lo stato fail-closed e il blocco `BL-080` restano descritti in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md).
+Lo staging non è disponibile e non è un prerequisito per continuare lo sviluppo locale verso AI integrata. Nessun comando Vercel, deploy, release o Production appartiene al percorso locale; lo stato fail-closed e il blocco `BL-080` restano descritti in [`PREVIEW_STAGING.md`](PREVIEW_STAGING.md).

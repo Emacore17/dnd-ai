@@ -2,7 +2,7 @@
 status: active
 owner: product-and-engineering
 last_reviewed: 2026-07-17
-last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
+last_verified_commit: d475389b11765f17276bb0a0efd7500a5e6f66a4
 source_refs:
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
@@ -10,6 +10,7 @@ source_refs:
 related_tasks:
   - GOV-001
   - GOV-004
+  - GOV-005
   - BL-003
   - BL-005
   - BL-006
@@ -3909,11 +3910,11 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 
 | Campo | Contenuto |
 |---|---|
-| **Obiettivo** | Rendere disponibile un percorso deployabile, osservabile e sicuro su cui costruire il dominio. |
+| **Obiettivo** | Rendere disponibile una fondazione locale osservabile, sicura e riproducibile su cui costruire il dominio e il playable loop con AI integrata. Il primo ambiente Preview/staging reale resta un gate remoto separato: blocca beta/release esterne, non l'avanzamento locale M1→M6. |
 | **Dipendenze** | Decisioni minime su cloud, auth, regione dati e repository. |
-| **Deliverable** | Monorepo; standard TypeScript; CI/CD; local/staging; PostgreSQL/Redis; migrations; auth; request IDs; logging/OTel; Sentry; secret management; base admin RBAC; contratto UX/UI mobile-first; fondazione shadcn/Radix, AI Elements selettiva e motion budget. |
-| **Criteri di accettazione** | Un utente di test si registra/login; API protetta risponde; migration da zero; staging deploy automatico; trace attraversa web/API/worker fake; nessun secret nel repository; shell mobile 320–430 px, token e componenti base superano accessibility/performance smoke. |
-| **Rischi** | Scelta piattaforma tardiva, auth sovradimensionata, ambienti divergenti, design system applicato tardi o animazioni che degradano il mobile. |
+| **Deliverable** | Monorepo; standard TypeScript; CI/CD; sviluppo locale; PostgreSQL/pgvector e harness Redis; migrations; auth; request IDs; logging/OTel; Sentry off-by-default; secret management; base admin RBAC pianificata; contratto UX/UI mobile-first; fondazione shadcn/Radix, AI Elements selettiva e motion budget. |
+| **Criteri di accettazione** | Un utente di test si registra/login; API protetta risponde; migration da zero; health, suite locale e browser harness passano; trace/config/secret boundary dei runtime disponibili sono verificati; nessun secret nel repository; shell mobile 320–430 px, token e componenti base superano accessibility/performance smoke. Preview/staging automatico, smoke provider e rollback remoto sono esclusi dal gate locale e restano obbligatori prima di utenti esterni. |
+| **Rischi** | Provider remoto bloccato, auth sovradimensionata, ambienti divergenti, design system applicato tardi o animazioni che degradano il mobile. |
 | **Priorità** | P0 |
 | **Stima** | M |
 
@@ -4003,10 +4004,12 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 
 ## Sequenza di rilascio
 
-- **Internal prototype:** M0–M3 con fake provider e regole stub, non utenti esterni.
+- **Internal local prototype:** M0–M3 funzionante in locale con fake provider deterministico nei test e adapter AI reale configurabile localmente, non utenti esterni.
 - **Playable alpha:** M0–M5, campagne limitate e operatori interni.
 - **Closed beta:** M0–M7 P0, quote strette, telemetry e review.
 - **MVP release:** criteri globali passati, budget e policy approvati.
+
+Decisione Product Owner 2026-07-17: fino alla disponibilità di un percorso Preview/staging supportato dal provider, la priorità di sviluppo è completare in locale l'intero progetto con AI integrata dietro adapter. Questa decisione non autorizza Production, upgrade piano, cambio account, deploy manuali o bypass dei guardrail Vercel; sposta soltanto il blocco remoto fuori dal percorso critico locale.
 
 # 31. Backlog iniziale
 
@@ -4023,7 +4026,7 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 | BL-009 | Contracts | Come client voglio DTO runtime-validati. | Zod, JSON Schema, OpenAPI generation. | P0 | BL-001 | Contract compile e response validation; schema versionato. | M |
 | BL-010 | Platform | Come operatore voglio feature flag e kill switch server-side. | Flag store/config auditato. | P0 | BL-003, BL-004, BL-008 | Disabilita start/turn/model route senza deploy; audit event. | M |
 | BL-079 | Frontend UX | Come giocatore voglio una fondazione visuale mobile semplice e premium fin dal primo slice. | Design system core, token, primitive accessibili e shell statica. | P0 | BL-001, BL-002, QA-001 | shadcn/Radix `new-york`, token, Geist/Lucide, target touch e shell 320–430 px/desktop adattiva passano build e verifica locale senza dipendere da staging. | S |
-| BL-080 | Platform | Come team voglio una preview/staging M0 isolata e riproducibile. | Provider/secret manager, provisioning, deploy automatico e smoke iniziale dei runtime deployabili. | P0 | BL-002, BL-003 | Preview/staging usa config e secret separati, non contiene dati production, pubblica URL/evidenza redatti e supera lo smoke dei runtime disponibili con rollback documentato. | M |
+| BL-080 | Platform | Come team voglio una preview/staging isolata e riproducibile prima di utenti esterni. | Provider/secret manager, provisioning, deploy automatico e smoke iniziale dei runtime deployabili. | P0 | BL-002, BL-003 | Preview/staging usa config e secret separati, non contiene dati production, pubblica URL/evidenza redatti e supera lo smoke dei runtime disponibili con rollback documentato; finché il provider non offre un percorso Preview-only supportato, il task resta bloccato senza fermare il playable loop locale. | M |
 | BL-081 | Frontend UX | Come giocatore voglio una shell conversazionale interattiva e affidabile. | Wrapper conversazionali, drawer, stati fixture e motion layer. | P0 | BL-079, QA-001 | AI Elements selettivi non sostituiscono `TurnView`/REST+SSE; shell 320–430 px e desktop, focus, reduced motion, overflow e bundle senza Rive iniziale superano smoke locale. | M |
 | BL-011 | Character | Come designer voglio cataloghi originali versionati. | Ascendenze, classi, background, ability, item base. | P0 | BL-009 | Nessun contenuto proprietario; schema/catalog validation pass. | L |
 | BL-012 | Character | Come giocatore voglio scegliere identità e classe. | Step builder con preview. | P0 | BL-011, BL-079 | Solo opzioni catalogo; keyboard/accessibility smoke. | M |
@@ -4098,7 +4101,7 @@ La roadmap è ordinata per ridurre il rischio tecnico prima di investire nel pol
 
 ## 32.1 Criteri globali dell’MVP
 
-Tutti i criteri seguenti sono P0 e devono passare in staging con evidenza automatizzata o review esplicita.
+Tutti i criteri seguenti sono P0. Durante lo sviluppo local-first devono passare nel percorso locale riproducibile con fake provider deterministico dove appropriato; prima di closed beta o utenti esterni devono passare anche in Preview/staging con evidenza automatizzata o review esplicita.
 
 | ID | Criterio | Scenario verificabile | Evidenza minima |
 |---|---|---|---|

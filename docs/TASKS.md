@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
+last_verified_commit: d475389b11765f17276bb0a0efd7500a5e6f66a4
 source_refs:
   - docs/MVP_SPEC.md
   - docs/adr/0010-internal-provider-neutral-identity.md
@@ -20,6 +20,7 @@ related_tasks:
   - GOV-002
   - GOV-003
   - GOV-004
+  - GOV-005
   - BL-001
   - BL-002
   - BL-003
@@ -185,13 +186,13 @@ supersedes: null
 > **Punto di ingresso agente:** [`AGENTS.md`](../AGENTS.md)
 > **Specifica canonica:** [`docs/MVP_SPEC.md`](MVP_SPEC.md)
 > **Studio UX/UI:** [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md)
-> **Baseline specifica:** SHA-256 `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b`
-> **Data baseline:** `2026-07-16`
+> **Baseline specifica:** SHA-256 `d5a2dec7a9ff673c824690eda73dfd41fbaa2f8ec1b2fff5baa946ca433b3900`
+> **Data baseline:** `2026-07-17`
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** nessun task P0 selezionabile; `QA-002` è integrato su `main` tramite PR #32 e CI post-merge verde
-> **Prossimo task READY:** nessun P0; `GATE-M0` resta chiuso perché `BL-080` è congelato `BLOCKED`
+> **Task attivo:** nessun task in corso; `GOV-005` è chiuso su branch locale con gate documentali verdi
+> **Prossimo task READY:** `GATE-M0` — exit gate locale M0; `BL-080` resta `BLOCKED` come gate remoto, non come blocco allo sviluppo locale
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -411,6 +412,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 ## 7. Regole di pianificazione e modifica del backlog
 
 - La sequenza P0 segue M0→M7. Un gate di milestone deve essere `DONE` prima della milestone successiva, salvo lavoro puramente preparatorio che non modifica il prodotto.
+- Decisione Product Owner 2026-07-17: l'obiettivo operativo corrente è avere l'intero progetto funzionante in locale, fino al playable loop con AI integrata dietro adapter. `BL-080` resta il proprietario del primo ambiente Preview/staging reale e blocca deploy/beta/release esterni, ma non blocca più `GATE-M0` locale né l'avanzamento M1→M6 verso il core loop locale. Ogni task AI deve restare eseguibile con fake provider deterministico nei test e predisposto per adapter reale configurato localmente, senza introdurre SDK nel dominio o chiamate provider non isolate.
 - P1, P2 e Post-MVP restano `DEFERRED` fino a decisione esplicita.
 - Un nuovo task usa un ID stabile: `BL-xxx` se entra nel backlog prodotto, `GOV-xxx`, `QA-xxx`, `DOC-xxx`, `GATE-xxx` o `BUG-xxx`.
 - Ogni nuovo task deve contenere stato, progresso, test, riferimenti, dipendenze, criterio, docs ed evidenze.
@@ -425,7 +427,7 @@ Se la specifica cambia, tutti i task non conclusi collegati alle sezioni modific
 
 | Milestone | Stato | Progresso | Task inclusi | Gate | Condizione di uscita |
 |---|---:|---:|---:|---|---|
-| M0 — Fondamenta | `IN_PROGRESS` | 76% | 21 | `GATE-M0` | Pipeline, auth, dati, osservabilità, ambiente preview/staging, fondazione UX/UI e contesto agenti operativi. |
+| M0 — Fondamenta locali | `IN_PROGRESS` | 90% | 22 | `GATE-M0` | Pipeline, auth, dati, osservabilità, sviluppo locale riproducibile, fondazione UX/UI e contesto agenti operativi; Preview/staging resta tracciato da `BL-080` per rilascio esterno. |
 | M1 — Character Builder | `NOT_STARTED` | 0% | 9 | `GATE-M1` | Personaggio e fino a due compagni validi e documentati. |
 | M2 — Campaign Generator | `NOT_STARTED` | 0% | 12 | `GATE-M2` | Bible/prologo validi, canonici, moderati e idempotenti. |
 | M3 — Core Turn Loop | `NOT_STARTED` | 0% | 16 | `GATE-M3` | Input→AI/tool→commit→SSE riproducibile e fault-safe. |
@@ -735,7 +737,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Bundle check prova AI Elements selettivi, assenza di `useChat`/trasporto parallelo e assenza di Rive iniziale.
 - **Documentazione e contesto:** design e piano BL-081; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
 - **Evidenze di chiusura:** design `interactive-game-shell-v1` e piano TDD versionati. Implementati model/reducer/fixture puri, wrapper `GameConversation`/`NarrativeTurn`/`FreeActionComposer`/`GameDrawer`, subset AI Elements e shadcn, home interattiva e Motion reduced-first senza timer, rete o storage browser. Mirati finali: reducer 14/14, contract UI 14/14 e smoke standalone 1/1 `PASS`; lint/typecheck web 8/8 e build production 3/3 `PASS`. Browser locale: 320×568, 390×844 e 1440×900 senza overflow; textarea/CTA 48 px, `Shift+Enter`, submit/continue, drawer Escape/focus restore e console pulita. Bundle: 1.328.006 byte raw iniziali e 750.594 byte entry pagina, entrambi `+691.262`; feature DOM Motion asincrona 285 byte; nessuna catena `ai`, `@ai-sdk/react`, Rive o plugin `@streamdown/*`. Full HIGH_RISK finale exit `0` in 209,3 s: lint/build 11, typecheck 16, report 376 test, security 39 pass/3 skip host, document/task/CI/deploy/secret policy e artifact 4.344 file `PASS`. Checkout detached del functional head `561dc2d`: install frozen 819 package, build web 3/3, reducer 14/14, contract 14/14, smoke 1/1 e `verify:docs` `PASS`; cleanup deregistrato e residuo Windows rimosso dal solo path verificato.
-- **Note, rischi o bloccanti:** Nessun blocco funzionale residuo. Il primo full si è fermato prima delle lane sulla formattazione di 14 file BL-081; Prettier mirato, lint/typecheck e 29 test hanno chiuso il finding prima del rerun verde. Streamdown spiega la quota principale del delta bundle; il runtime resta deliberatamente limitato al renderer effettivamente consumato e non è stata inventata una soglia retroattiva. `QA-002` è ora `READY` per consolidare il browser harness comune; `BL-080` e `GATE-M0` possiedono lo smoke remoto. Delivery protetta e checkout pulito restano evidenze esterne/terminali, non blocchi di implementazione. Nessuna azione Vercel è richiesta o autorizzata.
+- **Note, rischi o bloccanti:** Nessun blocco funzionale residuo. Il primo full si è fermato prima delle lane sulla formattazione di 14 file BL-081; Prettier mirato, lint/typecheck e 29 test hanno chiuso il finding prima del rerun verde. Streamdown spiega la quota principale del delta bundle; il runtime resta deliberatamente limitato al renderer effettivamente consumato e non è stata inventata una soglia retroattiva. `QA-002` è ora `READY` per consolidare il browser harness comune; `BL-080` possiede lo smoke remoto e `GATE-M0` è stato poi riallineato da `GOV-005` come gate locale. Delivery protetta e checkout pulito restano evidenze esterne/terminali, non blocchi di implementazione. Nessuna azione Vercel è richiesta o autorizzata.
 
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
 
@@ -798,6 +800,26 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Evidenze di chiusura:** design head `84357e83dbc173e9a3445b7df24a3b7e7157fbaa`; `tasks:check` exit `0`; `verify:docs` exit `0` con artifact contrattuali 8, document policy 46 documenti/10 modificati, task graph e secret scan `PASS`; self-review P0/P1 completata con un P1 di stato corretto e nessun finding residuo; candidate/PR `PENDING`; migration/eval/trace ID `N/A`.
 - **Note, rischi o bloccanti:** Nessuna azione provider. `BL-080` e `GATE-M0` restano invariati nel loro stato remoto.
 
+### GOV-005 — Riallineamento local-first e AI integrata
+
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
+- **Contesto verificato:** `YES` — base `d475389b11765f17276bb0a0efd7500a5e6f66a4`; issue `vercel/vercel#17069` ancora aperta al readback 2026-07-17; Product Owner conferma che l'obiettivo importante corrente è il progetto completo funzionante in locale con AI integrata.
+- **Priorità / stima:** `P0` / `S`
+- **Dipendenze:** GOV-004, QA-002
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §30 Roadmap; `docs/MVP_SPEC.md` §31 `BL-021`–`BL-041`; `docs/TASKS.md` §7; `docs/CONTEXT.md`; `docs/operations/LOCAL_DEVELOPMENT.md`; `docs/operations/PREVIEW_STAGING.md`
+- **Obiettivo:** Rendere esplicito che lo sviluppo P0 continua local-first verso una vertical slice giocabile con AI integrata, senza forzare il provider Preview/staging bloccato.
+- **Deliverable:** Spec, backlog, contesto e tracciabilità distinguono `GATE-M0` locale da `BL-080` remoto; il prossimo lavoro torna selezionabile; l'AI è trattata come capability locale dietro adapter/fake provider fino alla scelta provider reale.
+- **Criterio di accettazione:** `BL-080` resta `BLOCKED/50%/PARTIAL` e vieta deploy reali; `GATE-M0` dipende soltanto da deliverable locali già integrati e diventa il prossimo P0 `READY`; `BL-011` resta subordinato a `GATE-M0`; `BL-021` conserva il requisito di adapter AI sostituibile con fake provider testabile e integrazione reale configurabile localmente.
+- **Test obbligatori prima di `DONE`:**
+  - [x] `corepack pnpm@11.13.0 tasks:check` passa con `GATE-M0` local-first e senza dipendenze incomplete.
+  - [x] `corepack pnpm@11.13.0 verify:docs` passa con task graph, document policy e secret scan.
+  - [x] Diff review conferma che non sono stati eseguiti o riabilitati deploy Vercel, Production, custom environment o cambio account.
+- **Documentazione e contesto:** `docs/MVP_SPEC.md`; `docs/TASKS.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`; `docs/CHANGELOG.md`
+- **Evidenze di chiusura:** branch `codex/local-first-ai-objective`, base `d475389b11765f17276bb0a0efd7500a5e6f66a4`; `corepack pnpm@11.13.0 tasks:check` exit `0` con `task-graph: PASS`; `corepack pnpm@11.13.0 verify:docs` finale exit `0` con contracts build cache hit, `contract-artifacts: PASS` 70 file `api-contract-v4.0.0`, `documentation-policy: PASS` 60 documenti/6 changed, `task-graph: PASS` e `repository-secret-scan: PASS`; spec SHA `d5a2dec7a9ff673c824690eda73dfd41fbaa2f8ec1b2fff5baa946ca433b3900`; nessuna azione Vercel, deploy, workflow, runtime o lockfile modificata.
+- **Note, rischi o bloccanti:** Corsia `FAST`: cambio documentale/backlog senza runtime, workflow, lockfile o provider. Il blocco Vercel rimane valido e deliberatamente separato dalla traiettoria locale. L'integrazione AI reale richiederà la scelta `OD-06` prima dei task di generazione effettiva, mentre i test devono restare riproducibili con fake provider.
+
 ### QA-001 — Fondazione comune per test, fixture e comandi di qualità
 
 - **Stato:** `DONE`
@@ -839,7 +861,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [x] Visual artifact stabile su due run; server failure, browser crash e snapshot drift propagano exit non-zero.
 - **Documentazione e contesto:** `docs/testing/TEST_STRATEGY.md`; `docs/product/UX_UI_DESIGN.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
 - **Evidenze di chiusura:** commit branch-local `be6787d`, `f182865`, `40c643d`, `8f80202`, `8dd1050`, `f5ad6f9`, `0e12876`, `2831471`, `d6dd199`, `feaf49c` e PR head `dd8d3c6`; E2E 12/12 su due run Windows con tre hash invariati; sei baseline pixel-exact Windows/Linux, con Linux ripetuto nel container Playwright ufficiale; CI/report/security mirati 21/21 e policy workflow `PASS`. Due finding reali sono stati chiusi alla causa: owner QA-002 nel report security e cleanup degli asset statici copiati nello standalone. Review inline del diff completo senza P0/P1. Full HIGH_RISK finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 346 s: format, lint 11, typecheck 16, build 11, report 420 test su sei corsie, contract 110/110, database 27/27, security 44 pass/3 skip host, docs/task/CI/deployment/secret policy e artifact 4.396 file `PASS`. Checkout detached pulito su `feaf49c`: install frozen, Chromium, browser contract 6/6, E2E 12/12, report `e2e`, build web e `verify:docs` verdi in 108,2 s; residuo Windows rimosso sul solo path temporaneo verificato. PR #32 è stata integrata nel merge `889c51ea5a839b0a31e0797599bb22e6aaab6df4`; CI PR `29593436887` e post-merge `29593746286` hanno concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. Warning `MaxListenersExceededWarning` preesistente del reporter Node invariato. Migration/eval/trace ID `N/A`.
-- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` perché cambiano lockfile, runner, artifact e workflow CI. Design `browser-harness-v1`: unica lane `e2e` nel runner/report QA-001, Playwright `1.61.1`, axe `4.12.1`, solo Chromium, server standalone loopback, retry zero e snapshot per piattaforma. Lo starter copia e ripulisce gli asset statici Next nel layout standalone in modo idempotente; report remoti e trace/video/axe grezzi falliscono chiusi. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`; dopo il merge non esiste un altro P0 locale `READY` perché `GATE-M0` dipende da `BL-080`.
+- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` perché cambiano lockfile, runner, artifact e workflow CI. Design `browser-harness-v1`: unica lane `e2e` nel runner/report QA-001, Playwright `1.61.1`, axe `4.12.1`, solo Chromium, server standalone loopback, retry zero e snapshot per piattaforma. Lo starter copia e ripulisce gli asset statici Next nel layout standalone in modo idempotente; report remoti e trace/video/axe grezzi falliscono chiusi. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`; il riallineamento local-first `GOV-005` rende `GATE-M0` il prossimo P0 locale selezionabile senza forzare deploy.
 
 ### DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale
 
@@ -863,23 +885,23 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### GATE-M0 — Exit gate Milestone 0 — Fondamenta
 
-- **Stato:** `BACKLOG`
+- **Stato:** `READY`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
-- **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
+- **Contesto verificato:** `YES` — `GOV-005` ha separato il gate locale dal blocco remoto su base `d475389b11765f17276bb0a0efd7500a5e6f66a4`; spec SHA `d5a2dec7a9ff673c824690eda73dfd41fbaa2f8ec1b2fff5baa946ca433b3900`; data: `2026-07-17`
 - **Priorità / stima:** `P0` / `S`
-- **Dipendenze:** GOV-001, GOV-002, QA-001, QA-002, DOC-ARCH-001, BL-001..BL-010, BL-079, BL-080, BL-081
+- **Dipendenze:** GOV-001, GOV-002, GOV-003, GOV-004, GOV-005, QA-001, QA-002, DOC-ARCH-001, BL-001..BL-010, BL-079, BL-081
 - **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §30 Milestone 0; `docs/MVP_SPEC.md` §35.3
-- **Obiettivo:** Validare in modo integrato tutti i deliverable di M0 prima di autorizzare il lavoro della milestone successiva.
-- **Deliverable:** Report di exit gate M0, demo riproducibile, evidenze e aggiornamento della dashboard.
-- **Criterio di accettazione:** Utente test signup/login; API protetta; migration da zero; staging deploy automatico; trace web→API→worker fake; nessun secret nel repository; shell mobile-first e fondazione UX/UI superano gate accessibility/performance.
+- **Obiettivo:** Validare in modo integrato tutti i deliverable locali di M0 prima di autorizzare il lavoro M1, mantenendo `BL-080` come gate remoto separato per delivery esterna.
+- **Deliverable:** Report di exit gate M0 locale, demo riproducibile, evidenze e aggiornamento della dashboard.
+- **Criterio di accettazione:** Utente test signup/login; API protetta; migration da zero; health e harness browser locali verdi; trace/config/secret boundary dei runtime disponibili verificati; nessun secret nel repository; shell mobile-first e fondazione UX/UI superano gate accessibility/performance. Preview/staging automatico, rollback remoto e smoke provider sono esclusi da questo gate e restano in `BL-080`/`BL-070` prima di utenti esterni.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Eseguire la suite M0 da checkout pulito e in staging.
+  - [ ] Eseguire la suite M0 locale da checkout pulito.
   - [ ] Verificare security/config/secret scan e smoke end-to-end.
   - [ ] Aggiornare CONTEXT, TRACEABILITY, ADR e release evidence M0.
 - **Documentazione e contesto:** `docs/TASKS.md`, `docs/CONTEXT.md`, `docs/TRACEABILITY.md`, documenti della milestone, release evidence progressiva
 - **Evidenze di chiusura:** commit/PR `—`; comandi e exit code `—`; report/CI `—`; migration/eval/trace ID `—`; docs aggiornati `—`
-- **Note, rischi o bloccanti:** `—`
+- **Note, rischi o bloccanti:** `BL-080` non è una dipendenza di chiusura per il gate locale: resta `BLOCKED` sul provider Preview-only e blocca soltanto deploy/staging/release esterni. Se durante `GATE-M0` emerge un requisito locale non implementato, aprire un `BUG`/`GOV` mirato o riportare il gate a `IN_PROGRESS`; non riaprire Vercel.
 
 ## 10. M1 — Character Builder
 
@@ -2739,7 +2761,7 @@ test_status: PASSING
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
-| 2026-07-17 18:29 +02:00 | 100% | QA-002 è integrato su `main` tramite PR #32; il grafo non ha P0 `READY` perché `BL-080` resta `BLOCKED` e `GATE-M0` dipende dallo smoke remoto. Readback provider solo lettura: issue `vercel/vercel#17069` ancora aperta e CLI `56.3.1` senza fix dichiarato per Preview/Production. | PR #32 merge `889c51e`; CI PR `29593436887` e post-merge `29593746286` cinque job `SUCCESS`; `corepack pnpm@11.13.0 tasks:check` exit `0`; nessuna azione Vercel o cambio account. | Non riaprire `BL-080` né creare deployment finché non esiste fix/workaround Preview-only supportato e compatibile con Hobby; serve decisione PO per iniziare lavoro non-P0 o cambiare vincoli provider. |
+| 2026-07-17 18:29 +02:00 | 100% | QA-002 è integrato su `main` tramite PR #32; in quel checkpoint il grafo non aveva P0 `READY` perché `BL-080` restava `BLOCKED` e `GATE-M0` dipendeva dallo smoke remoto. Readback provider solo lettura: issue `vercel/vercel#17069` ancora aperta e CLI `56.3.1` senza fix dichiarato per Preview/Production. Stato operativo poi superato da `GOV-005`. | PR #32 merge `889c51e`; CI PR `29593436887` e post-merge `29593746286` cinque job `SUCCESS`; `corepack pnpm@11.13.0 tasks:check` exit `0`; nessuna azione Vercel o cambio account. | Non riaprire `BL-080` né creare deployment finché non esiste fix/workaround Preview-only supportato e compatibile con Hobby; `GOV-005` ha poi reso `GATE-M0` il gate locale successivo. |
 | 2026-07-17 17:37 +02:00 | 100% | QA-002 proposto `DONE/100%/PASSING` branch-local. La review inline non lascia P0/P1; i due finding reali chiusi sono owner/report security per QA-002 e cleanup degli asset statici standalone prima/dopo E2E. Nessun gate è stato indebolito e nessuna azione Vercel è stata eseguita. | Full finale `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 346 s con 420 test/report, E2E 12/12, artifact 4.396 file e policy root `PASS`. Checkout detached pulito su `feaf49c` exit `0` in 108,2 s: install frozen, Chromium, browser contract 6/6, E2E 12/12, report `e2e`, build web, docs/task graph e secret scan verdi. | Incorporare lo snapshot terminale nello stesso commit funzionale, aprire una sola PR protetta e attendere `CI / Merge gate`; nessun altro P0 locale READY finché `BL-080` resta congelato. |
 | 2026-07-17 16:54 +02:00 | 90% | Harness browser completato in sette batch: lane comune, server standalone con asset Next, matrice responsive/accessibile, baseline Windows/Linux, failure path e CI/artifact fail-closed. Il contrasto axe transiente durante Motion è stato eliminato impostando reduced-motion prima della scansione; nessun gate è stato attenuato. | E2E 12/12 ripetuti su Windows con tre hash invariati; sei PNG cross-platform stabili su due run; Linux verificato nel container Playwright ufficiale; contract/CI/security 21/21 e policy workflow PASS. Nessun processo residuo e nessuna azione Vercel. | Allineare living docs, review inline, unico full HIGH_RISK e checkout pulito; poi una sola PR protetta. |
 | 2026-07-17 16:10 +02:00 | 25% | BL-007 integrato tramite PR #31/merge `f653e63` e CI post-merge `29585826237` 5/5 `SUCCESS`. Selezionato QA-002 e adottato `browser-harness-v1`: unica lane Playwright nel runner/report comune, solo Chromium, server standalone loopback, axe e snapshot per piattaforma; esecuzione inline senza Vercel. | Base `f653e63`; spec SHA `737fcb…d80b`; build web PASS; shell unit/integration/contract 22/22. Fonti ufficiali Playwright/axe e versioni registry `1.61.1`/`4.12.1` verificate. | Versionare design/piano e avviare Task 1 TDD con catalogo lane/dipendenze RED. |
@@ -2857,7 +2879,7 @@ test_status: PASSING
 - **Prompt/model/eval version:** nessuna modifica a prompt, modello o provider; `N/A`.
 - **Documenti aggiornati:** task/contesto/tracciabilità, indice, architettura, dati, API, migration, threat model, design e piano BL-007.
 - **Rischi residui tracciati:** RLS e trasporto SSE pubblico hanno owner successivi. Warning `MaxListenersExceededWarning` preesistente/non bloccante del reporter Node; freeze BL-080 invariato e nessuna azione provider o Vercel.
-- **Task successivo:** nessun P0 `READY`; `GATE-M0` resta `BACKLOG` perché `BL-080` è `BLOCKED/50%/PARTIAL` sul provider Preview-only.
+- **Task successivo:** nota storica superseded da `GOV-005`: al tempo non c'era un P0 `READY` perché `GATE-M0` dipendeva da `BL-080`; ora `GATE-M0` è il prossimo gate locale `READY`.
 
 
 ## 21. Context Sync Log
@@ -2866,7 +2888,8 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 
 | Data | Commit | Task | Documento/componente | Modifica | Task da riesaminare |
 |---|---|---|---|---|---|
-| 2026-07-17 | `889c51e` + provider readback | QA-002 delivery / BL-080 audit | Main, task graph e blocker Vercel | PR #32 integra QA-002 su `main`; CI PR/post-merge cinque job `SUCCESS`. Readback 2026-07-17: `vercel/vercel#17069` resta aperta, CLI `56.3.1` non dichiara fix Preview/Production e i custom environment non sono disponibili su Hobby. Nessun P0 locale `READY`. | BL-080, GATE-M0 |
+| 2026-07-17 | `d475389` + local-first decision | GOV-005 | Task graph, contesto e blocker Vercel | Decisione PO: l'obiettivo operativo corrente è il progetto completo funzionante in locale con AI integrata. `BL-080` resta `BLOCKED` e vieta deploy reali, ma non blocca più il gate locale M0; `tasks:check` e `verify:docs` sono verdi e `GATE-M0` diventa il prossimo P0 `READY`. | GATE-M0, BL-011, BL-021, BL-080 |
+| 2026-07-17 | `889c51e` + provider readback | QA-002 delivery / BL-080 audit | Main, task graph e blocker Vercel | PR #32 integra QA-002 su `main`; CI PR/post-merge cinque job `SUCCESS`. Readback 2026-07-17: `vercel/vercel#17069` resta aperta, CLI `56.3.1` non dichiara fix Preview/Production e i custom environment non sono disponibili su Hobby. Il successivo riallineamento `GOV-005` separa il gate locale dal blocco remoto. | BL-080, GATE-M0 |
 | 2026-07-17 | `feaf49c` + terminal docs | QA-002 candidate | Browser harness, runner/report e UX/UI | QA-002 proposto `DONE/100%/PASSING` branch-local: full HIGH_RISK 420 test, clean checkout, review inline e due finding reali chiusi. La delivery resta derivata/PENDING fino a PR e `CI / Merge gate`; nessuna azione Vercel. | GATE-M0, BL-040 |
 | 2026-07-17 | `0e12876` + CI/docs candidate | QA-002 | Browser harness, artifact test e UX/UI | Lane Playwright comune, axe, matrice 320/390/1440, sei baseline Windows/Linux e failure path sono verdi; CI installa Chromium e verifica `e2e`, artifact limitato al JUnit. Proposta `IN_REVIEW/90%/PASSING`; full/clean pending, Vercel invariato. | BL-040, GATE-M0 |
 | 2026-07-17 | `f653e63` + QA-002 design | BL-007 delivery / QA-002 start | Main, browser harness e contesto | PR #31 e CI post-merge 5/5 verificano BL-007; selezionato QA-002 con `browser-harness-v1`, piano TDD inline e baseline web/shell verde. Nessuna azione Vercel. | QA-002, GATE-M0 |

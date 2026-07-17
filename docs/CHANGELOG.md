@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: c30c6db616ebb69434e4b04dcccb97e48530f6a9
+last_verified_commit: d475389b11765f17276bb0a0efd7500a5e6f66a4
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -19,6 +19,7 @@ related_tasks:
   - GOV-002
   - GOV-003
   - GOV-004
+  - GOV-005
   - BL-001
   - BL-002
   - BL-003
@@ -174,14 +175,17 @@ supersedes: null
 
 ### Changed
 
+- Riallineato il programma sulla priorità Product Owner 2026-07-17: il prossimo obiettivo è avere il progetto completo funzionante in locale con AI integrata dietro adapter. `BL-080` resta `BLOCKED` e continua a vietare deploy reali, ma non blocca più il gate locale M0 né l'avanzamento M1→M6.
+- Separato `GATE-M0` locale dal gate remoto Vercel: il prossimo task P0 selezionabile diventa il gate di fondazione locale; Preview/staging, smoke provider e rollback remoto restano proprietà di `BL-080`/`BL-070` prima di utenti esterni.
 - `BL-006` passa a proposta branch-local `DONE/100%/PASSING`: runtime, verticale, browser, full gate HIGH_RISK, checkout pulito e review terminale sono verdi sul functional head `df7f868`; la delivery protetta resta `PENDING`. `BL-081` resta READY ma non viene avviato prima dell'integrazione.
 - `BL-006` è integrato tramite PR #29/merge `c30c6db` con CI PR/post-merge 5/5 `SUCCESS`; `BL-081` passa `IN_PROGRESS/25%/NOT_RUN` e `BL-007` diventa READY dopo la chiusura delle dipendenze.
 - `BL-081` passa a proposta branch-local `DONE/100%/PASSING`: implementazione, test mirati, build, browser locale, bundle audit, full gate HIGH_RISK e checkout pulito sono conclusi; `QA-002` diventa READY e `BL-007` resta il primo P0 READY. La delivery protetta resta `PENDING`.
-- `QA-002` è integrato tramite PR #32/merge `889c51e` con CI PR `29593436887` e post-merge `29593746286` verdi; non resta alcun P0 locale `READY` perché `BL-080` blocca `GATE-M0`.
+- `QA-002` è integrato tramite PR #32/merge `889c51e` con CI PR `29593436887` e post-merge `29593746286` verdi; in quel checkpoint non restava alcun P0 locale `READY` perché `BL-080` bloccava `GATE-M0`, stato poi superato dal riallineamento `GOV-005`.
 - Allineati catalogo API, overview, modello dati, UX/UI, contesto e tracciabilità alla capability realmente implementata. SMTP reale, provider, deploy, release, Production e azioni Vercel restano esclusi.
 
 ### Verification
 
+- GOV-005: `corepack pnpm@11.13.0 tasks:check` exit `0`; `corepack pnpm@11.13.0 verify:docs` finale exit `0` con contract artifacts, document policy, task graph e secret scan verdi. Nessuna modifica runtime, workflow, lockfile o Vercel.
 - Baseline BL-081 su `c30c6db`: install frozen 701 package in 9,9 s; `verify:docs` con 45 artifact, 53 documenti, task graph e secret scan `PASS`; nessun codice runtime o Vercel modificato.
 - Audit di pianificazione BL-081: dry-run registry ufficiali completati; build baseline tramite grafo Turbo 3/3 `PASS`; home BL-079 pari a 636.744 byte JS raw iniziali e 59.332 byte entry route. Il piano limita le nuove dipendenze dirette a Motion, Streamdown, use-stick-to-bottom e Vaul; `verify:docs` passa con 45 artifact e 55 documenti/7 modificati.
 - Mirati BL-081: reducer 14/14 e contract UI 14/14 `PASS`; lint/typecheck web 8/8 e build production 3/3 verdi. Browser locale 320×568, 390×844 e 1440×900 senza overflow, con CTA 48 px, multilinea, submit/continue, drawer/focus restore e console pulita.
