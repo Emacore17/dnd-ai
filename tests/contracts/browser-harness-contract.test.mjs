@@ -80,6 +80,13 @@ test("QA-002:e2e-lane-is-closed-bounded-and-browser-only", () => {
   assert.equal(Object.isFrozen(resolveTestLane("e2e")), true);
 });
 
+test("QA-002:security-lane-authorizes-browser-report-policy-tests", () => {
+  assert.deepEqual(resolveTestLane("security").ownerTaskIds, [
+    "QA-001",
+    "QA-002",
+  ]);
+});
+
 test("QA-002:playwright-config-owns-a-single-local-standalone-server", async () => {
   const config = await readFile(
     path.join(repositoryRoot, "tests/e2e/playwright.config.mjs"),
