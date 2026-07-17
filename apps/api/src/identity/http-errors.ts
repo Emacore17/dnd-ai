@@ -12,6 +12,12 @@ export interface IdentityHttpError {
 }
 
 const ERROR_MAP = Object.freeze({
+  CREDENTIALS_INVALID: Object.freeze({
+    code: "identity.credentials_invalid" as const,
+    message: "Email o password non corretti.",
+    retryable: false,
+    statusCode: 401,
+  }),
   DELIVERY_UNAVAILABLE: Object.freeze({
     code: "identity.delivery_unavailable" as const,
     message: "Servizio di verifica temporaneamente non disponibile.",
@@ -30,6 +36,12 @@ const ERROR_MAP = Object.freeze({
     retryable: false,
     statusCode: 422,
   }),
+  PASSWORD_RESET_INVALID: Object.freeze({
+    code: "identity.password_reset_code_invalid" as const,
+    message: "Il codice di recupero non è valido.",
+    retryable: false,
+    statusCode: 422,
+  }),
   RATE_LIMITED: Object.freeze({
     code: "identity.rate_limited" as const,
     message: "Troppe richieste. Riprova più tardi.",
@@ -41,6 +53,12 @@ const ERROR_MAP = Object.freeze({
     message: "Richiesta non valida.",
     retryable: false,
     statusCode: 400,
+  }),
+  SESSION_INVALID: Object.freeze({
+    code: "identity.session_invalid" as const,
+    message: "La sessione non è valida.",
+    retryable: false,
+    statusCode: 401,
   }),
   VERIFICATION_EXPIRED: Object.freeze({
     code: "identity.verification_expired" as const,

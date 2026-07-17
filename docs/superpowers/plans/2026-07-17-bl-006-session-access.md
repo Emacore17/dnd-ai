@@ -386,7 +386,7 @@ supersedes: null
 - Consumes: contract v3, `IdentityAccessStore`, Argon2/blocklist/crypto e Origin/client-subject esistenti.
 - Produces: `IdentityAccessService` e `registerIdentityAccessRoutes`.
 
-- [ ] Scrivere service RED che provi: due rate gate prima di Argon2, dummy hash per identity non eleggibile, recheck credential version, session rotation/replay, generic reset, code check prima del nuovo Argon2 e mapping failure senza reflection.
+- [x] Scrivere service RED che provi: due rate gate prima di Argon2, dummy hash per identity non eleggibile, recheck credential version, session rotation/replay, generic reset, code check prima del nuovo Argon2 e mapping failure senza reflection.
 
   ```js
   assert.ok(calls.indexOf("rate:sign_in_email") < calls.indexOf("password:verify"));
@@ -397,16 +397,16 @@ supersedes: null
   });
   ```
 
-- [ ] Scrivere API/cookie RED per sei route, Origin/Sec-Fetch, `Idempotency-Key`, Cookie header, fixation, Set-Cookie ruotato, clear cookie esatto, 204 senza body, 401 generico, 202 reset request e `Cache-Control: no-store`.
+- [x] Scrivere API/cookie RED per sei route, Origin/Sec-Fetch, `Idempotency-Key`, Cookie header, fixation, Set-Cookie ruotato, clear cookie esatto, 204 senza body, 401 generico, 202 reset request e `Cache-Control: no-store`.
 
-- [ ] Eseguire il RED:
+- [x] Eseguire il RED:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/api
   node --test tests/unit/identity-access-service.test.mjs tests/unit/identity-cookie.test.mjs tests/integration/identity-access-api.test.mjs
   ```
 
-- [ ] Implementare il service con API esplicita:
+- [x] Implementare il service con API esplicita:
 
   ```ts
   export interface IdentityAccessService {
@@ -419,11 +419,11 @@ supersedes: null
   }
   ```
 
-- [ ] Per sign-in usare un PHC dummy Argon2id valido quando il lookup è null/pending; verificare password fuori transazione e lasciare allo store il lock/recheck finale. Tutti i casi non eleggibili mappano a `CREDENTIALS_INVALID`.
+- [x] Per sign-in usare un PHC dummy Argon2id valido quando il lookup è null/pending; verificare password fuori transazione e lasciare allo store il lock/recheck finale. Tutti i casi non eleggibili mappano a `CREDENTIALS_INVALID`.
 
-- [ ] Per reset conferma: rate IP, lookup/dummy challenge, rate challenge, confronto digest constant-time; mismatch chiama `rejectPasswordReset` senza hash. Solo un match normalizza/blocklista/hash la nuova password e chiama `confirmPasswordReset`.
+- [x] Per reset conferma: rate IP, lookup/dummy challenge, rate challenge, confronto digest constant-time; mismatch chiama `rejectPasswordReset` senza hash. Solo un match normalizza/blocklista/hash la nuova password e chiama `confirmPasswordReset`.
 
-- [ ] Estendere cookie helper:
+- [x] Estendere cookie helper:
 
   ```ts
   export function clearIdentitySessionCookie(): string {
@@ -439,18 +439,18 @@ supersedes: null
   }
   ```
 
-- [ ] Registrare route separate. Sign-in/refresh impostano il nuovo cookie; sign-out/revoke/reset-confirm impostano sempre il clear cookie; reset-request non accetta né emette cookie. Body absent è consentito soltanto a refresh/sign-out.
+- [x] Registrare route separate. Sign-in/refresh impostano il nuovo cookie; sign-out/revoke/reset-confirm impostano sempre il clear cookie; reset-request non accetta né emette cookie. Body absent è consentito soltanto a refresh/sign-out.
 
-- [ ] Comporre store/service/route in `createApiIdentityRuntime`; chiusura deve attendere entrambi gli store senza doppio `Pool.end()`.
+- [x] Comporre store/service/route in `createApiIdentityRuntime`; chiusura deve attendere entrambi gli store senza doppio `Pool.end()`.
 
-- [ ] Eseguire GREEN e security regression:
+- [x] Eseguire GREEN e security regression:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/api
   node --test tests/unit/identity-access-service.test.mjs tests/unit/identity-cookie.test.mjs tests/integration/identity-access-api.test.mjs tests/integration/identity-api.test.mjs tests/security/identity-api-security.test.mjs
   ```
 
-- [ ] Commit funzionale:
+- [x] Commit funzionale:
 
   ```powershell
   git add apps/api packages/config tests/unit/identity-access-service.test.mjs tests/unit/identity-cookie.test.mjs tests/integration/identity-access-api.test.mjs tests/security/identity-api-security.test.mjs

@@ -69,3 +69,20 @@ export function parseIdentitySessionCookie(value: string): string | null {
     ? token
     : null;
 }
+
+export function readIdentitySessionToken(
+  cookieHeader: string | undefined,
+): string | null {
+  if (cookieHeader === undefined) return null;
+  const prefix = `${COOKIE_NAME}=`;
+  const matches = cookieHeader
+    .split(/;\s*/u)
+    .filter((part) => part.startsWith(prefix));
+  if (matches.length !== 1) return null;
+  const token = matches[0]?.slice(prefix.length) ?? "";
+  return isCanonicalToken(token) ? token : null;
+}
+
+export function clearIdentitySessionCookie(): string {
+  return `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+}

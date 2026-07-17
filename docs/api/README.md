@@ -18,6 +18,8 @@ related_tasks:
   - BL-022
   - BL-028
 code_refs:
+  - apps/api/src/identity/access-routes.ts
+  - apps/api/src/identity/identity-access-service.ts
   - packages/contracts/src
   - packages/contracts/generated/v1
   - packages/contracts/generated/v2
@@ -27,6 +29,7 @@ code_refs:
   - scripts/lib/contract-compatibility-policy.mjs
   - scripts/lib/owned-path-policy.mjs
 test_refs:
+  - tests/integration/identity-access-api.test.mjs
   - tests/contracts/contracts-foundation.test.mjs
   - tests/contracts/contracts-runtime.test.mjs
   - tests/contracts/contracts-artifacts.test.mjs
@@ -34,6 +37,7 @@ test_refs:
   - tests/unit/contract-artifact-policy.test.mjs
   - tests/contracts/contracts-compatibility.test.mjs
   - tests/contracts/identity-contracts.test.mjs
+  - tests/unit/identity-access-service.test.mjs
   - tests/unit/owned-path-policy.test.mjs
 supersedes: null
 ---
@@ -44,9 +48,9 @@ supersedes: null
 
 `@dnd-ai/contracts` espone schemi Zod strict e tipi inferiti. Gli artifact `v1` (`1.0.0`) e `v2` (`2.0.0`) restano immutabili; la branch BL-006 genera il candidato `v3` (`3.0.0`) per il lifecycle identity completo. `schemaVersion: 1` degli envelope evento/SSE non cambia, perché il relativo wire format è invariato.
 
-OpenAPI `v3` contiene le tre operazioni signup già disponibili e sei contratti access/reset: sign-in, refresh, sign-out, revoke-all, reset request e reset confirm. Tutte richiedono `Idempotency-Key`; refresh/sign-out non hanno body e i `204` non dichiarano content. Finché BL-006 resta aperto, questi sei path sono wire contract candidati e non prova che gli handler siano già registrati. Le route del turno restano assenti.
+OpenAPI `v3` contiene le tre operazioni signup già disponibili e sei contratti access/reset: sign-in, refresh, sign-out, revoke-all, reset request e reset confirm. Tutte richiedono `Idempotency-Key`; refresh/sign-out non hanno body e i `204` non dichiarano content. I sei handler Fastify sono registrati sulla branch BL-006 con Origin/CSRF, rate limit pre-Argon2, cookie host-only e mapping errori generico; BFF e UI restano in sviluppo, quindi il percorso browser non è ancora disponibile. Le route del turno restano assenti.
 
-`identity-access-v1` possiede DTO strict, error code generici e response minimali del nuovo major. Le directory generate e gli export esistono e superano drift/compatibility; store, route e UI restano tracciati separatamente fino alla chiusura della slice.
+`identity-access-v1` possiede DTO strict, error code generici e response minimali del nuovo major. Le directory generate e gli export esistono e superano drift/compatibility; store e route API sono implementati, mentre outbox reset, BFF e UI restano tracciati separatamente fino alla chiusura della slice.
 
 | Contratto | Tipo | Responsabilità |
 |---|---|---|

@@ -21,11 +21,14 @@ import {
 import { IdentityPersistenceError } from "@dnd-ai/persistence";
 
 export type IdentityApplicationErrorCode =
+  | "CREDENTIALS_INVALID"
   | "DELIVERY_UNAVAILABLE"
   | "IDEMPOTENCY_CONFLICT"
   | "PASSWORD_REJECTED"
+  | "PASSWORD_RESET_INVALID"
   | "RATE_LIMITED"
   | "REQUEST_INVALID"
+  | "SESSION_INVALID"
   | "VERIFICATION_EXPIRED"
   | "VERIFICATION_INVALID"
   | "VERIFICATION_RATE_LIMITED";
@@ -95,6 +98,11 @@ function applicationError(
   retryAfterSeconds?: number,
 ): IdentityApplicationError {
   switch (code) {
+    case "CREDENTIALS_INVALID":
+      return new IdentityApplicationError(
+        code,
+        "Identity credentials are invalid.",
+      );
     case "DELIVERY_UNAVAILABLE":
       return new IdentityApplicationError(
         code,
@@ -110,6 +118,11 @@ function applicationError(
         code,
         "The password does not meet the identity policy.",
       );
+    case "PASSWORD_RESET_INVALID":
+      return new IdentityApplicationError(
+        code,
+        "Identity password reset code is invalid.",
+      );
     case "RATE_LIMITED":
       return new IdentityApplicationError(
         code,
@@ -118,6 +131,8 @@ function applicationError(
       );
     case "REQUEST_INVALID":
       return new IdentityApplicationError(code, "Identity request is invalid.");
+    case "SESSION_INVALID":
+      return new IdentityApplicationError(code, "Identity session is invalid.");
     case "VERIFICATION_EXPIRED":
       return new IdentityApplicationError(
         code,
