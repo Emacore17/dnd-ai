@@ -60,7 +60,7 @@ function createHarness(overrides = {}) {
         },
       };
     },
-    async refreshSession(command) {
+    async refreshSession() {
       calls.push("store:refresh");
       return {
         kind: "replayed",

@@ -89,6 +89,13 @@ code_refs:
   - apps/worker/src/observability.ts
   - apps/web/instrumentation.ts
   - apps/web/instrumentation-client.ts
+  - apps/api/src/identity
+  - apps/worker/src/identity
+  - apps/web/components/auth
+  - apps/web/lib/server
+  - packages/contracts/src/identity-access.ts
+  - packages/domain/src/identity
+  - packages/persistence/src/identity-access-store.ts
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/web-design-system.test.mjs
@@ -130,6 +137,7 @@ test_refs:
   - tests/integration/observability-flow.test.mjs
   - tests/contracts/observability-contract.test.mjs
   - tests/security/observability-security.test.mjs
+  - tests/integration/identity-access-flow.test.mjs
   - tests/contracts/contracts-foundation.test.mjs
   - tests/contracts/contracts-runtime.test.mjs
   - tests/contracts/contracts-artifacts.test.mjs
@@ -149,6 +157,25 @@ supersedes: null
 ---
 
 # Changelog documentale e contrattuale
+
+## 2026-07-17
+
+### Added
+
+- Implementato il lifecycle branch-local `identity-access-v1`: contract artifact `v3`, secret e HMAC reset dedicati, migration `000004_identity_access`, store PostgreSQL transazionale, sei route Fastify, outbox verifica/reset discriminato, sei route BFF e superfici shadcn `/sign-in`, `/reset-password`, `/account/security`.
+- Aggiunta la vertical slice PostgreSQL reale `identity-access-flow`: signup/verify, sign-in, refresh con rotazione, logout, revoca globale, reset one-time e nuovo login; doppia conferma e login concorrente al reset convergono tramite lock e `credential_version`.
+
+### Changed
+
+- `BL-006` passa a proposta branch-local `DONE/100%/PASSING`: runtime, verticale, browser, full gate HIGH_RISK, checkout pulito e review terminale sono verdi sul functional head `df7f868`; la delivery protetta resta `PENDING`. `BL-081` resta READY ma non viene avviato prima dell'integrazione.
+- Allineati catalogo API, overview, modello dati, UX/UI, contesto e tracciabilità alla capability realmente implementata. SMTP reale, provider, deploy, release, Production e azioni Vercel restano esclusi.
+
+### Verification
+
+- Verticale PostgreSQL `1/1 PASS` in 4,6 s; aggregato identity serializzato per le suite database `96/96 PASS` in 53,6 s. La serializzazione evita contesa fra container Docker indipendenti senza ritentare asserzioni o indebolire test.
+- Browser locale su 320×800, 390×844 e 1440×900: contenuto presente, overflow orizzontale `0`, target minimi 44 px, CTA 48 px, focus visibile, zero overlay e zero log warn/error. Il browser integrato non attiva eventi React sintetici, verificato anche sul toggle password; component/BFF test restano l'evidenza delle interazioni.
+- Full HIGH_RISK finale senza cache `PASS` in 250,3 s: lint 11, typecheck 16, build 11, report 355 test (351 pass/4 skip host), artifact 4.332 file e policy documentazione, task graph, CI, deployment e secret scan verdi. Due tentativi precedenti hanno trovato e chiuso due lint test e sei contract test fermi a `v2`/`000003`; regressioni mirate 14/14 e contract lane 94/94 precedono il rerun completo.
+- Checkout detached pulito del functional head `df7f868`: install frozen 701 package/13,3 s, generated drift 45 file, build API/worker/web 8/8, migration 13/13, verticale access + smoke web 2/2, secret scan e `verify:docs` `PASS`; review finale senza finding P0/P1.
 
 ## 2026-07-16
 

@@ -44,6 +44,7 @@ test_refs:
   - tests/database/identity-migration.test.mjs
   - tests/database/identity-store.test.mjs
   - tests/database/identity-access-store.test.mjs
+  - tests/integration/identity-access-flow.test.mjs
   - tests/integration/identity-signup-flow.test.mjs
   - tests/security/identity-persistence-security.test.mjs
   - tests/security/database-migration-security.test.mjs
@@ -210,7 +211,7 @@ flowchart LR
 
 ### Identity signup e persistence access implementati
 
-ADR-0010 e `identity-signup-v1` sono materializzati dalla migration `000003_identity_signup` e dal repository PostgreSQL. `000004_identity_access` implementa la parte fisica di `identity-access-v1`: `credential_version`, challenge reset, outbox discriminato e allowlist access/reset. Constraint, upgrade `000003`→head, rollback/re-apply locale e runner simultanei sono verificati su PostgreSQL reale. `PostgresIdentityAccessStore` materializza session lifecycle, rate limit e reset atomico con replay e race concorrente verificati; route API, dispatcher reset e superfici web restano in sviluppo, quindi la capability non è ancora esposta end-to-end. Ownership delle risorse resta BL-007.
+ADR-0010 e `identity-signup-v1` sono materializzati dalla migration `000003_identity_signup` e dal repository PostgreSQL. `000004_identity_access` implementa la parte fisica di `identity-access-v1`: `credential_version`, challenge reset, outbox discriminato e allowlist access/reset. Constraint, upgrade `000003`→head, rollback/re-apply locale e runner simultanei sono verificati su PostgreSQL reale. `PostgresIdentityAccessStore` materializza session lifecycle, rate limit e reset atomico con replay e race concorrente verificati; route API, dispatcher reset, BFF e superfici web completano il verticale branch-local. `identity-access-flow` prova che reset e login concorrenti convergono attraverso il recheck di `credential_version`, senza lasciare sessioni basate sulla credenziale precedente. Ownership delle risorse resta BL-007.
 
 ## Ownership dei task
 

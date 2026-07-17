@@ -369,6 +369,8 @@ Lo smoke locale del candidato copre 320×800, 390×844 e 1440×900: nessun overf
 
 `BL-006` estende la stessa foundation con `/sign-in`, `/reset-password` e `/account/security` secondo `identity-access-v1`. Login e reset mantengono una sola azione primaria per step, feedback live e focus sul primo errore; il reset usa un codice email a sei cifre senza capability in URL o storage browser. La sicurezza account resta essenziale: logout corrente e revoca globale, senza dashboard device o raccolta di metadata non necessari.
 
+La verifica locale BL-006 copre 320×800, 390×844 e 1440×900: nessun overflow orizzontale, CTA primarie da 48 px, altri target interattivi da almeno 44 px, focus visibile, una sola card focalizzata e zero overlay o log warn/error. Il browser integrato usato per la prova visuale non attiva gli eventi React sintetici; la progressione dei form, i dialoghi e i failure state restano quindi dimostrati dai test component/BFF, senza attribuire al browser evidenze che non ha prodotto.
+
 `BL-079` deve produrre, nell’ordine:
 
 1. `components.json`, Tailwind/PostCSS e token semantici;

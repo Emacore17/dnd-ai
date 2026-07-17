@@ -2,7 +2,7 @@
 status: active
 owner: engineering-security-and-product
 last_reviewed: 2026-07-17
-last_verified_commit: 6e4bf8c3b8a8b4f9e870a8088b674dd12b77e44a
+last_verified_commit: df7f8688d5455b97e91325cf85bb2330738745b2
 source_refs:
   - docs/MVP_SPEC.md#20-api
   - docs/MVP_SPEC.md#222-autenticazione
@@ -621,33 +621,33 @@ supersedes: null
 - Consumes: intero verticale BL-006.
 - Produces: evidenza riproducibile e proposta branch-local `DONE/100%/PASSING` soltanto se tutti i gate sono verdi.
 
-- [ ] Scrivere RED verticale PostgreSQL reale per signup/verify precondizione, sign-in, refresh, logout replay, revoke-all, request/reset/nuovo login. Aggiungere due race reali: login contro reset e doppia conferma reset.
+- [x] Scrivere RED verticale PostgreSQL reale per signup/verify precondizione, sign-in, refresh, logout replay, revoke-all, request/reset/nuovo login. Aggiungere due race reali: login contro reset e doppia conferma reset.
 
-- [ ] Eseguire il RED prima di collegare eventuali ultimi composition gap:
+- [x] Eseguire il RED prima di collegare eventuali ultimi composition gap:
 
   ```powershell
   corepack pnpm@11.13.0 turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/worker --filter=@dnd-ai/web
   node --test tests/integration/identity-access-flow.test.mjs
   ```
 
-- [ ] Chiudere soltanto i gap di composition osservati dal RED, quindi eseguire aggregato identity mirato:
+- [x] Chiudere soltanto i gap di composition osservati dal RED, quindi eseguire aggregato identity mirato. Nessun gap runtime è emerso; il clock fake è stato avanzato oltre la finestra rate prima della seconda race. Le suite PostgreSQL dell'aggregato restano serializzate per evitare contesa Docker fra file indipendenti:
 
   ```powershell
-  node --test tests/unit/identity-*.test.mjs tests/contracts/identity-*.test.mjs tests/database/identity-*.test.mjs tests/integration/identity-*.test.mjs tests/integration/web-identity-pages.test.mjs tests/security/identity-*.test.mjs
+  node --test --test-concurrency=1 tests/unit/identity-*.test.mjs tests/contracts/identity-*.test.mjs tests/contracts/web-identity-ui.test.mjs tests/database/identity-*.test.mjs tests/integration/identity-*.test.mjs tests/integration/web-identity-pages.test.mjs tests/security/identity-*.test.mjs
   ```
 
-- [ ] Avviare build Next locale e verificare 320×800, 390×844, 1440×900: overflow 0, CTA ≥48 px, target ≥44 px, ordine Tab/focus, form utilizzabile con reduced motion e zero console error. Screenshot temporanei, non versionati.
+- [x] Avviare build Next locale e verificare 320×800, 390×844, 1440×900: overflow 0, CTA ≥48 px, target ≥44 px, ordine Tab/focus, form utilizzabile con reduced motion e zero console error. Screenshot temporanei, non versionati. Il browser integrato non attiva eventi React sintetici neppure sul toggle password; le evidenze di interazione restano quindi nei test component/BFF, mentre browser e DOM provano layout, accessibilità statica, focus e assenza di errori.
 
-- [ ] Aggiornare documentazione da “target/design” a “implementato” solo per capability realmente verdi; registrare contract v3, migration head/checksum/source SHA, comandi, exit code e limiti SMTP/Vercel.
+- [x] Aggiornare documentazione da “target/design” a “implementato” solo per capability realmente verdi; registrare contract v3, migration head/checksum/source SHA, comandi, exit code e limiti SMTP/Vercel.
 
-- [ ] Eseguire document gate e audit dipendenze:
+- [x] Eseguire document gate e audit dipendenze:
 
   ```powershell
   corepack pnpm@11.13.0 verify:docs
   corepack pnpm@11.13.0 audit --audit-level high
   ```
 
-- [ ] Eseguire l'unico full gate finale:
+- [x] Eseguire il full gate finale sul candidato corretto. I primi due tentativi hanno trovato rispettivamente due errori lint nei test e sei aspettative contract ferme a `v2`/`000003`; dopo regressioni mirate 14/14 e contract lane 94/94, il candidato completo passa senza cache:
 
   ```powershell
   $env:TURBO_FORCE='true'
@@ -655,13 +655,13 @@ supersedes: null
   Remove-Item Env:TURBO_FORCE
   ```
 
-- [ ] Applicare `superpowers:verification-before-completion`, rileggere il diff completo e verificare secret/PII/debug/generated drift. Nessun finding P0/P1 può restare aperto.
+- [x] Applicare `superpowers:verification-before-completion`, rileggere il diff completo e verificare secret/PII/debug/generated drift. Nessun finding P0/P1 resta aperto.
 
-- [ ] Congelare il functional head, creare checkout detached temporaneo e verificare almeno install frozen, generated drift, migration zero/previous→head, build API/worker/web, verticale identity, secret scan e docs gate. Eliminare il worktree temporaneo dopo la verifica.
+- [x] Congelare il functional head, creare checkout detached temporaneo e verificare almeno install frozen, generated drift, migration zero/previous→head, build API/worker/web, verticale identity, secret scan e docs gate. Il worktree Git temporaneo è stato deregistrato e pruned; resta soltanto una directory locale ignorata che la policy terminale non consente di cancellare ricorsivamente.
 
-- [ ] Aggiornare card/registro BL-006 nello stesso commit funzionale finale; non creare commit di sola evidenza o post-CI.
+- [x] Aggiornare card/registro BL-006 nello stesso commit funzionale finale; non creare commit di sola evidenza o post-CI.
 
-- [ ] Commit candidato:
+- [x] Commit candidato:
 
   ```powershell
   git add tests docs apps packages scripts pnpm-lock.yaml

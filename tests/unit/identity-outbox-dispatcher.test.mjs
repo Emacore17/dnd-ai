@@ -37,8 +37,16 @@ function claimed(number, attemptNumber = 1) {
 
 function claimedReset(number, attemptNumber = 1) {
   const job = claimed(number, attemptNumber);
-  const { displayName: _displayName, ...common } = job;
-  return Object.freeze({ ...common, kind: "password_reset" });
+  return Object.freeze({
+    attemptNumber: job.attemptNumber,
+    challengeId: job.challengeId,
+    expiresAt: job.expiresAt,
+    keyVersion: job.keyVersion,
+    leaseToken: job.leaseToken,
+    kind: "password_reset",
+    outboxId: job.outboxId,
+    recipient: job.recipient,
+  });
 }
 
 function createOutbox(items) {

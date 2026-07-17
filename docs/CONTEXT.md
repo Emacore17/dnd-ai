@@ -195,19 +195,19 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-17 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-005` è integrato su `main` tramite [PR #28](https://github.com/Emacore17/dnd-ai/pull/28), candidate corretto `c2e4332b408f1cac3e2c69920cd18e5e772e87bf`, merge `e173fd9424ad77330ae8302f68affd4832d66798` e CI PR/post-merge `29525777416`/`29526030389` con cinque job `SUCCESS`. `BL-006` usa questa baseline in una worktree isolata; contract/config/domain/crypto, migration, store e runtime API/worker/web access/reset sono implementati e verificati localmente, senza delivery remota. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `BL-005` è integrato su `main` tramite [PR #28](https://github.com/Emacore17/dnd-ai/pull/28), candidate corretto `c2e4332b408f1cac3e2c69920cd18e5e772e87bf`, merge `e173fd9424ad77330ae8302f68affd4832d66798` e CI PR/post-merge `29525777416`/`29526030389` con cinque job `SUCCESS`. `BL-006` usa questa baseline in una worktree isolata; il functional head `df7f8688d5455b97e91325cf85bb2330738745b2` ha superato runtime, verticale PostgreSQL, browser multi-viewport, full gate da 355 test/4.332 file e checkout pulito. La proposta è terminale ma la delivery remota resta `PENDING`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-006 — IN_PROGRESS/75%/PARTIAL`; contract `v3`, config/domain/crypto, migration, store e runtime API/worker/web verdi; verticale e hardening successivi |
+| Task candidato | `BL-006 — DONE/100%/PASSING` branch-local; contract `v3`, runtime, verticale, browser, full gate, checkout pulito e review terminale verdi; delivery `PENDING` |
 | Ultimo task completato | `BL-005 — DONE/100%/PASSING`, integrato tramite PR #28 e CI post-merge `29526030389` |
-| Prossimo task READY | `BL-081`; non avviarlo mentre `BL-006` è attivo |
+| Prossimo task READY | `BL-081`; non avviarlo prima dell'integrazione protetta di `BL-006` |
 | Migration head | su `main`: `000003_identity_signup`; sulla branch BL-006: `000004_identity_access` / `database-identity-access-v1`, verificata su PostgreSQL reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` fornisce Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first e shell statica server-rendered; `BL-081` resta owner di AI Elements, interazione e Motion. `BL-005` implementa signup/verify/resend, sessione iniziale, migration PostgreSQL, outbox email, BFF e form shadcn. `BL-006` ha pubblicato sulla branch contract `v3`, porte pure, config/crypto reset, migration forward-only `000004`, store PostgreSQL transazionale, sei route Fastify, worker outbox discriminato, sei route BFF e tre superfici shadcn mobile-first per sign-in/refresh/logout/revoca/reset. Redis locale applicativo, BullMQ, route di gioco, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` fornisce Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first e shell statica server-rendered; `BL-081` resta owner di AI Elements, interazione e Motion. `BL-005` implementa signup/verify/resend, sessione iniziale, migration PostgreSQL, outbox email, BFF e form shadcn. `BL-006` ha pubblicato sulla branch contract `v3`, porte pure, config/crypto reset, migration forward-only `000004`, store PostgreSQL transazionale, sei route Fastify, worker outbox discriminato, sei route BFF e tre superfici shadcn mobile-first per sign-in/refresh/logout/revoca/reset; il verticale PostgreSQL verifica anche doppia conferma e race login/reset, mentre il browser locale copre 320/390/1440. Redis locale applicativo, BullMQ, route di gioco, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
 
 ## Decisioni operative vigenti
 
@@ -240,7 +240,7 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Test foundation contract | `testing-foundation-v1` | integrato su `main` tramite PR #24: runner isolato, primitive deterministiche, container PostgreSQL/Redis, JUnit/LCOV e manifest |
 | Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
 | Observability contract | `observability-baseline-v1` | implementato e integrato tramite PR #20; run post-merge `29415397361` 5/5 `SUCCESS`; provider remoti assenti |
-| Identity contract | `identity-signup-v1` implementato; `identity-access-v1` in corso | signup integrato; contract `v3`, porte/config/crypto, migration `000004`, store e runtime API/worker/web access/reset verdi sulla branch. Verticale, browser e gate terminali restano aperti; SMTP/provider/account remoti assenti |
+| Identity contract | `identity-signup-v1` implementato; `identity-access-v1` in review | signup integrato; contract `v3`, porte/config/crypto, migration `000004`, store, runtime API/worker/web, verticale access/reset, browser e full gate verdi sulla branch. Clean checkout/delivery restano aperti; SMTP/provider/account remoti assenti |
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
 | Design contract | `ux-ui-2026-07-13` | foundation statica BL-079 e form auth BL-005 implementate; shell di gioco interattiva/Motion restano BL-081 |
 | ADR UI | `ADR-0001 accepted` | vigente |
@@ -332,7 +332,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 ## Prossima azione
 
-Costruire il verticale PostgreSQL reale BL-006 per signup/verify, sign-in, refresh, logout, revoca e reset, incluse le race login/reset e doppia conferma; poi browser locale e hardening terminale. `BL-081` resta READY ma non viene avviato in parallelo. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
+Incorporare lo snapshot terminale BL-006 nello stesso commit funzionale, pubblicare una sola PR protetta e attendere `CI / Merge gate` senza bypass. Solo dopo l'integrazione selezionare il primo P0 realmente eseguibile; `BL-081` resta READY. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
 
 ## Rischi chiusi
 
