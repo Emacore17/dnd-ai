@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
+last_verified_commit: c30c6db616ebb69434e4b04dcccb97e48530f6a9
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -17,6 +17,8 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
   - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
+  - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
+  - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
 related_tasks:
   - GOV-001
   - GOV-004
@@ -36,7 +38,7 @@ related_tasks:
   - DOC-ARCH-001
 code_refs:
   - apps/web/components.json
-  - apps/web/components/static-game-shell.tsx
+  - apps/web/components/game
   - apps/web/components/ui
   - packages/testing
   - scripts/run-tests.mjs
@@ -137,6 +139,8 @@ supersedes: null
 | [`superpowers/plans/2026-07-16-bl-005-signup-verification.md`](superpowers/plans/2026-07-16-bl-005-signup-verification.md) | Piano TDD in sette batch, gate HIGH_RISK e limiti provider del candidato BL-005 |
 | [`superpowers/specs/2026-07-16-bl-006-session-access-design.md`](superpowers/specs/2026-07-16-bl-006-session-access-design.md) | Contratto approvato `identity-access-v1` per login, sessioni, revoca e recupero password |
 | [`superpowers/plans/2026-07-17-bl-006-session-access.md`](superpowers/plans/2026-07-17-bl-006-session-access.md) | Piano TDD inline in sette batch per implementare e verificare BL-006 |
+| [`superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md`](superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md) | Contratto implementato dal candidato `interactive-game-shell-v1` per wrapper conversazionali, fixture deterministiche, drawer e Motion reduced-first |
+| [`superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md`](superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md) | Piano TDD inline eseguito per reducer, AI Elements selettivi, shell, drawer, Motion e gate HIGH_RISK |
 | [`api/README.md`](api/README.md) | Catalogo artifact `v1` immutabile + `v2` identity, uso runtime e politica di versione |
 | [`superpowers/specs/2026-07-15-bl-009-contract-generation-design.md`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md) | Design della vertical slice contrattuale BL-009 |
 | [`superpowers/plans/2026-07-15-bl-009-contract-generation.md`](superpowers/plans/2026-07-15-bl-009-contract-generation.md) | Piano TDD e gate HIGH_RISK di BL-009 |

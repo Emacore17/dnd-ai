@@ -74,11 +74,7 @@ test("the web workspace pins the minimal local design-system dependencies", asyn
     );
   }
 
-  for (const packageName of [
-    "@ai-sdk/react",
-    "@rive-app/react-canvas",
-    "motion",
-  ]) {
+  for (const packageName of ["@ai-sdk/react", "@rive-app/react-canvas"]) {
     assert.equal(packageName in dependencies, false);
   }
 });
@@ -144,24 +140,40 @@ test("the approved shadcn primitives stay selective and server-compatible", asyn
   }
 });
 
-test("the static shell remains a server-rendered fixture without trusted AI HTML", async () => {
-  const sources = await Promise.all([
+test("the home page keeps an explicit server-to-client game boundary", async () => {
+  const [page, interactiveShell, staticShell] = await Promise.all([
     read("apps/web/app/page.tsx"),
+    read("apps/web/components/game/interactive-game-shell.tsx"),
     read("apps/web/components/static-game-shell.tsx"),
   ]);
 
-  for (const source of sources) {
-    assert.notEqual(source, null, "the static shell source should exist");
-    assert.doesNotMatch(source, /^\s*["']use client["'];?\s*$/mu);
-    assert.doesNotMatch(source, /dangerouslySetInnerHTML/u);
-  }
+  assert.notEqual(page, null, "the home page should exist");
+  assert.doesNotMatch(page, /^\s*["']use client["'];?\s*$/mu);
+  assert.match(page, /InteractiveGameShell/u);
+  assert.notEqual(
+    interactiveShell,
+    null,
+    "the client game boundary should exist",
+  );
+  assert.match(interactiveShell, /^\s*["']use client["'];?\s*$/mu);
+  assert.doesNotMatch(interactiveShell, /dangerouslySetInnerHTML/u);
+  assert.equal(
+    staticShell,
+    null,
+    "the superseded static shell should be removed",
+  );
 });
 
 test("the game feed scrolls without letting the persistent composer cover decisions", async () => {
-  const shell = await read("apps/web/components/static-game-shell.tsx");
+  const [shell, conversation] = await Promise.all([
+    read("apps/web/components/game/interactive-game-shell.tsx"),
+    read("apps/web/components/game/game-conversation.tsx"),
+  ]);
 
+  assert.notEqual(shell, null, "the interactive shell should exist");
+  assert.notEqual(conversation, null, "the game conversation should exist");
   assert.match(shell, /h-svh[^"\n]*overflow-hidden/u);
-  assert.match(shell, /min-h-0[^"\n]*overflow-y-auto/u);
+  assert.match(conversation, /min-h-0/u);
   assert.match(shell, /<footer className="shrink-0/u);
-  assert.doesNotMatch(shell, /sticky bottom-0/u);
+  assert.doesNotMatch(`${shell}\n${conversation}`, /sticky bottom-0/u);
 });

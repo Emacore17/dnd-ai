@@ -54,7 +54,7 @@ async function waitForPage(origin, child, output) {
   throw new Error(`web page did not become ready: ${output()}`);
 }
 
-test("the standalone page renders the static mobile-first game hierarchy", async (context) => {
+test("the standalone page renders the interactive mobile-first game hierarchy", async (context) => {
   const port = await reserveAvailablePort();
   const child = spawn(process.execPath, [webServerPath], {
     cwd: repositoryRoot,
@@ -89,17 +89,26 @@ test("the standalone page renders the static mobile-first game hierarchy", async
 
   const html = await response.text();
   assert.match(html, /<html[^>]+lang="it"/u);
-  assert.match(html, /<main[^>]+data-game-shell="static"/u);
+  assert.match(html, /<main[^>]+data-game-shell="interactive"/u);
+  assert.match(html, /data-shell-status="idle"/u);
   assert.match(html, /<header/u);
   assert.match(html, /<h1[^>]*>Passaggio di servizio<\/h1>/u);
   assert.match(html, /18 \/ 24 HP/u);
   assert.match(html, /Stabile/u);
   assert.match(html, /data-message-kind="narration"/u);
-  assert.match(html, /data-message-kind="player-action"/u);
-  assert.match(html, /data-message-kind="rule-result"/u);
+  assert.match(html, /data-message-kind="player_action"/u);
+  assert.match(html, /data-message-kind="rule_result"/u);
   assert.match(html, /Percezione/u);
   assert.match(html, /aria-label="Azioni suggerite"/u);
-  assert.match(html, /<label[^>]+for="player-action"/u);
-  assert.match(html, /placeholder="Scrivi la tua azione/u);
+  assert.match(html, /Segui il segnale/u);
+  assert.match(html, /Resta con Mara/u);
+  assert.match(html, /<label[^>]+for="free-action"/u);
+  assert.match(html, /<textarea[^>]+maxlength="2000"/iu);
+  assert.match(html, /placeholder="Cosa vuoi fare\?"/u);
   assert.match(html, /aria-label="Invia azione"/u);
+  assert.match(html, /role="status"/u);
+  assert.match(html, /aria-label="Apri obiettivo"/u);
+  assert.match(html, /aria-label="Apri party"/u);
+  assert.match(html, /aria-label="Apri inventario"/u);
+  assert.doesNotMatch(html, /javascript:/iu);
 });
