@@ -56,7 +56,7 @@ export const TEST_LANES = Object.freeze({
     concurrency: 2,
     executor: "node",
     name: "integration",
-    ownerTaskIds: ["QA-001"],
+    ownerTaskIds: ["QA-001", "QA-002"],
     patterns: ["tests/integration/*.test.mjs"],
     timeoutMs: 600_000,
   }),

@@ -1,9 +1,11 @@
 import { Buffer } from "node:buffer";
 import { execFile, spawn } from "node:child_process";
 import { lstat, realpath } from "node:fs/promises";
+import { createServer } from "node:net";
 import path from "node:path";
 import { clearTimeout, setTimeout } from "node:timers";
 
+import { createChildEnvironment } from "./test-lane-policy.mjs";
 import { assertOwnedPathChain } from "./owned-path-policy.mjs";
 
 const MAX_CAPTURE_BYTES = 1024 * 1024;
@@ -108,6 +110,109 @@ export function runCommandProcess({
       );
     });
   });
+}
+
+export async function reserveLoopbackPort() {
+  const server = createServer();
+
+  try {
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    if (
+      address === null ||
+      typeof address !== "object" ||
+      !Number.isSafeInteger(address.port) ||
+      address.port < 1_024 ||
+      address.port > 65_535
+    ) {
+      throw new Error("test-runner: port-reservation-failed");
+    }
+
+    return address.port;
+  } catch {
+    throw new Error("test-runner: port-reservation-failed");
+  } finally {
+    if (server.listening) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()));
+      });
+    }
+  }
+}
+
+export async function createPlaywrightInvocation({
+  junitPath,
+  packageManagerArguments,
+  packageManagerCommand,
+  port,
+  repositoryRoot,
+  sourceEnvironment,
+  timeoutMs,
+  updateSnapshots,
+}) {
+  if (
+    typeof packageManagerCommand !== "string" ||
+    packageManagerCommand.length === 0 ||
+    !Array.isArray(packageManagerArguments) ||
+    packageManagerArguments.length > 4 ||
+    packageManagerArguments.some(
+      (argument) => typeof argument !== "string" || argument.length === 0,
+    ) ||
+    !Number.isSafeInteger(port) ||
+    port < 1_024 ||
+    port > 65_535 ||
+    typeof junitPath !== "string" ||
+    junitPath.length === 0 ||
+    sourceEnvironment === null ||
+    typeof sourceEnvironment !== "object" ||
+    typeof updateSnapshots !== "boolean" ||
+    !Number.isSafeInteger(timeoutMs) ||
+    timeoutMs < 1 ||
+    timeoutMs > 1_800_000
+  ) {
+    throw new Error("test-runner: invalid-playwright-options");
+  }
+
+  const absoluteJunitPath = path.resolve(junitPath);
+  const testResultsRoot = path.resolve(repositoryRoot, "test-results");
+  if (!isInside(testResultsRoot, absoluteJunitPath)) {
+    throw new Error("test-runner: invalid-playwright-options");
+  }
+  try {
+    await assertOwnedPathChain(repositoryRoot, absoluteJunitPath, {
+      allowMissing: true,
+      finalType: "file",
+    });
+  } catch {
+    throw new Error("test-runner: invalid-playwright-options");
+  }
+
+  return Object.freeze({
+    arguments_: Object.freeze([
+      ...packageManagerArguments,
+      "exec",
+      "playwright",
+      "test",
+      "--config=tests/e2e/playwright.config.mjs",
+      `--update-snapshots=${updateSnapshots ? "all" : "none"}`,
+    ]),
+    command: packageManagerCommand,
+    environment: Object.freeze({
+      ...createChildEnvironment(sourceEnvironment),
+      HOSTNAME: "127.0.0.1",
+      PLAYWRIGHT_JUNIT_OUTPUT_FILE: absoluteJunitPath,
+      PORT: String(port),
+    }),
+    repositoryRoot,
+    timeoutMs,
+  });
+}
+
+export async function runPlaywrightProcess(options) {
+  return runCommandProcess(await createPlaywrightInvocation(options));
 }
 
 async function validateTestFiles(repositoryRoot, files) {
