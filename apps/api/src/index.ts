@@ -1,5 +1,27 @@
 export { createApiApp, type ApiAppDependencies } from "./app.js";
 export {
+  CampaignAccessError,
+  createCampaignAccessService,
+  type CampaignAccessErrorCode,
+  type CampaignAccessService,
+  type CreateCampaignAccessServiceOptions,
+} from "./campaign/campaign-access-service.js";
+export {
+  campaignRequestError,
+  sendCampaignError,
+  toCampaignHttpError,
+  type CampaignHttpError,
+} from "./campaign/http-errors.js";
+export {
+  readCampaignRequest,
+  type CampaignRequestBoundary,
+} from "./campaign/request-context.js";
+export {
+  CAMPAIGN_READ_RATE_LIMIT_CLASS,
+  registerCampaignRoutes,
+  type RegisterCampaignRoutesOptions,
+} from "./campaign/routes.js";
+export {
   verifyIdentityClientSubjectAssertion,
   type IdentityClientSubjectAssertion,
 } from "./identity/client-subject-assertion.js";

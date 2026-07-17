@@ -11,12 +11,18 @@ import {
   type NodeObservabilityOptions,
 } from "@dnd-ai/observability/node";
 import {
+  createPostgresCampaignAccessStore,
   createPostgresIdentityAccessStore,
   createPostgresIdentityStore,
 } from "@dnd-ai/persistence";
 import type { FastifyInstance, FastifyServerOptions } from "fastify";
 
 import { createApiApp, type ApiAppDependencies } from "./app.js";
+import { createCampaignAccessService } from "./campaign/campaign-access-service.js";
+import {
+  registerCampaignRoutes,
+  type RegisterCampaignRoutesOptions,
+} from "./campaign/routes.js";
 import { createNodeIdentityCryptography } from "./identity/identity-crypto.js";
 import {
   createIdentityAccessService,
@@ -50,6 +56,7 @@ type ApiObservabilityFactory = (
 export interface ApiIdentityRuntime {
   readonly routes: RegisterIdentityRoutesOptions;
   readonly accessRoutes?: RegisterIdentityAccessRoutesOptions;
+  readonly campaignRoutes?: RegisterCampaignRoutesOptions;
   close(): Promise<void>;
 }
 
@@ -86,11 +93,16 @@ export async function createApiIdentityRuntime(
   const accessStore = createPostgresIdentityAccessStore({
     databaseUrl: config.databaseUrl,
   });
+  const campaignAccessStore = createPostgresCampaignAccessStore({
+    databaseUrl: config.databaseUrl,
+  });
   let closePromise: Promise<void> | undefined;
   const close = (): Promise<void> => {
-    closePromise ??= Promise.all([store.close(), accessStore.close()]).then(
-      () => undefined,
-    );
+    closePromise ??= Promise.all([
+      store.close(),
+      accessStore.close(),
+      campaignAccessStore.close(),
+    ]).then(() => undefined);
     return closePromise;
   };
   try {
@@ -126,6 +138,12 @@ export async function createApiIdentityRuntime(
       passwordHasher,
       store: accessStore,
     });
+    const campaignService = createCampaignAccessService({
+      campaignReader: campaignAccessStore,
+      clock: Object.freeze({ now: () => new Date() }),
+      cryptography,
+      sessionReader: campaignAccessStore,
+    });
     const verifyClientSubject = (
       assertion: IdentityClientSubjectAssertion,
       now: Date,
@@ -141,6 +159,7 @@ export async function createApiIdentityRuntime(
         service: accessService,
         verifyClientSubjectAssertion: verifyClientSubject,
       }),
+      campaignRoutes: Object.freeze({ service: campaignService }),
       close,
       routes: Object.freeze({
         clock: Object.freeze({ now: () => new Date() }),
@@ -182,6 +201,9 @@ export function createConfiguredApiApp(
       registerIdentityRoutes(app, options.identityRuntime.routes);
       if (options.identityRuntime.accessRoutes !== undefined) {
         registerIdentityAccessRoutes(app, options.identityRuntime.accessRoutes);
+      }
+      if (options.identityRuntime.campaignRoutes !== undefined) {
+        registerCampaignRoutes(app, options.identityRuntime.campaignRoutes);
       }
       app.addHook("onClose", async () => options.identityRuntime?.close());
     }

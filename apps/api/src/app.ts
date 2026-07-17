@@ -11,8 +11,13 @@ import {
   registerIdentityAccessRoutes,
   type RegisterIdentityAccessRoutesOptions,
 } from "./identity/access-routes.js";
+import {
+  registerCampaignRoutes,
+  type RegisterCampaignRoutesOptions,
+} from "./campaign/routes.js";
 
 export interface ApiAppDependencies {
+  readonly campaign?: RegisterCampaignRoutesOptions;
   readonly identity?: RegisterIdentityRoutesOptions;
   readonly identityAccess?: RegisterIdentityAccessRoutesOptions;
 }
@@ -22,6 +27,9 @@ export function createApiApp(
   dependencies: ApiAppDependencies = {},
 ): FastifyInstance {
   const app = Fastify(options);
+  if (dependencies.campaign !== undefined) {
+    registerCampaignRoutes(app, dependencies.campaign);
+  }
   if (dependencies.identity !== undefined) {
     registerIdentityRoutes(app, dependencies.identity);
   }

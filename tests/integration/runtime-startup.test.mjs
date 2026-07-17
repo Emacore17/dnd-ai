@@ -175,6 +175,13 @@ test("a valid API profile binds and can be closed cleanly", async (context) => {
     runtime.app.hasRoute({ method: "POST", url: "/api/auth/sign-up" }),
     true,
   );
+  assert.equal(
+    runtime.app.hasRoute({
+      method: "GET",
+      url: "/api/campaigns/:campaignId",
+    }),
+    true,
+  );
 });
 
 test("worker validation runs before the injected initializer", async () => {

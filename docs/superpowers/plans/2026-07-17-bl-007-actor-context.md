@@ -713,7 +713,7 @@ Aggiungere `campaign?: RegisterCampaignRoutesOptions` a `ApiAppDependencies`. Ag
 Run:
 
 ```powershell
-corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/testing
+corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/api --filter=@dnd-ai/testing --filter=@dnd-ai/worker
 node --test tests/unit/campaign-access-service.test.mjs tests/integration/campaign-api.test.mjs tests/integration/runtime-startup.test.mjs
 ```
 
