@@ -1,5 +1,11 @@
 export { createApiApp, type ApiAppDependencies } from "./app.js";
 export {
+  createOwnedSsePreHandler,
+  type CreateOwnedSsePreHandlerOptions,
+  type OwnedSseFailure,
+  type OwnedSseResolution,
+} from "./access/owned-sse-authorization.js";
+export {
   CampaignAccessError,
   createCampaignAccessService,
   type CampaignAccessErrorCode,
@@ -21,6 +27,10 @@ export {
   registerCampaignRoutes,
   type RegisterCampaignRoutesOptions,
 } from "./campaign/routes.js";
+export {
+  createCampaignSseAuthorizationPreHandler,
+  type CreateCampaignSseAuthorizationPreHandlerOptions,
+} from "./campaign/sse-authorization.js";
 export {
   verifyIdentityClientSubjectAssertion,
   type IdentityClientSubjectAssertion,
