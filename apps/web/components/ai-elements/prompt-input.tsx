@@ -24,7 +24,10 @@ export const PromptInput = ({ className, ...props }: PromptInputProps) => (
   />
 );
 
-export type PromptInputTextareaProps = ComponentProps<typeof Textarea>;
+export type PromptInputTextareaProps = Omit<
+  ComponentProps<typeof Textarea>,
+  "onCompositionEnd" | "onCompositionStart"
+>;
 
 export const PromptInputTextarea = ({
   className,
@@ -76,7 +79,7 @@ export const PromptInputTextarea = ({
   );
 };
 
-export type PromptInputSubmitProps = ComponentProps<typeof Button>;
+export type PromptInputSubmitProps = Omit<ComponentProps<typeof Button>, "type">;
 
 export const PromptInputSubmit = ({
   "aria-label": ariaLabel = "Invia azione",
@@ -89,8 +92,8 @@ export const PromptInputSubmit = ({
     aria-label={ariaLabel}
     className={cn("shrink-0 rounded-xl", className)}
     size={size}
-    type="submit"
     {...props}
+    type="submit"
   >
     {children ?? <CornerDownLeftIcon aria-hidden="true" className="size-5" />}
   </Button>

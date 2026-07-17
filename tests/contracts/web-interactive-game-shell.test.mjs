@@ -121,24 +121,40 @@ test("the game shell keeps domain state independent from UI and transport packag
   assert.match(combined, /FixtureTurnSource/u);
 });
 
-test("the four public domain wrappers do not expose chat transport types", async () => {
+test("the public conversational wrappers preserve the mobile game controls", async () => {
   const wrapperPaths = [
     "apps/web/components/game/free-action-composer.tsx",
     "apps/web/components/game/game-conversation.tsx",
-    "apps/web/components/game/game-drawer.tsx",
     "apps/web/components/game/narrative-turn.tsx",
+    "apps/web/components/game/suggested-actions.tsx",
   ];
-  const sources = await Promise.all(wrapperPaths.map(readRequired));
+  const sources = await Promise.all([
+    ...wrapperPaths.map(readRequired),
+    readRequired("apps/web/components/ai-elements/prompt-input.tsx"),
+  ]);
   const combined = sources.join("\n");
 
   for (const exportName of [
     "FreeActionComposer",
     "GameConversation",
-    "GameDrawer",
     "NarrativeTurn",
+    "SuggestedActions",
   ]) {
     assert.match(combined, new RegExp(`export function ${exportName}\\b`, "u"));
   }
+
+  for (const requiredPattern of [
+    /data-message-kind/u,
+    /aria-live/u,
+    /maxLength=\{2000\}/u,
+    /isComposing/u,
+    /shiftKey/u,
+    /Collapsible/u,
+    /slice\(0, 2\)/u,
+  ]) {
+    assert.match(combined, requiredPattern);
+  }
+
   for (const forbiddenPattern of [
     /@ai-sdk\/react/u,
     /DefaultChatTransport/u,
@@ -147,6 +163,18 @@ test("the four public domain wrappers do not expose chat transport types", async
   ]) {
     assert.doesNotMatch(combined, forbiddenPattern);
   }
+});
+
+test("the game drawer remains a dedicated domain wrapper", async () => {
+  const source = await readRequired(
+    "apps/web/components/game/game-drawer.tsx",
+  );
+
+  assert.match(source, /export function GameDrawer\b/u);
+  assert.doesNotMatch(
+    source,
+    /@ai-sdk\/react|DefaultChatTransport|UIMessage|useChat/u,
+  );
 });
 
 test("the game feature boundary forbids trusted AI HTML, browser persistence, and fake latency", async () => {
