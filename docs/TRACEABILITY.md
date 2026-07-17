@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-17
-last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
+last_verified_commit: 0e128767996064e6e6d700a7b8f926096a62102b
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -22,6 +22,8 @@ source_refs:
   - docs/superpowers/plans/2026-07-16-bl-079-design-system-core.md
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
   - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
+  - docs/superpowers/specs/2026-07-17-qa-002-browser-harness-design.md
+  - docs/superpowers/plans/2026-07-17-qa-002-browser-harness.md
   - docs/testing/TEST_STRATEGY.md
   - docs/adr/README.md
 related_tasks:
@@ -114,6 +116,8 @@ code_refs:
   - packages/testing/src
   - scripts/run-tests.mjs
   - scripts/lib/test-report-policy.mjs
+  - tests/e2e/playwright.config.mjs
+  - tests/e2e/start-web-server.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/web-design-system.test.mjs
@@ -160,6 +164,10 @@ test_refs:
   - tests/integration/testing-containers.test.mjs
   - tests/contracts/testing-package-contract.test.mjs
   - tests/security/test-report-security.test.mjs
+  - tests/contracts/browser-harness-contract.test.mjs
+  - tests/e2e/game-shell.spec.mjs
+  - tests/e2e/accessibility.spec.mjs
+  - tests/e2e/harness-failures.spec.mjs
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
   - tests/integration/observability-flow.test.mjs
@@ -190,7 +198,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-007`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. `QA-002` è `IN_PROGRESS/25%/PARTIAL` con design `browser-harness-v1`; `BL-080` resta congelato/bloccato.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-007`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. `QA-002` è `IN_REVIEW/90%/PASSING` con design `browser-harness-v1`; full gate e checkout pulito restano terminali. `BL-080` resta congelato/bloccato.
 
 ## Governance e baseline
 
@@ -223,7 +231,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Rollback database fail-closed e forward-only gestito | spec §§19.5, 29.5; ADR-0006 | BL-004 | policy CLI e runbook `DATABASE_MIGRATIONS.md` | DDL invalido annullato con ledger 0; `down` solo loopback disposable senza query routing e con conferma; staging/production rifiutati | PASS mirato/full/clean/CI |
 | Feature flag e kill switch server-side sono condivisi, auditati e fail-closed | spec §§22.16, 27.5, 28.6, 29.8, 31 `BL-010`; ADR-0004, ADR-0006, ADR-0007 | BL-010 | `packages/persistence/src/feature-flags.ts`, `packages/persistence/src/migrations/000002_feature_flags.ts`, `scripts/manage-feature-flag.mjs` | catalogo chiuso `campaign.start`/`turn.new`/`model.route.premium`; store unavailable/unknown/malformed disabled; cambio CLI senza deploy; audit atomico; CAS; idempotency replay/conflict; output redatto | DONE; PR #22/merge `15382d5`, CI post-merge `29426357415` 5/5 `SUCCESS` |
 | Runner, fixture e report non-browser sono isolati e riproducibili | spec §§26, 35.1 | QA-001 | `@dnd-ai/testing`, runner Node root, harness PostgreSQL/Redis e artifact `testing-foundation-v1` | process isolation/failure/timeout, golden RNG/clock, smoke container concorrente, JUnit/LCOV/checksum e symlink/secret negative path | DONE; full + clean `PASS`, PR #24/merge `3e9c6d5`; [`TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) |
-| Browser, accessibility e visual regression usano un harness comune | spec §26.8; studio UX §§13–14.1; `browser-harness-v1` | BL-081, QA-002 | lane Playwright, axe, server standalone e baseline cross-platform (in implementazione) | viewport 320/390/1440, touch, tastiera/focus/zoom/safe-area, reduced-motion, accessibility negative fixture e visual drift | QA-002 `IN_PROGRESS/25%/PARTIAL`; dipendenze DONE, baseline web e shell 22/22 verdi |
+| Browser, accessibility e visual regression usano un harness comune | spec §26.8; studio UX §§13–14.1; `browser-harness-v1` | BL-081, QA-002 | lane `e2e` Playwright nel runner/report comune, axe, server standalone loopback e sei baseline Windows/Linux | 12/12 E2E: viewport 320/390/1440, touch, tastiera/focus/zoom/safe-area, reduced-motion, axe positivo/negativo, server/browser/drift failure; due run stabili per piattaforma | QA-002 `IN_REVIEW/90%/PASSING`; CI/report/security mirati verdi, full/clean pending |
 | W3C Trace Context e request ID attraversano web→API→queue→worker senza context bleed | spec §§24.1, 24.5; ADR-0007 | BL-008 | `packages/observability`, plugin Fastify e wrapper worker | `tests/integration/observability-flow.test.mjs`: parent chain `web.request`→`api.request`→`queue.enqueue`→`worker.process`, due flussi concorrenti disgiunti; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Log JSON e metadata telemetry non espongono PII, secret, prompt o output AI | spec §§22.10, 24.2; ADR-0007 | BL-008 | sanitizer bounded, logger Pino allowlisted e reporter safe | `tests/unit/observability-core.test.mjs`, `tests/unit/observability-node.test.mjs`, `tests/security/observability-security.test.mjs`; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Sentry resta error-only, off-by-default e non altera il risultato applicativo | spec §§24.4, 24.5; ADR-0007 | BL-008 | adapter Node/Next, transport fake, failure containment idempotente e bounded | unit/integration/security: exporter, destination e transport failure; zero rete; nessun Replay/profiling/log forwarding/tunnel/source map; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
@@ -238,14 +246,14 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 
 | ID | Requisito normativo | Task | Codice | Test | Evidenza corrente |
 |---|---|---|---|---|---|
-| UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-081, BL-040, QA-002 | `InteractiveGameShell`, reducer e fixture in `apps/web` | reducer/contract/smoke standalone; E2E comune planned | BL-081 verificato a 320×568, 390×844 e 1440×900 senza overflow; submit/continue fixture PASS |
-| UX-P0-02 | Feed conversazionale, decisione e composer dominano il primo livello | BL-079, BL-081, BL-040 | `GameConversation`, `NarrativeTurn`, `SuggestedActions`, `FreeActionComposer` | contract UI, smoke HTML e browser locale; visual regression comune planned | feed, due azioni e composer visibili insieme a 320 px; sei stati deterministici e retry guard testati |
+| UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-081, BL-040, QA-002 | `InteractiveGameShell`, reducer e fixture in `apps/web` | reducer/contract/smoke standalone + `game-shell.spec.mjs` | 320×800, 390×844 touch e 1440×900 senza overflow; submit/continue e CTA raggiungibili PASS |
+| UX-P0-02 | Feed conversazionale, decisione e composer dominano il primo livello | BL-079, BL-081, BL-040 | `GameConversation`, `NarrativeTurn`, `SuggestedActions`, `FreeActionComposer` | contract UI, smoke HTML e browser E2E/visual | feed, due azioni e composer visibili insieme a 320 px; sei stati deterministici e retry guard testati |
 | UX-P0-03 | HUD secondaria in drawer/sheet; desktop senza funzioni esclusive | BL-081, BL-040, QA-002 | `GameDrawer`, Vaul/shadcn e responsive shell | contract + browser 320/390/1440 | tre sezioni HUD, Escape e focus restore PASS; stessa gerarchia desktop |
 | UX-P0-04 | shadcn/ui `new-york` su Radix e token semantici | BL-079 | `apps/web/components.json`, `app/globals.css`, `components/ui` | `tests/contracts/web-design-system.test.mjs` | contract 7/7 e build web PASS; Tailwind 4.3.2, Geist 1.7.2, cinque primitive selettive |
 | UX-P0-05 | AI Elements selettivo non sostituisce `TurnView`, REST+SSE o idempotenza | BL-081, BL-040, BL-041 | subset `conversation`/`message`/`prompt-input` e reducer/view model locale | `tests/contracts/web-interactive-game-shell.test.mjs`; negative boundary scan | nessun `useChat`, AI SDK, route chat, storage o trasporto parallelo; backend turno resta planned |
-| UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all’animazione | BL-081, BL-027, BL-040, QA-002 | `GameMotionProvider`, feature DOM asincrona e fallback statico | contract, browser locale; E2E reduced-motion comune planned | `LazyMotion` strict, reduced-motion e transform/opacity; feature entry asincrona 285 byte |
-| UX-P0-07 | Touch target ≥44 px, primarie ≥48 px, safe area/tastiera/zoom | BL-079, BL-081, BL-012, BL-019, BL-040, QA-002 | `Button`, `Input`, token touch/safe-area e feed `100svh` | contract; browser matrix locale; E2E tastiera virtuale planned | minimo DOM 44 px, primarie 48 px, overlap `0`, Tab order e focus ring verificati su 320/390/1440 |
-| UX-P0-08 | Stile premium contemporaneo, non pseudo-medievale | BL-079, QA-002 | token graphite/cobalto e shell contemporanea in `apps/web` | review React/design e browser locale; visual regression comune planned | nessun chrome fantasy, font remoto, gradiente invasivo o runtime grafico; finding P0/P1 locale chiuso |
+| UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all’animazione | BL-081, BL-027, BL-040, QA-002 | `GameMotionProvider`, feature DOM asincrona e fallback statico | contract + E2E con media feature reduced | `LazyMotion` strict, transform/opacity e contenuto equivalente senza transizioni; PASS |
+| UX-P0-07 | Touch target ≥44 px, primarie ≥48 px, safe area/tastiera/zoom | BL-079, BL-081, BL-012, BL-019, BL-040, QA-002 | `Button`, `Input`, token touch/safe-area e feed `100svh` | contract + matrice E2E tastiera/focus/zoom/safe-area | minimo DOM 44 px, primarie 48 px, overlap `0`, zoom 200%, safe area 34 px, Tab order e focus restore PASS |
+| UX-P0-08 | Stile premium contemporaneo, non pseudo-medievale | BL-079, QA-002 | token graphite/cobalto e shell contemporanea in `apps/web` | review React/design + sei baseline pixel-exact per piattaforma | nessun chrome fantasy, font remoto, gradiente invasivo o runtime grafico; Windows/Linux stabili su due run |
 | UX-P0-09 | Dado decorativo riproduce risultato backend e possiede fallback | BL-040, BL-043 | dice tray (planned) | rules contract + reduced-motion UI test (planned) | spec §21.4 |
 
 ## Criteri globali

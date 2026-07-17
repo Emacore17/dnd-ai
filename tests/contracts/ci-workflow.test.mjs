@@ -88,18 +88,26 @@ test("the Tests job publishes only verified deterministic reports", async () => 
   const workflow = parse(workflowSource);
   const packageManifest = JSON.parse(packageSource);
   const steps = workflow.jobs.tests.steps;
+  const setup = steps.find((step) => step.name === "Setup workspace");
+  const installBrowser = steps.find((step) => step.name === "Install Chromium");
+  const browserTests = steps.find((step) => step.name === "Browser tests");
   const prepare = steps.find((step) => step.name === "Prepare test reports");
   const verify = steps.find((step) => step.name === "Verify test reports");
   const upload = steps.find((step) => step.name === "Upload test reports");
 
+  assert.equal(installBrowser.run, "pnpm test:e2e:install:ci");
+  assert.equal(browserTests.run, "pnpm test:e2e");
   assert.equal(
     prepare.run,
-    "pnpm test:reports:prepare --required=unit,integration,database,contract",
+    "pnpm test:reports:prepare --required=unit,integration,database,contract,e2e",
   );
   assert.equal(
     verify.run,
-    "pnpm test:reports:verify --required=unit,integration,database,contract",
+    "pnpm test:reports:verify --required=unit,integration,database,contract,e2e",
   );
+  assert.ok(steps.indexOf(setup) < steps.indexOf(installBrowser));
+  assert.ok(steps.indexOf(installBrowser) < steps.indexOf(browserTests));
+  assert.ok(steps.indexOf(browserTests) < steps.indexOf(prepare));
   assert.equal(
     upload.uses,
     "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
@@ -115,14 +123,22 @@ test("the Tests job publishes only verified deterministic reports", async () => 
     packageManifest.scripts["test:integration"],
     "node scripts/run-tests.mjs integration",
   );
+  assert.equal(
+    packageManifest.scripts["test:e2e"],
+    "node scripts/run-tests.mjs e2e",
+  );
+  assert.equal(
+    packageManifest.scripts["test:e2e:install:ci"],
+    "playwright install --with-deps chromium",
+  );
 
-  steps.splice(steps.indexOf(verify), 1);
+  steps.splice(steps.indexOf(browserTests), 1);
   assert.ok(
     validateCiDocuments(
       workflow,
       parse(setupActionSource),
       packageManifest,
-    ).some((error) => error.includes("test reports")),
+    ).some((error) => error.includes("browser harness")),
   );
 });
 

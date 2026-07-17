@@ -66,6 +66,9 @@ jobs:
       - name: Setup workspace
         uses: ./.github/actions/setup-workspace
 
+      - name: Install Chromium
+        run: pnpm test:e2e:install:ci
+
       - name: Unit tests
         run: pnpm test:unit
 
@@ -78,11 +81,14 @@ jobs:
       - name: Contract tests
         run: pnpm test:contract
 
+      - name: Browser tests
+        run: pnpm test:e2e
+
       - name: Prepare test reports
-        run: pnpm test:reports:prepare --required=unit,integration,database,contract
+        run: pnpm test:reports:prepare --required=unit,integration,database,contract,e2e
 
       - name: Verify test reports
-        run: pnpm test:reports:verify --required=unit,integration,database,contract
+        run: pnpm test:reports:verify --required=unit,integration,database,contract,e2e
 
       - name: Upload test reports
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

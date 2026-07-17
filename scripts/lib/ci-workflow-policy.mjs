@@ -12,7 +12,7 @@ const REQUIRED_JOBS = Object.freeze([
 const REQUIRED_PNPM_VERSION = "11.13.0";
 const TEST_REPORT_UPLOAD_ACTION =
   "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a";
-const TEST_REPORT_LANES = "unit,integration,database,contract";
+const TEST_REPORT_LANES = "unit,integration,database,contract,e2e";
 const FORBIDDEN_QUALITY_COMMANDS = Object.freeze([
   {
     label: "pnpm contracts:check",
@@ -246,6 +246,8 @@ function validateTestScripts(errors, packageManifest) {
     "db:migrate:test": "node scripts/run-tests.mjs database",
     "test:all": "node scripts/run-tests.mjs all",
     "test:contract": "node scripts/run-tests.mjs contract",
+    "test:e2e": "node scripts/run-tests.mjs e2e",
+    "test:e2e:install:ci": "playwright install --with-deps chromium",
     "test:integration": "node scripts/run-tests.mjs integration",
     "test:reports:prepare": "node scripts/prepare-test-reports.mjs",
     "test:reports:verify": "node scripts/verify-test-reports.mjs",
@@ -275,6 +277,34 @@ function validateTestReports(errors, testsJob) {
   const uploadIndex = steps.findIndex(
     (step) => step.name === "Upload test reports",
   );
+  const setupIndex = steps.findIndex((step) => step.name === "Setup workspace");
+  const installBrowserIndex = steps.findIndex(
+    (step) =>
+      step.name === "Install Chromium" &&
+      step.run === "pnpm test:e2e:install:ci",
+  );
+  const contractIndex = steps.findIndex(
+    (step) =>
+      step.name === "Contract tests" && step.run === "pnpm test:contract",
+  );
+  const browserTestsIndex = steps.findIndex(
+    (step) => step.name === "Browser tests" && step.run === "pnpm test:e2e",
+  );
+
+  if (installBrowserIndex === -1 || browserTestsIndex === -1) {
+    errors.push("browser harness requires exact install and test commands");
+  } else if (
+    setupIndex === -1 ||
+    contractIndex === -1 ||
+    !(
+      setupIndex < installBrowserIndex &&
+      installBrowserIndex < contractIndex &&
+      contractIndex < browserTestsIndex &&
+      browserTestsIndex < prepareIndex
+    )
+  ) {
+    errors.push("browser harness steps are in an invalid order");
+  }
 
   if (prepareIndex === -1) {
     errors.push("test reports missing exact prepare command");
@@ -385,10 +415,12 @@ function validateJobs(errors, workflow) {
     }
   }
   requireCommands(errors, "tests", jobs.tests, [
+    "pnpm test:e2e:install:ci",
     "pnpm test:unit",
     "pnpm test:integration",
     "pnpm db:migrate:test",
     "pnpm test:contract",
+    "pnpm test:e2e",
   ]);
   validateTestReports(errors, jobs.tests);
   requireCommands(errors, "security", jobs.security, [
