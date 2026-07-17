@@ -79,3 +79,61 @@ test("QA-002:e2e-lane-is-closed-bounded-and-browser-only", () => {
   });
   assert.equal(Object.isFrozen(resolveTestLane("e2e")), true);
 });
+
+test("QA-002:playwright-config-owns-a-single-local-standalone-server", async () => {
+  const config = await readFile(
+    path.join(repositoryRoot, "tests/e2e/playwright.config.mjs"),
+    "utf8",
+  );
+
+  assert.match(config, /127\.0\.0\.1/u);
+  assert.match(config, /node tests\/e2e\/start-web-server\.mjs/u);
+  assert.match(config, /apps\/web\/\.next\/standalone\/apps\/web\/server\.js/u);
+  assert.match(config, /reuseExistingServer:\s*false/u);
+  assert.match(config, /retries:\s*0/u);
+  assert.match(config, /workers:\s*1/u);
+  assert.match(config, /trace:\s*"off"/u);
+  assert.match(config, /video:\s*"off"/u);
+  assert.match(config, /PLAYWRIGHT_JUNIT_OUTPUT_FILE/u);
+});
+
+test("QA-002:browser-server-copies-next-static-assets-before-startup", async () => {
+  const source = await readFile(
+    path.join(repositoryRoot, "tests/e2e/start-web-server.mjs"),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /apps["'],\s*["']web["'],\s*["']\.next["'],\s*["']static/u,
+  );
+  assert.match(
+    source,
+    /standalone["'],\s*["']apps["'],\s*["']web["'],\s*["']\.next["'],\s*["']static/u,
+  );
+  assert.match(source, /await cp\(/u);
+  assert.match(source, /await import\(/u);
+});
+
+test("QA-002:game-shell-browser-matrix-covers-mobile-touch-and-desktop", async () => {
+  const [fixture, specification] = await Promise.all([
+    readFile(
+      path.join(repositoryRoot, "tests/e2e/browser-fixture.mjs"),
+      "utf8",
+    ),
+    readFile(
+      path.join(repositoryRoot, "tests/e2e/game-shell.spec.mjs"),
+      "utf8",
+    ),
+  ]);
+  const source = `${fixture}\n${specification}`;
+
+  assert.match(source, /width:\s*320/u);
+  assert.match(source, /width:\s*390/u);
+  assert.match(source, /width:\s*1440/u);
+  assert.match(source, /hasTouch:\s*true/u);
+  assert.match(source, /touchscreen\.tap/u);
+  assert.match(source, /scrollWidth/u);
+  assert.match(source, /target size/u);
+  assert.match(source, /focus restore/u);
+});
