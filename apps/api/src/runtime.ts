@@ -82,6 +82,8 @@ export async function createApiIdentityRuntime(
       challengeKey: config.identity.challenge.key,
       challengeKeyVersion: config.identity.challenge.version,
       randomBytes: (length) => randomBytes(length),
+      resetChallengeKey: config.identity.reset.key,
+      resetChallengeKeyVersion: config.identity.reset.version,
       sessionKey: config.identity.session.key,
       sessionKeyVersion: config.identity.session.version,
       subjectHashKey: config.identity.subjectHashKey,

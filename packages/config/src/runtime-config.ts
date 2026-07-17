@@ -20,6 +20,7 @@ export interface ApiIdentityRuntimeConfig {
   readonly passwordPepper: VersionedSecret;
   readonly challenge: VersionedSecret;
   readonly session: VersionedSecret;
+  readonly reset: VersionedSecret;
   readonly subjectHashKey: Uint8Array;
   readonly bffAssertionKey: Uint8Array;
 }
@@ -51,7 +52,10 @@ export interface WorkerRuntimeConfig {
   readonly environment: RuntimeEnvironment;
   readonly databaseUrl: string;
   readonly redisUrl: string;
-  readonly identity: Readonly<{ readonly challenge: VersionedSecret }>;
+  readonly identity: Readonly<{
+    readonly challenge: VersionedSecret;
+    readonly reset: VersionedSecret;
+  }>;
   readonly emailDelivery: WorkerEmailDeliveryConfig;
   readonly sentryDsn?: string;
 }
@@ -293,6 +297,8 @@ const apiEnvironmentSchema = z
     API_AUTH_CHALLENGE_KEY_VERSION: positiveVersionSchema,
     API_AUTH_SESSION_HMAC_KEY_BASE64: secretSchema,
     API_AUTH_SESSION_KEY_VERSION: positiveVersionSchema,
+    API_AUTH_RESET_HMAC_KEY_BASE64: secretSchema,
+    API_AUTH_RESET_KEY_VERSION: positiveVersionSchema,
     API_AUTH_SUBJECT_HASH_KEY_BASE64: secretSchema,
     API_AUTH_BFF_ASSERTION_KEY_BASE64: secretSchema,
     API_SENTRY_DSN: optionalSentryDsnSchema,
@@ -320,6 +326,10 @@ const apiEnvironmentSchema = z
       [
         "API_AUTH_SESSION_HMAC_KEY_BASE64",
         environment.API_AUTH_SESSION_HMAC_KEY_BASE64,
+      ],
+      [
+        "API_AUTH_RESET_HMAC_KEY_BASE64",
+        environment.API_AUTH_RESET_HMAC_KEY_BASE64,
       ],
       [
         "API_AUTH_SUBJECT_HASH_KEY_BASE64",
@@ -378,6 +388,8 @@ const workerBaseEnvironmentSchema = z.object({
   WORKER_REDIS_URL: redisUrlSchema,
   WORKER_AUTH_CHALLENGE_HMAC_KEY_BASE64: secretSchema,
   WORKER_AUTH_CHALLENGE_KEY_VERSION: positiveVersionSchema,
+  WORKER_AUTH_RESET_HMAC_KEY_BASE64: secretSchema,
+  WORKER_AUTH_RESET_KEY_VERSION: positiveVersionSchema,
   WORKER_SENTRY_DSN: optionalSentryDsnSchema,
 });
 
@@ -397,6 +409,19 @@ const workerEnvironmentSchema = z
     }),
   ])
   .superRefine((environment, context) => {
+    if (
+      equalBytes(
+        environment.WORKER_AUTH_CHALLENGE_HMAC_KEY_BASE64,
+        environment.WORKER_AUTH_RESET_HMAC_KEY_BASE64,
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "identity secrets must be logically distinct",
+        path: ["WORKER_AUTH_RESET_HMAC_KEY_BASE64"],
+      });
+    }
+
     if (
       environment.APP_ENV !== "local" &&
       environment.WORKER_EMAIL_DELIVERY_MODE === "fake"
@@ -523,6 +548,10 @@ export function parseApiRuntimeConfig(
         key: parsed.API_AUTH_SESSION_HMAC_KEY_BASE64,
         version: parsed.API_AUTH_SESSION_KEY_VERSION,
       }),
+      reset: Object.freeze({
+        key: parsed.API_AUTH_RESET_HMAC_KEY_BASE64,
+        version: parsed.API_AUTH_RESET_KEY_VERSION,
+      }),
       subjectHashKey: parsed.API_AUTH_SUBJECT_HASH_KEY_BASE64,
       bffAssertionKey: parsed.API_AUTH_BFF_ASSERTION_KEY_BASE64,
     }),
@@ -549,6 +578,10 @@ export function parseWorkerRuntimeConfig(
       challenge: Object.freeze({
         key: parsed.WORKER_AUTH_CHALLENGE_HMAC_KEY_BASE64,
         version: parsed.WORKER_AUTH_CHALLENGE_KEY_VERSION,
+      }),
+      reset: Object.freeze({
+        key: parsed.WORKER_AUTH_RESET_HMAC_KEY_BASE64,
+        version: parsed.WORKER_AUTH_RESET_KEY_VERSION,
       }),
     }),
     emailDelivery:

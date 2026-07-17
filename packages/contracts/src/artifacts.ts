@@ -167,7 +167,7 @@ export function createContractArtifacts(
       title: "AI Adventure API Contracts",
       version: CONTRACT_VERSION,
       description:
-        "Contratti versionati e operazioni identity implementate dal task proprietario BL-005.",
+        "Contratti versionati per registrazione, sessioni e recupero credenziali identity.",
     },
     paths: createIdentityOpenApiPaths(),
     components: { schemas: componentSchemas },

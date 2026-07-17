@@ -25,6 +25,7 @@ const ORIGIN = "https://game.example.test";
 const START = new Date("2026-07-16T10:00:00.000Z");
 const CHALLENGE_KEY = Buffer.alloc(32, 7);
 const SESSION_KEY = Buffer.alloc(32, 11);
+const RESET_KEY = Buffer.alloc(32, 17);
 const SUBJECT_HASH_KEY = Buffer.alloc(32, 13);
 const PASSWORD_HASH = {
   pepperVersion: 1,
@@ -66,6 +67,8 @@ async function createHarness(databaseUrl) {
     challengeKey: CHALLENGE_KEY,
     challengeKeyVersion: 1,
     randomBytes: createDeterministicRandomBytes(),
+    resetChallengeKey: RESET_KEY,
+    resetChallengeKeyVersion: 1,
     sessionKey: SESSION_KEY,
     sessionKeyVersion: 1,
     subjectHashKey: SUBJECT_HASH_KEY,

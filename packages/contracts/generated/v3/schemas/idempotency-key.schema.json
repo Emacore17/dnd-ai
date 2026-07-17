@@ -1,0 +1,11 @@
+{
+  "$id": "urn:dnd-ai:contracts:v3:IdempotencyKey",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "maxLength": 128,
+  "minLength": 16,
+  "pattern": "^[A-Za-z0-9._:-]+$",
+  "title": "IdempotencyKey",
+  "type": "string",
+  "x-dnd-ai-contract-kind": "request",
+  "x-dnd-ai-contract-version": "3.0.0"
+}

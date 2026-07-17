@@ -246,6 +246,10 @@ test("worker startup owns one cancellable loop and shuts dependencies down once"
         "base64",
       ),
       WORKER_AUTH_CHALLENGE_KEY_VERSION: "1",
+      WORKER_AUTH_RESET_HMAC_KEY_BASE64: Buffer.alloc(32, 17).toString(
+        "base64",
+      ),
+      WORKER_AUTH_RESET_KEY_VERSION: "1",
       WORKER_DATABASE_URL:
         "postgresql://worker:secret@127.0.0.1:5432/dnd_ai?sslmode=disable",
       WORKER_EMAIL_DELIVERY_MODE: "fake",

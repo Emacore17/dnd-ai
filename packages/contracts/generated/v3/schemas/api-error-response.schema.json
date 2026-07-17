@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "__schema0": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "maxLength": 96,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 500,
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "urn:dnd-ai:contracts:v3:ApiErrorResponse",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "error": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "maxLength": 96,
+          "minLength": 1,
+          "pattern": "^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$",
+          "type": "string"
+        },
+        "currentStateVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "details": {
+          "items": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "message": {
+          "maxLength": 500,
+          "minLength": 1,
+          "type": "string"
+        },
+        "requestId": {
+          "description": "Server-owned canonical lowercase UUIDv4 request ID.",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "requestId",
+        "retryable"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "error"
+  ],
+  "title": "ApiErrorResponse",
+  "type": "object",
+  "x-dnd-ai-contract-kind": "response",
+  "x-dnd-ai-contract-version": "3.0.0"
+}

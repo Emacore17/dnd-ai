@@ -15,6 +15,9 @@ const API_IDENTITY_ENVIRONMENT = Object.freeze({
   API_AUTH_SESSION_HMAC_KEY_BASE64:
     "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8=",
   API_AUTH_SESSION_KEY_VERSION: "9",
+  API_AUTH_RESET_HMAC_KEY_BASE64:
+    "oKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr8=",
+  API_AUTH_RESET_KEY_VERSION: "11",
   API_AUTH_SUBJECT_HASH_KEY_BASE64:
     "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8=",
   API_AUTH_BFF_ASSERTION_KEY_BASE64:
@@ -35,6 +38,10 @@ const WORKER_CHALLENGE_ENVIRONMENT = Object.freeze({
     API_IDENTITY_ENVIRONMENT.API_AUTH_CHALLENGE_HMAC_KEY_BASE64,
   WORKER_AUTH_CHALLENGE_KEY_VERSION:
     API_IDENTITY_ENVIRONMENT.API_AUTH_CHALLENGE_KEY_VERSION,
+  WORKER_AUTH_RESET_HMAC_KEY_BASE64:
+    API_IDENTITY_ENVIRONMENT.API_AUTH_RESET_HMAC_KEY_BASE64,
+  WORKER_AUTH_RESET_KEY_VERSION:
+    API_IDENTITY_ENVIRONMENT.API_AUTH_RESET_KEY_VERSION,
 });
 
 function bytesToHex(value) {
@@ -56,6 +63,8 @@ test("API identity secrets are decoded, versioned, scoped and deeply frozen", ()
       challengeHex: bytesToHex(parsed.identity.challenge.key),
       sessionVersion: parsed.identity.session.version,
       sessionHex: bytesToHex(parsed.identity.session.key),
+      resetVersion: parsed.identity.reset.version,
+      resetHex: bytesToHex(parsed.identity.reset.key),
       subjectHex: bytesToHex(parsed.identity.subjectHashKey),
       bffAssertionHex: bytesToHex(parsed.identity.bffAssertionKey),
     },
@@ -69,6 +78,9 @@ test("API identity secrets are decoded, versioned, scoped and deeply frozen", ()
       sessionVersion: 9,
       sessionHex:
         "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+      resetVersion: 11,
+      resetHex:
+        "a0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
       subjectHex:
         "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
       bffAssertionHex:
@@ -91,6 +103,11 @@ test("identity configuration rejects missing, short, malformed or reused secrets
     {
       API_AUTH_SESSION_HMAC_KEY_BASE64:
         API_IDENTITY_ENVIRONMENT.API_AUTH_CHALLENGE_HMAC_KEY_BASE64,
+    },
+    { API_AUTH_RESET_HMAC_KEY_BASE64: undefined },
+    {
+      API_AUTH_RESET_HMAC_KEY_BASE64:
+        API_IDENTITY_ENVIRONMENT.API_AUTH_SESSION_HMAC_KEY_BASE64,
     },
   ]) {
     assert.throws(
@@ -177,6 +194,7 @@ test("worker email delivery is fake only locally and SMTP is complete outside lo
   const local = parse({ ...base, WORKER_EMAIL_DELIVERY_MODE: "fake" });
   assert.deepEqual(local.emailDelivery, { mode: "fake" });
   assert.equal(local.identity.challenge.version, 7);
+  assert.equal(local.identity.reset.version, 11);
 
   const smtp = parse({
     ...base,

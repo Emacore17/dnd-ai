@@ -50,6 +50,7 @@ code_refs:
   - packages/contracts/src
   - packages/contracts/generated/v1
   - packages/contracts/generated/v2
+  - packages/contracts/generated/v3
   - scripts/generate-contracts.mjs
   - scripts/lib/contract-artifact-policy.mjs
   - scripts/lib/contract-compatibility-policy.mjs
@@ -188,11 +189,11 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-16 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-005` è integrato su `main` tramite [PR #28](https://github.com/Emacore17/dnd-ai/pull/28), candidate corretto `c2e4332b408f1cac3e2c69920cd18e5e772e87bf`, merge `e173fd9424ad77330ae8302f68affd4832d66798` e CI PR/post-merge `29525777416`/`29526030389` con cinque job `SUCCESS`. `BL-006` usa questa baseline in una worktree isolata; design approvato e implementazione non iniziata. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `BL-005` è integrato su `main` tramite [PR #28](https://github.com/Emacore17/dnd-ai/pull/28), candidate corretto `c2e4332b408f1cac3e2c69920cd18e5e772e87bf`, merge `e173fd9424ad77330ae8302f68affd4832d66798` e CI PR/post-merge `29525777416`/`29526030389` con cinque job `SUCCESS`. `BL-006` usa questa baseline in una worktree isolata; il primo batch contract/config/domain/crypto è implementato e verificato localmente, senza delivery remota. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-006 — IN_PROGRESS/25%/PARTIAL`; contratto `identity-access-v1` approvato e piano TDD inline versionato, implementazione pronta |
+| Task attivo | `BL-006 — IN_PROGRESS/25%/PARTIAL`; contract artifact `v3`, config/domain e primitive reset verdi; migration `000004` successiva |
 | Ultimo task completato | `BL-005 — DONE/100%/PASSING`, integrato tramite PR #28 e CI post-merge `29526030389` |
 | Prossimo task READY | `BL-081`; non avviarlo mentre `BL-006` è attivo |
 | Migration head | `000003_identity_signup` / `database-identity-signup-v1` su `main`; BL-006 pianifica `000004_identity_access` / `database-identity-access-v1` |
@@ -200,7 +201,7 @@ supersedes: null
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` fornisce Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first e shell statica server-rendered; `BL-081` resta owner di AI Elements, interazione e Motion. `BL-005` implementa signup/verify/resend, sessione iniziale, migration PostgreSQL, outbox email, BFF e form shadcn. `BL-006` ha un design approvato per login, refresh, logout, revoca globale e reset password, ma nessun runtime BL-006 è ancora implementato. Redis locale applicativo, BullMQ, route di gioco, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` fornisce Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first e shell statica server-rendered; `BL-081` resta owner di AI Elements, interazione e Motion. `BL-005` implementa signup/verify/resend, sessione iniziale, migration PostgreSQL, outbox email, BFF e form shadcn. `BL-006` ha pubblicato sulla branch il contract `v3`, le porte pure, la config reset service-scoped e le primitive HMAC/token; store, migration, route, outbox reset e UI restano da implementare. Redis locale applicativo, BullMQ, route di gioco, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
 
 ## Decisioni operative vigenti
 
@@ -214,7 +215,7 @@ supersedes: null
 - Configurazione runtime server-only validata ai composition root; il BFF web valida inoltre la propria superficie minima senza dipendere dal package `config`. Il subject client attraversa BFF→API soltanto come HMAC firmato a vita breve; nessun IP raw o valore secret entra nel client, nei default, nei log o nei documenti. ADR-0004 accepted durante `BL-003`.
 - OpenTelemetry è l'unica autorità trace; Pino usa un vocabolario allowlisted e Sentry resta error-only opzionale/off-by-default, con export browser/Node separati e failure containment secondo ADR-0007.
 - Fondazione database secondo ADR-0006: migration forward-only negli ambienti gestiti, `down` soltanto local/disposable con conferma, manifest/checksum immutabili, transazione singola e advisory lock fail-fast.
-- Contratti Zod-first secondo ADR-0008: JSON Schema 2020-12 e OpenAPI 3.1.1 vengono generati dallo stesso catalogo; `v1` resta immutabile e BL-005 ha pubblicato `v2` con le sole operazioni auth implementate. BL-006 pianifica `v3` senza modificare i major esistenti. La CI rifiuta drift o modifiche a major già pubblicati rispetto alla base protetta.
+- Contratti Zod-first secondo ADR-0008: JSON Schema 2020-12 e OpenAPI 3.1.1 vengono generati dallo stesso catalogo; `v1` e `v2` restano immutabili. La branch BL-006 genera `v3` con le nove operazioni auth senza modificare i major esistenti; finché la slice non è terminale, l'artifact descrive il contratto candidato e non disponibilità runtime completa. La CI rifiuta drift o modifiche a major già pubblicati rispetto alla base protetta.
 - Architettura runtime/data/workflow secondo ADR-0009: processi separabili dello stesso modular monolith, Fastify, REST+SSE, PostgreSQL autorevole, Redis non autorevole, eventi+proiezioni atomici e BullMQ/outbox come target. L'ADR espone lo stato di adozione e non trasforma capability pianificate in runtime disponibile.
 - Identità P0 interna provider-neutral secondo ADR-0010: PostgreSQL autorevole, password Argon2id con pepper versionato, codici email one-time e SMTP dietro adapter/outbox. BL-006 adotta sessioni idle 24 h/absolute 30 giorni, rotazione esplicita, logout/revoca globale e reset a sei cifre senza auto-login; nessun provider o account remoto è richiesto.
 - Preview/staging web non disponibile su Vercel Hobby. Root Directory, regione, Production Branch riservata e Trusted Source sono configurate, ma il grant condiviso `41079282` non viene ristretto per decisione PO ed è un rischio residuo accettato. Vercel CLI `55.0.0` elimina il target Preview dal body e il provider ha restituito Production; l'applicazione della regola first-deployment, coerente con `vercel/vercel#17069`, resta un'ipotesi non confermata. Finché non esiste un fix/workaround supportato, Git auto-deploy e creazione manuale approvata restano disabilitati. Sono ammessi solo dry-run/readback/contenimento; `--archive`, `--prebuilt`, `--prod`, `promote`, `redeploy`, `--cwd apps/web` e override dei metadata sono vietati. ADR-0005 resta proposed.
@@ -226,14 +227,14 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Elemento | Versione/head | Stato |
 |---|---|---|
 | Migration head | `000003_identity_signup` | integrato e verificato su PostgreSQL reale; contract `database-identity-signup-v1`, compatibilità minima `000001`; target BL-006 `000004_identity_access` non ancora implementato |
-| Contract/API/event schema | artifact `v1` immutabile + `v2` / SemVer `2.0.0` / event `schemaVersion: 1` invariato | Zod strict come fonte; 13 JSON Schema `v2` e OpenAPI 3.1.1 con signup, verify e resend; generated drift e compatibilità major testati |
+| Contract/API/event schema | su `main`: `v1` immutabile + `v2`/SemVer `2.0.0`; su branch BL-006: candidato `v3`/SemVer `3.0.0`; event `schemaVersion: 1` invariato | Zod strict come fonte; `v3` contiene 20 JSON Schema e OpenAPI 3.1.1 con nove POST auth; v1/v2 senza diff, generated drift e compatibilità major testati |
 | Rules version | `N/A` | package rules presente come scaffold; cataloghi/formule non implementati |
 | Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
 | Eval suite version | `N/A` | harness non creato |
 | Test foundation contract | `testing-foundation-v1` | integrato su `main` tramite PR #24: runner isolato, primitive deterministiche, container PostgreSQL/Redis, JUnit/LCOV e manifest |
 | Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
 | Observability contract | `observability-baseline-v1` | implementato e integrato tramite PR #20; run post-merge `29415397361` 5/5 `SUCCESS`; provider remoti assenti |
-| Identity contract | `identity-signup-v1` implementato; `identity-access-v1` design | signup integrato; login/session/reset approvati ma non implementati. Target contract artifact `v3`, migration `000004`; SMTP/provider/account remoti assenti |
+| Identity contract | `identity-signup-v1` implementato; `identity-access-v1` in corso | signup integrato; contract `v3`, porte/config/crypto access-reset verdi sulla branch. Migration `000004`, store/API/worker/UI e gate terminali restano aperti; SMTP/provider/account remoti assenti |
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
 | Design contract | `ux-ui-2026-07-13` | foundation statica BL-079 e form auth BL-005 implementate; shell di gioco interattiva/Motion restano BL-081 |
 | ADR UI | `ADR-0001 accepted` | vigente |
@@ -325,7 +326,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 ## Prossima azione
 
-Eseguire il piano TDD BL-006 inline iniziando da contract/config/domain/crypto RED, quindi migration/store, API/worker e UI shadcn. `BL-081` resta READY ma non viene avviato in parallelo. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
+Eseguire migration `000004_identity_access` in TDD con upgrade `000003`→head, vincoli e runner concorrenti; poi implementare `PostgresIdentityAccessStore`, API/worker e UI shadcn. `BL-081` resta READY ma non viene avviato in parallelo. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
 
 ## Rischi chiusi
 
