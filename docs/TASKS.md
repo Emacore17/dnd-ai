@@ -1,13 +1,14 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-16
+last_reviewed: 2026-07-17
 last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
+  - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -170,12 +171,12 @@ supersedes: null
 > **Punto di ingresso agente:** [`AGENTS.md`](../AGENTS.md)
 > **Specifica canonica:** [`docs/MVP_SPEC.md`](MVP_SPEC.md)
 > **Studio UX/UI:** [`docs/product/UX_UI_DESIGN.md`](product/UX_UI_DESIGN.md)
-> **Baseline specifica:** SHA-256 `cf9f7b148554cc96735b1de0077079c9f6cd5ca4238a21375ca4709f7310659a`
+> **Baseline specifica:** SHA-256 `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b`
 > **Data baseline:** `2026-07-16`
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-006 — IN_PROGRESS/25%/PARTIAL` sulla branch `codex/bl-006-sessions-reset`; design `identity-access-v1` approvato e in review documentale
+> **Task attivo:** `BL-006 — IN_PROGRESS/25%/PARTIAL` sulla branch `codex/bl-006-sessions-reset`; design approvato e piano TDD inline versionato, implementazione pronta
 > **Prossimo task READY:** `BL-081 — Shell conversazionale interattiva e motion layer`; non avviarlo mentre BL-006 è attivo
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
@@ -560,7 +561,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Contesto verificato:** `YES` — base integrata: `e173fd9424ad77330ae8302f68affd4832d66798`; data: `2026-07-16`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-005, BL-079
-- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20 API; `docs/MVP_SPEC.md` §§22.2 e 22.8–22.12; `docs/MVP_SPEC.md` §§26.5, 26.8 e 26.9; `docs/MVP_SPEC.md` §32 AC-01; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/adr/0010-internal-provider-neutral-identity.md`; `docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`; `docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md`; `docs/MVP_SPEC.md` §31 `BL-006`; `docs/MVP_SPEC.md` §35.1
+- **Riferimenti obbligatori:** `docs/MVP_SPEC.md` §20 API; `docs/MVP_SPEC.md` §§22.2 e 22.8–22.12; `docs/MVP_SPEC.md` §§26.5, 26.8 e 26.9; `docs/MVP_SPEC.md` §32 AC-01; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/adr/0010-internal-provider-neutral-identity.md`; `docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md`; `docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md`; `docs/superpowers/plans/2026-07-17-bl-006-session-access.md`; `docs/MVP_SPEC.md` §31 `BL-006`; `docs/MVP_SPEC.md` §35.1
 - **Obiettivo:** Come utente voglio login/logout/reset sicuri.
 - **Deliverable:** Sessioni, reset, revoca.
 - **Criterio di accettazione:** Cookie sicuri; logout revoca; reset one-time e rate-limited.
@@ -2688,13 +2689,13 @@ progress: 25
 started_at: 2026-07-16T21:56:29+02:00
 candidate_at: null
 cycle_target_minutes: 120
-cycle_actual_minutes: 4
-updated_at: 2026-07-16T22:00:16+02:00
+cycle_actual_minutes: 15
+updated_at: 2026-07-17T09:11:25+02:00
 agent: Codex development agent
 git_branch: codex/bl-006-sessions-reset
 base_commit: e173fd9424ad77330ae8302f68affd4832d66798
 candidate_head: null
-spec_sha256: cf9f7b148554cc96735b1de0077079c9f6cd5ca4238a21375ca4709f7310659a
+spec_sha256: 737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b
 context_verified: true
 test_status: PARTIAL
 ```
@@ -2723,6 +2724,7 @@ test_status: PARTIAL
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-17 09:11 +02:00 | 25% | Il Product Owner ha approvato il design. Versionato il piano TDD inline in sette batch, con store/service/route access separati per evitare di ampliare i file signup e un solo full gate finale. Corrette freshness al nuovo giorno e due segnaposto intercettati dalla self-review. | `git diff --check` e `verify:docs` exit `0`: 23 artifact, 53 documenti/14 modificati, task graph e secret scan `PASS`; spec SHA `737fcb73…`. | Committare il piano, invocare `executing-plans` e iniziare Task 1 con test contract/config/crypto RED. |
 | 2026-07-16 22:04 +02:00 | 25% | Il gate documentale è verde. La self-review ha corretto lo SHA specifica rimasto alla baseline precedente e ha reso esplicito `credential_version` nel target migration per chiudere il race login/reset; nessun placeholder, capability futura presentata come disponibile o finding P0/P1 residuo. | `git diff --check` e `verify:docs` confermati dopo le correzioni: 23 artifact, 52 documenti/13 modificati, task graph e secret scan `PASS`. | Committare la specifica e chiedere review utente prima della skill di pianificazione TDD. |
 | 2026-07-16 22:00 +02:00 | 25% | Selezionato BL-006 dalla delivery protetta di BL-005. Il Product Owner ha approvato `identity-access-v1`: codice reset email a sei cifre, sessioni 24 h idle/30 giorni absolute, logout/revoca essenziali e UI shadcn progressiva senza device metadata. I riferimenti della card sono stati completati con security, API/E2E e test. | Base `e173fd9`; PR #28 CI `29525777416` e post-merge `29526030389` 5/5 `SUCCESS`. Install frozen 701 package, build API/worker/web 8 task, baseline identity 16/16 e `verify:docs` iniziale PASS; nessuna azione Vercel. | Versionare design e allineamento living, eseguire `verify:docs` e self-review; chiedere review utente prima del piano TDD. |
 | 2026-07-16 20:51 +02:00 | 100% | La prima CI PR ha provato un gap di isolamento, non una vulnerabilità: `test:security` importava i nuovi dist API/worker senza compilarli nella propria corsia. Aggiunti soltanto i due filtri mancanti e una regressione; nessun runtime di prodotto o gate è stato indebolito. | PR #28 run `29524998132`: Quality/Tests PASS, Security FAIL su due `ERR_MODULE_NOT_FOUND`, merge gate correttamente FAIL. Regressione RED 2/3→GREEN 3/3; security forzata 42 test + secret scan PASS; full HIGH_RISK correttivo exit `0` in 290,2 s, 333 test e artifact 4.178 PASS. | Committare e pubblicare la correzione funzionale sulla stessa PR; attendere una sola nuova CI protetta. |

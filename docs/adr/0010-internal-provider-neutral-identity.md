@@ -1,7 +1,7 @@
 ---
 status: accepted
 owner: engineering-security-and-product
-last_reviewed: 2026-07-16
+last_reviewed: 2026-07-17
 last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md#222-autenticazione

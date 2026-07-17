@@ -1,7 +1,7 @@
 ---
 status: active
 owner: product-and-engineering
-last_reviewed: 2026-07-16
+last_reviewed: 2026-07-17
 last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/adr/0010-internal-provider-neutral-identity.md

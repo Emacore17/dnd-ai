@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-16
+last_reviewed: 2026-07-17
 last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md
@@ -11,6 +11,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/plans/2026-07-16-bl-005-signup-verification.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
+  - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -160,6 +161,7 @@ supersedes: null
 - Aggiunta la vertical slice PostgreSQL reale `identity-signup-flow`: pending→delivery→active/session, replay cookie, concorrenza senza duplicati e failure path per codice errato/scaduto, supersession, abuso, conflitto, Origin e timeout email.
 - Approvato il design `identity-signup-v1` di BL-005: identità interna provider-neutral, Argon2id con pepper versionato, codice email one-time, transactional outbox SMTP, prima sessione post-verifica e UI shadcn mobile-first.
 - Approvato il design `identity-access-v1` di BL-006: login generico anti-enumeration, sessioni idle 24 h/absolute 30 giorni con rotazione, logout/revoca globale, reset a sei cifre senza auto-login e UI shadcn mobile-first essenziale.
+- Versionato il piano TDD inline BL-006 in sette batch: contract/config/crypto, migration, store, API, worker, UI shadcn e candidato verificato.
 - Accettato [`ADR-0010`](adr/0010-internal-provider-neutral-identity.md), che chiude `OD-07` senza introdurre provider, account o deploy remoti.
 - Implementato il candidato BL-079: Tailwind CSS v4, shadcn/ui `new-york` su Radix, Geist locale, Lucide, token semantici e cinque primitive selettive (`Button`, `Card`, `Badge`, `Separator`, `Input`).
 - Aggiunta una shell statica server-rendered, mobile-first e conversation-like con stato essenziale, narrazione, azione giocatore, risultato regola, due scelte e composer persistente; AI Elements, Motion e Rive restano fuori scope.
@@ -198,6 +200,7 @@ supersedes: null
 - Delivery BL-005: CI PR corretta `29525777416` e post-merge `29526030389` hanno concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`; merge `e173fd9` su `main`.
 - Baseline BL-006: install frozen 701 package, build API/worker/web 8 task e suite identity esistente 16/16 `PASS`; nessuna azione provider o Vercel.
 - Design BL-006: `git diff --check` e `verify:docs` confermati dopo self-review, con 23 artifact, 52 documenti/13 modificati, task graph e secret scan `PASS`; corretto lo SHA living e definito `credential_version` senza anticipare runtime.
+- Piano BL-006: gate documentale `PASS` con 23 artifact e 53 documenti/14 modificati; freshness aggiornata al 2026-07-17, task graph e secret scan verdi.
 - Design BL-005: `git diff --check` e `verify:docs` exit `0`; 8 artifact contrattuali, 49 documenti/13 modificati, task graph e secret scan `PASS`. Il primo gate su checkout pulito ha riprodotto il solo `code_ref` a `packages/observability/dist`; rimosso il riferimento generato, il rerun è verde senza build artifact preesistenti.
 - BL-079 functional head `ddcbb5ead4baacda6c494e74934d2e5d5afd3fed` verificato da worktree detached: install frozen in 14,9 s; Turbo build web+dipendenze, contract 7/7, lint, typecheck e smoke HTTP 1/1 tutti exit `0`; cleanup completato e self-review senza P0/P1. Il typecheck diretto preliminare ha confermato il prerequisito `^build` dichiarato dal grafo e non ha richiesto correzioni.
 - BL-079 full `HIGH_RISK`: `TURBO_FORCE=true corepack pnpm@11.13.0 verify` exit `0` in 150,6 s con lint/build 11, typecheck 13, unit 107 pass/1 skip host, integration 21, database 16, contract 80, security 32 pass/3 skip host, report 259 test e artifact 3.987 file; audit high senza vulnerabilità. Il warning reporter è stato isolato nel `node:internal/test_runner` della suite unit preesistente e non modifica l'esito né lo scope UI.

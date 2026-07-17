@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-16
+last_reviewed: 2026-07-17
 last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md
@@ -18,6 +18,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-gov-004-unblock-ui-dependencies-design.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
+  - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
 related_tasks:
   - GOV-001
   - GOV-002
@@ -189,9 +190,9 @@ supersedes: null
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
 | Delivery/commit | `BL-005` è integrato su `main` tramite [PR #28](https://github.com/Emacore17/dnd-ai/pull/28), candidate corretto `c2e4332b408f1cac3e2c69920cd18e5e772e87bf`, merge `e173fd9424ad77330ae8302f68affd4832d66798` e CI PR/post-merge `29525777416`/`29526030389` con cinque job `SUCCESS`. `BL-006` usa questa baseline in una worktree isolata; design approvato e implementazione non iniziata. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
-| SHA-256 specifica | `cf9f7b148554cc96735b1de0077079c9f6cd5ca4238a21375ca4709f7310659a` |
+| SHA-256 specifica | `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-006 — IN_PROGRESS/25%/PARTIAL`; contratto `identity-access-v1` approvato, in review documentale prima del piano TDD |
+| Task attivo | `BL-006 — IN_PROGRESS/25%/PARTIAL`; contratto `identity-access-v1` approvato e piano TDD inline versionato, implementazione pronta |
 | Ultimo task completato | `BL-005 — DONE/100%/PASSING`, integrato tramite PR #28 e CI post-merge `29526030389` |
 | Prossimo task READY | `BL-081`; non avviarlo mentre `BL-006` è attivo |
 | Migration head | `000003_identity_signup` / `database-identity-signup-v1` su `main`; BL-006 pianifica `000004_identity_access` / `database-identity-access-v1` |
@@ -324,7 +325,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 ## Prossima azione
 
-Completare il gate documentale e la review utente di `identity-access-v1`; soltanto dopo creare il piano TDD di BL-006 e implementare la slice nella worktree isolata. `BL-081` resta READY ma non viene avviato in parallelo. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
+Eseguire il piano TDD BL-006 inline iniziando da contract/config/domain/crypto RED, quindi migration/store, API/worker e UI shadcn. `BL-081` resta READY ma non viene avviato in parallelo. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
 
 ## Rischi chiusi
 

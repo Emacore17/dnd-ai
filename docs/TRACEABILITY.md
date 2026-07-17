@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering-and-qa
-last_reviewed: 2026-07-16
+last_reviewed: 2026-07-17
 last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
@@ -13,6 +13,7 @@ source_refs:
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
+  - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
   - docs/superpowers/specs/2026-07-15-gov-002-document-integrity-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
