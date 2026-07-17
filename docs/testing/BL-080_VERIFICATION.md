@@ -1,7 +1,7 @@
 ---
 status: active
 owner: engineering-and-qa
-last_reviewed: 2026-07-14
+last_reviewed: 2026-07-17
 last_verified_commit: aaa17b2ada8a7bab73e3877f263b2c46c5865c13
 source_refs:
   - docs/MVP_SPEC.md#293-ambienti
@@ -175,9 +175,10 @@ Il change set successivo introduce `source.manualDeployment.enabled=false` e `de
 | Output CLI | Il [comando deploy](https://github.com/vercel/vercel/blob/11f0cebacce81dfb713b3cb2d4622e49da0fb475/packages/cli/src/commands/deploy/index.ts#L2217-L2235) etichetta Production soltanto quando `finalDeployment.target` restituito dal provider vale `production` |
 | Contratto REST corrente | [Create Deployment API](https://vercel.com/docs/rest-api/deployments/create-a-new-deployment) dichiara Preview quando `target` è omesso, ma consente anche inferenza environment dal branch; non documenta la precedenza della regola first-deployment |
 | Regola first-deployment | La fonte Vercel [Default Production Domain](https://vercel.com/blog/default-production-domain) documenta che il primo deployment di un nuovo progetto viene automaticamente promosso a Production; è una fonte del 2019, coerente con il comportamento osservato ma non ripetuta nella documentazione CLI corrente |
-| Riproduzione pubblica | [`vercel/vercel#17069`](https://github.com/vercel/vercel/issues/17069), aperta il 2026-07-13, documenta due tentativi CLI `55.0.0` su un progetto con zero deployment e dichiara esplicitamente assente la Git Integration; al cutoff è aperta, senza label/assignee/risposta maintainer |
+| Riproduzione pubblica | [`vercel/vercel#17069`](https://github.com/vercel/vercel/issues/17069), aperta il 2026-07-13, documenta due tentativi CLI `55.0.0` su un progetto con zero deployment e dichiara esplicitamente assente la Git Integration; al readback 2026-07-17 è aperta, senza label/assignee/risposta maintainer o PR collegata |
+| Readback 2026-07-17 | I commenti pubblici aggiungono riproduzioni indipendenti su Git-trigger, CLI e REST fino a CLI `56.2.1`; la release [`vercel@56.3.1`](https://github.com/vercel/vercel/releases/tag/vercel%4056.3.1) cita soltanto token project-scoped e non una correzione Preview/Production. La documentazione Vercel conferma che i custom environment sono Pro/Enterprise, quindi non sono una workaround ammessa sul piano Hobby. |
 
-Conclusione certa: il problema non è il parsing locale e la CLI stampa Production dal payload restituito dal provider. Inferenza più forte: l'omissione del target Preview rende indistinguibile l'intento esplicito dal default e il server applica la regola first-deployment. Poiché manca una conferma o un workaround supportato, non è autorizzato testare la tesi con un terzo deployment. Il blocco concreto di `BL-080` è il conflitto fra contratto documentato e risultato provider, insieme all'assenza di un percorso Preview-only supportato.
+Conclusione certa: il problema non è il parsing locale e la CLI stampa Production dal payload restituito dal provider. Inferenza più forte: l'omissione del target Preview rende indistinguibile l'intento esplicito dal default e il server applica la regola first-deployment. Poiché manca una conferma o un workaround supportato, non è autorizzato testare la tesi con un terzo deployment. Il readback 2026-07-17 non sblocca il task: issue aperta, CLI più recente senza fix dichiarato e nessuna alternativa Hobby supportata. Il blocco concreto di `BL-080` è il conflitto fra contratto documentato e risultato provider, insieme all'assenza di un percorso Preview-only supportato.
 
 ## Incidente tooling durante il readback GitHub
 
@@ -221,7 +222,7 @@ Il primo full verify post-review è terminato per timeout host con exit `124` do
 
 ## Gate ancora aperti
 
-- fix o workaround first-deployment Preview-only confermato dal provider, compatibile con Hobby e con il divieto di Production;
+- fix o workaround first-deployment Preview-only confermato dal provider, compatibile con Hobby e con il divieto di Production; un semplice upgrade CLI resta insufficiente se la release non dichiara la correzione o un dry-run/readback non la prova senza creare deployment;
 - PR separata con containment verificato per qualunque riapertura del percorso manuale;
 - procedura futura di cattura stdout/stderr e containment testata prima di un nuovo bootstrap;
 - deploy automatico Preview identificato da SHA/deployment ID, senza Production;
