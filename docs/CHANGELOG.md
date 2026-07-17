@@ -38,7 +38,8 @@ code_refs:
   - .github/workflows/ci.yml
   - apps/web/components.json
   - apps/web/app/globals.css
-  - apps/web/components/static-game-shell.tsx
+  - apps/web/components/ai-elements
+  - apps/web/components/game
   - apps/web/components/ui
   - scripts/lib/build-artifact.mjs
   - scripts/lib/ci-workflow-policy.mjs
@@ -168,17 +169,23 @@ supersedes: null
 - Aggiunta la vertical slice PostgreSQL reale `identity-access-flow`: signup/verify, sign-in, refresh con rotazione, logout, revoca globale, reset one-time e nuovo login; doppia conferma e login concorrente al reset convergono tramite lock e `credential_version`.
 - Approvato e versionato `interactive-game-shell-v1`: wrapper di dominio, reducer fixture puro, AI Elements selettivo senza `useChat`, drawer shadcn/Radix e Motion lazy/reduced per BL-081.
 - Versionato il piano TDD inline BL-081 in sette batch: contract RED, reducer puro, pruning del registry AI Elements/shadcn, verticale standalone, drawer/Motion, browser locale, bundle delta e gate HIGH_RISK.
+- Implementato il candidato BL-081: home conversazionale interattiva, reducer e fixture event-driven senza timer, subset AI Elements/shadcn posseduti, composer con suggerimenti, HUD in drawer e micro-interazioni Motion reduced-first.
 
 ### Changed
 
 - `BL-006` passa a proposta branch-local `DONE/100%/PASSING`: runtime, verticale, browser, full gate HIGH_RISK, checkout pulito e review terminale sono verdi sul functional head `df7f868`; la delivery protetta resta `PENDING`. `BL-081` resta READY ma non viene avviato prima dell'integrazione.
 - `BL-006` è integrato tramite PR #29/merge `c30c6db` con CI PR/post-merge 5/5 `SUCCESS`; `BL-081` passa `IN_PROGRESS/25%/NOT_RUN` e `BL-007` diventa READY dopo la chiusura delle dipendenze.
+- `BL-081` passa a proposta branch-local `DONE/100%/PASSING`: implementazione, test mirati, build, browser locale, bundle audit, full gate HIGH_RISK e checkout pulito sono conclusi; `QA-002` diventa READY e `BL-007` resta il primo P0 READY. La delivery protetta resta `PENDING`.
 - Allineati catalogo API, overview, modello dati, UX/UI, contesto e tracciabilità alla capability realmente implementata. SMTP reale, provider, deploy, release, Production e azioni Vercel restano esclusi.
 
 ### Verification
 
 - Baseline BL-081 su `c30c6db`: install frozen 701 package in 9,9 s; `verify:docs` con 45 artifact, 53 documenti, task graph e secret scan `PASS`; nessun codice runtime o Vercel modificato.
 - Audit di pianificazione BL-081: dry-run registry ufficiali completati; build baseline tramite grafo Turbo 3/3 `PASS`; home BL-079 pari a 636.744 byte JS raw iniziali e 59.332 byte entry route. Il piano limita le nuove dipendenze dirette a Motion, Streamdown, use-stick-to-bottom e Vaul; `verify:docs` passa con 45 artifact e 55 documenti/7 modificati.
+- Mirati BL-081: reducer 14/14 e contract UI 14/14 `PASS`; lint/typecheck web 8/8 e build production 3/3 verdi. Browser locale 320×568, 390×844 e 1440×900 senza overflow, con CTA 48 px, multilinea, submit/continue, drawer/focus restore e console pulita.
+- Bundle BL-081: 1.328.006 byte raw iniziali e 750.594 byte entry pagina, entrambi `+691.262` sulla shell statica; la quota è spiegata dai runtime consumati, soprattutto Streamdown. Feature DOM Motion asincrona 285 byte; nessuna catena installata per `ai`, `@ai-sdk/react`, Rive o plugin `@streamdown/*`.
+- Full HIGH_RISK BL-081 finale exit `0` in 209,3 s: lint/build 11, typecheck 16, report 376 test, security 39 pass/3 skip host, documentazione/task graph/CI/deployment/secret scan e artifact 4.344 file `PASS`. Un primo avvio si è fermato prima delle lane su 14 file non formattati; il finding è stato chiuso con Prettier mirato, lint/typecheck e 29 test verdi prima del rerun.
+- Checkout detached del functional head BL-081 `561dc2d`: install frozen 819 package, build web 3/3, reducer 14/14, contract 14/14, smoke standalone 1/1 e `verify:docs` `PASS`; cleanup completato sul solo path verificato e worktree list preservata.
 - Verticale PostgreSQL `1/1 PASS` in 4,6 s; aggregato identity serializzato per le suite database `96/96 PASS` in 53,6 s. La serializzazione evita contesa fra container Docker indipendenti senza ritentare asserzioni o indebolire test.
 - Browser locale su 320×800, 390×844 e 1440×900: contenuto presente, overflow orizzontale `0`, target minimi 44 px, CTA 48 px, focus visibile, zero overlay e zero log warn/error. Il browser integrato non attiva eventi React sintetici, verificato anche sul toggle password; component/BFF test restano l'evidenza delle interazioni.
 - Full HIGH_RISK finale senza cache `PASS` in 250,3 s: lint 11, typecheck 16, build 11, report 355 test (351 pass/4 skip host), artifact 4.332 file e policy documentazione, task graph, CI, deployment e secret scan verdi. Due tentativi precedenti hanno trovato e chiuso due lint test e sei contract test fermi a `v2`/`000003`; regressioni mirate 14/14 e contract lane 94/94 precedono il rerun completo.

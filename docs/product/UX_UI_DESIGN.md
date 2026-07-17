@@ -11,6 +11,7 @@ source_refs:
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
+  - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
 related_tasks:
   - GOV-001
   - GOV-004
@@ -41,11 +42,17 @@ code_refs:
   - apps/web/components/auth
   - apps/web/components/ui/alert.tsx
   - apps/web/components/ui/label.tsx
+  - apps/web/components/ai-elements
+  - apps/web/components/game
+  - apps/web/lib/game-shell
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/web-identity-ui.test.mjs
   - tests/integration/web-identity-pages.test.mjs
   - tests/unit/identity-client.test.mjs
+  - tests/unit/game-shell-reducer.test.mjs
+  - tests/contracts/web-interactive-game-shell.test.mjs
+  - tests/integration/web-game-shell.test.mjs
   - tests/e2e/mobile-game-loop.spec.ts (planned)
   - tests/e2e/reduced-motion.spec.ts (planned)
   - tests/visual/game-shell.spec.ts (planned)
@@ -386,6 +393,8 @@ La verifica locale BL-006 copre 320×800, 390×844 e 1440×900: nessun overflow 
 4. Motion lazy/reduced e progressive enhancement desktop;
 5. smoke locale per focus, touch target, overflow e contenuto equivalente senza motion;
 6. decisione Rive: assente dal bundle iniziale salvo benchmark successivo.
+
+Il candidato branch-local di `BL-081` implementa questa sequenza con un reducer puro e una sorgente fixture iniettata, senza timer, rete o persistenza browser. `Conversation`, `Message` e `PromptInput` sono subset posseduti del registry AI Elements; `GameDrawer` usa Vaul/shadcn e ripristina il focus; Motion usa `LazyMotion` strict, `prefers-reduced-motion`, trasformazioni e opacity. Lo smoke locale verifica 320, 390 e 1440 px, submit/continue, multilinea, drawer/focus restore e console pulita. Il bundle iniziale non contiene Rive, AI SDK chat o plugin `@streamdown/*`; la feature DOM Motion resta asincrona. Il gate comune Playwright/accessibility/visuale rimane correttamente in `QA-002`.
 
 `QA-002` consolida Playwright, accessibility, visual regression, device matrix e failure path dopo `BL-081`.
 

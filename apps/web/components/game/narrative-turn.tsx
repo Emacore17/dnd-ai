@@ -1,3 +1,7 @@
+"use client";
+
+import { m, useReducedMotion } from "motion/react";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Message,
@@ -12,6 +16,12 @@ export interface NarrativeTurnProps {
   readonly isAnimating?: boolean;
 }
 
+const RESULT_ANIMATE = { opacity: 1, transform: "translateY(0)" } as const;
+const RESULT_INITIAL = {
+  opacity: 0,
+  transform: "translateY(0.25rem)",
+} as const;
+
 function assertNever(turn: never): never {
   throw new Error(`Unhandled narrative turn: ${JSON.stringify(turn)}`);
 }
@@ -20,6 +30,8 @@ export function NarrativeTurn({
   turn,
   isAnimating = false,
 }: NarrativeTurnProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   switch (turn.kind) {
     case "narration":
       return (
@@ -45,10 +57,12 @@ export function NarrativeTurn({
 
     case "rule_result":
       return (
-        <section
+        <m.section
+          animate={RESULT_ANIMATE}
           aria-label={`Risultato: ${turn.label}`}
           className="max-w-[65ch] rounded-2xl border border-border/80 bg-card/75 p-4 shadow-sm"
           data-message-kind="rule_result"
+          initial={prefersReducedMotion ? false : RESULT_INITIAL}
         >
           <div className="flex flex-wrap items-center gap-2">
             <Badge
@@ -73,7 +87,7 @@ export function NarrativeTurn({
               {turn.stateDiff}
             </p>
           ) : null}
-        </section>
+        </m.section>
       );
 
     default:

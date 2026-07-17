@@ -79,7 +79,10 @@ export const PromptInputTextarea = ({
   );
 };
 
-export type PromptInputSubmitProps = Omit<ComponentProps<typeof Button>, "type">;
+export type PromptInputSubmitProps = Omit<
+  ComponentProps<typeof Button>,
+  "type"
+>;
 
 export const PromptInputSubmit = ({
   "aria-label": ariaLabel = "Invia azione",

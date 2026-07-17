@@ -177,14 +177,8 @@ test("incompatible events fail closed without cloning state", () => {
     reduceGameShell(initial, { type: "command_acknowledged" }),
     initial,
   );
-  assert.equal(
-    reduceGameShell(initial, FIXTURE_COMPLETED_TURN),
-    initial,
-  );
-  assert.equal(
-    reduceGameShell(initial, { type: "retry_requested" }),
-    initial,
-  );
+  assert.equal(reduceGameShell(initial, FIXTURE_COMPLETED_TURN), initial);
+  assert.equal(reduceGameShell(initial, { type: "retry_requested" }), initial);
 });
 
 test("drawer events only change the active hud section", () => {

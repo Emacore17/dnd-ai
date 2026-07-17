@@ -74,10 +74,7 @@ test("the web workspace pins the minimal local design-system dependencies", asyn
     );
   }
 
-  for (const packageName of [
-    "@ai-sdk/react",
-    "@rive-app/react-canvas",
-  ]) {
+  for (const packageName of ["@ai-sdk/react", "@rive-app/react-canvas"]) {
     assert.equal(packageName in dependencies, false);
   }
 });
@@ -153,10 +150,18 @@ test("the home page keeps an explicit server-to-client game boundary", async () 
   assert.notEqual(page, null, "the home page should exist");
   assert.doesNotMatch(page, /^\s*["']use client["'];?\s*$/mu);
   assert.match(page, /InteractiveGameShell/u);
-  assert.notEqual(interactiveShell, null, "the client game boundary should exist");
+  assert.notEqual(
+    interactiveShell,
+    null,
+    "the client game boundary should exist",
+  );
   assert.match(interactiveShell, /^\s*["']use client["'];?\s*$/mu);
   assert.doesNotMatch(interactiveShell, /dangerouslySetInnerHTML/u);
-  assert.equal(staticShell, null, "the superseded static shell should be removed");
+  assert.equal(
+    staticShell,
+    null,
+    "the superseded static shell should be removed",
+  );
 });
 
 test("the game feed scrolls without letting the persistent composer cover decisions", async () => {

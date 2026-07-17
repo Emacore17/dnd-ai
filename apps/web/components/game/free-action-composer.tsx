@@ -77,24 +77,35 @@ export function FreeActionComposer({
   };
 
   return (
-    <div className="space-y-2">
+    <div className={status === "idle" ? "space-y-0" : "space-y-2"}>
       <div
         aria-atomic="true"
         aria-live="polite"
-        className="min-h-5 text-xs text-muted-foreground"
+        className={
+          status === "idle"
+            ? "sr-only"
+            : "min-h-5 text-xs text-muted-foreground"
+        }
         role={status === "error" ? "alert" : "status"}
       >
         {getStatusMessage(status, progress, failure)}
       </div>
       {canRetry ? (
-        <Button className="w-full" onClick={onRetry} type="button" variant="outline">
+        <Button
+          className="w-full"
+          onClick={onRetry}
+          type="button"
+          variant="outline"
+        >
           Riprova la stessa azione
         </Button>
       ) : null}
       {status === "completed" ||
       (status === "error" && failure?.stateApplied === true) ? (
         <Button className="w-full" onClick={onContinue} type="button">
-          {status === "completed" ? "Continua" : "Continua dalla scena aggiornata"}
+          {status === "completed"
+            ? "Continua"
+            : "Continua dalla scena aggiornata"}
         </Button>
       ) : null}
       <PromptInput onSubmit={handleSubmit}>

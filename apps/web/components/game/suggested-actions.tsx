@@ -38,8 +38,8 @@ export function SuggestedActions({
   );
 
   return (
-    <section aria-label="Azioni suggerite" className="space-y-2">
-      <div className="grid gap-2 sm:grid-cols-2">
+    <section aria-label="Azioni suggerite" className="space-y-1">
+      <div className="grid grid-cols-2 gap-2">
         {primaryActions.map(renderAction)}
       </div>
       {additionalActions.length > 0 ? (
@@ -55,7 +55,7 @@ export function SuggestedActions({
               <ChevronDownIcon aria-hidden="true" className="size-4" />
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="grid gap-2 pt-2 sm:grid-cols-2">
+          <CollapsibleContent className="grid grid-cols-2 gap-2 pt-2">
             {additionalActions.map(renderAction)}
           </CollapsibleContent>
         </Collapsible>

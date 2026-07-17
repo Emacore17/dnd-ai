@@ -80,7 +80,10 @@ test("the approved AI Elements and shadcn source inventory stays selective", asy
     "PromptInputSubmit",
     "PromptInputTextarea",
   ]) {
-    assert.match(combined, new RegExp(`export (?:const|function) ${exportName}\\b`, "u"));
+    assert.match(
+      combined,
+      new RegExp(`export (?:const|function) ${exportName}\\b`, "u"),
+    );
   }
 
   for (const forbiddenToken of [
@@ -166,11 +169,20 @@ test("the public conversational wrappers preserve the mobile game controls", asy
 });
 
 test("the game drawer remains a dedicated domain wrapper", async () => {
-  const source = await readRequired(
-    "apps/web/components/game/game-drawer.tsx",
-  );
+  const source = await readRequired("apps/web/components/game/game-drawer.tsx");
 
-  assert.match(source, /export function GameDrawer\b/u);
+  for (const requiredPattern of [
+    /export function GameDrawer\b/u,
+    /DrawerTitle/u,
+    /DrawerDescription/u,
+    /DrawerClose/u,
+    /onCloseAutoFocus/u,
+    /\.focus\(\)/u,
+    /pb-\[var\(--safe-area-bottom\)\]/u,
+    /aria-haspopup="dialog"/u,
+  ]) {
+    assert.match(source, requiredPattern);
+  }
   assert.doesNotMatch(
     source,
     /@ai-sdk\/react|DefaultChatTransport|UIMessage|useChat/u,
@@ -217,9 +229,16 @@ test("Motion stays behind a strict lazy reduced-motion boundary", async () => {
 
   assert.match(provider, /LazyMotion/u);
   assert.match(provider, /strict/u);
+  assert.match(provider, /MotionConfig/u);
   assert.match(provider, /reducedMotion=["']user["']/u);
   assert.match(provider, /import\(["'].\/game-motion-features["']\)/u);
   assert.match(features, /domAnimation/u);
+  assert.match(shell, /useReducedMotion/u);
+  assert.match(shell, /\bm\.(?:div|p|section)\b/u);
   assert.doesNotMatch(`${provider}\n${shell}`, /\bmotion\s*[,}]/u);
+  assert.doesNotMatch(
+    `${provider}\n${shell}`,
+    /repeat:\s*Infinity|\blayout\b/u,
+  );
   assert.doesNotMatch(`${provider}\n${features}\n${shell}`, /@rive-app/u);
 });

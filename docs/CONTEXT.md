@@ -197,19 +197,19 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-17 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `BL-006` è integrato su `main` tramite [PR #29](https://github.com/Emacore17/dnd-ai/pull/29), candidato `31d5cb3ec6e9d4e16042d2c177b8992f0340a299` e merge `c30c6db616ebb69434e4b04dcccb97e48530f6a9`; CI PR `29570461340` e post-merge `29570669866` hanno concluso cinque job `SUCCESS`. `BL-081` usa questa baseline in una worktree isolata e non ha delivery remota. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `BL-006` è integrato su `main` tramite [PR #29](https://github.com/Emacore17/dnd-ai/pull/29), candidato `31d5cb3ec6e9d4e16042d2c177b8992f0340a299` e merge `c30c6db616ebb69434e4b04dcccb97e48530f6a9`; CI PR `29570461340` e post-merge `29570669866` hanno concluso cinque job `SUCCESS`. Il functional head BL-081 `561dc2d` ha completato full e checkout pulito nella worktree isolata, ma non ha ancora delivery remota. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
 | SHA-256 specifica | `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | `BL-081 — IN_PROGRESS/25%/NOT_RUN`; design `interactive-game-shell-v1` approvato e piano TDD inline versionato, implementazione non iniziata |
+| Task attivo | `BL-081 — DONE/100%/PASSING` proposto sulla branch; full HIGH_RISK e checkout pulito verdi, delivery protetta `PENDING` |
 | Ultimo task completato | `BL-006 — DONE/100%/PASSING`, integrato tramite PR #29 e CI post-merge `29570669866` |
-| Prossimo task READY | `BL-007`; dipendenze BL-004/BL-006 integrate, resta non avviato mentre BL-081 è attivo |
+| Prossimo task READY | `BL-007`; `QA-002` è anch'esso sbloccato da BL-081 ma viene dopo BL-007 nell'ordine P0 |
 | Migration head | `000004_identity_access` / `database-identity-access-v1`, integrata e verificata su PostgreSQL reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-006`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` fornisce Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide, token semantic-first e shell statica server-rendered; `BL-081` è stato selezionato per AI Elements, interazione e Motion. `BL-005`/`BL-006` implementano l'intero lifecycle identity locale con contract `v3`, migration `000004`, API/worker/BFF e superfici shadcn mobile-first. Redis locale applicativo, BullMQ, route di gioco, SSE e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-006`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `QA-001` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079` fornisce Tailwind v4, shadcn `new-york`/Radix, Geist/Lucide e token semantic-first; il candidato `BL-081` sostituisce la home statica con una shell fixture interattiva, reducer puro, subset AI Elements, drawer HUD e Motion reduced-first. `BL-005`/`BL-006` implementano l'intero lifecycle identity locale con contract `v3`, migration `000004`, API/worker/BFF e superfici shadcn mobile-first. Redis locale applicativo, BullMQ, route di gioco, SSE e staging **non sono disponibili**: la shell non va confusa con un backend turno già presente. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
 
 ## Decisioni operative vigenti
 
@@ -244,10 +244,10 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Observability contract | `observability-baseline-v1` | implementato e integrato tramite PR #20; run post-merge `29415397361` 5/5 `SUCCESS`; provider remoti assenti |
 | Identity contract | `identity-signup-v1` implementato; `identity-access-v1` in review | signup integrato; contract `v3`, porte/config/crypto, migration `000004`, store, runtime API/worker/web, verticale access/reset, browser e full gate verdi sulla branch. Clean checkout/delivery restano aperti; SMTP/provider/account remoti assenti |
 | Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
-| Design contract | `ux-ui-2026-07-13` | foundation statica BL-079 e form auth BL-005 implementate; shell di gioco interattiva/Motion restano BL-081 |
+| Design contract | `ux-ui-2026-07-13` / `interactive-game-shell-v1` | foundation BL-079 e form auth BL-005 integrate; candidato BL-081 implementa shell di gioco interattiva, AI Elements selettivi, drawer e Motion reduced-first |
 | ADR UI | `ADR-0001 accepted` | vigente |
-| Toolchain | Node `24.11.0` (engine `>=22.13.0`); pnpm `11.13.0`; Turbo `2.10.4`; TypeScript `6.0.3`; Zod `4.4.3`; Ajv `8.20.0`/formats `3.0.1` test-only; github-slugger `2.0.0`; Mermaid `11.16.0`/DOMPurify `3.4.12` docs-only; OTel API `1.9.1`/SDK `2.9.0`; Pino `10.3.1`; Sentry `10.65.0`; Argon2 `0.44.0`; Nodemailer `9.0.3`; PostgreSQL `17`; pgvector `0.8.2`; node-pg-migrate `8.0.4`; pg `8.22.0`; Docker `29.2.1` | pinning e lockfile presenti; `argon2` è l'unica nuova dipendenza nativa allowlisted; immagine DB pin a digest |
-| Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web con shell statica e form/BFF auth; API espone le sole route identity, validate-before-bind e shutdown del pool; nessuna route di gioco |
+| Toolchain | Node `24.11.0` (engine `>=22.13.0`); pnpm `11.13.0`; Turbo `2.10.4`; TypeScript `6.0.3`; Zod `4.4.3`; Ajv `8.20.0`/formats `3.0.1` test-only; github-slugger `2.0.0`; Mermaid `11.16.0`/DOMPurify `3.4.12` docs-only; Motion `12.42.2`; Streamdown `2.5.0`; use-stick-to-bottom `1.1.6`; Vaul `1.1.2`; OTel API `1.9.1`/SDK `2.9.0`; Pino `10.3.1`; Sentry `10.65.0`; Argon2 `0.44.0`; Nodemailer `9.0.3`; PostgreSQL `17`; pgvector `0.8.2`; node-pg-migrate `8.0.4`; pg `8.22.0`; Docker `29.2.1` | pinning e lockfile presenti; AI SDK chat, Rive e plugin `@streamdown/*` assenti; immagine DB pin a digest |
+| Web/API | Next `16.2.10`; React `19.2.7`; Fastify `5.10.0` | web candidato con shell fixture interattiva e form/BFF auth; API espone le sole route identity, validate-before-bind e shutdown del pool; nessuna route di gioco |
 | Package boundary policy | `boundary-policy-v1` | checker + fixture negativa presenti |
 | Task graph policy | `task-graph-v1` | ID, range, status, parity spec e consumer UX verificati |
 | Agent workflow policy | `agent-workflow-v1` / task schema `1.1.0` | corsie di rischio, delivery derivata, budget e gate rapidi fail-closed verificati |
@@ -322,8 +322,8 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 | ID | Rischio | Mitigazione/owner |
 |---|---|---|
 | CTX-R03 | App e package di gioco restano in gran parte scaffold; esiste soltanto il verticale identity oltre alla foundation UI | non inferire loop di gioco, API turni o stato campagna dalla shell fixture o dalle route auth; BL-081/BL-028 possiedono i passi successivi |
-| CTX-R04 | La shell interattiva e il browser harness comune restano successivi alla foundation | `BL-081` è IN_PROGRESS per stati/interazione/Motion; `QA-002` consolida il browser gate dopo la shell interattiva |
-| CTX-R05 | Motion/Rive possono degradare device mobili | Motion lazy/reduced e Rive assente dal bundle iniziale in `BL-081`; `QA-002` verifica reduced-motion e visual/performance regression |
+| CTX-R04 | Il browser harness comune non è ancora disponibile | `BL-081` ha completato lo smoke browser locale di feature e sbloccato `QA-002`, ora READY per Playwright, accessibility e visual regression |
+| CTX-R05 | Motion/Rive possono degradare device mobili | Motion usa `LazyMotion` strict con feature DOM asincrona da 285 byte e reduced-motion; Rive è assente. `QA-002` conserva il gate visual/performance comune |
 | CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | `BL-080` è `BLOCKED/50%/PARTIAL` sull'assenza di un percorso first-deployment Preview-only supportato; freeze e `GATE-M0` restano chiusi, mentre i slice UI locali avanzano senza deploy |
 | CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based/ignore-aware |
 | CTX-R14 | L'installazione condivisa `41079282` vede 8 repository e non può essere ristretta senza togliere accesso ad altri progetti; un owner può bypassare l'interlock procedurale e invocare direttamente CLI/UI | Controlli project-level, Git disabilitato, `manualDeployment.enabled=false`, runbook fail-closed e divieto esplicito di deploy reale; l'interlock non viene presentato come enforcement provider |
@@ -334,7 +334,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 ## Prossima azione
 
-Completare self-review e gate documentale del piano TDD BL-081, committarlo e proseguire inline con `superpowers:executing-plans`: Task 1 crea l'inventory contract RED prima di ogni modifica runtime. `BL-007` resta READY e non avviato. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
+Completare la review terminale del candidato BL-081, pubblicare una sola PR protetta e integrare esclusivamente con `CI / Merge gate` verde. `BL-007` resta il primo task READY e non avviato; `QA-002` è sbloccato. `BL-080` resta congelato e non sono autorizzate azioni Vercel.
 
 ## Rischi chiusi
 

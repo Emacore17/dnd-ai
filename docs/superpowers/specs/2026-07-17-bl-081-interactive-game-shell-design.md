@@ -18,9 +18,10 @@ code_refs:
   - apps/web/app/page.tsx
   - apps/web/app/globals.css
   - apps/web/components.json
-  - apps/web/components/static-game-shell.tsx
+  - apps/web/components/ai-elements
+  - apps/web/components/game
   - apps/web/components/ui
-  - apps/web/lib/static-game-shell-fixture.ts
+  - apps/web/lib/game-shell
 test_refs:
   - tests/contracts/web-design-system.test.mjs
   - tests/integration/web-game-shell.test.mjs

@@ -1,12 +1,7 @@
 export const MAX_ACTION_LENGTH = 2_000;
 
 export type GameShellStatus =
-  | "idle"
-  | "submitting"
-  | "progress"
-  | "completed"
-  | "reconnect"
-  | "error";
+  "idle" | "submitting" | "progress" | "completed" | "reconnect" | "error";
 
 export type GameDrawerSection = "objective" | "party" | "inventory";
 

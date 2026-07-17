@@ -107,5 +107,8 @@ test("the standalone page renders the interactive mobile-first game hierarchy", 
   assert.match(html, /placeholder="Cosa vuoi fare\?"/u);
   assert.match(html, /aria-label="Invia azione"/u);
   assert.match(html, /role="status"/u);
+  assert.match(html, /aria-label="Apri obiettivo"/u);
+  assert.match(html, /aria-label="Apri party"/u);
+  assert.match(html, /aria-label="Apri inventario"/u);
   assert.doesNotMatch(html, /javascript:/iu);
 });

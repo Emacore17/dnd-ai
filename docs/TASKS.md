@@ -179,8 +179,8 @@ supersedes: null
 > **Versione schema task:** `1.1.0`
 > **Stato del programma:** `IN_PROGRESS`
 > **Milestone corrente:** `M0 — Fondamenta`
-> **Task attivo:** `BL-081 — IN_PROGRESS/25%/NOT_RUN` sulla branch `codex/bl-081-interactive-shell`; design `interactive-game-shell-v1` approvato, implementazione non ancora iniziata
-> **Prossimo task READY:** `BL-007 — ActorContext e query tenant-safe`; resta non avviato mentre BL-081 è attivo
+> **Task attivo:** `BL-081 — DONE/100%/PASSING` proposto sulla branch `codex/bl-081-interactive-shell`; delivery protetta `PENDING` finché il candidato non raggiunge `main`
+> **Prossimo task READY:** `BL-007 — ActorContext e query tenant-safe`; `QA-002` è anch'esso sbloccato e `READY`, ma viene dopo BL-007 nell'ordine P0
 > **Regola assoluta:** nessun task può essere marcato `DONE` senza test `PASSING`, contesto verificato ed evidenze di chiusura.
 
 Questo file è sia backlog sia registro di esecuzione. Deve essere modificato nello stesso commit del lavoro a cui si riferisce. Le descrizioni di prodotto e architettura provengono da `docs/MVP_SPEC.md`; questo documento le scompone in unità eseguibili, con dipendenze, riferimenti e quality gate.
@@ -707,9 +707,9 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### BL-081 — Shell conversazionale interattiva e motion layer
 
-- **Stato:** `IN_PROGRESS`
-- **Progresso:** `25%`
-- **Esito test:** `NOT_RUN`
+- **Stato:** `DONE`
+- **Progresso:** `100%`
+- **Esito test:** `PASSING`
 - **Contesto verificato:** `YES` — base integrata `c30c6db616ebb69434e4b04dcccb97e48530f6a9`; specifica SHA `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b`; data: `2026-07-17`
 - **Priorità / stima:** `P0` / `M`
 - **Dipendenze:** BL-079, QA-001
@@ -718,13 +718,13 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 - **Deliverable:** Wrapper `GameConversation`, `NarrativeTurn`, `FreeActionComposer` e `GameDrawer`; primitive AI Elements selettive senza trasporto parallelo; fixture deterministiche per stati turno; drawer HUD; Motion lazy/reduced; progressive enhancement desktop.
 - **Criterio di accettazione:** La shell interattiva funziona a 320–430 px e desktop; composer, safe area, tastiera virtuale, due azioni suggerite, drawer, focus, overflow, stati idle/submitting/progress/completed/reconnect/error e contenuto equivalente senza motion superano smoke locale; Rive resta assente dal bundle iniziale.
 - **Test obbligatori prima di `DONE`:**
-  - [ ] Component test dei wrapper e degli stati deterministici, inclusi contenuto lungo, errore e reconnect.
-  - [ ] Smoke locale 320/390/1440 px per touch target, focus, safe area, tastiera virtuale e overflow.
-  - [ ] Reduced-motion mantiene contenuto, focus order e azioni; Motion usa `LazyMotion`/feature subset e transform/opacity nei percorsi frequenti.
-  - [ ] Bundle check prova AI Elements selettivi, assenza di `useChat`/trasporto parallelo e assenza di Rive iniziale.
+  - [x] Component test dei wrapper e degli stati deterministici, inclusi contenuto lungo, errore e reconnect.
+  - [x] Smoke locale 320/390/1440 px per touch target, focus, safe area, tastiera virtuale e overflow.
+  - [x] Reduced-motion mantiene contenuto, focus order e azioni; Motion usa `LazyMotion`/feature subset e transform/opacity nei percorsi frequenti.
+  - [x] Bundle check prova AI Elements selettivi, assenza di `useChat`/trasporto parallelo e assenza di Rive iniziale.
 - **Documentazione e contesto:** design e piano BL-081; `docs/product/UX_UI_DESIGN.md`; `docs/adr/0001-mobile-first-conversational-ui.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
-- **Evidenze di chiusura:** design `interactive-game-shell-v1` approvato e piano inline TDD in sette batch versionato; baseline `c30c6db`: install frozen 701 package in 9,9 s e `verify:docs` con 45 artifact/53 documenti, task graph e secret scan `PASS`. Audit registry ufficiale: AI Elements completi ampliano inutilmente il P0; subset finale previsto `motion@12.42.2`, `streamdown@2.5.0`, `use-stick-to-bottom@1.1.6`, `vaul@1.1.2`. Build baseline via grafo Turbo `PASS`; home 636.744 byte JS raw iniziali e 59.332 byte entry route. Piano: `verify:docs` con 45 artifact/55 documenti/7 modificati, task graph e secret scan `PASS`. Implementazione e test runtime non ancora iniziati.
-- **Note, rischi o bloccanti:** Corsia `HIGH_RISK` per dependency graph/lockfile, rendering AI, stato client, overlay e Motion. Selettivi `conversation`/`message`/`prompt-input`, reducer puro e `LazyMotion`; vietati `useChat`, trasporto parallelo, raw HTML, storage browser e Rive iniziale. `QA-002` consolida il browser harness comune dopo questa feature; `BL-080` e `GATE-M0` possiedono lo smoke remoto. Nessuna azione Vercel è richiesta o autorizzata.
+- **Evidenze di chiusura:** design `interactive-game-shell-v1` e piano TDD versionati. Implementati model/reducer/fixture puri, wrapper `GameConversation`/`NarrativeTurn`/`FreeActionComposer`/`GameDrawer`, subset AI Elements e shadcn, home interattiva e Motion reduced-first senza timer, rete o storage browser. Mirati finali: reducer 14/14, contract UI 14/14 e smoke standalone 1/1 `PASS`; lint/typecheck web 8/8 e build production 3/3 `PASS`. Browser locale: 320×568, 390×844 e 1440×900 senza overflow; textarea/CTA 48 px, `Shift+Enter`, submit/continue, drawer Escape/focus restore e console pulita. Bundle: 1.328.006 byte raw iniziali e 750.594 byte entry pagina, entrambi `+691.262`; feature DOM Motion asincrona 285 byte; nessuna catena `ai`, `@ai-sdk/react`, Rive o plugin `@streamdown/*`. Full HIGH_RISK finale exit `0` in 209,3 s: lint/build 11, typecheck 16, report 376 test, security 39 pass/3 skip host, document/task/CI/deploy/secret policy e artifact 4.344 file `PASS`. Checkout detached del functional head `561dc2d`: install frozen 819 package, build web 3/3, reducer 14/14, contract 14/14, smoke 1/1 e `verify:docs` `PASS`; cleanup deregistrato e residuo Windows rimosso dal solo path verificato.
+- **Note, rischi o bloccanti:** Nessun blocco funzionale residuo. Il primo full si è fermato prima delle lane sulla formattazione di 14 file BL-081; Prettier mirato, lint/typecheck e 29 test hanno chiuso il finding prima del rerun verde. Streamdown spiega la quota principale del delta bundle; il runtime resta deliberatamente limitato al renderer effettivamente consumato e non è stata inventata una soglia retroattiva. `QA-002` è ora `READY` per consolidare il browser harness comune; `BL-080` e `GATE-M0` possiedono lo smoke remoto. Delivery protetta e checkout pulito restano evidenze esterne/terminali, non blocchi di implementazione. Nessuna azione Vercel è richiesta o autorizzata.
 
 ### GOV-002 — Validazione automatica della documentazione e tracciabilità
 
@@ -811,7 +811,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
 
 ### QA-002 — Browser, accessibility e visual regression harness
 
-- **Stato:** `BACKLOG`
+- **Stato:** `READY`
 - **Progresso:** `0%`
 - **Esito test:** `NOT_RUN`
 - **Contesto verificato:** `NO` — commit/SHA: `—`; data: `—`
@@ -828,7 +828,7 @@ Stabilire repository, governance del contesto, contratti, dati, identity, osserv
   - [ ] Visual artifact stabile su due run; server failure, browser crash e snapshot drift propagano exit non-zero.
 - **Documentazione e contesto:** `docs/testing/TEST_STRATEGY.md`; `docs/product/UX_UI_DESIGN.md`; `docs/CONTEXT.md`; `docs/TRACEABILITY.md`
 - **Evidenze di chiusura:** commit/PR `—`; comandi/report/CI `—`; migration/eval/trace ID `N/A`.
-- **Note, rischi o bloccanti:** Non duplica le fixture di `BL-081` e non ne blocca l’implementazione. È bloccato finché `QA-001` e `BL-081` non sono `DONE`. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`.
+- **Note, rischi o bloccanti:** Le dipendenze `QA-001` e `BL-081` sono `DONE`; il task è sbloccato ma resta successivo a `BL-007` nell'ordine P0. Non duplica le fixture di feature. Preview/staging e ogni azione Vercel restano proprietà di `BL-080`.
 
 ### DOC-ARCH-001 — Documentazione architetturale, dati e sviluppo locale
 
@@ -2687,20 +2687,20 @@ Compilare questa sezione durante il lavoro; mantenerne una sola istanza per il t
 active_task: BL-081
 last_completed_task: BL-006
 next_ready_task: BL-007
-status: IN_PROGRESS
-progress: 25
+status: DONE
+progress: 100
 started_at: 2026-07-17T11:38:00+02:00
-candidate_at: null
+candidate_at: 2026-07-17T13:25:00+02:00
 cycle_target_minutes: 120
-cycle_actual_minutes: 35
-updated_at: 2026-07-17T12:13:08+02:00
+cycle_actual_minutes: 113
+updated_at: 2026-07-17T13:31:00+02:00
 agent: Codex development agent
 git_branch: codex/bl-081-interactive-shell
 base_commit: c30c6db616ebb69434e4b04dcccb97e48530f6a9
-candidate_head: null
+candidate_head: 561dc2d2b69f4a9a4cbb4b136687d39ceb42f7ae
 spec_sha256: 737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b
 context_verified: true
-test_status: NOT_RUN
+test_status: PASSING
 ```
 
 ## Contesto letto
@@ -2727,6 +2727,9 @@ test_status: NOT_RUN
 
 | Data/ora assoluta | Progresso | Decisione/finding | Test/evidenza | Prossimo passo |
 |---|---:|---|---|---|
+| 2026-07-17 13:31 +02:00 | 100% | Il functional head è riproducibile da checkout detached pulito. `git worktree remove` ha deregistrato il checkout ma lasciato output Windows non vuoto; il residuo è stato verificato come unico path sotto la `.worktrees` locale e rimosso con pathspec esatto, senza toccare altri worktree. | Head `561dc2d`: install frozen 819 package/11,9 s; build web 3/3; reducer 14/14; contract 14/14; smoke standalone 1/1; `verify:docs` con 45 artifact/55 documenti, task graph e secret scan `PASS`. Worktree list finale contiene solo main, BL-006 e BL-081. | Aggiornare le evidenze nello stesso commit funzionale, eseguire verifica finale/status/diff e pubblicare una sola PR protetta senza azioni Vercel. |
+| 2026-07-17 13:25 +02:00 | 100% | Candidato branch-local proposto `DONE/100%/PASSING`; BL-081 chiude il verticale UI fixture senza fingere API turno/SSE. QA-002 diventa READY, mentre BL-007 resta il primo P0 READY. Il primo full ha trovato soltanto 14 file non formattati e si è fermato prima delle lane; il batch Prettier mirato è stato verificato prima del rerun. | Full HIGH_RISK finale exit `0` in 209,3 s: lint/build 11, typecheck 16, report 376 test, security 39 pass/3 skip host, documentazione/task graph/CI/deployment/secret scan e artifact 4.344 file `PASS`. Nessuna azione Vercel. | Incorporare codice/test/docs nell'ultimo commit funzionale, eseguire checkout detached pulito e review terminale; poi unica PR protetta con merge gate verde. |
+| 2026-07-17 13:16 +02:00 | 90% | Shell interattiva completata inline: reducer/event source deterministici, AI Elements/shadcn selettivi, composer e HUD accessibili, `LazyMotion` strict e Rive assente. L'audit React ha stabilizzato gli oggetti Motion; l'entrypoint alternativo `motion/react-m` è stato scartato dopo typecheck/build perché la versione pin non esporta `m`. | Reducer 14/14, contract UI 14/14, lint/typecheck 8/8 e build web 3/3 `PASS`. Browser locale 320×568, 390×844 e 1440×900: overflow 0, CTA 48 px, multilinea/submit/continue e focus drawer verificati, console pulita. Bundle 1.328.006 byte iniziali e 750.594 byte pagina (`+691.262`); Motion DOM asincrono 285 byte; `why` esclusi vuoti. | Allineare living docs, eseguire l'unico full gate HIGH_RISK, incorporare tutto nell'ultimo commit funzionale e verificare il candidato da checkout pulito. |
 | 2026-07-17 12:13 +02:00 | 25% | Review Product Owner del design conclusa; piano TDD inline scomposto in sette batch con reducer puro prima del client, acquisizione registry seguita da pruning, un solo full gate e checkout pulito. Le skill shadcn/AI Elements hanno ristretto il risultato finale a quattro dipendenze dirette e source posseduto; QA-002 conserva il harness browser comune. | Dry-run ufficiali: AI Elements 3 item/16 file e overwrite non accettabili grezzi; shadcn `drawer`/`textarea`/`progress`/`collapsible` selettivi. Build baseline tramite Turbo 3/3 PASS; home 636.744 byte JS raw iniziali, entry route 59.332. `verify:docs` PASS: 45 artifact, 55 documenti/7 modificati, task graph e secret scan. Nessun runtime source, lockfile o Vercel modificato. | Committare il piano, poi invocare `executing-plans` e iniziare Task 1 con inventory contract RED. |
 | 2026-07-17 11:53 +02:00 | 25% | Selezionato BL-081 dopo merge/CI post-merge BL-006. Approvato `interactive-game-shell-v1`: wrapper di dominio, reducer puro, fixture event-driven senza timer, AI Elements selettivo senza `useChat`, shadcn/Radix e `LazyMotion` reduced-first. BL-007 passa READY perché BL-004/BL-006 sono DONE. | Base `c30c6db`; install frozen 701 package in 9,9 s; baseline `verify:docs` PASS con 45 artifact, 53 documenti, task graph e secret scan. Spec SHA `737fcb…d80b`; nessun codice runtime o Vercel modificato. | Self-review e gate documentale del design, commit della spec, quindi review Product Owner prima del piano TDD. |
 | 2026-07-17 11:29 +02:00 | 100% | Il functional head è riproducibile da checkout detached pulito e la review terminale non lascia finding P0/P1. BL-006 diventa proposta branch-local `DONE/100%/PASSING`; la delivery resta derivata `PENDING`. | Head `df7f868`: install frozen 701 package/13,3 s; generated drift 45 file; build runtime 8/8; migration 13/13; verticale access + smoke web 2/2; secret scan e `verify:docs` PASS. Worktree Git temporaneo deregistrato e pruned; la policy terminale ha impedito soltanto la cancellazione della directory locale residua già ignorata. | Incorporare lo snapshot terminale nello stesso commit funzionale, push e una sola PR protetta; attendere `CI / Merge gate` senza azioni Vercel. |
@@ -2824,16 +2827,16 @@ test_status: NOT_RUN
 
 ## Chiusura
 
-- **Commit/PR:** branch `codex/bl-006-sessions-reset` su base `e173fd9424ad77330ae8302f68affd4832d66798`; functional head verificato `df7f8688d5455b97e91325cf85bb2330738745b2`; PR e delivery protetta ancora `PENDING`.
-- **Comandi eseguiti:** test TDD mirati per contratti/config/crypto/migration/store/API/cookie/outbox/BFF/UI/verticale; browser locale 320/390/1440; audit high; `verify:docs`; full `TURBO_FORCE=true corepack pnpm@11.13.0 verify`; checkout detached con install frozen, generated drift, build test harness e runtime, migration, verticale/smoke, secret scan e docs gate; review completa.
-- **Exit code:** full HIGH_RISK finale `0` in 250,3 s con lint 11, typecheck 16, build 11, report 355 test (351 pass/4 skip host) e artifact 4.332 file `PASS`; checkout pulito `0` sui gate terminali, inclusi migration 13/13, build runtime 8/8 e verticale/smoke 2/2.
-- **Report/CI URL o path:** design e piano BL-006, ADR-0010, card e traceability; CI remota non ancora disponibile e non copiata nei documenti.
-- **Migration head:** `000004_identity_access`; contract `database-identity-access-v1`; source SHA `330164398efd1ce9bd4463753f1ca01cb5ef3eaa56a187fe10b7097f0c2385d9`; checksum `73f20dd1c1791cd9b313ac4ef5355c284c11a43556abf3f6316c9bf071c22549`.
-- **Contract/schema/event version:** `identity-access-v1`; artifact `v3` / SemVer `3.0.0`; `schemaVersion: 1` degli envelope evento/SSE invariato; artifact `v1`/`v2` preservati byte-per-byte.
-- **Prompt/model/eval version:** nessuna modifica AI; non applicabile a BL-006.
-- **Documenti aggiornati:** ADR-0010, MVP spec, task/contesto/tracciabilità, modello dati, overview, UX/UI, catalogo API, configurazione/migration, indice, changelog, design e piano BL-006.
-- **Rischi residui tracciati:** SMTP reale e staging non verificati perché fuori scope locale; warning `MaxListenersExceededWarning` preesistente/non bloccante del reporter Node; freeze BL-080 invariato e nessuna azione provider o Vercel.
-- **Task successivo READY:** `BL-081 — Shell conversazionale interattiva e motion layer`; resta non avviato finché BL-006 non è integrato tramite PR protetta.
+- **Commit/PR:** branch `codex/bl-081-interactive-shell` su base `c30c6db616ebb69434e4b04dcccb97e48530f6a9`; functional head verificato `561dc2d2b69f4a9a4cbb4b136687d39ceb42f7ae`; PR e delivery protetta ancora `PENDING`.
+- **Comandi eseguiti:** TDD reducer/contract/wrapper, lint/typecheck/build web, smoke standalone e browser locale 320/390/1440; audit React/diff/bundle; `verify:docs`; full `TURBO_FORCE=true corepack pnpm@11.13.0 verify`; checkout detached con install frozen, build, reducer, contract, smoke e docs gate; review completa.
+- **Exit code:** full HIGH_RISK finale `0` in 209,3 s con lint/build 11, typecheck 16, report 376 test, security 39 pass/3 skip host e artifact 4.344 file `PASS`; checkout pulito `0` su install/build/test/docs.
+- **Report/CI URL o path:** design e piano BL-081, card, studio UX/UI e traceability; CI remota non ancora disponibile e non copiata nei documenti.
+- **Migration head:** `000004_identity_access` invariata; migration/eval/trace ID `N/A` per questa slice UI fixture.
+- **Contract/schema/event version:** `interactive-game-shell-v1`; contract API/evento e `schemaVersion: 1` invariati; la shell non introduce un trasporto chat parallelo.
+- **Prompt/model/eval version:** nessuna modifica a prompt, modello o provider; `N/A`.
+- **Documenti aggiornati:** task/contesto/tracciabilità, changelog, indice, studio UX/UI, design e piano BL-081.
+- **Rischi residui tracciati:** Streamdown spiega il delta bundle raw; `QA-002` possiede il gate browser/accessibility/visuale comune. Warning `MaxListenersExceededWarning` preesistente/non bloccante del reporter Node; freeze BL-080 invariato e nessuna azione provider o Vercel.
+- **Task successivo READY:** `BL-007 — ActorContext e query tenant-safe`; `QA-002` è anch'esso READY ma successivo nell'ordine P0.
 
 
 ## 21. Context Sync Log
@@ -2842,6 +2845,7 @@ Registrare soltanto cambiamenti che alterano il contesto operativo. Non usare qu
 
 | Data | Commit | Task | Documento/componente | Modifica | Task da riesaminare |
 |---|---|---|---|---|---|
+| 2026-07-17 | `561dc2d` + terminal docs | BL-081 candidate | Shell conversazionale, UX/UI e task graph | Reducer fixture, AI Elements/shadcn selettivi, drawer, Motion, browser e full/clean gate propongono BL-081 `DONE/100%/PASSING`; QA-002 diventa READY, BL-007 resta il primo READY e Vercel invariato. | BL-007, BL-027, BL-039, BL-040, BL-071, BL-072, QA-002 |
 | 2026-07-17 | `c30c6db` + design branch | BL-081 | Spec, backlog e shell conversazionale | BL-006 integrato tramite PR #29/CI 5/5; selezionato BL-081 e approvato `interactive-game-shell-v1` con reducer puro, AI Elements selettivo, shadcn/Radix, Motion reduced-first e nessuna azione Vercel. BL-007 passa READY. | BL-007, BL-027, BL-039, BL-040, BL-071, BL-072, QA-002 |
 | 2026-07-17 | `df7f868` + candidate docs | BL-006 candidate | Identity access/reset e superfici auth mobile | Contract `v3`, migration `000004`, API/worker/BFF/UI e verticale PostgreSQL hanno superato mirati, browser, full HIGH_RISK, checkout pulito e review P0/P1. Proposta `DONE/100%/PASSING`; delivery protetta `PENDING`, nessuna azione Vercel. | BL-007, BL-065, BL-067, BL-081, QA-002 |
 | 2026-07-16 | `e173fd9` + design branch | BL-006 | Spec, ADR-0010, backlog e UX/UI | Approvato `identity-access-v1`: contract `v3`, migration target `000004`, session lifecycle, reset one-time, transazioni, failure path e superfici auth mobile. Spec SHA `cf9f7b148554cc96735b1de0077079c9f6cd5ca4238a21375ca4709f7310659a`. | BL-006, BL-007, BL-065, BL-067, QA-002 |

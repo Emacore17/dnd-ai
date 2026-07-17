@@ -99,7 +99,7 @@ supersedes: null
 - Consumes: `components.json`, `apps/web/package.json`, source sotto `apps/web/components` e design `interactive-game-shell-v1`.
 - Produces: failure riproducibili prima di aggiungere model, wrapper, primitive e dipendenze.
 
-- [ ] **Step 1: scrivere l'inventory contract prima del codice**
+- [x] **Step 1: scrivere l'inventory contract prima del codice**
 
 Il nuovo test deve leggere manifest e source senza importare React. Richiedere:
 
@@ -126,7 +126,7 @@ const forbiddenDependencies = Object.freeze([
 
 Richiedere inoltre i quattro wrapper pubblici, i tre file AI Elements, le quattro primitive shadcn, il reducer, `LazyMotion` strict e l'assenza nei nuovi boundary `components/game`, `components/ai-elements` e `lib/game-shell` di `useChat`, `DefaultChatTransport`, `dangerouslySetInnerHTML`, `localStorage`, `sessionStorage`, `setTimeout`, import Rive e `/api/chat`. Non scansionare indiscriminatamente il BFF identity: usa legittimamente un timeout di rete bounded e resta fuori da BL-081.
 
-- [ ] **Step 2: aggiornare il contratto BL-079 senza cancellarne i guardrail**
+- [x] **Step 2: aggiornare il contratto BL-079 senza cancellarne i guardrail**
 
 Nel test esistente sostituire le asserzioni che impongono una shell statica server-only con queste responsabilita:
 
@@ -136,7 +136,7 @@ Nel test esistente sostituire le asserzioni che impongono una shell statica serv
 - Streamdown e Motion sono consentiti soltanto dai file boundary previsti;
 - Rive e AI SDK chat restano assenti.
 
-- [ ] **Step 3: osservare RED per capability mancanti**
+- [x] **Step 3: osservare RED per capability mancanti**
 
 ```powershell
 node --test tests/contracts/web-design-system.test.mjs tests/contracts/web-interactive-game-shell.test.mjs
@@ -144,7 +144,7 @@ node --test tests/contracts/web-design-system.test.mjs tests/contracts/web-inter
 
 Expected: exit `1`; failure su dependency/component/model mancanti, nessuna failure dovuta a syntax o path errati.
 
-- [ ] **Step 4: confermare il payload registry senza scritture**
+- [x] **Step 4: confermare il payload registry senza scritture**
 
 ```powershell
 corepack pnpm@11.13.0 dlx shadcn@latest add https://elements.ai-sdk.dev/api/registry/conversation.json https://elements.ai-sdk.dev/api/registry/message.json https://elements.ai-sdk.dev/api/registry/prompt-input.json --dry-run -c apps/web
@@ -169,7 +169,7 @@ Non creare commit: questo task termina intenzionalmente RED.
 - No import React, Next, shadcn, Motion, Streamdown, storage, clock, RNG o rete.
 - Node 24.11 importa direttamente i file `.ts`; usare soltanto TypeScript erasable e import relativi con estensione `.ts`.
 
-- [ ] **Step 1: scrivere la matrice reducer RED**
+- [x] **Step 1: scrivere la matrice reducer RED**
 
 Il test importa `createInitialGameShellState`, `FIXTURE_COMPLETED_TURN` e `reduceGameShell`. Coprire almeno:
 
@@ -192,7 +192,7 @@ node --test tests/unit/game-shell-reducer.test.mjs
 
 Expected: exit `1`, `ERR_MODULE_NOT_FOUND` per i file game-shell ancora assenti.
 
-- [ ] **Step 2: definire union e porta fixture**
+- [x] **Step 2: definire union e porta fixture**
 
 Usare contratti equivalenti a:
 
@@ -276,17 +276,17 @@ export interface FixtureTurnSource {
 
 L'evento `submit_requested` porta la stringa gia normalizzata; il reducer rifiuta stringa vuota o oltre limite invece di troncarla silenziosamente.
 
-- [ ] **Step 3: implementare transizioni fail-closed**
+- [x] **Step 3: implementare transizioni fail-closed**
 
 Usare uno `switch` esaustivo per evento e piccole funzioni guard. Gli eventi minimi sono `draft_changed`, `submit_requested`, `command_acknowledged`, `progress_received`, `connection_lost`, `turn_failed`, `retry_requested`, `turn_completed`, `turn_ready`, `drawer_opened`, `drawer_closed`.
 
 Un evento invalido restituisce `state` senza clone. `turn_completed` sostituisce feed/progress/failure/stateDiff in una sola nuova istanza. Nessuna funzione scrive fuori dallo stato restituito.
 
-- [ ] **Step 4: aggiungere fixture italiane player-safe**
+- [x] **Step 4: aggiungere fixture italiane player-safe**
 
 Creare scena, quattro suggerimenti ordinati, obiettivo, due membri party, inventario sintetico, sequenza happy path, errore retryable pre-apply, errore non-retryable post-apply e reconnect. Le fixture non contengono PII, ID reali, lore proprietaria, markup HTML o URL.
 
-- [ ] **Step 5: portare il reducer a GREEN**
+- [x] **Step 5: portare il reducer a GREEN**
 
 ```powershell
 node --test tests/unit/game-shell-reducer.test.mjs
@@ -295,7 +295,7 @@ corepack pnpm@11.13.0 exec turbo run typecheck --filter=@dnd-ai/web
 
 Expected: reducer test `PASS`; typecheck e build dei prerequisiti dichiarati dal grafo Turbo exit `0` anche da checkout senza `dist` preesistenti.
 
-- [ ] **Step 6: commit del batch puro**
+- [x] **Step 6: commit del batch puro**
 
 ```powershell
 git add apps/web/lib/game-shell tests/unit/game-shell-reducer.test.mjs
@@ -323,7 +323,7 @@ git commit -m "feat(web): add deterministic game shell state"
 - Final direct runtime dependencies nuove: soltanto `motion`, `streamdown`, `use-stick-to-bottom`, `vaul`.
 - `MessageResponse` accetta solo `children`, `className` e stato animazione strettamente necessario; il caller non puo riabilitare link, immagini o raw HTML.
 
-- [ ] **Step 1: installare source ufficiale con la CLI**
+- [x] **Step 1: installare source ufficiale con la CLI**
 
 ```powershell
 corepack pnpm@11.13.0 dlx shadcn@latest add https://elements.ai-sdk.dev/api/registry/conversation.json https://elements.ai-sdk.dev/api/registry/message.json https://elements.ai-sdk.dev/api/registry/prompt-input.json drawer textarea progress collapsible --yes -c apps/web
@@ -332,11 +332,11 @@ git diff -- apps/web/components apps/web/package.json pnpm-lock.yaml
 
 Expected: source registry presente; la CLI propone export e dipendenze non P0. Non committare il risultato grezzo.
 
-- [ ] **Step 2: ridurre `conversation` al feed necessario**
+- [x] **Step 2: ridurre `conversation` al feed necessario**
 
 Mantenere `Conversation`, `ConversationContent` e `ConversationScrollButton` con `use-stick-to-bottom`. Rimuovere download Markdown, `messagesToMarkdown`, empty-state non consumato e ogni import `UIMessage`/`ai`.
 
-- [ ] **Step 3: ridurre `message` e chiudere il renderer**
+- [x] **Step 3: ridurre `message` e chiudere il renderer**
 
 Mantenere `Message`, `MessageContent` e `MessageResponse`. Sostituire `UIMessage["role"]` con la union locale `"user" | "assistant"`. Rimuovere actions, branches, toolbar, attachment e tutti i plugin `@streamdown/*`.
 
@@ -344,26 +344,25 @@ Il renderer deve fissare internamente:
 
 ```tsx
 <Streamdown
-  allowedImagePrefixes={[]}
-  allowedLinkPrefixes={[]}
   className={cn(
     "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
     className,
   )}
   components={safeNarrativeComponents}
   skipHtml
+  urlTransform={() => null}
 >
   {children}
 </Streamdown>
 ```
 
-`safeNarrativeComponents` rende il testo dei link come `span` e restituisce `null` per immagini. Non accettare `components`, `rehypePlugins`, `allowedTags`, `urlTransform` o allowlist dai props pubblici.
+`safeNarrativeComponents` rende il testo dei link come `span` e restituisce `null` per immagini; `urlTransform={() => null}` applica la deny-all URL supportata dalla versione `streamdown@2.5.0` pin. Non accettare `components`, `rehypePlugins`, `allowedTags`, `urlTransform` o allowlist dai props pubblici.
 
-- [ ] **Step 4: ridurre `prompt-input` al compound P0**
+- [x] **Step 4: ridurre `prompt-input` al compound P0**
 
 Mantenere soltanto `PromptInput` come `form`, `PromptInputTextarea` basato sulla primitive shadcn `Textarea` e `PromptInputSubmit` basato su `Button`. Rimuovere context attachment, upload, screenshot, model selector, command menu, hover card, input group, spinner e `nanoid`.
 
-- [ ] **Step 5: riconciliare le primitive shadcn**
+- [x] **Step 5: riconciliare le primitive shadcn**
 
 Mantenere `Drawer` Vaul e `Textarea`/`Progress`/`Collapsible` Radix. Eliminare file UI introdotti soltanto dal prompt input completo. Confrontare `button`, `input`, `separator`, `globals.css` e `components.json` con `HEAD`; preservare le versioni BL-079 salvo le modifiche deliberate di questo piano.
 
@@ -373,7 +372,7 @@ Correggere nello stesso batch il gotcha Tailwind v4/Geist indicato dalla skill s
 @source "../node_modules/streamdown/dist/*.js";
 ```
 
-- [ ] **Step 6: normalizzare dipendenze esatte**
+- [x] **Step 6: normalizzare dipendenze esatte**
 
 Rimuovere ogni dipendenza diretta introdotta e non consumata, poi pinning esplicito:
 
@@ -386,18 +385,18 @@ corepack pnpm@11.13.0 install --frozen-lockfile
 
 Verificare manualmente che `apps/web/package.json` non contenga i nove package vietati dal contract.
 
-- [ ] **Step 7: portare inventory e build a GREEN**
+- [x] **Step 7: portare inventory e build a GREEN**
 
 ```powershell
-node --test tests/contracts/web-design-system.test.mjs tests/contracts/web-interactive-game-shell.test.mjs
+node --test --test-name-pattern "runtime dependencies|source inventory|domain state" tests/contracts/web-interactive-game-shell.test.mjs
 corepack pnpm@11.13.0 exec turbo run lint --filter=@dnd-ai/web
 corepack pnpm@11.13.0 exec turbo run typecheck --filter=@dnd-ai/web
 corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/web
 ```
 
-Expected: contract `PASS`; tre task web e prerequisiti `PASS`; nessun warning TypeScript soppresso.
+Expected: i tre contract già implementabili `PASS` (gli altri risultano `SKIP`); tre task web e prerequisiti `PASS`; nessun warning TypeScript soppresso. Il contract completo resta intenzionalmente RED fino ai file dichiarati nei task 4-6.
 
-- [ ] **Step 8: commit del source posseduto**
+- [x] **Step 8: commit del source posseduto**
 
 ```powershell
 git add apps/web/components/ai-elements apps/web/components/ui apps/web/app/globals.css apps/web/package.json pnpm-lock.yaml tests/contracts
@@ -419,7 +418,7 @@ git commit -m "feat(web): add selective conversational primitives"
 - I wrapper ricevono soltanto tipi da `game-shell-model.ts` e callback di dominio.
 - Suggerimento e testo libero convergono su `onSubmitAction(action: string)`.
 
-- [ ] **Step 1: estendere il contract RED sui wrapper**
+- [x] **Step 1: estendere il contract RED sui wrapper**
 
 Richiedere export nominati, marker `data-message-kind`, `aria-live`, `maxLength={2000}`, `isComposing`, `Shift+Enter`, due azioni sempre visibili, `Collapsible` per le ulteriori e nessun import da `ai`/`@ai-sdk/react`.
 
@@ -429,22 +428,22 @@ node --test tests/contracts/web-interactive-game-shell.test.mjs
 
 Expected: exit `1` sui quattro file wrapper mancanti.
 
-- [ ] **Step 2: implementare `NarrativeTurn` esaustivo**
+- [x] **Step 2: implementare `NarrativeTurn` esaustivo**
 
 - `narration`: `Message from="assistant"`, label DM e `MessageResponse` per Markdown;
 - `player_action`: `Message from="user"`, testo escaped da React senza Markdown;
 - `rule_result`: primitive shadcn con formula mono, outcome semanticamente distinto, detail sicuro e state diff separato;
 - switch esaustivo con helper `assertNever` locale.
 
-- [ ] **Step 3: implementare `GameConversation`**
+- [x] **Step 3: implementare `GameConversation`**
 
 Comporre `Conversation`, `ConversationContent` e `ConversationScrollButton`; unico scroll container con `min-h-0`, `overscroll-contain`, label italiana e padding sufficiente per non coprire l'ultima decisione. Il feed non virtualizza e non ricostruisce stato canonico.
 
-- [ ] **Step 4: implementare suggerimenti progressivi**
+- [x] **Step 4: implementare suggerimenti progressivi**
 
 Mostrare esattamente le prime due azioni come target da almeno 44 px. Se la fixture ne contiene altre, usare `Collapsible` con trigger "Altre opzioni" e non un secondo percorso di submit. Disabilitare tutte le scelte quando il reducer blocca il composer.
 
-- [ ] **Step 5: implementare il composer controllato**
+- [x] **Step 5: implementare il composer controllato**
 
 Usare `PromptInput`, `PromptInputTextarea` e `PromptInputSubmit`. Requisiti:
 
@@ -456,17 +455,17 @@ Usare `PromptInput`, `PromptInputTextarea` e `PromptInputSubmit`. Requisiti:
 - draft visibile finche il reducer non riceve ack;
 - live region per lock/submitting/progress/reconnect/error.
 
-- [ ] **Step 6: GREEN e commit**
+- [x] **Step 6: GREEN e commit**
 
 ```powershell
-node --test tests/contracts/web-interactive-game-shell.test.mjs
+node --test --test-name-pattern "public conversational wrappers" tests/contracts/web-interactive-game-shell.test.mjs
 corepack pnpm@11.13.0 exec turbo run lint --filter=@dnd-ai/web
 corepack pnpm@11.13.0 exec turbo run typecheck --filter=@dnd-ai/web
 git add apps/web/components/game tests/contracts/web-interactive-game-shell.test.mjs
 git commit -m "feat(web): compose the conversational game loop"
 ```
 
-Expected: contract/lint/typecheck `PASS`.
+Expected: il contract dei wrapper `PASS` (gli altri risultano `SKIP`); lint/typecheck `PASS`. Shell, drawer e Motion restano gate espliciti dei task successivi.
 
 ---
 
@@ -484,15 +483,16 @@ Expected: contract/lint/typecheck `PASS`.
 - `page.tsx` resta server-side e passa `createInitialGameShellState()` al client container.
 - `InteractiveGameShell` usa `useReducer(reduceGameShell, initialViewModel)` e una `FixtureTurnSource` iniettata; nessun fetch o side effect esterno.
 
-- [ ] **Step 1: riscrivere lo smoke standalone e osservarlo RED**
+- [x] **Step 1: riscrivere lo smoke standalone e osservarlo RED**
 
 Il test esistente deve richiedere nel vero HTML production-like:
 
 - `data-game-shell="interactive"` e `data-shell-status="idle"`;
 - header scena/stato, feed, tre tipi di turno, due suggerimenti primari;
-- `textarea` label/limite, submit, tre trigger HUD;
-- regioni status/error, drawer title disponibili semanticamente;
-- nessun raw `<script>` derivato dalla fixture, `javascript:` o HTML AI trusted.
+- `textarea` label/limite, submit e regioni status/error;
+- nessun `javascript:` o HTML AI trusted; la non esposizione di HTML AI resta verificata anche dal contract source.
+
+I trigger HUD e il drawer sono deliberatamente esclusi da questo smoke: appartengono al task 6 e vengono aggiunti al test nello stesso batch.
 
 ```powershell
 corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/web
@@ -501,7 +501,7 @@ node --test tests/integration/web-game-shell.test.mjs
 
 Expected: smoke exit `1` per marker/static shell ancora presente.
 
-- [ ] **Step 2: implementare il container event-driven**
+- [x] **Step 2: implementare il container event-driven**
 
 `submitAction` normalizza una volta, dispatcha `submit_requested` e consuma nell'ordine gli eventi restituiti dalla fixture. Tra eventi usare soltanto il boundary asincrono naturale della sorgente; vietati delay temporali e timer. Una ref impedisce un secondo consumer concorrente oltre al guard reducer.
 
@@ -518,22 +518,22 @@ Per ogni stato rendere testo stabile:
 
 Il retry usa `pendingAction` e lo stesso consumer; se `stateApplied=true` mostra istruzione di recupero, non un pulsante di reinvio.
 
-- [ ] **Step 3: sostituire la shell statica senza doppioni**
+- [x] **Step 3: sostituire la shell statica senza doppioni**
 
 Aggiornare `page.tsx`, eliminare i due file BL-079 sostituiti e rimuovere dal contract ogni path statico. Non conservare alias o componenti morti.
 
-- [ ] **Step 4: GREEN del verticale locale**
+- [x] **Step 4: GREEN del verticale locale**
 
 ```powershell
 node --test tests/unit/game-shell-reducer.test.mjs
-node --test tests/contracts/web-design-system.test.mjs tests/contracts/web-interactive-game-shell.test.mjs
+node --test --test-name-pattern "server-to-client game boundary|interactive game boundary|game feed scrolls" tests/contracts/web-design-system.test.mjs tests/contracts/web-interactive-game-shell.test.mjs
 corepack pnpm@11.13.0 exec turbo run build --filter=@dnd-ai/web
 node --test tests/integration/web-game-shell.test.mjs
 ```
 
-Expected: reducer, due contract e smoke standalone `PASS`.
+Expected: reducer, contract del verticale e smoke standalone `PASS`; i controlli Motion/drawer restano `SKIP` fino al task 6.
 
-- [ ] **Step 5: commit del verticale interattivo**
+- [x] **Step 5: commit del verticale interattivo**
 
 ```powershell
 git add apps/web/app/page.tsx apps/web/components apps/web/lib tests
@@ -558,7 +558,7 @@ git commit -m "feat(web): activate the interactive game shell"
 - Un solo `GameDrawer` controllato da `activeDrawer`; trigger massimo tre.
 - Feature Motion caricate da import dinamico; i componenti usano `m`, mai `motion`.
 
-- [ ] **Step 1: aggiungere contract RED per overlay e motion boundary**
+- [x] **Step 1: aggiungere contract RED per overlay e motion boundary**
 
 Richiedere:
 
@@ -568,13 +568,13 @@ Richiedere:
 - soltanto `opacity` e `transform` nelle varianti frequenti;
 - assenza di loop infinito, glow continuo, `layout` sul feed e import `motion` completo.
 
-- [ ] **Step 2: implementare `GameDrawer`**
+- [x] **Step 2: implementare `GameDrawer`**
 
 I tre trigger aprono un solo drawer bottom-first. Titolo e contenuto dipendono da `activeDrawer`; Escape e close ripristinano focus al trigger che ha aperto il pannello. Il body puo scorrere, il titolo/close restano stabili e `pb-[var(--safe-area-bottom)]` protegge la home indicator area.
 
 Desktop amplia larghezza/misura e spacing della stessa gerarchia; non introduce azioni o informazioni essenziali esclusive. Inventario resta on demand.
 
-- [ ] **Step 3: implementare il boundary Motion asincrono**
+- [x] **Step 3: implementare il boundary Motion asincrono**
 
 `game-motion-features.ts` esporta soltanto `domAnimation`. Il provider usa un loader equivalente a:
 
@@ -585,7 +585,7 @@ const loadGameMotionFeatures = () =>
 
 Avvolgere la shell con `MotionConfig` e `LazyMotion strict`. Usare `m` per progress, risultato canonico e state diff; reduced-motion usa opacity breve o nessuna transizione, mantenendo lo stesso DOM e focus order.
 
-- [ ] **Step 4: rifinire mobile e desktop**
+- [x] **Step 4: rifinire mobile e desktop**
 
 Verificare via classi e CSS:
 
@@ -597,7 +597,7 @@ Verificare via classi e CSS:
 - 1440 px con misura testo massima 65ch e nessuna HUD densa;
 - fallback globale `prefers-reduced-motion` conservato.
 
-- [ ] **Step 5: GREEN e commit**
+- [x] **Step 5: GREEN e commit**
 
 ```powershell
 node --test tests/contracts/web-interactive-game-shell.test.mjs
@@ -627,7 +627,7 @@ Expected: contract, lint, typecheck, build e smoke `PASS`.
 **Interfaces:**
 - Produce evidenza locale riproducibile; non produce deployment o artifact browser committati.
 
-- [ ] **Step 1: smoke browser locale con la skill Browser**
+- [x] **Step 1: smoke browser locale con la skill Browser**
 
 Avviare il vero standalone costruito dal task 6 su un porto libero, in processo nascosto, con `HOSTNAME=127.0.0.1`. Usare il browser integrato sul solo URL locale e chiuderlo al termine.
 
@@ -644,7 +644,7 @@ Interazioni obbligatorie: Tab order, fill multilinea, `Shift+Enter`, submit con 
 
 Se il browser integrato non puo attivare un evento React, registrare il limite e usare reducer/contract come evidenza dell'interazione; non dichiarare il click passato.
 
-- [ ] **Step 2: misurare il bundle dopo build**
+- [x] **Step 2: misurare il bundle dopo build**
 
 Dal file `apps/web/.next/server/app/index.html`, estrarre i path unici `/_next/static/chunks/*.js`, sommare le dimensioni raw sotto `apps/web/.next/static/chunks` e confrontare con 636.744 byte. Dal `page_client-reference-manifest.js`, sommare gli entry chunk unici di `apps/web/app/page` e confrontare con 59.332 byte.
 
@@ -660,7 +660,9 @@ corepack pnpm@11.13.0 --filter @dnd-ai/web why @streamdown/code
 
 Expected: i quattro `why` non mostrano una catena installata. Se il delta include code/math/mermaid plugin AI Elements, attachment/model/voice, `ai`, Rive o Motion completo nel chunk iniziale, correggere prima dei gate.
 
-- [ ] **Step 3: audit React e diff completo**
+Evidenza: 15 chunk iniziali per 1.328.006 byte raw (`+691.262` sulla baseline 636.744) e 8 entry chunk pagina per 750.594 byte raw (`+691.262` sulla baseline 59.332). Il delta è attribuito ai quattro runtime realmente consumati, soprattutto Streamdown; `ai`, `@ai-sdk/react`, Rive e i plugin `@streamdown/*` non hanno catene installate. Le feature DOM di Motion restano nell'entry asincrona `2lghcbi2p29jj.js` da 285 byte raw; nessun runtime escluso è entrato nel chunk iniziale.
+
+- [x] **Step 3: audit React e diff completo**
 
 Applicare `vercel:react-best-practices` ai TSX modificati. Controllare manualmente:
 
@@ -673,7 +675,9 @@ rg -n "useChat|DefaultChatTransport|dangerouslySetInnerHTML|localStorage|session
 
 Expected: `git diff --check` exit `0`; `rg` senza match; nessun finding P0/P1, secret, PII, debug o file generato accidentale.
 
-- [ ] **Step 4: aggiornare living docs nello stesso candidato**
+Evidenza: checklist React applicata ai TSX modificati, oggetti Motion stabili a livello modulo e nessun effetto o memoizzazione superflua; `git diff --check` exit `0`, scan boundary/debug senza match, lint/typecheck web e build production `PASS`. Nessun finding P0/P1 residuo.
+
+- [x] **Step 4: aggiornare living docs nello stesso candidato**
 
 - BL-081 `DONE/100%/PASSING` soltanto dopo tutti i gate locali;
 - dipendenze/versioni effettive, test, viewport, bundle baseline/finale/delta e failure path nella card;
@@ -683,7 +687,7 @@ Expected: `git diff --check` exit `0`; `rg` senza match; nessun finding P0/P1, s
 - `CHANGELOG` e indice README;
 - nessun riferimento a provider o smoke remoto eseguito.
 
-- [ ] **Step 5: eseguire l'unico full gate**
+- [x] **Step 5: eseguire l'unico full gate**
 
 ```powershell
 $env:TURBO_FORCE="true"
@@ -693,7 +697,9 @@ Remove-Item Env:TURBO_FORCE
 
 Expected: exit `0`; lint, typecheck, build, tutte le lane, generated drift, docs, task graph, security, artifact e deployment policy `PASS`. Un failure reale viene corretto con test mirato; non rilanciare il full senza una modifica correlata.
 
-- [ ] **Step 6: incorporare documentazione nel commit funzionale**
+Evidenza: il primo avvio si è fermato prima delle lane sulla formattazione di 14 file BL-081. Dopo Prettier mirato, lint/typecheck e 29 test verdi, il rerun completo è terminato con exit `0` in 209,3 s: lint/build 11, typecheck 16, report 376 test, security 39 pass/3 skip host, policy e artifact 4.344 file `PASS`.
+
+- [x] **Step 6: incorporare documentazione nel commit funzionale**
 
 ```powershell
 git add docs apps/web tests package.json pnpm-lock.yaml
@@ -702,7 +708,7 @@ git commit --amend --no-edit
 
 Expected: working tree pulita; nessun commit docs-only o evidence-only.
 
-- [ ] **Step 7: clean checkout del candidato**
+- [x] **Step 7: clean checkout del candidato**
 
 Creare una worktree detached sotto `.worktrees` con nome derivato dallo SHA candidato. Prima di rimuoverla verificare che il path assoluto risolto inizi con la directory `.worktrees` del repository.
 
@@ -719,7 +725,9 @@ corepack pnpm@11.13.0 verify:docs
 
 Expected: install/build/test/docs `PASS`; cleanup della worktree registrata completato senza toccare altre directory.
 
-- [ ] **Step 8: verifica finale prima della delivery**
+Evidenza: functional head `561dc2d`; install frozen 819 package, build web 3/3, reducer 14/14, contract 14/14, smoke 1/1 e `verify:docs` `PASS`. `git worktree remove` ha deregistrato il checkout ma lasciato output Windows non vuoto; il residuo è stato rimosso con pathspec esatto dopo verifica assoluta e la lista worktree finale è invariata salvo il checkout temporaneo rimosso.
+
+- [x] **Step 8: verifica finale prima della delivery**
 
 Applicare `superpowers:verification-before-completion`, rileggere lo SHA effettivo e confermare:
 

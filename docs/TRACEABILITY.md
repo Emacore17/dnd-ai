@@ -48,9 +48,10 @@ code_refs:
   - apps/web/components.json
   - apps/web/app/globals.css
   - apps/web/app/layout.tsx
-  - apps/web/components/static-game-shell.tsx
+  - apps/web/components/ai-elements
+  - apps/web/components/game
   - apps/web/components/ui
-  - apps/web/lib/static-game-shell-fixture.ts
+  - apps/web/lib/game-shell
   - packages
   - packages/config
   - packages/observability
@@ -177,7 +178,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. BL-006 è verificato tramite PR #29, candidato `31d5cb3`, merge `c30c6db` e CI PR/post-merge `29570461340`/`29570669866`, entrambe 5/5 `SUCCESS`. `BL-081` è `IN_PROGRESS/25%/NOT_RUN` con design `interactive-game-shell-v1` approvato e piano TDD inline versionato; `BL-007` è ora `READY`, `QA-002` `BACKLOG` e `BL-080` congelato/bloccato.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. BL-006 è verificato tramite PR #29, candidato `31d5cb3`, merge `c30c6db` e CI PR/post-merge `29570461340`/`29570669866`, entrambe 5/5 `SUCCESS`. Il candidato branch-local `BL-081` è proposto `DONE/100%/PASSING` dopo mirati, build, browser, bundle, full HIGH_RISK e checkout pulito verdi; resta aperta soltanto la delivery protetta. `BL-007` e `QA-002` sono `READY`; `BL-080` resta congelato/bloccato.
 
 ## Governance e baseline
 
@@ -190,7 +191,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Monorepo buildabile con tre runtime e package puri | spec §§11.2–11.3; `AGENTS.md` §9 | BL-001 | `apps/*`, `packages/*`, `turbo.json` | lint/typecheck/build su 10 workspace; report BL-001 | implemented, clean worktree PASS |
 | Import e dipendenze rispettano la allowlist | `AGENTS.md` §§4.6, 9 | BL-001 | `scripts/lib/workspace-boundaries.mjs` | `tests/contracts/workspace-boundaries.test.mjs`, inclusa fixture vietata; report BL-001 | implemented, PASS |
 | Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check` e gate composto `pnpm docs:check`; report BL-001 | implemented, PASS |
-| Fondazione UI locale separata da shell interattiva e smoke remoto | spec §31; ADR-0001; studio UX §14 | GOV-004, BL-079, BL-081, BL-080, QA-002 | design/piani GOV-004 e BL-079, task graph, `apps/web` | task graph; contract design system; smoke standalone; browser locale | GOV-004 integrato via PR #26; BL-079 integrato via PR #27 con full/clean/CI e viewport PASS; BL-080 invariato BLOCKED |
+| Fondazione UI locale separata da shell interattiva e smoke remoto | spec §31; ADR-0001; studio UX §14 | GOV-004, BL-079, BL-081, BL-080, QA-002 | design/piani, `apps/web/components/{ai-elements,game}`, `apps/web/lib/game-shell` | task graph; contract design system/interazione; reducer; smoke standalone e browser locale | GOV-004/BL-079 integrati; candidato BL-081 con mirati/build/browser/bundle PASS; BL-080 invariato BLOCKED |
 | Architettura living implementato/target | spec §§11, 29; ADR-0009 | DOC-ARCH-001 | `docs/architecture/SYSTEM_OVERVIEW.md`, ADR-0009 | `tests/contracts/architecture-documentation.test.mjs`, Mermaid parse e `verify:docs` | PASS; contract 3/3, docs gate e full HIGH_RISK verdi |
 | Modello dati e migration head | spec §19; ADR-0006, ADR-0010 | DOC-ARCH-001, BL-005, BL-006 | `docs/data/DATA_MODEL.md`; `000004_identity_access` su main | architecture-documentation contract + migration contract/database/identity suite | `000004`/`database-identity-access-v1` verde su PostgreSQL reale per zero/previous→head, vincoli, replay, rollback e runner concorrenti; integrato tramite PR #29 |
 | Cold start locale riproducibile | spec §29.3; card DOC-ARCH-001 | DOC-ARCH-001 | `docs/operations/LOCAL_DEVELOPMENT.md` | clean checkout + `web-health-v1`/runtime integration | PASS; frozen install, config, migration, build, integration 20/20 e health reale verdi |
@@ -224,12 +225,12 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 
 | ID | Requisito normativo | Task | Codice | Test | Evidenza corrente |
 |---|---|---|---|---|---|
-| UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-081, BL-040, QA-002 | shell statica in `apps/web/components/static-game-shell.tsx`; design `interactive-game-shell-v1`; loop interattivo in implementazione | `tests/integration/web-game-shell.test.mjs`; E2E completo planned | BL-079 verificato a 320×844 e 390×844 senza overflow/overlap; BL-081 IN_PROGRESS |
-| UX-P0-02 | Feed conversazionale, decisione e composer dominano il primo livello | BL-079, BL-081, BL-040 | shell statica BL-079; `GameConversation` e `FreeActionComposer` interattivi planned | smoke HTML e browser locale; visual regression comune planned | feed, due azioni e composer visibili insieme a 320 px; stato applicativo ancora fuori scope |
-| UX-P0-03 | HUD secondaria in drawer/sheet; desktop senza funzioni esclusive | BL-081, BL-040, QA-002 | `GameDrawer`, responsive shell (planned) | viewport/browser matrix (planned) | ADR-0001 |
+| UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-081, BL-040, QA-002 | `InteractiveGameShell`, reducer e fixture in `apps/web` | reducer/contract/smoke standalone; E2E comune planned | BL-081 verificato a 320×568, 390×844 e 1440×900 senza overflow; submit/continue fixture PASS |
+| UX-P0-02 | Feed conversazionale, decisione e composer dominano il primo livello | BL-079, BL-081, BL-040 | `GameConversation`, `NarrativeTurn`, `SuggestedActions`, `FreeActionComposer` | contract UI, smoke HTML e browser locale; visual regression comune planned | feed, due azioni e composer visibili insieme a 320 px; sei stati deterministici e retry guard testati |
+| UX-P0-03 | HUD secondaria in drawer/sheet; desktop senza funzioni esclusive | BL-081, BL-040, QA-002 | `GameDrawer`, Vaul/shadcn e responsive shell | contract + browser 320/390/1440 | tre sezioni HUD, Escape e focus restore PASS; stessa gerarchia desktop |
 | UX-P0-04 | shadcn/ui `new-york` su Radix e token semantici | BL-079 | `apps/web/components.json`, `app/globals.css`, `components/ui` | `tests/contracts/web-design-system.test.mjs` | contract 7/7 e build web PASS; Tailwind 4.3.2, Geist 1.7.2, cinque primitive selettive |
-| UX-P0-05 | AI Elements selettivo non sostituisce `TurnView`, REST+SSE o idempotenza | BL-081, BL-040, BL-041 | `interactive-game-shell-v1`; adapter/wrapper UI in implementazione | contract + UI negative test (planned) | design approvato: reducer/view model locale, nessun `useChat` o trasporto parallelo |
-| UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all’animazione | BL-081, BL-027, BL-040, QA-002 | motion primitives (planned) | `tests/e2e/reduced-motion.spec.ts` (planned) | studio §11 |
+| UX-P0-05 | AI Elements selettivo non sostituisce `TurnView`, REST+SSE o idempotenza | BL-081, BL-040, BL-041 | subset `conversation`/`message`/`prompt-input` e reducer/view model locale | `tests/contracts/web-interactive-game-shell.test.mjs`; negative boundary scan | nessun `useChat`, AI SDK, route chat, storage o trasporto parallelo; backend turno resta planned |
+| UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all’animazione | BL-081, BL-027, BL-040, QA-002 | `GameMotionProvider`, feature DOM asincrona e fallback statico | contract, browser locale; E2E reduced-motion comune planned | `LazyMotion` strict, reduced-motion e transform/opacity; feature entry asincrona 285 byte |
 | UX-P0-07 | Touch target ≥44 px, primarie ≥48 px, safe area/tastiera/zoom | BL-079, BL-081, BL-012, BL-019, BL-040, QA-002 | `Button`, `Input`, token touch/safe-area e feed `100svh` | contract; browser matrix locale; E2E tastiera virtuale planned | minimo DOM 44 px, primarie 48 px, overlap `0`, Tab order e focus ring verificati su 320/390/1440 |
 | UX-P0-08 | Stile premium contemporaneo, non pseudo-medievale | BL-079, QA-002 | token graphite/cobalto e shell contemporanea in `apps/web` | review React/design e browser locale; visual regression comune planned | nessun chrome fantasy, font remoto, gradiente invasivo o runtime grafico; finding P0/P1 locale chiuso |
 | UX-P0-09 | Dado decorativo riproduce risultato backend e possiede fallback | BL-040, BL-043 | dice tray (planned) | rules contract + reduced-motion UI test (planned) | spec §21.4 |
