@@ -1,0 +1,28 @@
+{
+  "$id": "urn:dnd-ai:contracts:v4:VerificationRequiredResponse",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "challengeExpiresInSeconds": {
+      "const": 600,
+      "type": "number"
+    },
+    "resendAfterSeconds": {
+      "const": 60,
+      "type": "number"
+    },
+    "status": {
+      "const": "verification_required",
+      "type": "string"
+    }
+  },
+  "required": [
+    "status",
+    "challengeExpiresInSeconds",
+    "resendAfterSeconds"
+  ],
+  "title": "VerificationRequiredResponse",
+  "type": "object",
+  "x-dnd-ai-contract-kind": "response",
+  "x-dnd-ai-contract-version": "4.0.0"
+}

@@ -1,6 +1,7 @@
 export * from "./ai-turn.js";
 export * from "./api.js";
 export * from "./artifacts.js";
+export * from "./campaign.js";
 export * from "./catalog.js";
 export * from "./events.js";
 export * from "./game-event.js";

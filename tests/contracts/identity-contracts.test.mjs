@@ -209,14 +209,14 @@ test("identity responses and idempotency header are closed contracts", () => {
   }
 });
 
-test("current artifacts publish session access in v3 and preserve earlier baselines", () => {
-  assert.equal(contracts.CONTRACT_VERSION, "3.0.0");
+test("current artifacts preserve identity access in v4", () => {
+  assert.equal(contracts.CONTRACT_VERSION, "4.0.0");
   assert.equal(contracts.CONTRACT_SCHEMA_VERSION, 1);
-  assert.equal(contracts.CONTRACT_MAJOR_VERSION, "v3");
+  assert.equal(contracts.CONTRACT_MAJOR_VERSION, "v4");
 
   const artifacts = contracts.createContractArtifacts();
-  const openapi = artifacts["v3/openapi.json"];
-  assert.ok(openapi, "v3 OpenAPI must be generated");
+  const openapi = artifacts["v4/openapi.json"];
+  assert.ok(openapi, "v4 OpenAPI must be generated");
   assert.deepEqual(
     Object.keys(openapi.paths).sort(),
     [
@@ -229,10 +229,13 @@ test("current artifacts publish session access in v3 and preserve earlier baseli
       "/api/auth/sign-out",
       "/api/auth/sign-up",
       "/api/auth/verify-email",
+      "/api/campaigns/{campaignId}",
     ].sort(),
   );
 
-  for (const path of Object.keys(openapi.paths)) {
+  for (const path of Object.keys(openapi.paths).filter((value) =>
+    value.startsWith("/api/auth/"),
+  )) {
     const operation = openapi.paths[path].post;
     assert.equal(operation.parameters[0].name, "Idempotency-Key");
     assert.equal(operation.parameters[0].required, true);

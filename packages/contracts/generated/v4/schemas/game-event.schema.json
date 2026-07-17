@@ -1,0 +1,161 @@
+{
+  "$defs": {
+    "__schema0": {
+      "description": "Canonical lowercase UUIDv7.",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "__schema1": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+      "type": "string"
+    },
+    "__schema2": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "type": "string"
+    },
+    "__schema3": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/__schema3"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/__schema3"
+          },
+          "propertyNames": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$id": "urn:dnd-ai:contracts:v4:GameEvent",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actorId": {
+      "$ref": "#/$defs/__schema0"
+    },
+    "actorType": {
+      "enum": [
+        "player",
+        "system",
+        "ai_proposal",
+        "admin"
+      ],
+      "type": "string"
+    },
+    "aggregateId": {
+      "$ref": "#/$defs/__schema0"
+    },
+    "aggregateType": {
+      "$ref": "#/$defs/__schema1"
+    },
+    "campaignId": {
+      "$ref": "#/$defs/__schema0"
+    },
+    "causationId": {
+      "$ref": "#/$defs/__schema2"
+    },
+    "correlationId": {
+      "$ref": "#/$defs/__schema2"
+    },
+    "eventType": {
+      "description": "Version 1 event type ending in .v1.",
+      "maxLength": 160,
+      "minLength": 5,
+      "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*\\.v1$",
+      "type": "string"
+    },
+    "eventVersion": {
+      "const": 1,
+      "type": "number"
+    },
+    "id": {
+      "$ref": "#/$defs/__schema0"
+    },
+    "metadata": {
+      "additionalProperties": false,
+      "properties": {
+        "bibleVersion": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "requestId": {
+          "description": "Server-owned canonical lowercase UUIDv4 request ID.",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "rulesVersion": {
+          "$ref": "#/$defs/__schema1"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "requestId",
+        "rulesVersion"
+      ],
+      "type": "object"
+    },
+    "occurredAt": {
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+      "type": "string"
+    },
+    "payload": {
+      "$ref": "#/$defs/__schema3"
+    },
+    "sequence": {
+      "maximum": 9007199254740991,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "turnId": {
+      "$ref": "#/$defs/__schema0"
+    }
+  },
+  "required": [
+    "id",
+    "campaignId",
+    "sequence",
+    "aggregateType",
+    "aggregateId",
+    "eventType",
+    "eventVersion",
+    "causationId",
+    "correlationId",
+    "actorType",
+    "payload",
+    "metadata",
+    "occurredAt"
+  ],
+  "title": "GameEvent",
+  "type": "object",
+  "x-dnd-ai-contract-kind": "event",
+  "x-dnd-ai-contract-version": "4.0.0"
+}

@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 import { CONTRACT_CATALOG, type ContractCatalogEntry } from "./catalog.js";
-import { createIdentityOpenApiPaths } from "./operations.js";
+import {
+  createCampaignOpenApiPaths,
+  createIdentityOpenApiPaths,
+} from "./operations.js";
 import {
   CONTRACT_ID_NAMESPACE,
   CONTRACT_MAJOR_VERSION,
@@ -167,9 +170,12 @@ export function createContractArtifacts(
       title: "AI Adventure API Contracts",
       version: CONTRACT_VERSION,
       description:
-        "Contratti versionati per registrazione, sessioni e recupero credenziali identity.",
+        "Contratti versionati per identity e accesso player-safe alle campagne.",
     },
-    paths: createIdentityOpenApiPaths(),
+    paths: {
+      ...createIdentityOpenApiPaths(),
+      ...createCampaignOpenApiPaths(),
+    },
     components: { schemas: componentSchemas },
     "x-dnd-ai-contract-version": CONTRACT_VERSION,
   };
