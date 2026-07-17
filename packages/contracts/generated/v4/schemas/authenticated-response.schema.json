@@ -1,0 +1,18 @@
+{
+  "$id": "urn:dnd-ai:contracts:v4:AuthenticatedResponse",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "const": "authenticated",
+      "type": "string"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "title": "AuthenticatedResponse",
+  "type": "object",
+  "x-dnd-ai-contract-kind": "response",
+  "x-dnd-ai-contract-version": "4.0.0"
+}

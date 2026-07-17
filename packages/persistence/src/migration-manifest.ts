@@ -13,9 +13,14 @@ export const DATABASE_IDENTITY_SIGNUP_MIGRATION_NAME = "000003_identity_signup";
 export const DATABASE_IDENTITY_ACCESS_CONTRACT_VERSION =
   "database-identity-access-v1";
 export const DATABASE_IDENTITY_ACCESS_MIGRATION_NAME = "000004_identity_access";
+export const DATABASE_CAMPAIGN_OWNERSHIP_CONTRACT_VERSION =
+  "database-campaign-ownership-v1";
+export const DATABASE_CAMPAIGN_OWNERSHIP_MIGRATION_NAME =
+  "000005_campaign_ownership";
 export const DATABASE_CONTRACT_VERSION =
-  DATABASE_IDENTITY_ACCESS_CONTRACT_VERSION;
-export const DATABASE_MIGRATION_HEAD = DATABASE_IDENTITY_ACCESS_MIGRATION_NAME;
+  DATABASE_CAMPAIGN_OWNERSHIP_CONTRACT_VERSION;
+export const DATABASE_MIGRATION_HEAD =
+  DATABASE_CAMPAIGN_OWNERSHIP_MIGRATION_NAME;
 export const DATABASE_BASELINE_MIGRATION_SOURCE_SHA256 =
   "e8543d84b9b842adf352260536dcea284c93dfb859c9ec03368f10deb9455fc7";
 export const FEATURE_FLAGS_MIGRATION_SOURCE_SHA256 =
@@ -24,6 +29,8 @@ export const IDENTITY_SIGNUP_MIGRATION_SOURCE_SHA256 =
   "22821ad6cf592d99ed63cd444cf2a6b4e3ea936685c0e32b975bf71e06969d05";
 export const IDENTITY_ACCESS_MIGRATION_SOURCE_SHA256 =
   "330164398efd1ce9bd4463753f1ca01cb5ef3eaa56a187fe10b7097f0c2385d9";
+export const CAMPAIGN_OWNERSHIP_MIGRATION_SOURCE_SHA256 =
+  "119a102cedbad7129eb40ad7082c0c6f8a52fb3d0f0792cee305e2cf75027f0d";
 
 // Derived from the first 32 bits of SHA-256("dnd-ai:database-migrations")
 // and kept in the signed 32-bit range for PostgreSQL advisory locking.
@@ -788,9 +795,106 @@ VALUES (
 );
 `.trim();
 
+export const DATABASE_CAMPAIGN_OWNERSHIP_TABLE_SQL = `
+CREATE TABLE app.campaigns (
+  campaign_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  status text NOT NULL DEFAULT 'draft',
+  state_version bigint NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at timestamptz NULL,
+  CONSTRAINT campaigns_pkey PRIMARY KEY (campaign_id),
+  CONSTRAINT campaigns_user_fkey FOREIGN KEY (user_id)
+    REFERENCES app.users (user_id) ON DELETE RESTRICT,
+  CONSTRAINT campaigns_id_uuidv7 CHECK (
+    campaign_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+  ),
+  CONSTRAINT campaigns_title_bounded CHECK (
+    title = btrim(title) AND char_length(title) BETWEEN 1 AND 80
+  ),
+  CONSTRAINT campaigns_status_known CHECK (
+    status IN (
+      'draft', 'ready', 'generating', 'active',
+      'completed', 'abandoned', 'failed'
+    )
+  ),
+  CONSTRAINT campaigns_state_version_bounded CHECK (
+    state_version BETWEEN 0 AND 2147483647
+  ),
+  CONSTRAINT campaigns_timestamps_coherent CHECK (
+    updated_at >= created_at
+    AND (deleted_at IS NULL OR deleted_at >= created_at)
+  )
+);
+`.trim();
+
+export const DATABASE_CAMPAIGN_OWNERSHIP_INDEX_SQL = `
+CREATE INDEX campaigns_owner_lookup_idx
+ON app.campaigns (user_id, campaign_id)
+WHERE deleted_at IS NULL;
+`.trim();
+
+const campaignOwnershipContractDefinition = Object.freeze({
+  migrationId: 5,
+  migrationName: DATABASE_CAMPAIGN_OWNERSHIP_MIGRATION_NAME,
+  contractVersion: DATABASE_CAMPAIGN_OWNERSHIP_CONTRACT_VERSION,
+  fileName: DATABASE_CAMPAIGN_OWNERSHIP_MIGRATION_NAME,
+  minimumCompatibleMigrationId: 1,
+});
+
+export const DATABASE_CAMPAIGN_OWNERSHIP_SUPERSEDE_ACCESS_CONTRACT_SQL = `
+UPDATE infra.migration_contracts
+SET superseded_at = GREATEST(CURRENT_TIMESTAMP, applied_at)
+WHERE migration_id = ${identityAccessContract.migrationId}
+  AND superseded_at IS NULL;
+`.trim();
+
+const campaignOwnershipCanonicalDefinition = [
+  CAMPAIGN_OWNERSHIP_MIGRATION_SOURCE_SHA256,
+  DATABASE_CAMPAIGN_OWNERSHIP_TABLE_SQL,
+  DATABASE_CAMPAIGN_OWNERSHIP_INDEX_SQL,
+  DATABASE_CAMPAIGN_OWNERSHIP_SUPERSEDE_ACCESS_CONTRACT_SQL,
+  JSON.stringify(campaignOwnershipContractDefinition),
+].join("\n");
+
+const campaignOwnershipChecksum = createHash("sha256")
+  .update(campaignOwnershipCanonicalDefinition, "utf8")
+  .digest("hex");
+
+const campaignOwnershipContract = Object.freeze({
+  ...campaignOwnershipContractDefinition,
+  checksum: campaignOwnershipChecksum,
+});
+
+export const DATABASE_CAMPAIGN_OWNERSHIP_RESTORE_ACCESS_CONTRACT_SQL = `
+UPDATE infra.migration_contracts
+SET superseded_at = NULL
+WHERE migration_id = ${identityAccessContract.migrationId};
+`.trim();
+
+export const DATABASE_CAMPAIGN_OWNERSHIP_CONTRACT_INSERT_SQL = `
+INSERT INTO infra.migration_contracts (
+  migration_id,
+  migration_name,
+  contract_version,
+  checksum,
+  minimum_compatible_migration_id
+)
+VALUES (
+  ${campaignOwnershipContract.migrationId},
+  ${quoteSqlLiteral(campaignOwnershipContract.migrationName)},
+  ${quoteSqlLiteral(campaignOwnershipContract.contractVersion)},
+  ${quoteSqlLiteral(campaignOwnershipContract.checksum)},
+  ${campaignOwnershipContract.minimumCompatibleMigrationId}
+);
+`.trim();
+
 export const DATABASE_MIGRATION_MANIFEST = Object.freeze([
   baselineContract,
   featureFlagsContract,
   identitySignupContract,
   identityAccessContract,
+  campaignOwnershipContract,
 ]) satisfies readonly DatabaseMigrationManifestEntry[];

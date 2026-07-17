@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: c30c6db616ebb69434e4b04dcccb97e48530f6a9
+last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
 source_refs:
   - AGENTS.md
   - docs/TASKS.md#6-contesto-e-documentazione-living
@@ -17,6 +17,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
   - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
+  - docs/superpowers/specs/2026-07-17-bl-007-actor-context-design.md
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
   - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
 related_tasks:
@@ -28,6 +29,7 @@ related_tasks:
   - BL-004
   - BL-005
   - BL-006
+  - BL-007
   - BL-008
   - BL-009
   - BL-079
@@ -56,6 +58,10 @@ code_refs:
   - packages/contracts/src
   - packages/contracts/generated/v1
   - packages/contracts/generated/v2
+  - packages/contracts/generated/v3
+  - packages/contracts/generated/v4
+  - apps/api/src/campaign
+  - packages/persistence/src/campaign-access-store.ts
   - scripts/generate-contracts.mjs
   - scripts/lib/contract-compatibility-policy.mjs
   - scripts/lib/owned-path-policy.mjs
@@ -89,6 +95,8 @@ test_refs:
   - tests/contracts/architecture-documentation.test.mjs
   - tests/contracts/identity-contracts.test.mjs
   - tests/integration/identity-signup-flow.test.mjs
+  - tests/integration/campaign-idor-flow.test.mjs
+  - tests/security/campaign-access-security.test.mjs
 supersedes: null
 ---
 
@@ -139,9 +147,12 @@ supersedes: null
 | [`superpowers/plans/2026-07-16-bl-005-signup-verification.md`](superpowers/plans/2026-07-16-bl-005-signup-verification.md) | Piano TDD in sette batch, gate HIGH_RISK e limiti provider del candidato BL-005 |
 | [`superpowers/specs/2026-07-16-bl-006-session-access-design.md`](superpowers/specs/2026-07-16-bl-006-session-access-design.md) | Contratto approvato `identity-access-v1` per login, sessioni, revoca e recupero password |
 | [`superpowers/plans/2026-07-17-bl-006-session-access.md`](superpowers/plans/2026-07-17-bl-006-session-access.md) | Piano TDD inline in sette batch per implementare e verificare BL-006 |
+| [`superpowers/specs/2026-07-17-bl-007-actor-context-design.md`](superpowers/specs/2026-07-17-bl-007-actor-context-design.md) | Contratto implementato dal candidato `campaign-ownership-v1` per ActorContext, ownership PostgreSQL e confine HTTP/SSE |
+| [`superpowers/plans/2026-07-17-bl-007-actor-context.md`](superpowers/plans/2026-07-17-bl-007-actor-context.md) | Piano TDD inline e gate HIGH_RISK di BL-007 |
+| [`security/THREAT_MODEL.md`](security/THREAT_MODEL.md) | Baseline attiva dei trust boundary identity e campaign ownership implementati da BL-005–BL-007 |
 | [`superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md`](superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md) | Contratto implementato dal candidato `interactive-game-shell-v1` per wrapper conversazionali, fixture deterministiche, drawer e Motion reduced-first |
 | [`superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md`](superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md) | Piano TDD inline eseguito per reducer, AI Elements selettivi, shell, drawer, Motion e gate HIGH_RISK |
-| [`api/README.md`](api/README.md) | Catalogo artifact `v1` immutabile + `v2` identity, uso runtime e politica di versione |
+| [`api/README.md`](api/README.md) | Catalogo artifact `v1`–`v4`, uso runtime e politica di versione |
 | [`superpowers/specs/2026-07-15-bl-009-contract-generation-design.md`](superpowers/specs/2026-07-15-bl-009-contract-generation-design.md) | Design della vertical slice contrattuale BL-009 |
 | [`superpowers/plans/2026-07-15-bl-009-contract-generation.md`](superpowers/plans/2026-07-15-bl-009-contract-generation.md) | Piano TDD e gate HIGH_RISK di BL-009 |
 | [`superpowers/specs/2026-07-16-qa-001-test-foundation-design.md`](superpowers/specs/2026-07-16-qa-001-test-foundation-design.md) | Design approvato di `testing-foundation-v1` e decomposizione QA-001/QA-002 |
@@ -149,7 +160,7 @@ supersedes: null
 | [`superpowers/plans/2026-07-16-gov-004-unblock-ui-dependencies.md`](superpowers/plans/2026-07-16-gov-004-unblock-ui-dependencies.md) | Piano esecutivo e gate FAST di GOV-004 |
 | [`superpowers/plans/2026-07-16-bl-079-design-system-core.md`](superpowers/plans/2026-07-16-bl-079-design-system-core.md) | Piano TDD e gate HIGH_RISK della foundation shadcn/Tailwind e shell statica BL-079 |
 | [`testing/TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) | Contratto operativo di runner, fixture, container, coverage e report non-browser |
-| [`data/DATA_MODEL.md`](data/DATA_MODEL.md) | Schema fisico fino a `000003_identity_signup` e modello di gioco pianificato |
+| [`data/DATA_MODEL.md`](data/DATA_MODEL.md) | Schema fisico fino a `000005_campaign_ownership` e modello di gioco pianificato |
 | [`operations/LOCAL_DEVELOPMENT.md`](operations/LOCAL_DEVELOPMENT.md) | Cold start, readiness e cleanup dello sviluppo locale |
 
 ## Documenti pianificati
@@ -164,7 +175,7 @@ I path seguenti sono pianificati e non sono link finché non esistono:
 - `docs/features/RULES_ENGINE.md` — `DOC-RULES-001`;
 - `docs/features/MEMORY_NPC.md` — `DOC-MEM-001`;
 - `docs/features/PROGRESSION_ENDINGS.md` — `DOC-END-001`;
-- `docs/security/THREAT_MODEL.md` e `docs/security/MODERATION_POLICY.md` — `DOC-SEC-001`;
+- `docs/security/MODERATION_POLICY.md` — `BL-064`;
 - `docs/operations/RUNBOOK.md` — `DOC-OPS-001`;
 - `docs/events/EVENT_CATALOG.md` — task delle relative feature.
 

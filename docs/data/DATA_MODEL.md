@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
+last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
 source_refs:
   - docs/MVP_SPEC.md#19-modello-dati
   - docs/MVP_SPEC.md#195-migrazioni-e-compatibilit%C3%A0
@@ -12,11 +12,13 @@ source_refs:
   - docs/adr/0010-internal-provider-neutral-identity.md
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
+  - docs/superpowers/specs/2026-07-17-bl-007-actor-context-design.md
 related_tasks:
   - DOC-ARCH-001
   - BL-004
   - BL-005
   - BL-006
+  - BL-007
   - BL-010
   - BL-025
   - BL-028
@@ -32,9 +34,11 @@ code_refs:
   - packages/persistence/src/migrations/000002_feature_flags.ts
   - packages/persistence/src/migrations/000003_identity_signup.ts
   - packages/persistence/src/migrations/000004_identity_access.ts
+  - packages/persistence/src/migrations/000005_campaign_ownership.ts
   - packages/persistence/src/feature-flags.ts
   - packages/persistence/src/identity-store.ts
   - packages/persistence/src/identity-access-store.ts
+  - packages/persistence/src/campaign-access-store.ts
   - infra/local/postgres.compose.yml
 test_refs:
   - tests/contracts/architecture-documentation.test.mjs
@@ -49,6 +53,8 @@ test_refs:
   - tests/security/identity-persistence-security.test.mjs
   - tests/security/database-migration-security.test.mjs
   - tests/security/feature-flags-security.test.mjs
+  - tests/database/campaign-ownership-migration.test.mjs
+  - tests/database/campaign-access-store.test.mjs
 supersedes: null
 ---
 
@@ -66,8 +72,8 @@ supersedes: null
 | PostgreSQL | `17` | `infra/local/postgres.compose.yml` |
 | pgvector | `0.8.2` | immagine Compose pin a digest |
 | Migration runner | `node-pg-migrate 8.0.4` | `packages/persistence/package.json` |
-| Migration head | `000004_identity_access` | `DATABASE_MIGRATION_HEAD` |
-| Contract attivo | `database-identity-access-v1` | `DATABASE_CONTRACT_VERSION` |
+| Migration head | `000005_campaign_ownership` | `DATABASE_MIGRATION_HEAD` |
+| Contract attivo | `database-campaign-ownership-v1` | `DATABASE_CONTRACT_VERSION` |
 | Compatibilità minima | migration `000001_postgresql_foundation` | manifest versionato |
 
 Le migration sono eseguite in ordine, sotto advisory lock, con singola transazione per run. Il runner rifiuta file sconosciuti, ledger non ordinati, contract/checksum inattesi e oggetti di fondazione presenti senza migration applicata.
@@ -78,7 +84,7 @@ Le migration sono eseguite in ordine, sotto advisory lock, con singola transazio
 
 - L'estensione `vector` è installata dalla prima migration. Non esistono ancora colonne embedding o indici vettoriali applicativi.
 - Lo schema `infra` contiene il ledger gestito dal runner e il contratto applicativo delle migration.
-- Lo schema `app` contiene feature flag/audit e il verticale identity. Non contiene ancora campagne, personaggi, turni o stato di gioco.
+- Lo schema `app` contiene feature flag/audit, il verticale identity e la radice minima campagna owner-scoped. Non contiene ancora personaggi, turni, Bible, scene o progressione.
 
 ### `infra.schema_migrations`
 
@@ -145,6 +151,20 @@ L'indice `feature_flag_events_flag_key_created_at_idx` ordina la lettura audit p
 
 Signup persiste utente pending, credenziale, challenge, outbox, idempotenza e audit nella stessa transazione. Verify consuma la challenge, attiva l'utente e inserisce una sola sessione atomicamente. Lo store BL-006 applica sign-in, refresh con rotazione, logout, revoca globale e reset nella stessa transaction boundary di audit/idempotenza; il reset incrementa la versione credenziale, consuma una sola challenge e revoca tutte le sessioni. Lock advisory su email, idempotenza e bucket rate-limit, più lock di riga su credenziali/sessioni/challenge, chiudono i race testati; Redis non partecipa a questi invarianti.
 
+### `app.campaigns` di `000005_campaign_ownership`
+
+| Campo | Vincoli effettivi |
+|---|---|
+| `campaign_id` | UUIDv7 lowercase, primary key |
+| `user_id` | UUID, foreign key verso `app.users(user_id)`, delete `RESTRICT` |
+| `title` | text trimmed, lunghezza 1–80 |
+| `status` | `draft`, `ready`, `generating`, `active`, `completed`, `abandoned` o `failed` |
+| `state_version` | bigint non negativo, massimo `2_147_483_647`, default `0` |
+| `created_at`, `updated_at` | timestamptz non null; `updated_at >= created_at` |
+| `deleted_at` | timestamptz nullable e non precedente a `created_at` |
+
+L'indice parziale `campaigns_owner_lookup_idx (user_id, campaign_id) WHERE deleted_at IS NULL` serve la sola lettura player implementata. `CampaignAccessStore` seleziona colonne esplicite, applica campaign ID, owner e soft-delete nella stessa query e restituisce una projection frozen. Creazione/lista/modifica, Bible, scena e stato narrativo restano ai task proprietari; RLS non è presente.
+
 ## Relazioni implementate
 
 ```mermaid
@@ -187,6 +207,14 @@ erDiagram
     USERS ||--o{ USER_SESSIONS : authenticates
     USERS ||--o{ IDENTITY_EMAIL_OUTBOX : dispatches
     USERS ||--o{ IDENTITY_AUDIT_EVENTS : records
+    USERS ||--o{ CAMPAIGNS : owns
+    CAMPAIGNS {
+        uuid campaign_id PK
+        uuid user_id FK
+        string status
+        bigint state_version
+        datetime deleted_at
+    }
     EMAIL_VERIFICATION_CHALLENGES ||--|| IDENTITY_EMAIL_OUTBOX : delivers
     PASSWORD_RESET_CHALLENGES ||--|| IDENTITY_EMAIL_OUTBOX : delivers
 ```
@@ -195,11 +223,11 @@ erDiagram
 
 ## Modello logico pianificato
 
-Questo diagramma è concettuale per il dominio di gioco: soltanto `User identity` corrisponde oggi allo schema fisico implementato sopra. Gli altri nodi sono **Pianificati** e non autorizzano query, tabelle o migration con questi nomi.
+Questo diagramma è concettuale per il dominio di gioco: `User identity` e la radice minima `Campaign ownership` corrispondono allo schema fisico implementato sopra. Gli altri nodi sono **Pianificati** e non autorizzano query, tabelle o migration con questi nomi.
 
 ```mermaid
 flowchart LR
-    USER["User identity · Implementato"] --> CAMPAIGN["Campaign · Pianificato"]
+    USER["User identity · Implementato"] --> CAMPAIGN["Campaign ownership · Implementato minimo"]
     CAMPAIGN --> CHARACTER["Character/Entity · Pianificato"]
     CAMPAIGN --> SCENE["Scene/Quest/NPC · Pianificato"]
     CAMPAIGN --> TURN["Turn request · Pianificato"]
@@ -209,15 +237,15 @@ flowchart LR
     TURN --> AI_REQUEST["AI request/usage · Pianificato"]
 ```
 
-### Identity signup e persistence access implementati
+### Identity e campaign access implementati
 
-ADR-0010 e `identity-signup-v1` sono materializzati dalla migration `000003_identity_signup` e dal repository PostgreSQL. `000004_identity_access` implementa la parte fisica di `identity-access-v1`: `credential_version`, challenge reset, outbox discriminato e allowlist access/reset. Constraint, upgrade `000003`→head, rollback/re-apply locale e runner simultanei sono verificati su PostgreSQL reale. `PostgresIdentityAccessStore` materializza session lifecycle, rate limit e reset atomico con replay e race concorrente verificati; route API, dispatcher reset, BFF e superfici web completano il verticale branch-local. `identity-access-flow` prova che reset e login concorrenti convergono attraverso il recheck di `credential_version`, senza lasciare sessioni basate sulla credenziale precedente. Ownership delle risorse resta BL-007.
+ADR-0010 e `identity-signup-v1` sono materializzati dalla migration `000003_identity_signup` e dal repository PostgreSQL. `000004_identity_access` implementa la parte fisica di `identity-access-v1`: `credential_version`, challenge reset, outbox discriminato e allowlist access/reset. `000005_campaign_ownership` aggiunge la radice minima campagna e l'ownership verso `app.users`. Constraint, upgrade `000004`→head, rollback/re-apply locale e isolamento sono verificati su PostgreSQL reale. `PostgresIdentityAccessStore` materializza session lifecycle, rate limit e reset atomico; `CampaignAccessStore` risolve sessioni read-only e campagne owner-scoped senza mutazioni. La matrice BL-007 prova due utenti su repository, HTTP e guardia SSE.
 
 ## Ownership dei task
 
 | Area concettuale | Task proprietario | Regola per la migration futura |
 |---|---|---|
-| Utente, verifica, sessione e ownership | `BL-005`–`BL-007` | `BL-005` ha introdotto `000003_identity_signup`; BL-006 aggiunge forward-only `000004_identity_access` per login, refresh, revoca e reset senza riscrivere le migration condivise; BL-007 aggiunge ownership. |
+| Utente, verifica, sessione e ownership | `BL-005`–`BL-007` | `BL-005` ha introdotto `000003_identity_signup`; BL-006 aggiunge forward-only `000004_identity_access`; BL-007 aggiunge `000005_campaign_ownership` senza riscrivere migration condivise. |
 | Personaggio e cataloghi | `BL-011`, `BL-015`–`BL-017` | Nessuna tabella è nominata in anticipo; aggregate e autosave definiscono il contratto. |
 | Campagna, Bible, scena, location, quest e clock | `BL-018`, `BL-022`–`BL-025` | Persistenza soltanto dopo schema e validazione della Bible. |
 | NPC e knowledge state | `BL-025`, `BL-052`, `BL-053` | Knowledge boundary e ownership precedono qualsiasi indice di retrieval. |

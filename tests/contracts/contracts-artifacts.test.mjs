@@ -16,6 +16,13 @@ const expectedCatalog = [
   ["AuthenticatedResponse", "response", "authenticated-response.schema.json"],
   ["ApiErrorResponse", "response", "api-error-response.schema.json"],
   [
+    "CampaignDetailResponse",
+    "response",
+    "campaign-detail-response.schema.json",
+  ],
+  ["CampaignErrorResponse", "response", "campaign-error-response.schema.json"],
+  ["CampaignId", "request", "campaign-id.schema.json"],
+  [
     "DungeonMasterTurnResult",
     "ai_output",
     "dungeon-master-turn-result.schema.json",
@@ -80,6 +87,22 @@ const validFixtureByContract = {
       currentStateVersion: 5,
     },
   },
+  CampaignDetailResponse: {
+    id: CAMPAIGN_ID,
+    stateVersion: 0,
+    status: "active",
+    title: "La città sommersa",
+    updatedAt: "2026-07-17T12:00:00.000Z",
+  },
+  CampaignErrorResponse: {
+    error: {
+      code: "campaign.not_found",
+      message: "Campagna non trovata.",
+      requestId: REQUEST_ID,
+      retryable: false,
+    },
+  },
+  CampaignId: CAMPAIGN_ID,
   DungeonMasterTurnResult: {
     turnId: TURN_ID,
     interactionMode: "free_action",
@@ -206,7 +229,7 @@ function collectReferences(value, references = []) {
   return references;
 }
 
-test("the v3 contract catalog has stable unique names, kinds and filenames", () => {
+test("the v4 contract catalog has stable unique names, kinds and filenames", () => {
   assert.deepEqual(
     contracts.CONTRACT_CATALOG.map(({ fileName, kind, name }) => [
       name,
@@ -225,16 +248,16 @@ test("the v3 contract catalog has stable unique names, kinds and filenames", () 
 test("contract artifacts contain versioned JSON Schema and owned identity operations", () => {
   const artifacts = contracts.createContractArtifacts();
   const expectedArtifactPaths = [
-    "v3/manifest.json",
-    "v3/openapi.json",
-    ...expectedCatalog.map(([, , fileName]) => `v3/schemas/${fileName}`),
+    "v4/manifest.json",
+    "v4/openapi.json",
+    ...expectedCatalog.map(([, , fileName]) => `v4/schemas/${fileName}`),
   ].sort();
 
   assert.deepEqual(Object.keys(artifacts).sort(), expectedArtifactPaths);
 
-  const manifest = artifacts["v3/manifest.json"];
+  const manifest = artifacts["v4/manifest.json"];
   assert.equal(manifest.schemaVersion, "contract-artifact-manifest-v1");
-  assert.equal(manifest.contractVersion, "3.0.0");
+  assert.equal(manifest.contractVersion, "4.0.0");
   assert.equal(
     manifest.jsonSchemaDialect,
     "https://json-schema.org/draft/2020-12/schema",
@@ -249,21 +272,21 @@ test("contract artifacts contain versioned JSON Schema and owned identity operat
   );
 
   for (const [name, kind, fileName] of expectedCatalog) {
-    const schema = artifacts[`v3/schemas/${fileName}`];
+    const schema = artifacts[`v4/schemas/${fileName}`];
 
     assert.equal(
       schema.$schema,
       "https://json-schema.org/draft/2020-12/schema",
     );
-    assert.equal(schema.$id, `urn:dnd-ai:contracts:v3:${name}`);
+    assert.equal(schema.$id, `urn:dnd-ai:contracts:v4:${name}`);
     assert.equal(schema.title, name);
-    assert.equal(schema["x-dnd-ai-contract-version"], "3.0.0");
+    assert.equal(schema["x-dnd-ai-contract-version"], "4.0.0");
     assert.equal(schema["x-dnd-ai-contract-kind"], kind);
   }
 
-  const openapi = artifacts["v3/openapi.json"];
+  const openapi = artifacts["v4/openapi.json"];
   assert.equal(openapi.openapi, "3.1.1");
-  assert.equal(openapi.info.version, "3.0.0");
+  assert.equal(openapi.info.version, "4.0.0");
   assert.equal(
     openapi.jsonSchemaDialect,
     "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -278,6 +301,7 @@ test("contract artifacts contain versioned JSON Schema and owned identity operat
     "/api/auth/sign-out",
     "/api/auth/sign-up",
     "/api/auth/verify-email",
+    "/api/campaigns/{campaignId}",
   ]);
   assert.deepEqual(
     Object.keys(openapi.components.schemas).sort(),
@@ -315,7 +339,7 @@ test("artifact creation returns isolated immutable snapshots", () => {
   assert.deepEqual(first, second);
   assert.equal(Object.isFrozen(first), true);
   assert.throws(() => {
-    first["v3/openapi.json"].paths.extra = {};
+    first["v4/openapi.json"].paths.extra = {};
   }, TypeError);
 });
 
@@ -335,7 +359,7 @@ test("generated JSON Schema agrees with Zod on valid and unknown-field fixtures"
 
   for (const entry of contracts.CONTRACT_CATALOG) {
     const fixture = validFixtureByContract[entry.name];
-    const schema = artifacts[`v3/schemas/${entry.fileName}`];
+    const schema = artifacts[`v4/schemas/${entry.fileName}`];
     const validate = ajv.compile(schema);
 
     assert.equal(entry.schema.safeParse(fixture).success, true, entry.name);
@@ -352,7 +376,7 @@ test("generated JSON Schema agrees with Zod on valid and unknown-field fixtures"
 });
 
 test("OpenAPI component-local references are rebased to their component root", () => {
-  const openapi = contracts.createContractArtifacts()["v3/openapi.json"];
+  const openapi = contracts.createContractArtifacts()["v4/openapi.json"];
 
   for (const [name, schema] of Object.entries(openapi.components.schemas)) {
     for (const reference of collectReferences(schema)) {

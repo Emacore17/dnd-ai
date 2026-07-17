@@ -1,0 +1,26 @@
+{
+  "$id": "urn:dnd-ai:contracts:v4:SignUpRequest",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "displayName": {
+      "type": "string"
+    },
+    "email": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "email",
+    "password",
+    "displayName"
+  ],
+  "title": "SignUpRequest",
+  "type": "object",
+  "x-dnd-ai-contract-kind": "request",
+  "x-dnd-ai-contract-version": "4.0.0"
+}

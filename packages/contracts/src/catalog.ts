@@ -6,6 +6,11 @@ import {
   SubmitTurnAcceptedResponseSchema,
   SubmitTurnRequestSchema,
 } from "./api.js";
+import {
+  CampaignDetailResponseSchema,
+  CampaignErrorResponseSchema,
+  CampaignIdSchema,
+} from "./campaign.js";
 import { TurnStreamEventSchema } from "./events.js";
 import { GameEventSchema } from "./game-event.js";
 import {
@@ -57,6 +62,24 @@ export const CONTRACT_CATALOG: readonly ContractCatalogEntry[] = Object.freeze([
     "response",
     "api-error-response.schema.json",
     ApiErrorResponseSchema,
+  ),
+  contract(
+    "CampaignDetailResponse",
+    "response",
+    "campaign-detail-response.schema.json",
+    CampaignDetailResponseSchema,
+  ),
+  contract(
+    "CampaignErrorResponse",
+    "response",
+    "campaign-error-response.schema.json",
+    CampaignErrorResponseSchema,
+  ),
+  contract(
+    "CampaignId",
+    "request",
+    "campaign-id.schema.json",
+    CampaignIdSchema,
   ),
   contract(
     "DungeonMasterTurnResult",

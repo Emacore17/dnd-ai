@@ -236,3 +236,48 @@ export function createIdentityOpenApiPaths(): JsonRecord {
     },
   };
 }
+
+export function createCampaignOpenApiPaths(): JsonRecord {
+  const campaignError = (description: string): JsonRecord => ({
+    description,
+    content: {
+      "application/json": {
+        schema: { $ref: "#/components/schemas/CampaignErrorResponse" },
+      },
+    },
+  });
+
+  return {
+    "/api/campaigns/{campaignId}": {
+      get: {
+        operationId: "getCampaign",
+        summary: "Legge il dettaglio player-safe di una campagna posseduta.",
+        "x-dnd-ai-rate-limit-class": "campaign.read",
+        parameters: [
+          {
+            in: "path",
+            name: "campaignId",
+            required: true,
+            schema: { $ref: "#/components/schemas/CampaignId" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Campagna posseduta.",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CampaignDetailResponse",
+                },
+              },
+            },
+          },
+          "400": campaignError("Identificatore non valido."),
+          "401": campaignError("Sessione non valida."),
+          "404": campaignError("Campagna non trovata."),
+          "503": campaignError("Servizio temporaneamente non disponibile."),
+        },
+      },
+    },
+  };
+}

@@ -41,3 +41,9 @@ export {
   type IdentityPersistenceErrorCode,
 } from "./identity-store.js";
 export { createPostgresIdentityAccessStore } from "./identity-access-store.js";
+export {
+  CampaignAccessPersistenceError,
+  createPostgresCampaignAccessStore,
+  type CampaignAccessPersistenceErrorCode,
+  type CampaignAccessStore,
+} from "./campaign-access-store.js";

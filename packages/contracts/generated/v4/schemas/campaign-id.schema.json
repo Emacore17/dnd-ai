@@ -1,0 +1,10 @@
+{
+  "$id": "urn:dnd-ai:contracts:v4:CampaignId",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Canonical lowercase UUIDv7.",
+  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+  "title": "CampaignId",
+  "type": "string",
+  "x-dnd-ai-contract-kind": "request",
+  "x-dnd-ai-contract-version": "4.0.0"
+}

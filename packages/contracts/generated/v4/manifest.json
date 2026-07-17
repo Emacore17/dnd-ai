@@ -1,0 +1,146 @@
+{
+  "contractVersion": "4.0.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "openapi": "openapi.json",
+  "schemaVersion": "contract-artifact-manifest-v1",
+  "schemas": [
+    {
+      "file": "schemas/authenticated-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:AuthenticatedResponse",
+      "kind": "response",
+      "name": "AuthenticatedResponse"
+    },
+    {
+      "file": "schemas/api-error-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:ApiErrorResponse",
+      "kind": "response",
+      "name": "ApiErrorResponse"
+    },
+    {
+      "file": "schemas/campaign-detail-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:CampaignDetailResponse",
+      "kind": "response",
+      "name": "CampaignDetailResponse"
+    },
+    {
+      "file": "schemas/campaign-error-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:CampaignErrorResponse",
+      "kind": "response",
+      "name": "CampaignErrorResponse"
+    },
+    {
+      "file": "schemas/campaign-id.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:CampaignId",
+      "kind": "request",
+      "name": "CampaignId"
+    },
+    {
+      "file": "schemas/dungeon-master-turn-result.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:DungeonMasterTurnResult",
+      "kind": "ai_output",
+      "name": "DungeonMasterTurnResult"
+    },
+    {
+      "file": "schemas/idempotency-key.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:IdempotencyKey",
+      "kind": "request",
+      "name": "IdempotencyKey"
+    },
+    {
+      "file": "schemas/identity-error-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:IdentityErrorResponse",
+      "kind": "response",
+      "name": "IdentityErrorResponse"
+    },
+    {
+      "file": "schemas/password-reset-completed-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:PasswordResetCompletedResponse",
+      "kind": "response",
+      "name": "PasswordResetCompletedResponse"
+    },
+    {
+      "file": "schemas/password-reset-confirm.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:PasswordResetConfirm",
+      "kind": "request",
+      "name": "PasswordResetConfirm"
+    },
+    {
+      "file": "schemas/password-reset-requested-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:PasswordResetRequestedResponse",
+      "kind": "response",
+      "name": "PasswordResetRequestedResponse"
+    },
+    {
+      "file": "schemas/password-reset-request.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:PasswordResetRequest",
+      "kind": "request",
+      "name": "PasswordResetRequest"
+    },
+    {
+      "file": "schemas/resend-verification-request.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:ResendVerificationRequest",
+      "kind": "request",
+      "name": "ResendVerificationRequest"
+    },
+    {
+      "file": "schemas/revoke-all-sessions-request.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:RevokeAllSessionsRequest",
+      "kind": "request",
+      "name": "RevokeAllSessionsRequest"
+    },
+    {
+      "file": "schemas/sign-in-request.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:SignInRequest",
+      "kind": "request",
+      "name": "SignInRequest"
+    },
+    {
+      "file": "schemas/sign-up-request.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:SignUpRequest",
+      "kind": "request",
+      "name": "SignUpRequest"
+    },
+    {
+      "file": "schemas/game-event.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:GameEvent",
+      "kind": "event",
+      "name": "GameEvent"
+    },
+    {
+      "file": "schemas/submit-turn-accepted-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:SubmitTurnAcceptedResponse",
+      "kind": "response",
+      "name": "SubmitTurnAcceptedResponse"
+    },
+    {
+      "file": "schemas/submit-turn-request.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:SubmitTurnRequest",
+      "kind": "request",
+      "name": "SubmitTurnRequest"
+    },
+    {
+      "file": "schemas/verification-required-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:VerificationRequiredResponse",
+      "kind": "response",
+      "name": "VerificationRequiredResponse"
+    },
+    {
+      "file": "schemas/verified-response.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:VerifiedResponse",
+      "kind": "response",
+      "name": "VerifiedResponse"
+    },
+    {
+      "file": "schemas/verify-email-request.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:VerifyEmailRequest",
+      "kind": "request",
+      "name": "VerifyEmailRequest"
+    },
+    {
+      "file": "schemas/turn-stream-event.schema.json",
+      "id": "urn:dnd-ai:contracts:v4:TurnStreamEvent",
+      "kind": "event",
+      "name": "TurnStreamEvent"
+    }
+  ]
+}

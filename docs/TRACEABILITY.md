@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-17
-last_verified_commit: c30c6db616ebb69434e4b04dcccb97e48530f6a9
+last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -14,6 +14,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
   - docs/superpowers/plans/2026-07-17-bl-006-session-access.md
+  - docs/superpowers/specs/2026-07-17-bl-007-actor-context-design.md
   - docs/superpowers/specs/2026-07-15-bl-010-feature-flags-design.md
   - docs/superpowers/specs/2026-07-15-gov-002-document-integrity-design.md
   - docs/superpowers/specs/2026-07-16-qa-001-test-foundation-design.md
@@ -33,6 +34,7 @@ related_tasks:
   - BL-004
   - BL-005
   - BL-006
+  - BL-007
   - BL-008
   - BL-009
   - BL-010
@@ -59,6 +61,11 @@ code_refs:
   - packages/contracts/generated/v1
   - packages/contracts/generated/v2
   - packages/contracts/generated/v3
+  - packages/contracts/generated/v4
+  - apps/api/src/campaign
+  - apps/api/src/access/owned-sse-authorization.ts
+  - packages/domain/src/access/actor-context.ts
+  - packages/persistence/src/campaign-access-store.ts
   - scripts/generate-contracts.mjs
   - scripts/lib/contract-artifact-policy.mjs
   - scripts/lib/contract-compatibility-policy.mjs
@@ -164,6 +171,11 @@ test_refs:
   - tests/contracts/contracts-generated.test.mjs
   - tests/contracts/identity-contracts.test.mjs
   - tests/contracts/web-identity-ui.test.mjs
+  - tests/contracts/campaign-contracts.test.mjs
+  - tests/database/campaign-ownership-migration.test.mjs
+  - tests/database/campaign-access-store.test.mjs
+  - tests/integration/campaign-idor-flow.test.mjs
+  - tests/security/campaign-access-security.test.mjs
   - tests/integration/identity-signup-flow.test.mjs
   - tests/security/identity-api-security.test.mjs
   - tests/security/identity-email-security.test.mjs
@@ -178,7 +190,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. BL-006 è verificato tramite PR #29, candidato `31d5cb3`, merge `c30c6db` e CI PR/post-merge `29570461340`/`29570669866`, entrambe 5/5 `SUCCESS`. Il candidato branch-local `BL-081` è proposto `DONE/100%/PASSING` dopo mirati, build, browser, bundle, full HIGH_RISK e checkout pulito verdi; resta aperta soltanto la delivery protetta. `BL-007` e `QA-002` sono `READY`; `BL-080` resta congelato/bloccato.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. BL-007 è candidato branch-local `DONE/100%/PASSING`: migration, contract, store, HTTP, guardia SSE, matrice IDOR, full e clean checkout sono verdi; delivery protetta `PENDING`. `QA-002` è READY; `BL-080` resta congelato/bloccato.
 
 ## Governance e baseline
 
@@ -204,6 +216,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003, DOC-ARCH-001 | `packages/config`, API/worker composition root e script composto root | unit 7/7; integration process 5/5; regressione `runtime-config-contract` sul pin Corepack dei subprocess; full verify locale/clean; CI `29285998646`; report BL-003 | DONE BL-003; regressione DOC-ARCH-001 6/6 e cold rerun PASS |
 | Signup pending, verifica one-time e prima sessione sicura | spec §§20, 22.2, 22.8–22.10, 32 AC-01; ADR-0010 | BL-005 | `apps/api/src/identity`, `apps/worker/src/identity`, `apps/web/app/{sign-up,verify-email,api/auth}`, `apps/web/lib/server`, `packages/persistence/src/identity-store.ts`, migration `000003`, contract artifact `v2` | unit/DB/API/worker/BFF/UI/security; asserzione subject HMAC BFF→API; vertical `identity-signup-flow` su PostgreSQL reale; concorrenza, replay, supersession, timeout e rate limit | BL-005 integrato tramite PR #28; mirati, browser, full, clean checkout e CI PR/post-merge PASS |
 | Login, session lifecycle, logout, revoca globale e reset one-time | spec §§20, 22.2, 22.8–22.12, 26.5, 26.8, 26.9 e 32 AC-01; ADR-0010; `identity-access-v1` | BL-006, QA-002 | contract artifact `v3`, porte/config/crypto, migration `000004_identity_access`, access store, service, sei route Fastify, worker outbox discriminato, sei route BFF e pagine `sign-in`, `reset-password`, `account/security` implementati | contract/config/crypto/startup e migration `PASS`; store PostgreSQL 2/2 + regressione 3/3 + security 2/2; service/cookie/API/security 20/20 e regressioni 23/23; worker build, unit/security 12/12 e integrazione PostgreSQL 6/6; web build/lint/typecheck e 19/19 BFF/client/UI/standalone; verticale `identity-access-flow` 1/1 e aggregato identity 96/96; browser 320/390/1440; full 355 test e artifact 4.332; clean head `df7f868` con install/artifact/build/migration/verticale/docs/secret verdi | DONE; PR #29/merge `c30c6db`, CI PR/post-merge 5/5 `SUCCESS` |
+| AC-23 — isolamento campagne e accesso cross-tenant impossibile | spec §§20.1, 22.3, 32 AC-23; `campaign-ownership-v1` | BL-007 | `ActorContext`, `CampaignReader`, `app.campaigns`, artifact `v4`, `CampaignAccessStore`, GET owner-scoped e pre-handler SSE non registrato | `campaign-contracts`, `campaign-ownership-migration`, `campaign-access-store`, `campaign-api`, `campaign-idor-flow`, `campaign-access-security`: due utenti, foreign/missing/deleted, sessione revocata, 404 uniformi, DB 503, nessuno stream prima dell'auth | candidato `DONE/100%/PASSING`; mirati, full HIGH_RISK e checkout detached pulito verdi; delivery `PENDING` |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
 | Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-005, BL-006, BL-080 | template service-scoped, scanner fail-closed; BFF assertion key soltanto server-side con IP pseudonimo e nessun valore identity nel bundle client; BL-006 con chiave HMAC reset dedicata API/worker e controllo anti-riuso; Git Integration reale senza token Vercel persistente | config/security/BFF suite; header provider-controlled, firma/timestamp/tampering; secret reset fail-fast/redaction; token mancante/malformato fail-before-fetch | BL-003/BL-005 PASS; BL-006 config/crypto/security/secret scan e checkout pulito PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
 | Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004, BL-010, BL-005, BL-006 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head e previous→head, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | `000004_identity_access` su main PASS: identity 2/2, lifecycle 11/11, concurrency/failure 2/2; PR #29 integrata |

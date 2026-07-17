@@ -3,11 +3,7 @@ import test from "node:test";
 
 import pg from "pg";
 
-import {
-  DATABASE_CONTRACT_VERSION,
-  DATABASE_MIGRATION_HEAD,
-  runDatabaseMigrations,
-} from "../../packages/persistence/dist/index.js";
+import { runDatabaseMigrations } from "../../packages/persistence/dist/index.js";
 import { withPostgresTestContainer } from "../../scripts/lib/postgres-test-container.mjs";
 
 const { Client } = pg;
@@ -43,12 +39,11 @@ test(
   async () => {
     await withPostgresTestContainer(async ({ databaseUrl }) => {
       const migrated = await runDatabaseMigrations({
+        count: 4,
         databaseUrl,
         direction: "up",
       });
-      assert.equal(DATABASE_MIGRATION_HEAD, "000004_identity_access");
-      assert.equal(DATABASE_CONTRACT_VERSION, "database-identity-access-v1");
-      assert.equal(migrated.current, DATABASE_MIGRATION_HEAD);
+      assert.equal(migrated.current, "000004_identity_access");
 
       const client = await connect(databaseUrl);
       try {
@@ -453,6 +448,7 @@ test(
       }
 
       const upgraded = await runDatabaseMigrations({
+        count: 1,
         databaseUrl,
         direction: "up",
       });
@@ -497,6 +493,7 @@ test(
       }
 
       const reapplied = await runDatabaseMigrations({
+        count: 1,
         databaseUrl,
         direction: "up",
       });

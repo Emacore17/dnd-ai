@@ -57,7 +57,7 @@ test("architecture overview represents every tracked workspace", async () => {
   assert.match(overview, /\*\*Pianificato\*\*/u);
   assert.match(overview, /- \*\*BullMQ:\*\* Pianificato/u);
   assert.match(overview, /- \*\*Redis locale:\*\* Pianificato/u);
-  assert.match(overview, /- \*\*API di dominio:\*\* Pianificata/u);
+  assert.match(overview, /- \*\*API di dominio completa:\*\* Pianificata/u);
   assert.match(overview, /- \*\*Staging:\*\* non disponibile/u);
 });
 
@@ -68,11 +68,11 @@ test("data model follows the persistence migration head", async () => {
   ]);
   const head = stringConstant(
     migrationSource,
-    "DATABASE_IDENTITY_ACCESS_MIGRATION_NAME",
+    "DATABASE_CAMPAIGN_OWNERSHIP_MIGRATION_NAME",
   );
   const contract = stringConstant(
     migrationSource,
-    "DATABASE_IDENTITY_ACCESS_CONTRACT_VERSION",
+    "DATABASE_CAMPAIGN_OWNERSHIP_CONTRACT_VERSION",
   );
 
   assert.match(dataModel, new RegExp("`" + escapeRegExp(head) + "`", "u"));
@@ -89,12 +89,25 @@ test("data model follows the persistence migration head", async () => {
     "app.password_reset_challenges",
     "app.user_sessions",
     "app.identity_email_outbox",
+    "app.campaigns",
   ]) {
     assert.match(
       dataModel,
       new RegExp("`" + escapeRegExp(tableName) + "`", "u"),
     );
   }
+});
+
+test("threat model tracks the implemented campaign authorization boundary", async () => {
+  const threatModel = await read("docs/security/THREAT_MODEL.md");
+
+  assert.match(threatModel, /status: active/u);
+  assert.match(threatModel, /Browser → API identity/u);
+  assert.match(threatModel, /API → campaign repository/u);
+  assert.match(threatModel, /Browser → SSE authorization/u);
+  assert.match(threatModel, /404 campaign\.not_found/u);
+  assert.match(threatModel, /503 campaign\.unavailable/u);
+  assert.match(threatModel, /BL-064/u);
 });
 
 test("local development guide exposes only existing commands and readiness", async () => {
