@@ -2,7 +2,7 @@
 status: active
 owner: product-design-and-frontend
 last_reviewed: 2026-07-17
-last_verified_commit: e173fd9424ad77330ae8302f68affd4832d66798
+last_verified_commit: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
 source_refs:
   - docs/MVP_SPEC.md#8-esperienza-utente
   - docs/MVP_SPEC.md#21-interfaccia-utente
@@ -12,6 +12,7 @@ source_refs:
   - docs/superpowers/specs/2026-07-16-bl-005-signup-verification-design.md
   - docs/superpowers/specs/2026-07-16-bl-006-session-access-design.md
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
+  - docs/superpowers/specs/2026-07-17-qa-002-browser-harness-design.md
 related_tasks:
   - GOV-001
   - GOV-004
@@ -45,6 +46,7 @@ code_refs:
   - apps/web/components/ai-elements
   - apps/web/components/game
   - apps/web/lib/game-shell
+  - tests/e2e
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/web-identity-ui.test.mjs
@@ -53,9 +55,9 @@ test_refs:
   - tests/unit/game-shell-reducer.test.mjs
   - tests/contracts/web-interactive-game-shell.test.mjs
   - tests/integration/web-game-shell.test.mjs
-  - tests/e2e/mobile-game-loop.spec.ts (planned)
-  - tests/e2e/reduced-motion.spec.ts (planned)
-  - tests/visual/game-shell.spec.ts (planned)
+  - tests/e2e/game-shell.spec.mjs
+  - tests/e2e/accessibility.spec.mjs
+  - tests/e2e/harness-failures.spec.mjs
 supersedes: null
 ---
 
@@ -353,6 +355,8 @@ Un asset Rive può essere sperimentato per generazione mondo o dado, ma entra ne
 - Rive assente dal bundle iniziale e caricato una sola volta nella feature che lo usa;
 - visual regression e test del layout dopo font load, reconnect e contenuto lungo.
 
+La copertura automatizzata disponibile in `QA-002` verifica oggi la shell fixture a 320×800, 390×844 touch e 1440×900, inclusi touch target, tastiera/focus, zoom, safe area, reduced-motion, axe A/AA e baseline Windows/Linux. Portrait/landscape aggiuntivi, screen reader reale, trace su device e test di comprensione con utenti restano verifiche proprietarie delle feature che introdurranno progress turno, dadi e reconnect; non sono dichiarate coperte dalla shell corrente.
+
 ### Test di comprensione
 
 Con un prototipo e cinque utenti interni non coinvolti nell’implementazione, verificare:
@@ -394,9 +398,9 @@ La verifica locale BL-006 copre 320×800, 390×844 e 1440×900: nessun overflow 
 5. smoke locale per focus, touch target, overflow e contenuto equivalente senza motion;
 6. decisione Rive: assente dal bundle iniziale salvo benchmark successivo.
 
-Il candidato branch-local di `BL-081` implementa questa sequenza con un reducer puro e una sorgente fixture iniettata, senza timer, rete o persistenza browser. `Conversation`, `Message` e `PromptInput` sono subset posseduti del registry AI Elements; `GameDrawer` usa Vaul/shadcn e ripristina il focus; Motion usa `LazyMotion` strict, `prefers-reduced-motion`, trasformazioni e opacity. Lo smoke locale verifica 320, 390 e 1440 px, submit/continue, multilinea, drawer/focus restore e console pulita. Il bundle iniziale non contiene Rive, AI SDK chat o plugin `@streamdown/*`; la feature DOM Motion resta asincrona. Il gate comune Playwright/accessibility/visuale rimane correttamente in `QA-002`.
+Il candidato branch-local di `BL-081` implementa questa sequenza con un reducer puro e una sorgente fixture iniettata, senza timer, rete o persistenza browser. `Conversation`, `Message` e `PromptInput` sono subset posseduti del registry AI Elements; `GameDrawer` usa Vaul/shadcn e ripristina il focus; Motion usa `LazyMotion` strict, `prefers-reduced-motion`, trasformazioni e opacity. Lo smoke locale verifica 320, 390 e 1440 px, submit/continue, multilinea, drawer/focus restore e console pulita. Il bundle iniziale non contiene Rive, AI SDK chat o plugin `@streamdown/*`; la feature DOM Motion resta asincrona.
 
-`QA-002` consolida Playwright, accessibility, visual regression, device matrix e failure path dopo `BL-081`.
+`QA-002` implementa il gate comune Playwright/Chromium dopo `BL-081`. La matrice automatica usa 320×800, 390×844 touch e 1440×900; verifica overflow, target 44/48 px, submit, drawer, Escape/focus restore, tastiera, zoom 200%, safe area e reduced-motion. Axe copre WCAG A/AA e una violazione intenzionale; sei baseline pixel-exact Windows/Linux sono stabili su due run per piattaforma. Server non pronto, browser chiuso e drift visuale devono fallire con causa specifica e cleanup bounded. Il browser resta locale/CI: preview, staging e Vercel non sono prerequisiti né dipendenze del gate.
 
 Le feature M1–M3 consumano questa fondazione; non ridefiniscono palette, spacing, componenti chat o motion localmente.
 
@@ -404,7 +408,7 @@ Le feature M1–M3 consumano questa fondazione; non ridefiniscono palette, spaci
 
 Ogni task che crea o modifica una superficie utente dipende esplicitamente da `BL-079` e cita sia questo contratto sia `docs/adr/0001-mobile-first-conversational-ui.md`. La regola vale anche per identity, recovery e backlog differito: un gate di milestone transitivo non sostituisce il collegamento al design system concretamente consumato. `BL-027`, `BL-039`, `BL-040`, `BL-071` e `BL-072` dipendono inoltre da `BL-081` perché consumano la conversazione di gioco.
 
-`BL-079` possiede il design system core e la shell statica. `BL-081` possiede wrapper conversazionali, stati, Motion e smoke browser minimo di feature. `QA-001` fornisce la fondazione test non-browser; `QA-002`, dipendente da `QA-001` e `BL-081`, consolida il setup browser nel harness comune senza duplicare le fixture di feature. Preview/staging non è un prerequisito dei due slice locali: lo smoke remoto resta in `BL-080` e `GATE-M0`.
+`BL-079` possiede il design system core e la shell statica. `BL-081` possiede wrapper conversazionali, stati, Motion e smoke browser minimo di feature. `QA-001` fornisce la fondazione test Node/container; `QA-002`, dipendente da `QA-001` e `BL-081`, aggiunge la corsia `e2e` allo stesso runner/report e riusa la shell reale senza duplicare le fixture di feature. Preview/staging non è un prerequisito dei due slice locali: lo smoke remoto resta in `BL-080` e `GATE-M0`.
 
 ## 15. Rischi e mitigazioni
 

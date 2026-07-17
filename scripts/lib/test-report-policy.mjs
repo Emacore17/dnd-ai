@@ -112,6 +112,10 @@ function hasCredentialAuthority(value) {
 }
 
 function assertNoSensitiveContent(content, filePath) {
+  const lowered = content.toLowerCase();
+  if (lowered.includes("http://") || lowered.includes("https://")) {
+    fail("remote-content");
+  }
   if (
     hasCredentialAuthority(content) ||
     scanSecretBuffer(Buffer.from(content, "utf8"), filePath).length > 0

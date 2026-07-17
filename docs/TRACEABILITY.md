@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-17
-last_verified_commit: dde888e4f835d25fc5d6142129394971efa90320
+last_verified_commit: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -22,6 +22,8 @@ source_refs:
   - docs/superpowers/plans/2026-07-16-bl-079-design-system-core.md
   - docs/superpowers/specs/2026-07-17-bl-081-interactive-game-shell-design.md
   - docs/superpowers/plans/2026-07-17-bl-081-interactive-game-shell.md
+  - docs/superpowers/specs/2026-07-17-qa-002-browser-harness-design.md
+  - docs/superpowers/plans/2026-07-17-qa-002-browser-harness.md
   - docs/testing/TEST_STRATEGY.md
   - docs/adr/README.md
 related_tasks:
@@ -114,6 +116,8 @@ code_refs:
   - packages/testing/src
   - scripts/run-tests.mjs
   - scripts/lib/test-report-policy.mjs
+  - tests/e2e/playwright.config.mjs
+  - tests/e2e/start-web-server.mjs
 test_refs:
   - AGENTS_VALIDATION.txt
   - tests/contracts/web-design-system.test.mjs
@@ -160,6 +164,10 @@ test_refs:
   - tests/integration/testing-containers.test.mjs
   - tests/contracts/testing-package-contract.test.mjs
   - tests/security/test-report-security.test.mjs
+  - tests/contracts/browser-harness-contract.test.mjs
+  - tests/e2e/game-shell.spec.mjs
+  - tests/e2e/accessibility.spec.mjs
+  - tests/e2e/harness-failures.spec.mjs
   - tests/unit/observability-core.test.mjs
   - tests/unit/observability-node.test.mjs
   - tests/integration/observability-flow.test.mjs
@@ -190,7 +198,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. BL-007 è candidato branch-local `DONE/100%/PASSING`: migration, contract, store, HTTP, guardia SSE, matrice IDOR, full e clean checkout sono verdi; delivery protetta `PENDING`. `QA-002` è READY; `BL-080` resta congelato/bloccato.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-007`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `GOV-002`, `GOV-004`, `QA-001` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. `QA-002` è `DONE/100%/PASSING` branch-local con design `browser-harness-v1`, full gate, checkout pulito e review inline verdi; delivery protetta `PENDING`. `BL-080` resta congelato/bloccato.
 
 ## Governance e baseline
 
@@ -203,7 +211,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Monorepo buildabile con tre runtime e package puri | spec §§11.2–11.3; `AGENTS.md` §9 | BL-001 | `apps/*`, `packages/*`, `turbo.json` | lint/typecheck/build su 10 workspace; report BL-001 | implemented, clean worktree PASS |
 | Import e dipendenze rispettano la allowlist | `AGENTS.md` §§4.6, 9 | BL-001 | `scripts/lib/workspace-boundaries.mjs` | `tests/contracts/workspace-boundaries.test.mjs`, inclusa fixture vietata; report BL-001 | implemented, PASS |
 | Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check` e gate composto `pnpm docs:check`; report BL-001 | implemented, PASS |
-| Fondazione UI locale separata da shell interattiva e smoke remoto | spec §31; ADR-0001; studio UX §14 | GOV-004, BL-079, BL-081, BL-080, QA-002 | design/piani, `apps/web/components/{ai-elements,game}`, `apps/web/lib/game-shell` | task graph; contract design system/interazione; reducer; smoke standalone e browser locale | GOV-004/BL-079 integrati; candidato BL-081 con mirati/build/browser/bundle PASS; BL-080 invariato BLOCKED |
+| Fondazione UI locale separata da shell interattiva e smoke remoto | spec §31; ADR-0001; studio UX §14 | GOV-004, BL-079, BL-081, BL-080, QA-002 | design/piani, `apps/web/components/{ai-elements,game}`, `apps/web/lib/game-shell` | task graph; contract design system/interazione; reducer; smoke standalone e browser locale | GOV-004/BL-079/BL-081 integrati; QA-002 branch-local `DONE/100%/PASSING`; BL-080 invariato BLOCKED |
 | Architettura living implementato/target | spec §§11, 29; ADR-0009 | DOC-ARCH-001 | `docs/architecture/SYSTEM_OVERVIEW.md`, ADR-0009 | `tests/contracts/architecture-documentation.test.mjs`, Mermaid parse e `verify:docs` | PASS; contract 3/3, docs gate e full HIGH_RISK verdi |
 | Modello dati e migration head | spec §19; ADR-0006, ADR-0010 | DOC-ARCH-001, BL-005, BL-006 | `docs/data/DATA_MODEL.md`; `000004_identity_access` su main | architecture-documentation contract + migration contract/database/identity suite | `000004`/`database-identity-access-v1` verde su PostgreSQL reale per zero/previous→head, vincoli, replay, rollback e runner concorrenti; integrato tramite PR #29 |
 | Cold start locale riproducibile | spec §29.3; card DOC-ARCH-001 | DOC-ARCH-001 | `docs/operations/LOCAL_DEVELOPMENT.md` | clean checkout + `web-health-v1`/runtime integration | PASS; frozen install, config, migration, build, integration 20/20 e health reale verdi |
@@ -216,14 +224,14 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Config runtime tipizzata e service-scoped | spec §§5, 22.10, 29.3; ADR-0004 | BL-003, DOC-ARCH-001 | `packages/config`, API/worker composition root e script composto root | unit 7/7; integration process 5/5; regressione `runtime-config-contract` sul pin Corepack dei subprocess; full verify locale/clean; CI `29285998646`; report BL-003 | DONE BL-003; regressione DOC-ARCH-001 6/6 e cold rerun PASS |
 | Signup pending, verifica one-time e prima sessione sicura | spec §§20, 22.2, 22.8–22.10, 32 AC-01; ADR-0010 | BL-005 | `apps/api/src/identity`, `apps/worker/src/identity`, `apps/web/app/{sign-up,verify-email,api/auth}`, `apps/web/lib/server`, `packages/persistence/src/identity-store.ts`, migration `000003`, contract artifact `v2` | unit/DB/API/worker/BFF/UI/security; asserzione subject HMAC BFF→API; vertical `identity-signup-flow` su PostgreSQL reale; concorrenza, replay, supersession, timeout e rate limit | BL-005 integrato tramite PR #28; mirati, browser, full, clean checkout e CI PR/post-merge PASS |
 | Login, session lifecycle, logout, revoca globale e reset one-time | spec §§20, 22.2, 22.8–22.12, 26.5, 26.8, 26.9 e 32 AC-01; ADR-0010; `identity-access-v1` | BL-006, QA-002 | contract artifact `v3`, porte/config/crypto, migration `000004_identity_access`, access store, service, sei route Fastify, worker outbox discriminato, sei route BFF e pagine `sign-in`, `reset-password`, `account/security` implementati | contract/config/crypto/startup e migration `PASS`; store PostgreSQL 2/2 + regressione 3/3 + security 2/2; service/cookie/API/security 20/20 e regressioni 23/23; worker build, unit/security 12/12 e integrazione PostgreSQL 6/6; web build/lint/typecheck e 19/19 BFF/client/UI/standalone; verticale `identity-access-flow` 1/1 e aggregato identity 96/96; browser 320/390/1440; full 355 test e artifact 4.332; clean head `df7f868` con install/artifact/build/migration/verticale/docs/secret verdi | DONE; PR #29/merge `c30c6db`, CI PR/post-merge 5/5 `SUCCESS` |
-| AC-23 — isolamento campagne e accesso cross-tenant impossibile | spec §§20.1, 22.3, 32 AC-23; `campaign-ownership-v1` | BL-007 | `ActorContext`, `CampaignReader`, `app.campaigns`, artifact `v4`, `CampaignAccessStore`, GET owner-scoped e pre-handler SSE non registrato | `campaign-contracts`, `campaign-ownership-migration`, `campaign-access-store`, `campaign-api`, `campaign-idor-flow`, `campaign-access-security`: due utenti, foreign/missing/deleted, sessione revocata, 404 uniformi, DB 503, nessuno stream prima dell'auth | candidato `DONE/100%/PASSING`; mirati, full HIGH_RISK e checkout detached pulito verdi; delivery `PENDING` |
+| AC-23 — isolamento campagne e accesso cross-tenant impossibile | spec §§20.1, 22.3, 32 AC-23; `campaign-ownership-v1` | BL-007 | `ActorContext`, `CampaignReader`, `app.campaigns`, artifact `v4`, `CampaignAccessStore`, GET owner-scoped e pre-handler SSE non registrato | `campaign-contracts`, `campaign-ownership-migration`, `campaign-access-store`, `campaign-api`, `campaign-idor-flow`, `campaign-access-security`: due utenti, foreign/missing/deleted, sessione revocata, 404 uniformi, DB 503, nessuno stream prima dell'auth | DONE; PR #31/merge `f653e63`, CI PR/post-merge 5/5 `SUCCESS` |
 | Startup fallisce prima degli effetti su config mancante/malformata | spec §31 `BL-003`; card BL-003 | BL-003 | `apps/api/src/runtime.ts`, `apps/api/src/start.ts`, `apps/worker/src/runtime.ts` | listener reale, factory/initializer ordering, exit non-zero | PASS mirato |
 | Secret template/injection senza leakage | spec §22.10; ADR-0004 | BL-003, BL-005, BL-006, BL-080 | template service-scoped, scanner fail-closed; BFF assertion key soltanto server-side con IP pseudonimo e nessun valore identity nel bundle client; BL-006 con chiave HMAC reset dedicata API/worker e controllo anti-riuso; Git Integration reale senza token Vercel persistente | config/security/BFF suite; header provider-controlled, firma/timestamp/tampering; secret reset fail-fast/redaction; token mancante/malformato fail-before-fetch | BL-003/BL-005 PASS; BL-006 config/crypto/security/secret scan e checkout pulito PASS; BL-080 boundary/trust OIDC PASS, activation parziale |
 | Migration PostgreSQL riproducibili e versionate | spec §§19.5, 26.4, 29.5; ADR-0006 | BL-004, BL-010, BL-005, BL-006 | `packages/persistence`, `scripts/run-database-migrations.mjs`, `infra/local/postgres.compose.yml` | zero→head e previous→head, replay, source/contract drift, file sconosciuto pre-DDL, due runner simultanei, vincoli/indice, rollback/re-apply su PostgreSQL 17/pgvector 0.8.2 | `000004_identity_access` su main PASS: identity 2/2, lifecycle 11/11, concurrency/failure 2/2; PR #29 integrata |
 | Rollback database fail-closed e forward-only gestito | spec §§19.5, 29.5; ADR-0006 | BL-004 | policy CLI e runbook `DATABASE_MIGRATIONS.md` | DDL invalido annullato con ledger 0; `down` solo loopback disposable senza query routing e con conferma; staging/production rifiutati | PASS mirato/full/clean/CI |
 | Feature flag e kill switch server-side sono condivisi, auditati e fail-closed | spec §§22.16, 27.5, 28.6, 29.8, 31 `BL-010`; ADR-0004, ADR-0006, ADR-0007 | BL-010 | `packages/persistence/src/feature-flags.ts`, `packages/persistence/src/migrations/000002_feature_flags.ts`, `scripts/manage-feature-flag.mjs` | catalogo chiuso `campaign.start`/`turn.new`/`model.route.premium`; store unavailable/unknown/malformed disabled; cambio CLI senza deploy; audit atomico; CAS; idempotency replay/conflict; output redatto | DONE; PR #22/merge `15382d5`, CI post-merge `29426357415` 5/5 `SUCCESS` |
 | Runner, fixture e report non-browser sono isolati e riproducibili | spec §§26, 35.1 | QA-001 | `@dnd-ai/testing`, runner Node root, harness PostgreSQL/Redis e artifact `testing-foundation-v1` | process isolation/failure/timeout, golden RNG/clock, smoke container concorrente, JUnit/LCOV/checksum e symlink/secret negative path | DONE; full + clean `PASS`, PR #24/merge `3e9c6d5`; [`TEST_STRATEGY.md`](testing/TEST_STRATEGY.md) |
-| Browser, accessibility e visual regression usano un harness comune | spec §26.8; studio UX §§13–14.1 | BL-081, QA-002 | Playwright e browser harness (planned) | viewport 320/390/1440, reduced-motion, accessibility negative fixture e visual drift (planned) | QA-002 BACKLOG; dipende da QA-001 e BL-081 |
+| Browser, accessibility e visual regression usano un harness comune | spec §26.8; studio UX §§13–14.1; `browser-harness-v1` | BL-081, QA-002 | lane `e2e` Playwright nel runner/report comune, axe, server standalone loopback, cleanup asset standalone e sei baseline Windows/Linux | 12/12 E2E: viewport 320/390/1440, touch, tastiera/focus/zoom/safe-area, reduced-motion, axe positivo/negativo, server/browser/drift failure; due run stabili per piattaforma; report artifact solo JUnit | QA-002 branch-local `DONE/100%/PASSING`; full `verify` 420 test, clean checkout e review inline verdi; CI PR pending |
 | W3C Trace Context e request ID attraversano web→API→queue→worker senza context bleed | spec §§24.1, 24.5; ADR-0007 | BL-008 | `packages/observability`, plugin Fastify e wrapper worker | `tests/integration/observability-flow.test.mjs`: parent chain `web.request`→`api.request`→`queue.enqueue`→`worker.process`, due flussi concorrenti disgiunti; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Log JSON e metadata telemetry non espongono PII, secret, prompt o output AI | spec §§22.10, 24.2; ADR-0007 | BL-008 | sanitizer bounded, logger Pino allowlisted e reporter safe | `tests/unit/observability-core.test.mjs`, `tests/unit/observability-node.test.mjs`, `tests/security/observability-security.test.mjs`; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Sentry resta error-only, off-by-default e non altera il risultato applicativo | spec §§24.4, 24.5; ADR-0007 | BL-008 | adapter Node/Next, transport fake, failure containment idempotente e bounded | unit/integration/security: exporter, destination e transport failure; zero rete; nessun Replay/profiling/log forwarding/tunnel/source map; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
@@ -238,14 +246,14 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 
 | ID | Requisito normativo | Task | Codice | Test | Evidenza corrente |
 |---|---|---|---|---|---|
-| UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-081, BL-040, QA-002 | `InteractiveGameShell`, reducer e fixture in `apps/web` | reducer/contract/smoke standalone; E2E comune planned | BL-081 verificato a 320×568, 390×844 e 1440×900 senza overflow; submit/continue fixture PASS |
-| UX-P0-02 | Feed conversazionale, decisione e composer dominano il primo livello | BL-079, BL-081, BL-040 | `GameConversation`, `NarrativeTurn`, `SuggestedActions`, `FreeActionComposer` | contract UI, smoke HTML e browser locale; visual regression comune planned | feed, due azioni e composer visibili insieme a 320 px; sei stati deterministici e retry guard testati |
+| UX-P0-01 | Core loop completo a 320 px; baseline 360–430 px | BL-079, BL-081, BL-040, QA-002 | `InteractiveGameShell`, reducer e fixture in `apps/web` | reducer/contract/smoke standalone + `game-shell.spec.mjs` | 320×800, 390×844 touch e 1440×900 senza overflow; submit/continue e CTA raggiungibili PASS |
+| UX-P0-02 | Feed conversazionale, decisione e composer dominano il primo livello | BL-079, BL-081, BL-040 | `GameConversation`, `NarrativeTurn`, `SuggestedActions`, `FreeActionComposer` | contract UI, smoke HTML e browser E2E/visual | feed, due azioni e composer visibili insieme a 320 px; sei stati deterministici e retry guard testati |
 | UX-P0-03 | HUD secondaria in drawer/sheet; desktop senza funzioni esclusive | BL-081, BL-040, QA-002 | `GameDrawer`, Vaul/shadcn e responsive shell | contract + browser 320/390/1440 | tre sezioni HUD, Escape e focus restore PASS; stessa gerarchia desktop |
 | UX-P0-04 | shadcn/ui `new-york` su Radix e token semantici | BL-079 | `apps/web/components.json`, `app/globals.css`, `components/ui` | `tests/contracts/web-design-system.test.mjs` | contract 7/7 e build web PASS; Tailwind 4.3.2, Geist 1.7.2, cinque primitive selettive |
 | UX-P0-05 | AI Elements selettivo non sostituisce `TurnView`, REST+SSE o idempotenza | BL-081, BL-040, BL-041 | subset `conversation`/`message`/`prompt-input` e reducer/view model locale | `tests/contracts/web-interactive-game-shell.test.mjs`; negative boundary scan | nessun `useChat`, AI SDK, route chat, storage o trasporto parallelo; backend turno resta planned |
-| UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all’animazione | BL-081, BL-027, BL-040, QA-002 | `GameMotionProvider`, feature DOM asincrona e fallback statico | contract, browser locale; E2E reduced-motion comune planned | `LazyMotion` strict, reduced-motion e transform/opacity; feature entry asincrona 285 byte |
-| UX-P0-07 | Touch target ≥44 px, primarie ≥48 px, safe area/tastiera/zoom | BL-079, BL-081, BL-012, BL-019, BL-040, QA-002 | `Button`, `Input`, token touch/safe-area e feed `100svh` | contract; browser matrix locale; E2E tastiera virtuale planned | minimo DOM 44 px, primarie 48 px, overlap `0`, Tab order e focus ring verificati su 320/390/1440 |
-| UX-P0-08 | Stile premium contemporaneo, non pseudo-medievale | BL-079, QA-002 | token graphite/cobalto e shell contemporanea in `apps/web` | review React/design e browser locale; visual regression comune planned | nessun chrome fantasy, font remoto, gradiente invasivo o runtime grafico; finding P0/P1 locale chiuso |
+| UX-P0-06 | Motion lazy, reduced-motion e nessuna informazione affidata all’animazione | BL-081, BL-027, BL-040, QA-002 | `GameMotionProvider`, feature DOM asincrona e fallback statico | contract + E2E con media feature reduced | `LazyMotion` strict, transform/opacity e contenuto equivalente senza transizioni; PASS |
+| UX-P0-07 | Touch target ≥44 px, primarie ≥48 px, safe area/tastiera/zoom | BL-079, BL-081, BL-012, BL-019, BL-040, QA-002 | `Button`, `Input`, token touch/safe-area e feed `100svh` | contract + matrice E2E tastiera/focus/zoom/safe-area | minimo DOM 44 px, primarie 48 px, overlap `0`, zoom 200%, safe area 34 px, Tab order e focus restore PASS |
+| UX-P0-08 | Stile premium contemporaneo, non pseudo-medievale | BL-079, QA-002 | token graphite/cobalto e shell contemporanea in `apps/web` | review React/design + sei baseline pixel-exact per piattaforma | nessun chrome fantasy, font remoto, gradiente invasivo o runtime grafico; Windows/Linux stabili su due run |
 | UX-P0-09 | Dado decorativo riproduce risultato backend e possiede fallback | BL-040, BL-043 | dice tray (planned) | rules contract + reduced-motion UI test (planned) | spec §21.4 |
 
 ## Criteri globali

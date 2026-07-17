@@ -150,7 +150,7 @@ test("QA-001:test-report-artifact-is-hashed-reproducible-and-verifiable", async 
   assert.deepEqual(first, second);
   assert.equal(first.schemaVersion, "testing-foundation-v1");
   assert.deepEqual(first.lanes, ["unit"]);
-  assert.deepEqual(first.taskIds, ["QA-001"]);
+  assert.deepEqual(first.taskIds, ["QA-001", "QA-002"]);
   assert.deepEqual(await verifyTestReportArtifact(options), []);
 
   const persisted = JSON.parse(
@@ -160,4 +160,38 @@ test("QA-001:test-report-artifact-is-hashed-reproducible-and-verifiable", async 
     ),
   );
   assert.deepEqual(persisted, first);
+});
+
+test("QA-002:e2e-report-uses-the-common-manifest-without-coverage", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "dnd-ai-e2e-reports-"));
+  const laneDirectory = path.join(
+    root,
+    "test-results",
+    "testing-foundation-v1",
+    "e2e",
+  );
+  await mkdir(laneDirectory, { recursive: true });
+  await writeFile(
+    path.join(laneDirectory, "junit.xml"),
+    normalizeJUnitReport(
+      '<?xml version="1.0" encoding="utf-8"?>\n<testsuites><testcase name="QA-002:browser-pass" time="0.2" classname="e2e"/></testsuites>\n',
+      { knownTaskIds: ["QA-002"], lane: "e2e" },
+    ),
+    "utf8",
+  );
+
+  const options = {
+    commit: "b".repeat(40),
+    repositoryRoot: root,
+    requiredLanes: ["e2e"],
+  };
+  const manifest = await prepareTestReportArtifact(options);
+
+  assert.deepEqual(manifest.lanes, ["e2e"]);
+  assert.deepEqual(manifest.taskIds, ["QA-002"]);
+  assert.deepEqual(
+    manifest.files.map(({ path: filePath }) => filePath),
+    ["e2e/junit.xml"],
+  );
+  assert.deepEqual(await verifyTestReportArtifact(options), []);
 });

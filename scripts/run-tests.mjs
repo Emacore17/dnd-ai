@@ -9,7 +9,12 @@ import {
   discoverLaneFiles,
   resolveTestLane,
 } from "./lib/test-lane-policy.mjs";
-import { runCommandProcess, runTestProcess } from "./lib/test-process.mjs";
+import {
+  reserveLoopbackPort,
+  runCommandProcess,
+  runPlaywrightProcess,
+  runTestProcess,
+} from "./lib/test-process.mjs";
 import {
   normalizeJUnitReport,
   normalizeLcovReport,
@@ -34,6 +39,26 @@ const packageManagerCommand =
   process.platform === "win32" ? process.execPath : "pnpm";
 const packageManagerArguments =
   process.platform === "win32" ? [corepackEntry, "pnpm@11.13.0"] : [];
+
+export async function cleanupBrowserRuntimeStatic(root) {
+  if (typeof root !== "string" || root.length === 0) {
+    throw new Error("test-runner: invalid-browser-runtime-root");
+  }
+  const resolvedRoot = path.resolve(root);
+  const destinationStatic = path.join(
+    resolvedRoot,
+    "apps",
+    "web",
+    ".next",
+    "standalone",
+    "apps",
+    "web",
+    ".next",
+    "static",
+  );
+  await assertOwnedPathChain(resolvedRoot, destinationStatic);
+  await rm(destinationStatic, { force: true, recursive: true });
+}
 
 function forward(result) {
   if (result.stdout) {
@@ -97,9 +122,12 @@ async function finalizeReports(lane, workspace) {
   }
 }
 
-async function executeLane(laneName, environment) {
+async function executeLane(laneName, environment, updateSnapshots) {
   const lane = resolveTestLane(laneName);
   const reportWorkspace = await createReportWorkspace(lane);
+  if (lane.executor === "playwright") {
+    await cleanupBrowserRuntimeStatic(repositoryRoot);
+  }
   const build = await runCommandProcess({
     arguments_: [
       ...packageManagerArguments,
@@ -120,6 +148,26 @@ async function executeLane(laneName, environment) {
   }
 
   const files = await discoverLaneFiles(repositoryRoot, lane);
+  if (lane.executor === "playwright") {
+    try {
+      const result = await runPlaywrightProcess({
+        junitPath: reportWorkspace.junit,
+        packageManagerArguments,
+        packageManagerCommand,
+        port: await reserveLoopbackPort(),
+        repositoryRoot,
+        sourceEnvironment: environment,
+        timeoutMs: lane.timeoutMs,
+        updateSnapshots,
+      });
+      forward(result);
+      await finalizeReports(lane, reportWorkspace);
+      return result.code;
+    } finally {
+      await cleanupBrowserRuntimeStatic(repositoryRoot);
+    }
+  }
+
   const reporters = [
     { destination: "stdout", name: "spec" },
     { destination: reportWorkspace.junit, name: "junit" },
@@ -149,6 +197,51 @@ async function executeLane(laneName, environment) {
   return result.code;
 }
 
+export async function runSelectedLanes({
+  laneNames,
+  sourceEnvironment,
+  updateSnapshots = false,
+}) {
+  if (
+    !Array.isArray(laneNames) ||
+    laneNames.length === 0 ||
+    laneNames.some((laneName) => typeof laneName !== "string") ||
+    typeof updateSnapshots !== "boolean" ||
+    sourceEnvironment === null ||
+    typeof sourceEnvironment !== "object"
+  ) {
+    throw new Error("test-runner: invalid-arguments");
+  }
+  const resolvedLaneNames = laneNames.map(
+    (laneName) => resolveTestLane(laneName).name,
+  );
+  if (
+    updateSnapshots &&
+    (sourceEnvironment.CI === "true" ||
+      sourceEnvironment.GITHUB_ACTIONS === "true" ||
+      resolvedLaneNames.length !== 1 ||
+      resolvedLaneNames[0] !== "e2e")
+  ) {
+    throw new Error("test-runner: snapshot-update-forbidden");
+  }
+  const environment = createChildEnvironment(sourceEnvironment);
+
+  for (const laneName of resolvedLaneNames) {
+    const code = await executeLane(laneName, environment, updateSnapshots);
+    if (code !== 0) {
+      return code;
+    }
+  }
+
+  return 0;
+}
+
+function testRunnerErrorMessage(error) {
+  return error instanceof Error && error.message.startsWith("test-runner:")
+    ? error.message
+    : "test-runner: unexpected-failure";
+}
+
 async function main() {
   if (process.argv.length !== 3) {
     throw new Error("test-runner: invalid-arguments");
@@ -159,24 +252,21 @@ async function main() {
     selected === "all"
       ? Object.keys(TEST_LANES)
       : [resolveTestLane(selected).name];
-  const environment = createChildEnvironment(process.env);
-
-  for (const laneName of laneNames) {
-    const code = await executeLane(laneName, environment);
-    if (code !== 0) {
-      process.exitCode = code;
-      return;
-    }
-  }
+  process.exitCode = await runSelectedLanes({
+    laneNames,
+    sourceEnvironment: process.env,
+  });
 }
 
-try {
-  await main();
-} catch (error) {
-  const message =
-    error instanceof Error && error.message.startsWith("test-runner:")
-      ? error.message
-      : "test-runner: unexpected-failure";
-  process.stderr.write(`${message}\n`);
-  process.exitCode = 1;
+const isDirectInvocation =
+  typeof process.argv[1] === "string" &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isDirectInvocation) {
+  try {
+    await main();
+  } catch (error) {
+    process.stderr.write(`${testRunnerErrorMessage(error)}\n`);
+    process.exitCode = 1;
+  }
 }
