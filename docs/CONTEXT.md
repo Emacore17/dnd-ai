@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-17
-last_verified_commit: d475389b11765f17276bb0a0efd7500a5e6f66a4
+last_reviewed: 2026-07-18
+last_verified_commit: b7d137f10f3602224704f9da65a3f226b6410139
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -31,6 +31,7 @@ related_tasks:
   - GOV-003
   - GOV-004
   - GOV-005
+  - GATE-M0
   - BL-001
   - BL-002
   - BL-003
@@ -218,21 +219,21 @@ supersedes: null
 
 | Campo | Valore |
 |---|---|
-| Data assoluta | 2026-07-17 |
+| Data assoluta | 2026-07-18 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `QA-002` è integrato su `main` tramite [PR #32](https://github.com/Emacore17/dnd-ai/pull/32), head `dd8d3c6dfae08137c4a8673f703ab7accc5fba83` e merge `889c51ea5a839b0a31e0797599bb22e6aaab6df4`; CI PR `29593436887` e post-merge `29593746286` hanno concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. Readback successivo su `d475389b11765f17276bb0a0efd7500a5e6f66a4` conferma `BL-080` bloccato/congelato: nessun deploy Production è autorizzato. |
+| Delivery/commit | `GOV-005` è integrato su `main` tramite [PR #35](https://github.com/Emacore17/dnd-ai/pull/35), head `a1266ee5e81b6d893043314360c6e7c221f4888c` e merge `b7d137f10f3602224704f9da65a3f226b6410139`; CI PR `29599403230` ha concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. `BL-080` resta bloccato/congelato: nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
-| SHA-256 specifica | `d5a2dec7a9ff673c824690eda73dfd41fbaa2f8ec1b2fff5baa946ca433b3900` |
-| Milestone | `M0 — Fondamenta` |
+| SHA-256 specifica | `e28f3e8e2123139ad956ff84a7342ca0e62c018fe6a45880657ac622219341b3` |
+| Milestone | `M1 — Character Builder` |
 | Task attivo | nessun task in corso |
-| Ultimo task completato | `GOV-005 — DONE/100%/PASSING` su branch locale; `QA-002` resta l'ultimo task integrato su `main` tramite PR #32 e CI post-merge `29593746286` |
-| Prossimo task READY | `GATE-M0` locale; poi `BL-011` per avviare M1 Character Builder. `BL-080` resta `BLOCKED` come gate remoto per deploy/beta/release esterni |
+| Ultimo task completato | `GATE-M0 — DONE/100%/PASSING` su branch `codex/gate-m0-local`; `GOV-005` è integrato su `main` tramite PR #35 e CI `29599403230` |
+| Prossimo task READY | `BL-011` per avviare M1 Character Builder. `BL-080` resta `BLOCKED` come gate remoto per deploy/beta/release esterni |
 | Migration head | `000005_campaign_ownership` / `database-campaign-ownership-v1`, integrato e verificato su PostgreSQL reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-006`, `BL-007`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `QA-001`, `QA-002` e `DOC-ARCH-001` sono integrati e verificati su `main`; `GOV-005` è chiuso su branch locale e riallinea il programma sulla priorità local-first richiesta dal Product Owner. `BL-079`/`BL-081` forniscono foundation shadcn e shell fixture interattiva con reducer puro, subset AI Elements, drawer HUD e Motion reduced-first. `BL-005`/`BL-006` implementano l'intero lifecycle identity locale; `BL-007` aggiunge contract `v4`, migration `000005`, `ActorContext`, query campagna owner-scoped, GET player-safe e guardia SSE non registrata. `QA-002` aggiunge al runner comune la corsia Playwright/Chromium, axe, matrice 320/390/1440, sei baseline Windows/Linux, failure path bounded e cleanup degli asset statici standalone; CI PR/post-merge sono verdi. CI e artifact includono soltanto JUnit normalizzato. Redis locale applicativo, BullMQ, SSE pubblico, Campaign Bible, Turn Orchestrator e provider AI sono ancora pianificati. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `GOV-005`, `GATE-M0`, `BL-005`, `BL-006`, `BL-007`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `QA-001`, `QA-002` e `DOC-ARCH-001` sono integrati o proposti branch-local con verifica completa; `GATE-M0` chiude la fondazione locale con full `verify` verde dopo avvio Docker Desktop. `GOV-005` riallinea il programma sulla priorità local-first richiesta dal Product Owner. `BL-079`/`BL-081` forniscono foundation shadcn e shell fixture interattiva con reducer puro, subset AI Elements, drawer HUD e Motion reduced-first. `BL-005`/`BL-006` implementano l'intero lifecycle identity locale; `BL-007` aggiunge contract `v4`, migration `000005`, `ActorContext`, query campagna owner-scoped, GET player-safe e guardia SSE non registrata. `QA-002` aggiunge al runner comune la corsia Playwright/Chromium, axe, matrice 320/390/1440, sei baseline Windows/Linux, failure path bounded e cleanup degli asset statici standalone; CI PR/post-merge sono verdi. CI e artifact includono soltanto JUnit normalizzato. Redis locale applicativo, BullMQ, SSE pubblico, Campaign Bible, Turn Orchestrator e provider AI sono ancora pianificati. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
 
 ## Decisioni operative vigenti
 
@@ -336,7 +337,7 @@ Get-FileHash -Algorithm SHA256 docs\MVP_SPEC.md
 Get-ChildItem -Recurse -Filter *.md
 ```
 
-Il report riproducibile di `GOV-001` è `AGENTS_VALIDATION.txt`. La prossima verifica di programma è `GATE-M0` locale: deve usare i comandi disponibili senza Vercel e deve fallire se una capability locale dichiarata non è realmente disponibile.
+Il report riproducibile di `GOV-001` è `AGENTS_VALIDATION.txt`. `GATE-M0` locale è stato verificato con `corepack pnpm@11.13.0 verify` exit `0`: report 420 test, 0 failure, sei lane, secret scan, deployment foundation locale e artifact verification verdi. La prima esecuzione ha fallito correttamente quando Docker Desktop non era attivo; dopo avvio del daemon la lane integration e il full gate sono passati.
 
 ## Decisioni aperte
 
@@ -364,7 +365,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 ## Prossima azione
 
-Selezionare `GATE-M0` come exit gate locale. Se `GATE-M0` passa, il prossimo sviluppo P0 è `BL-011` per avviare M1 Character Builder; in parallelo concettuale, `BL-021` resta il riferimento per AIProvider/fake provider e adapter reale configurabile localmente prima della generazione campagna. Non eseguire deploy Vercel, Production, upgrade, custom environment o cambio account: `BL-080` resta solo readback/dry-run/contenimento finché non esiste un percorso Preview-only supportato.
+Selezionare `BL-011` per avviare M1 Character Builder con cataloghi originali versionati. In parallelo concettuale, `BL-021` resta il riferimento per AIProvider/fake provider e adapter reale configurabile localmente prima della generazione campagna. Non eseguire deploy Vercel, Production, upgrade, custom environment o cambio account: `BL-080` resta solo readback/dry-run/contenimento finché non esiste un percorso Preview-only supportato.
 
 ## Rischi chiusi
 

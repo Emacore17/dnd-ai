@@ -1,8 +1,8 @@
 ---
 status: active
 owner: engineering
-last_reviewed: 2026-07-17
-last_verified_commit: d475389b11765f17276bb0a0efd7500a5e6f66a4
+last_reviewed: 2026-07-18
+last_verified_commit: b7d137f10f3602224704f9da65a3f226b6410139
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -20,6 +20,7 @@ related_tasks:
   - GOV-003
   - GOV-004
   - GOV-005
+  - GATE-M0
   - BL-001
   - BL-002
   - BL-003
@@ -177,6 +178,7 @@ supersedes: null
 
 - Riallineato il programma sulla priorità Product Owner 2026-07-17: il prossimo obiettivo è avere il progetto completo funzionante in locale con AI integrata dietro adapter. `BL-080` resta `BLOCKED` e continua a vietare deploy reali, ma non blocca più il gate locale M0 né l'avanzamento M1→M6.
 - Separato `GATE-M0` locale dal gate remoto Vercel: il prossimo task P0 selezionabile diventa il gate di fondazione locale; Preview/staging, smoke provider e rollback remoto restano proprietà di `BL-080`/`BL-070` prima di utenti esterni.
+- `GATE-M0` passa a proposta branch-local `DONE/100%/PASSING`: la fondazione locale M0 è stata verificata con full gate, `BL-011` diventa il prossimo task P0 READY e M1 può partire senza riaprire Vercel.
 - `BL-006` passa a proposta branch-local `DONE/100%/PASSING`: runtime, verticale, browser, full gate HIGH_RISK, checkout pulito e review terminale sono verdi sul functional head `df7f868`; la delivery protetta resta `PENDING`. `BL-081` resta READY ma non viene avviato prima dell'integrazione.
 - `BL-006` è integrato tramite PR #29/merge `c30c6db` con CI PR/post-merge 5/5 `SUCCESS`; `BL-081` passa `IN_PROGRESS/25%/NOT_RUN` e `BL-007` diventa READY dopo la chiusura delle dipendenze.
 - `BL-081` passa a proposta branch-local `DONE/100%/PASSING`: implementazione, test mirati, build, browser locale, bundle audit, full gate HIGH_RISK e checkout pulito sono conclusi; `QA-002` diventa READY e `BL-007` resta il primo P0 READY. La delivery protetta resta `PENDING`.
@@ -186,6 +188,7 @@ supersedes: null
 ### Verification
 
 - GOV-005: `corepack pnpm@11.13.0 tasks:check` exit `0`; `corepack pnpm@11.13.0 verify:docs` finale exit `0` con contract artifacts, document policy, task graph e secret scan verdi. Nessuna modifica runtime, workflow, lockfile o Vercel.
+- GATE-M0: primo `corepack pnpm@11.13.0 verify` exit `1` perché Docker Desktop non era avviato (`postgres-test-container: start-failed` su 9 test); dopo avvio del daemon, `corepack pnpm@11.13.0 test:integration` exit `0` con 45/45 test e full finale `corepack pnpm@11.13.0 verify` exit `0` in 176,2 s con report 420 test, 416 pass, 4 skip host Windows, 0 fail, artifact 4.396 file, secret scan e deployment foundation `PASS`. Nessuna azione Vercel.
 - Baseline BL-081 su `c30c6db`: install frozen 701 package in 9,9 s; `verify:docs` con 45 artifact, 53 documenti, task graph e secret scan `PASS`; nessun codice runtime o Vercel modificato.
 - Audit di pianificazione BL-081: dry-run registry ufficiali completati; build baseline tramite grafo Turbo 3/3 `PASS`; home BL-079 pari a 636.744 byte JS raw iniziali e 59.332 byte entry route. Il piano limita le nuove dipendenze dirette a Motion, Streamdown, use-stick-to-bottom e Vaul; `verify:docs` passa con 45 artifact e 55 documenti/7 modificati.
 - Mirati BL-081: reducer 14/14 e contract UI 14/14 `PASS`; lint/typecheck web 8/8 e build production 3/3 verdi. Browser locale 320×568, 390×844 e 1440×900 senza overflow, con CTA 48 px, multilinea, submit/continue, drawer/focus restore e console pulita.
