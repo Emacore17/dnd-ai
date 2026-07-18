@@ -2,7 +2,7 @@
 status: active
 owner: engineering-and-qa
 last_reviewed: 2026-07-17
-last_verified_commit: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
+last_verified_commit: d475389b11765f17276bb0a0efd7500a5e6f66a4
 source_refs:
   - docs/MVP_SPEC.md#32-criteri-di-accettazione
   - docs/TASKS.md
@@ -30,6 +30,7 @@ related_tasks:
   - GOV-001
   - GOV-002
   - GOV-004
+  - GOV-005
   - BL-001
   - BL-002
   - BL-003
@@ -198,7 +199,7 @@ supersedes: null
 
 ## Stato del registro
 
-Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-007`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `GOV-002`, `GOV-004`, `QA-001`, `QA-002` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. `QA-002` è integrato tramite PR #32/merge `889c51e` con CI PR/post-merge verdi. `BL-080` resta congelato/bloccato.
+Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` ha introdotto lo scaffold applicativo, `BL-002` pipeline/Ruleset e `BL-003` config/startup fail-fast. `BL-004`, `BL-005`, `BL-006`, `BL-007`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `GOV-002`, `GOV-004`, `QA-001`, `QA-002` e `DOC-ARCH-001` sono `DONE/100%/PASSING` e integrati su `main`. `QA-002` è integrato tramite PR #32/merge `889c51e` con CI PR/post-merge verdi. `GOV-005` riallinea il programma sulla priorità local-first: completare il playable loop locale con AI integrata dietro adapter. `BL-080` resta congelato/bloccato come gate remoto.
 
 ## Governance e baseline
 
@@ -212,6 +213,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Import e dipendenze rispettano la allowlist | `AGENTS.md` §§4.6, 9 | BL-001 | `scripts/lib/workspace-boundaries.mjs` | `tests/contracts/workspace-boundaries.test.mjs`, inclusa fixture vietata; report BL-001 | implemented, PASS |
 | Task ID, dipendenze, cicli, status, parity spec e riferimenti UI sono verificabili | `docs/TASKS.md` §§2, 7; studio UX §14.1 | BL-001, GOV-002 | `scripts/lib/task-graph.mjs` | `tests/contracts/task-graph.test.mjs`; `pnpm tasks:check` e gate composto `pnpm docs:check`; report BL-001 | implemented, PASS |
 | Fondazione UI locale separata da shell interattiva e smoke remoto | spec §31; ADR-0001; studio UX §14 | GOV-004, BL-079, BL-081, BL-080, QA-002 | design/piani, `apps/web/components/{ai-elements,game}`, `apps/web/lib/game-shell` | task graph; contract design system/interazione; reducer; smoke standalone e browser locale | GOV-004/BL-079/BL-081/QA-002 integrati; BL-080 invariato BLOCKED |
+| Roadmap local-first verso AI integrata | spec §30; `docs/TASKS.md` §7; decisione PO 2026-07-17 | GOV-005, GATE-M0, BL-011, BL-021, BL-023, BL-028..BL-041 | `docs/MVP_SPEC.md`, `docs/TASKS.md`, `docs/CONTEXT.md`; futuri `AIProvider`/`FakeAIProvider` e adapter reale configurabile localmente | `tasks:check`/`verify:docs` per il riallineamento; futuri contract test fake/adapter, fixture success/timeout/error/invalid schema/usage missing e E2E locale del turn loop | GOV-005 DONE/PASSING; `BL-080` non blocca più M1→M6 locale; `OD-06` resta da decidere prima dell'adapter reale |
 | Architettura living implementato/target | spec §§11, 29; ADR-0009 | DOC-ARCH-001 | `docs/architecture/SYSTEM_OVERVIEW.md`, ADR-0009 | `tests/contracts/architecture-documentation.test.mjs`, Mermaid parse e `verify:docs` | PASS; contract 3/3, docs gate e full HIGH_RISK verdi |
 | Modello dati e migration head | spec §19; ADR-0006, ADR-0010 | DOC-ARCH-001, BL-005, BL-006 | `docs/data/DATA_MODEL.md`; `000004_identity_access` su main | architecture-documentation contract + migration contract/database/identity suite | `000004`/`database-identity-access-v1` verde su PostgreSQL reale per zero/previous→head, vincoli, replay, rollback e runner concorrenti; integrato tramite PR #29 |
 | Cold start locale riproducibile | spec §29.3; card DOC-ARCH-001 | DOC-ARCH-001 | `docs/operations/LOCAL_DEVELOPMENT.md` | clean checkout + `web-health-v1`/runtime integration | PASS; frozen install, config, migration, build, integration 20/20 e health reale verdi |
@@ -236,7 +238,7 @@ Il repository pubblico è versionato e collegato a `Emacore17/dnd-ai`. `BL-001` 
 | Log JSON e metadata telemetry non espongono PII, secret, prompt o output AI | spec §§22.10, 24.2; ADR-0007 | BL-008 | sanitizer bounded, logger Pino allowlisted e reporter safe | `tests/unit/observability-core.test.mjs`, `tests/unit/observability-node.test.mjs`, `tests/security/observability-security.test.mjs`; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Sentry resta error-only, off-by-default e non altera il risultato applicativo | spec §§24.4, 24.5; ADR-0007 | BL-008 | adapter Node/Next, transport fake, failure containment idempotente e bounded | unit/integration/security: exporter, destination e transport failure; zero rete; nessun Replay/profiling/log forwarding/tunnel/source map; PR #20/run `29415397361` | PASS mirato/full/clean/CI |
 | Boundary browser/Node e startup config osservabilità falliscono in modo sicuro | spec §§11.3, 24.4; ADR-0004, ADR-0007 | BL-008 | export root browser-safe e `/node`; config DSN service-scoped; entrypoint Next lazy | `tests/contracts/observability-contract.test.mjs`, runtime config/startup integration, artifact client e PR #20/run `29415397361` | PASS mirato/full/clean/CI |
-| Preview/staging M0 e smoke remoto restano obbligatori al gate senza bloccare i slice UI locali | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0 | foundation, `/health`, progetto collegato, protezioni, Git auto-deploy spento e guard Preview-only | PR #12 e CLI su `1060228` entrambi Production/rimossi; freeze PR #16/merge `aa9342d`, CI `29343319207`/`29343526054` verdi e zero deploy; audit omissione client + ipotesi first-deployment + issue CLI `#17069` | BL-080 BLOCKED/PARTIAL; nessuno staging; serve fix/workaround provider; BL-079 può avanzare localmente |
+| Preview/staging e smoke remoto restano obbligatori prima di utenti esterni senza bloccare il playable loop locale | spec §§29.3–29.4, §30, §31 `BL-080`; DoD §35.1 | BL-003, BL-080, GATE-M0, BL-070 | foundation, `/health`, progetto collegato, protezioni, Git auto-deploy spento e guard Preview-only | PR #12 e CLI su `1060228` entrambi Production/rimossi; freeze PR #16/merge `aa9342d`, CI `29343319207`/`29343526054` verdi e zero deploy; audit omissione client + ipotesi first-deployment + issue CLI `#17069` | BL-080 BLOCKED/PARTIAL; nessuno staging; serve fix/workaround provider; `GATE-M0` locale e M1→M6 possono avanzare senza deploy |
 | Build provider limitato a Preview senza leakage | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `apps/web/vercel.json`, build script dedicato, policy pura e target metadata nella cache Turbo | unit policy, security subprocess e contract deployment versionati; build Vercel richiede `VERCEL=1`, `VERCEL_ENV=preview`, `VERCEL_TARGET_ENV=preview`; locale ammesso solo con tutti assenti | guard integrato; secondo record Production `ERROR`, ma log post-rimozione insufficienti per attribuire l'errore al guard |
 | Payload CLI minimo e verificato prima di creare deployment | spec §§22.10, 29.3–29.4; ADR-0005 proposed | BL-080 | `.vercelignore`, dry-run parser e deployment foundation contract | test unit/security/contract; dry-run `nextjs` dalla root con 158 entry e 1.093.594 byte; mode/hash/symlink, cache/output/env/path non relativi e budget oltre soglia falliscono chiusi | PR #15/merge `1060228`, CI PR/post-merge verdi; contratto payload PASS |
 | Creazione manuale fail-closed nel percorso approvato | spec §§29.3–29.4, §31 `BL-080`; ADR-0005 proposed | BL-080 | `source.manualDeployment.enabled=false`, `scripts/assert-vercel-preview-bootstrap-enabled.mjs` | unit policy, security subprocess statico e contract manifest; `deploy:bootstrap:check` expected exit `1`; PR #16 CI/post-merge 5/5 | interlock procedurale integrato; non è enforcement provider contro owner; riapertura vietata senza fix/workaround Preview-only supportato |

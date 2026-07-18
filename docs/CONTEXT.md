@@ -2,7 +2,7 @@
 status: active
 owner: engineering
 last_reviewed: 2026-07-17
-last_verified_commit: feaf49c3d13a5ac87544d6583fc3c8e7e0457706
+last_verified_commit: d475389b11765f17276bb0a0efd7500a5e6f66a4
 source_refs:
   - docs/MVP_SPEC.md
   - docs/TASKS.md
@@ -30,6 +30,7 @@ related_tasks:
   - GOV-002
   - GOV-003
   - GOV-004
+  - GOV-005
   - BL-001
   - BL-002
   - BL-003
@@ -219,19 +220,19 @@ supersedes: null
 |---|---|
 | Data assoluta | 2026-07-17 |
 | Repository | GitHub pubblico `Emacore17/dnd-ai`; remote `origin` collegato durante `BL-002` |
-| Delivery/commit | `QA-002` è integrato su `main` tramite [PR #32](https://github.com/Emacore17/dnd-ai/pull/32), head `dd8d3c6dfae08137c4a8673f703ab7accc5fba83` e merge `889c51ea5a839b0a31e0797599bb22e6aaab6df4`; CI PR `29593436887` e post-merge `29593746286` hanno concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. `BL-080` resta bloccato/congelato e nessun deploy Production è autorizzato. |
+| Delivery/commit | `QA-002` è integrato su `main` tramite [PR #32](https://github.com/Emacore17/dnd-ai/pull/32), head `dd8d3c6dfae08137c4a8673f703ab7accc5fba83` e merge `889c51ea5a839b0a31e0797599bb22e6aaab6df4`; CI PR `29593436887` e post-merge `29593746286` hanno concluso Quality, Tests, Security, Build artifact e `CI / Merge gate` con `SUCCESS`. Readback successivo su `d475389b11765f17276bb0a0efd7500a5e6f66a4` conferma `BL-080` bloccato/congelato: nessun deploy Production è autorizzato. |
 | Specifica canonica | `docs/MVP_SPEC.md` |
-| SHA-256 specifica | `737fcb7380282c0e36e8aa4d0c310ae5b257b27ab38cd24ac46b06d80e69d80b` |
+| SHA-256 specifica | `d5a2dec7a9ff673c824690eda73dfd41fbaa2f8ec1b2fff5baa946ca433b3900` |
 | Milestone | `M0 — Fondamenta` |
-| Task attivo | nessun task P0 selezionabile |
-| Ultimo task completato | `QA-002 — DONE/100%/PASSING`, integrato su `main` tramite PR #32 e CI post-merge `29593746286` |
-| Prossimo task READY | nessun P0; `GATE-M0` resta chiuso perché `BL-080` è congelato `BLOCKED` |
+| Task attivo | nessun task in corso |
+| Ultimo task completato | `GOV-005 — DONE/100%/PASSING` su branch locale; `QA-002` resta l'ultimo task integrato su `main` tramite PR #32 e CI post-merge `29593746286` |
+| Prossimo task READY | `GATE-M0` locale; poi `BL-011` per avviare M1 Character Builder. `BL-080` resta `BLOCKED` come gate remoto per deploy/beta/release esterni |
 | Migration head | `000005_campaign_ownership` / `database-campaign-ownership-v1`, integrato e verificato su PostgreSQL reale |
 | Stato programma | `IN_PROGRESS` |
 
 ## Stato reale del repository
 
-`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-006`, `BL-007`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `QA-001`, `QA-002` e `DOC-ARCH-001` sono integrati e verificati su `main`. `BL-079`/`BL-081` forniscono foundation shadcn e shell fixture interattiva con reducer puro, subset AI Elements, drawer HUD e Motion reduced-first. `BL-005`/`BL-006` implementano l'intero lifecycle identity locale; `BL-007` aggiunge contract `v4`, migration `000005`, `ActorContext`, query campagna owner-scoped, GET player-safe e guardia SSE non registrata. `QA-002` aggiunge al runner comune la corsia Playwright/Chromium, axe, matrice 320/390/1440, sei baseline Windows/Linux, failure path bounded e cleanup degli asset statici standalone; CI PR/post-merge sono verdi. CI e artifact includono soltanto JUnit normalizzato. Redis locale applicativo, BullMQ, SSE pubblico e staging **non sono disponibili**. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
+`BL-001` ha creato il workspace pnpm/Turborepo con tre app; `BL-002` ha verificato pipeline/Ruleset, `BL-003` implementa `runtime-config-v1` e `BL-004` la baseline PostgreSQL. `GOV-002`, `GOV-003`, `GOV-004`, `BL-005`, `BL-006`, `BL-007`, `BL-008`, `BL-009`, `BL-010`, `BL-079`, `BL-081`, `QA-001`, `QA-002` e `DOC-ARCH-001` sono integrati e verificati su `main`; `GOV-005` è chiuso su branch locale e riallinea il programma sulla priorità local-first richiesta dal Product Owner. `BL-079`/`BL-081` forniscono foundation shadcn e shell fixture interattiva con reducer puro, subset AI Elements, drawer HUD e Motion reduced-first. `BL-005`/`BL-006` implementano l'intero lifecycle identity locale; `BL-007` aggiunge contract `v4`, migration `000005`, `ActorContext`, query campagna owner-scoped, GET player-safe e guardia SSE non registrata. `QA-002` aggiunge al runner comune la corsia Playwright/Chromium, axe, matrice 320/390/1440, sei baseline Windows/Linux, failure path bounded e cleanup degli asset statici standalone; CI PR/post-merge sono verdi. CI e artifact includono soltanto JUnit normalizzato. Redis locale applicativo, BullMQ, SSE pubblico, Campaign Bible, Turn Orchestrator e provider AI sono ancora pianificati. Il Redis effimero di `QA-001` è soltanto una risorsa del test harness. Non sono stati creati account applicativi, exporter remoti o nuovi deploy.
 
 ## Decisioni operative vigenti
 
@@ -241,6 +242,7 @@ supersedes: null
 - UI mobile-first e conversation-first; desktop come progressive enhancement.
 - shadcn/ui `new-york` su Radix; AI Elements solo presentational layer; Motion per micro-interazioni; Rive opzionale e performance-gated.
 - Visual language premium contemporaneo per casual gamer, senza chrome pseudo-medievale/fantasy.
+- Obiettivo operativo corrente: completare e verificare in locale l'intero progetto, fino a una vertical slice giocabile con AI integrata dietro `AIProvider`. I test restano deterministici con fake provider; l'adapter reale deve essere configurabile localmente quando `OD-06`/`BL-021` lo abiliteranno, senza SDK nel dominio e senza effetti provider non isolati.
 - Workspace e direzioni di dipendenza secondo ADR-0002; manifest/import/cicli falliscono chiuso tramite checker versionato.
 - Configurazione runtime server-only validata ai composition root; il BFF web valida inoltre la propria superficie minima senza dipendere dal package `config`. Il subject client attraversa BFF→API soltanto come HMAC firmato a vita breve; nessun IP raw o valore secret entra nel client, nei default, nei log o nei documenti. ADR-0004 accepted durante `BL-003`.
 - OpenTelemetry è l'unica autorità trace; Pino usa un vocabolario allowlisted e Sentry resta error-only opzionale/off-by-default, con export browser/Node separati e failure containment secondo ADR-0007.
@@ -259,13 +261,13 @@ Decisioni vigenti: [`ADR-0001`](adr/0001-mobile-first-conversational-ui.md), [`A
 | Migration head | candidato `000005_campaign_ownership` | contract `database-campaign-ownership-v1`, compatibilità minima `000001`, source SHA `119a102c…`, checksum `e6fadbe1…`; zero/`000004`→head, replay, vincoli, rollback e isolamento verdi su PostgreSQL reale |
 | Contract/API/event schema | `v1`–`v3` immutabili + candidato `v4`/SemVer `4.0.0`; event `schemaVersion: 1` invariato | Zod strict come fonte; `v4` conserva nove POST auth e aggiunge una GET campagna owner-scoped; generated drift e compatibilità major testati |
 | Rules version | `N/A` | package rules presente come scaffold; cataloghi/formule non implementati |
-| Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati |
+| Prompt version | `N/A` | package AI presente come scaffold; prompt/provider non implementati; `BL-021` dovrà introdurre fake provider deterministico e adapter reale configurabile localmente |
 | Eval suite version | `N/A` | harness non creato |
 | Test foundation contract | `testing-foundation-v1` | integrato su `main` tramite PR #24: runner isolato, primitive deterministiche, container PostgreSQL/Redis, JUnit/LCOV e manifest |
 | Runtime config contract | `runtime-config-v1` | parser/config CLI e composition root implementati; test mirati PASS; nessun secret reale |
 | Observability contract | `observability-baseline-v1` | implementato e integrato tramite PR #20; run post-merge `29415397361` 5/5 `SUCCESS`; provider remoti assenti |
 | Identity contract | `identity-signup-v1` e `identity-access-v1` implementati | contract `v3`, porte/config/crypto, migration `000004`, store, runtime API/worker/web e verticale access/reset integrati tramite PR #29; SMTP/provider/account remoti assenti |
-| Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti |
+| Deploy/health contract | `staging-foundation-v1` / `web-health-v1` | contenimento, guard, payload policy e freeze integrati tramite PR #13/#14/#15/#16; manifest unlinked/fail-closed, Git e manual deploy spenti; BL-080 bloccato su fix/workaround provider Preview-only; smoke/failure/rollback-redeploy restano aperti e non bloccano più il gate locale M0 |
 | Design contract | `ux-ui-2026-07-13` / `interactive-game-shell-v1` / `campaign-ownership-v1` / `browser-harness-v1` | shell, ownership e browser harness QA-002 integrati su `main`; staging remoto ancora assente |
 | ADR UI | `ADR-0001 accepted` | vigente |
 | Toolchain | Node `24.11.0` (engine `>=22.13.0`); pnpm `11.13.0`; Turbo `2.10.4`; TypeScript `6.0.3`; Zod `4.4.3`; Ajv `8.20.0`/formats `3.0.1` test-only; Playwright `1.61.1`/axe `4.12.1` test-only; github-slugger `2.0.0`; Mermaid `11.16.0`/DOMPurify `3.4.12` docs-only; Motion `12.42.2`; Streamdown `2.5.0`; use-stick-to-bottom `1.1.6`; Vaul `1.1.2`; OTel API `1.9.1`/SDK `2.9.0`; Pino `10.3.1`; Sentry `10.65.0`; Argon2 `0.44.0`; Nodemailer `9.0.3`; PostgreSQL `17`; pgvector `0.8.2`; node-pg-migrate `8.0.4`; pg `8.22.0`; Docker `29.2.1` | pinning e lockfile presenti; AI SDK chat, Rive e plugin `@streamdown/*` assenti; immagini container e browser corrispondenti pinati |
@@ -334,11 +336,11 @@ Get-FileHash -Algorithm SHA256 docs\MVP_SPEC.md
 Get-ChildItem -Recurse -Filter *.md
 ```
 
-Il report riproducibile di `GOV-001` è `AGENTS_VALIDATION.txt`.
+Il report riproducibile di `GOV-001` è `AGENTS_VALIDATION.txt`. La prossima verifica di programma è `GATE-M0` locale: deve usare i comandi disponibili senza Vercel e deve fallire se una capability locale dichiarata non è realmente disponibile.
 
 ## Decisioni aperte
 
-Le decisioni ancora aperte restano in `docs/MVP_SPEC.md` §34. `OD-07` è chiusa da ADR-0010; quella che può ancora bloccare M0 è soprattutto `OD-08` su regione dati/telemetry.
+Le decisioni ancora aperte restano in `docs/MVP_SPEC.md` §34. `OD-07` è chiusa da ADR-0010. `OD-08` su regione dati/telemetry non blocca più il gate locale M0, ma resta bloccante prima di staging/beta; `OD-06` diventa critica prima dell'integrazione AI reale in M2.
 - Il target provider effettivo blocca `BL-080`: il client Vercel `17.6.4` omette intenzionalmente il target Preview dalla POST e il provider ha restituito Production. Readback 2026-07-17: l'issue pubblica `vercel/vercel#17069` è ancora aperta e contiene riproduzioni indipendenti anche Git/REST, ma nessuna risposta/fix del maintainer; la release CLI `56.3.1` non cita la classificazione Preview/Production e i custom environment sono Pro/Enterprise, quindi non sono una workaround Hobby. Nessuna riattivazione Git o manuale è ammessa finché **non** esiste un percorso Preview-only supportato e verificabile in PR separata. Il piano/account Hobby resta vincolato all'identità esclusiva e l'installazione condivisa non viene ristretta per decisione PO.
 
 Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce token e contrasto; l’eventuale uso di Rive resta fuori dal bundle iniziale e può essere valutato soltanto nel performance gate di `BL-081`.
@@ -347,10 +349,10 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 | ID | Rischio | Mitigazione/owner |
 |---|---|---|
-| CTX-R03 | App e package di gioco restano in gran parte scaffold; esiste soltanto il verticale identity oltre alla foundation UI | non inferire loop di gioco, API turni o stato campagna dalla shell fixture o dalle route auth; BL-081/BL-028 possiedono i passi successivi |
+| CTX-R03 | App e package di gioco restano in gran parte scaffold; esiste soltanto il verticale identity oltre alla foundation UI | non inferire loop di gioco, API turni o stato campagna dalla shell fixture o dalle route auth; `GATE-M0` valida la fondazione locale, poi `BL-011` avvia il percorso verso playable loop locale e `BL-021` possiede l'integrazione AI adapter |
 | CTX-R04 | Il browser harness comune può introdurre drift visuale o lentezza fra piattaforme | QA-002 è integrato su `main` tramite PR #32; Playwright/axe pinati, lane/report/CI comuni, matrice cross-platform e failure path restano il gate prima di ulteriori UI |
 | CTX-R05 | Motion/Rive possono degradare device mobili | Motion usa `LazyMotion` strict con feature DOM asincrona da 285 byte e reduced-motion; Rive è assente. `QA-002` conserva il gate visual/performance comune |
-| CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi | `BL-080` è `BLOCKED/50%/PARTIAL` sull'assenza di un percorso first-deployment Preview-only supportato; freeze e `GATE-M0` restano chiusi, mentre i slice UI locali avanzano senza deploy |
+| CTX-R11 | Preview/staging M0 non è ancora disponibile; `BL-070` arriverebbe troppo tardi per scoprire problemi di delivery esterna | `BL-080` è `BLOCKED/50%/PARTIAL` sull'assenza di un percorso first-deployment Preview-only supportato; il freeze resta chiuso e vieta deploy, ma `GOV-005` separa `GATE-M0` locale dal gate remoto così lo sviluppo playable/AI procede in locale |
 | CTX-R13 | Config errata o troppo ampia può esporre credenziali fra servizi o negli errori | `BL-003` usa parser service-scoped, messaggi redatti, template separati e scanner path-based/ignore-aware |
 | CTX-R14 | L'installazione condivisa `41079282` vede 8 repository e non può essere ristretta senza togliere accesso ad altri progetti; un owner può bypassare l'interlock procedurale e invocare direttamente CLI/UI | Controlli project-level, Git disabilitato, `manualDeployment.enabled=false`, runbook fail-closed e divieto esplicito di deploy reale; l'interlock non viene presentato come enforcement provider |
 | CTX-R16 | Il client Vercel omette il target Preview e il provider ha restituito due record Production; la causa server resta non confermata | Entrambi rimossi; freeze PR #16 integrato; riapertura solo con fix/workaround provider supportato, containment testato e PR separata |
@@ -362,7 +364,7 @@ Il dettaglio cromatico finale non è un blocco di prodotto. `BL-079` definisce t
 
 ## Prossima azione
 
-Non selezionare un nuovo P0 locale: il grafo non espone task `READY` finché `BL-080` resta `BLOCKED` e `GATE-M0` resta `BACKLOG`. Continuare soltanto con readback/dry-run/contenimento su fonti ufficiali/provider issue, senza deploy Vercel, oppure attendere una decisione esplicita del Product Owner per lavoro non-P0 o per cambiare i vincoli provider.
+Selezionare `GATE-M0` come exit gate locale. Se `GATE-M0` passa, il prossimo sviluppo P0 è `BL-011` per avviare M1 Character Builder; in parallelo concettuale, `BL-021` resta il riferimento per AIProvider/fake provider e adapter reale configurabile localmente prima della generazione campagna. Non eseguire deploy Vercel, Production, upgrade, custom environment o cambio account: `BL-080` resta solo readback/dry-run/contenimento finché non esiste un percorso Preview-only supportato.
 
 ## Rischi chiusi
 
